@@ -1,0 +1,10 @@
+{
+  "name": "缘合",
+  "short_name": "缘合",
+  "description": "理解自己·遇见对的人",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FAFAF7",
+  "theme_color": "#FF6B6B",
+  "icons": []
+}
