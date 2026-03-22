@@ -1,186 +1,52 @@
-/**
- * 塔罗牌引擎
- * 完整78张韦特塔罗牌 + 牌阵 + 抽牌逻辑
- */
+const MAJOR=[{id:0,zh:'愚者',en:'The Fool',up:['新开始','冒险','自由'],dn:['鲁莽','迷失','不成熟']},{id:1,zh:'魔术师',en:'The Magician',up:['创造力','意志力','掌控'],dn:['操纵','欺骗','能力不足']},{id:2,zh:'女祭司',en:'High Priestess',up:['直觉','潜意识','内在智慧'],dn:['隐秘','脱离现实','表面化']},{id:3,zh:'女皇',en:'The Empress',up:['丰盛','母性','滋养'],dn:['依赖','过度保护','匮乏']},{id:4,zh:'皇帝',en:'The Emperor',up:['权威','秩序','稳定'],dn:['专制','僵化','控制欲']},{id:5,zh:'教皇',en:'Hierophant',up:['传统','信仰','精神指引'],dn:['教条','顺从','限制']},{id:6,zh:'恋人',en:'The Lovers',up:['爱情','选择','和谐'],dn:['犹豫','价值冲突','关系不平衡']},{id:7,zh:'战车',en:'The Chariot',up:['决心','胜利','意志'],dn:['失控','缺乏方向','攻击性']},{id:8,zh:'力量',en:'Strength',up:['勇气','耐心','内在力量'],dn:['自我怀疑','脆弱','缺乏信心']},{id:9,zh:'隐者',en:'The Hermit',up:['独处','内省','智慧'],dn:['孤立','逃避','固执己见']},{id:10,zh:'命运之轮',en:'Wheel of Fortune',up:['转折','机遇','命运'],dn:['厄运','阻碍','失控']},{id:11,zh:'正义',en:'Justice',up:['公平','真相','因果'],dn:['不公','偏见','逃避责任']},{id:12,zh:'倒吊人',en:'Hanged Man',up:['放手','新视角','等待'],dn:['拖延','抗拒','无谓牺牲']},{id:13,zh:'死神',en:'Death',up:['转变','重生','放下旧的'],dn:['恐惧改变','停滞','依恋过去']},{id:14,zh:'节制',en:'Temperance',up:['平衡','耐心','调和'],dn:['失衡','过度','急躁']},{id:15,zh:'恶魔',en:'The Devil',up:['面对阴影','束缚觉察','欲望'],dn:['沉迷','控制','自我毁灭']},{id:16,zh:'塔',en:'The Tower',up:['觉醒','打破旧有','解放'],dn:['灾难','混乱','逃避']},{id:17,zh:'星星',en:'The Star',up:['希望','灵感','宁静'],dn:['失望','缺乏信念','脱离']},{id:18,zh:'月亮',en:'The Moon',up:['直觉','潜意识','幻想'],dn:['恐惧','欺骗','混乱']},{id:19,zh:'太阳',en:'The Sun',up:['快乐','成功','活力'],dn:['自负','短暂快乐','过度乐观']},{id:20,zh:'审判',en:'Judgement',up:['觉醒','反思','重生'],dn:['自我批判','后悔','拒绝成长']},{id:21,zh:'世界',en:'The World',up:['圆满','完成','成就'],dn:['未完成','缺乏收尾','停滞']}];
+const SUITS=[{id:'wands',zh:'权杖',en:'Wands',theme:'行动·激情'},{id:'cups',zh:'圣杯',en:'Cups',theme:'情感·关系'},{id:'swords',zh:'宝剑',en:'Swords',theme:'思维·冲突'},{id:'pentacles',zh:'星币',en:'Pentacles',theme:'物质·金钱'}];
+const COURT=[{r:'page',zh:'侍从',en:'Page'},{r:'knight',zh:'骑士',en:'Knight'},{r:'queen',zh:'王后',en:'Queen'},{r:'king',zh:'国王',en:'King'}];
+const MINOR_KW={1:{up:['潜力','新机会','种子'],dn:['错失','延迟','空想']},2:{up:['选择','平衡','合作'],dn:['犹豫','失衡','拖延']},3:{up:['成长','创造','初步成果'],dn:['过度扩张','缺乏规划','散漫']},4:{up:['稳定','休息','基础'],dn:['停滞','倦怠','过度保守']},5:{up:['挑战','竞争','冲突'],dn:['逃避、内耗','恶性竞争']},6:{up:['和谐','给予','分享'],dn:['不平等','自私','旧模式']},7:{up:['反思','评估','耐心'],dn:['焦虑','拖延','缺乏信心']},8:{up:['行动','速度','变化'],dn:['仓促','阻碍','方向不明']},9:{up:['接近目标','智慧','丰收'],dn:['孤独','缺乏信任','未竟之志']},10:{up:['圆满','完成','结局'],dn:['负担','结束的抗拒','过度责任']}};
+const COURT_KW={page:{up:['学习者','好奇','新消息'],dn:['幼稚','缺乏经验','犹豫']},knight:{up:['行动','追求','热情'],dn:['冲动','不稳定','过度激进']},queen:{up:['成熟','滋养','掌控'],dn:['情绪化','控制欲','自我封闭']},king:{up:['权威','成就','掌控全局'],dn:['专横','僵化','压力过大']}};
+function buildDeck(){const d=MAJOR.map(c=>({...c,type:'major'}));let id=22;SUITS.forEach(s=>{for(let n=1;n<=10;n++)d.push({id:id++,zh:`${s.zh}${n===1?'王牌':n}`,en:`${n===1?'Ace':n} of ${s.en}`,type:'minor',suit:s.id,num:n,up:MINOR_KW[n].up,dn:MINOR_KW[n].dn});COURT.forEach(c=>d.push({id:id++,zh:`${s.zh}${c.zh}`,en:`${c.en} of ${s.en}`,type:'court',suit:s.id,rank:c.r,up:COURT_KW[c.r].up,dn:COURT_KW[c.r].dn}));});return d;}
+const DECK=buildDeck();
+const SPREADS={single:{zh:'单张指引',pos:[{zh:'指引',en:'Guidance'}]},threeCard:{zh:'三张牌阵',pos:[{zh:'过去',en:'Past'},{zh:'现在',en:'Present'},{zh:'未来',en:'Future'}]},relationship:{zh:'关系牌阵',pos:[{zh:'你',en:'You'},{zh:'对方',en:'Other'},{zh:'关系',en:'Relationship'},{zh:'建议',en:'Advice'}]}};
 
-// 大阿尔卡那 22张
-const MAJOR_ARCANA = [
-  { id: 0, name: { zh: '愚者', en: 'The Fool' }, keywords: { zh: ['新开始', '冒险', '自由', '天真'], en: ['New beginnings', 'Adventure', 'Freedom', 'Innocence'] } },
-  { id: 1, name: { zh: '魔术师', en: 'The Magician' }, keywords: { zh: ['创造力', '意志力', '技能', '掌控'], en: ['Manifestation', 'Willpower', 'Skill', 'Mastery'] } },
-  { id: 2, name: { zh: '女祭司', en: 'The High Priestess' }, keywords: { zh: ['直觉', '潜意识', '神秘', '内在智慧'], en: ['Intuition', 'Subconscious', 'Mystery', 'Inner wisdom'] } },
-  { id: 3, name: { zh: '女皇', en: 'The Empress' }, keywords: { zh: ['丰盛', '母性', '自然', '滋养'], en: ['Abundance', 'Nurturing', 'Nature', 'Fertility'] } },
-  { id: 4, name: { zh: '皇帝', en: 'The Emperor' }, keywords: { zh: ['权威', '秩序', '领导', '稳定'], en: ['Authority', 'Structure', 'Leadership', 'Stability'] } },
-  { id: 5, name: { zh: '教皇', en: 'The Hierophant' }, keywords: { zh: ['传统', '信仰', '教导', '精神指引'], en: ['Tradition', 'Faith', 'Teaching', 'Guidance'] } },
-  { id: 6, name: { zh: '恋人', en: 'The Lovers' }, keywords: { zh: ['爱情', '选择', '和谐', '价值观'], en: ['Love', 'Choices', 'Harmony', 'Values'] } },
-  { id: 7, name: { zh: '战车', en: 'The Chariot' }, keywords: { zh: ['决心', '胜利', '意志', '控制'], en: ['Determination', 'Victory', 'Willpower', 'Control'] } },
-  { id: 8, name: { zh: '力量', en: 'Strength' }, keywords: { zh: ['勇气', '耐心', '内在力量', '柔中带刚'], en: ['Courage', 'Patience', 'Inner strength', 'Compassion'] } },
-  { id: 9, name: { zh: '隐者', en: 'The Hermit' }, keywords: { zh: ['独处', '内省', '智慧', '寻找真理'], en: ['Solitude', 'Introspection', 'Wisdom', 'Soul-searching'] } },
-  { id: 10, name: { zh: '命运之轮', en: 'Wheel of Fortune' }, keywords: { zh: ['转折', '机遇', '命运', '循环'], en: ['Change', 'Destiny', 'Cycles', 'Turning point'] } },
-  { id: 11, name: { zh: '正义', en: 'Justice' }, keywords: { zh: ['公平', '真相', '因果', '平衡'], en: ['Fairness', 'Truth', 'Karma', 'Balance'] } },
-  { id: 12, name: { zh: '倒吊人', en: 'The Hanged Man' }, keywords: { zh: ['放手', '新视角', '等待', '牺牲'], en: ['Letting go', 'New perspective', 'Pause', 'Sacrifice'] } },
-  { id: 13, name: { zh: '死神', en: 'Death' }, keywords: { zh: ['结束', '转变', '重生', '放下旧的'], en: ['Transformation', 'Endings', 'Rebirth', 'Release'] } },
-  { id: 14, name: { zh: '节制', en: 'Temperance' }, keywords: { zh: ['平衡', '耐心', '调和', '适度'], en: ['Balance', 'Patience', 'Moderation', 'Harmony'] } },
-  { id: 15, name: { zh: '恶魔', en: 'The Devil' }, keywords: { zh: ['束缚', '执念', '诱惑', '阴影面'], en: ['Bondage', 'Addiction', 'Temptation', 'Shadow self'] } },
-  { id: 16, name: { zh: '塔', en: 'The Tower' }, keywords: { zh: ['突变', '觉醒', '打破', '重建'], en: ['Upheaval', 'Awakening', 'Destruction', 'Revelation'] } },
-  { id: 17, name: { zh: '星星', en: 'The Star' }, keywords: { zh: ['希望', '灵感', '宁静', '信心'], en: ['Hope', 'Inspiration', 'Serenity', 'Faith'] } },
-  { id: 18, name: { zh: '月亮', en: 'The Moon' }, keywords: { zh: ['幻觉', '恐惧', '潜意识', '直觉'], en: ['Illusion', 'Fear', 'Subconscious', 'Intuition'] } },
-  { id: 19, name: { zh: '太阳', en: 'The Sun' }, keywords: { zh: ['快乐', '成功', '活力', '光明'], en: ['Joy', 'Success', 'Vitality', 'Clarity'] } },
-  { id: 20, name: { zh: '审判', en: 'Judgement' }, keywords: { zh: ['觉醒', '反思', '重生', '召唤'], en: ['Rebirth', 'Reflection', 'Reckoning', 'Calling'] } },
-  { id: 21, name: { zh: '世界', en: 'The World' }, keywords: { zh: ['圆满', '完成', '成就', '旅程终点'], en: ['Completion', 'Achievement', 'Wholeness', 'Travel'] } },
-];
+// 确定性伪随机：同seed永远相同结果
+function seededRng(seed){let s=typeof seed==='string'?hash(seed):seed;return()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};}
+function hash(str){let h=0;for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0;}return Math.abs(h);}
 
-// 小阿尔卡那花色
-const SUITS = [
-  { id: 'wands', zh: '权杖', en: 'Wands', element: 'fire', theme: { zh: '行动·激情·创造', en: 'Action · Passion · Creativity' } },
-  { id: 'cups', zh: '圣杯', en: 'Cups', element: 'water', theme: { zh: '情感·关系·直觉', en: 'Emotions · Relationships · Intuition' } },
-  { id: 'swords', zh: '宝剑', en: 'Swords', element: 'air', theme: { zh: '思维·冲突·真相', en: 'Intellect · Conflict · Truth' } },
-  { id: 'pentacles', zh: '星币', en: 'Pentacles', element: 'earth', theme: { zh: '物质·金钱·健康', en: 'Material · Wealth · Health' } },
-];
+// seed策略：userId+日期 → 同一天同一用户结果不变
+function stableSeed(userId, date) {
+  const d = date || new Date();
+  return `${userId}-${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
 
-// 生成完整56张小阿尔卡那
-const COURT_NAMES = [
-  { rank: 'page', zh: '侍从', en: 'Page' },
-  { rank: 'knight', zh: '骑士', en: 'Knight' },
-  { rank: 'queen', zh: '王后', en: 'Queen' },
-  { rank: 'king', zh: '国王', en: 'King' },
-];
+function drawCards(spreadType='threeCard', seed){
+  const spread=SPREADS[spreadType]||SPREADS.threeCard;
+  const deck=[...DECK];
+  const rng=seededRng(seed||Date.now());
+  for(let i=deck.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+  return{spread:{name:spread.zh,type:spreadType},cards:deck.slice(0,spread.pos.length).map((c,i)=>({...c,position:spread.pos[i],reversed:rng()>0.7})),seed:typeof seed==='string'?seed:'dynamic'};
+}
 
-function buildMinorArcana() {
-  const cards = [];
-  let id = 22;
-  SUITS.forEach(suit => {
-    // 数字牌 Ace-10
-    for (let num = 1; num <= 10; num++) {
-      const numName = num === 1 ? { zh: '王牌', en: 'Ace' } : { zh: `${num}`, en: `${num}` };
-      cards.push({
-        id: id++,
-        name: { zh: `${suit.zh}${numName.zh}`, en: `${numName.en} of ${suit.en}` },
-        suit: suit.id,
-        number: num,
-        type: 'number',
-      });
-    }
-    // 宫廷牌
-    COURT_NAMES.forEach(court => {
-      cards.push({
-        id: id++,
-        name: { zh: `${suit.zh}${court.zh}`, en: `${court.en} of ${suit.en}` },
-        suit: suit.id,
-        type: 'court',
-        rank: court.rank,
-      });
+function formatForAI(result, mode='simple') {
+  const r=result;
+  if(mode==='expert'){
+    let o=`【塔罗牌阵：${r.spread.name}】\n`;
+    r.cards.forEach(c=>{
+      const rev=c.reversed;
+      const suitInfo=c.suit?SUITS.find(s=>s.id===c.suit):null;
+      o+=`\n${c.position.zh}位 — ${c.zh}（${c.en}）${rev?'【逆位】':'【正位】'}`;
+      o+=`\n  ${rev?'逆位含义：'+(c.dn||[]).join('、'):'正位含义：'+(c.up||[]).join('、')}`;
+      o+=`\n  牌型：${c.type==='major'?'大阿尔卡那':suitInfo?suitInfo.zh+'（'+suitInfo.theme+'）':''}`;
     });
+    o+=`\n\n【整体能量】大阿尔卡那${r.cards.filter(c=>c.type==='major').length}张，逆位${r.cards.filter(c=>c.reversed).length}张`;
+    if(r.seed) o+=`\n【牌阵ID】${r.seed}`;
+    return o;
+  }
+  let o=`你的塔罗牌阵（${r.spread.name}）：\n`;
+  r.cards.forEach(c=>{
+    const rev=c.reversed;
+    o+=`\n${c.position.zh}：${c.zh} ${rev?'（逆位·需要注意）':'（正位·积极信号）'}`;
+    if(c.up) o+=`\n  关键词：${(rev?(c.dn||[]):(c.up||[])).slice(0,2).join('、')}`;
   });
-  return cards;
+  return o;
 }
 
-const MINOR_ARCANA = buildMinorArcana();
-const FULL_DECK = [...MAJOR_ARCANA.map(c => ({ ...c, type: 'major' })), ...MINOR_ARCANA];
-
-// 牌阵定义
-const SPREADS = {
-  single: {
-    name: { zh: '单张指引', en: 'Single Card' },
-    positions: [{ zh: '指引', en: 'Guidance' }],
-    cardCount: 1,
-  },
-  threeCard: {
-    name: { zh: '三张牌阵', en: 'Three Card Spread' },
-    positions: [
-      { zh: '过去', en: 'Past' },
-      { zh: '现在', en: 'Present' },
-      { zh: '未来', en: 'Future' },
-    ],
-    cardCount: 3,
-  },
-  relationship: {
-    name: { zh: '关系牌阵', en: 'Relationship Spread' },
-    positions: [
-      { zh: '你', en: 'You' },
-      { zh: '对方', en: 'The Other' },
-      { zh: '关系', en: 'The Relationship' },
-      { zh: '建议', en: 'Advice' },
-    ],
-    cardCount: 4,
-  },
-  celticCross: {
-    name: { zh: '凯尔特十字', en: 'Celtic Cross' },
-    positions: [
-      { zh: '现状', en: 'Present' },
-      { zh: '挑战', en: 'Challenge' },
-      { zh: '根源', en: 'Foundation' },
-      { zh: '过去', en: 'Past' },
-      { zh: '可能', en: 'Possibility' },
-      { zh: '近未来', en: 'Near Future' },
-      { zh: '自我', en: 'Self' },
-      { zh: '环境', en: 'Environment' },
-      { zh: '希望/恐惧', en: 'Hopes/Fears' },
-      { zh: '结果', en: 'Outcome' },
-    ],
-    cardCount: 10,
-  },
-};
-
-/**
- * 随机抽牌（带正逆位）
- */
-function drawCards(spreadType = 'threeCard', seed) {
-  const spread = SPREADS[spreadType] || SPREADS.threeCard;
-  const count = spread.cardCount;
-
-  // 洗牌（Fisher-Yates）
-  const deck = [...FULL_DECK];
-  const rng = seed ? seededRandom(seed) : Math.random;
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
-  }
-
-  // 抽取并决定正逆位
-  const drawn = deck.slice(0, count).map((card, idx) => ({
-    ...card,
-    position: spread.positions[idx],
-    reversed: rng() > 0.7,  // 约30%概率逆位
-  }));
-
-  return {
-    spread: { name: spread.name, type: spreadType },
-    cards: drawn,
-    timestamp: new Date().toISOString(),
-  };
-}
-
-/**
- * 可重复的伪随机（用于同一用户同一天得到相同结果）
- */
-function seededRandom(seed) {
-  let s = typeof seed === 'string' ? hashCode(seed) : seed;
-  return function () {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    return s / 0x7fffffff;
-  };
-}
-
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-/**
- * 格式化抽牌结果为AI可读文本
- */
-function formatForAI(result, lang = 'zh') {
-  return result.cards.map(card => {
-    const name = card.name[lang];
-    const pos = card.position[lang];
-    const rev = card.reversed ? (lang === 'zh' ? '（逆位）' : '(Reversed)') : (lang === 'zh' ? '（正位）' : '(Upright)');
-    const kw = card.keywords ? card.keywords[lang].join(', ') : '';
-    return `${pos}: ${name} ${rev}${kw ? ` — ${kw}` : ''}`;
-  }).join('\n');
-}
-
-module.exports = { drawCards, formatForAI, FULL_DECK, SPREADS, MAJOR_ARCANA };
+module.exports={drawCards,formatForAI,stableSeed,DECK,SPREADS};
