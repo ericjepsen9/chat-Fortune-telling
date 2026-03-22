@@ -71,6 +71,9 @@
         <select id="gender"><option value="female">女</option><option value="male">男</option></select>
       </label>
     </div>
+    <div class="input-row" style="margin-top:4px">
+      <label>当前城市 <input type="text" id="city" value="北京" style="width:140px" placeholder="如：上海"></label>
+    </div>
   </div>
 
   <!-- 模式选择 -->
@@ -95,7 +98,7 @@
     </div>
 
     <!-- 提问 -->
-    <input class="question-input" id="question" placeholder="输入你的问题（如：我的感情运势如何？）" value="请分析我的性格特点和近期运势">
+    <input class="question-input" id="question" placeholder="留空=全面分析（性格/事业/感情/财运/健康/今年运势） | 输入具体问题=深度聚焦" value="">
 
     <!-- 显示模式 -->
     <div style="display:flex;gap:6px;margin-bottom:12px">
@@ -139,6 +142,7 @@ function getProfile() {
     month: document.getElementById('month').value,
     day: document.getElementById('day').value,
     hour: document.getElementById('hour').value,
+    city: document.getElementById('city').value || '北京',
   };
 }
 
@@ -194,29 +198,32 @@ async function runDivine() {
   btn.disabled = true;
   btn.textContent = '🔮 AI 解读中...';
 
-  showResult('<div class="result-section ai-result"><h3>⏳ 引擎计算 + AI 解读中（可能需要10-30秒）...</h3><div class="loading"></div></div>');
+  const analysisType = question ? '聚焦分析' : '全面分析';
+  showResult(`<div class="result-section ai-result"><h3>⏳ ${analysisType}中（${question ? '围绕你的问题' : '性格/事业/感情/财运/健康/运势'}）...</h3><div class="loading"></div></div>`);
 
   try {
     const res = await fetch('/api/divine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: currentMode, ...profile, question }),
+      body: JSON.stringify({ mode: currentMode, ...profile, question, displayMode, city: profile.city }),
     });
     const data = await res.json();
 
     if (data.error) throw new Error(data.error);
 
     const modeNames = { bazi: '八字命理', astrology: '星座运势', tarot: '塔罗牌', meihua: '梅花易数', vedic: '印度占星' };
+    const modeLabel = displayMode === 'expert' ? '专家' : '大众';
     showResult(`
       <div class="result-section engine-result">
-        <h3>📊 ${modeNames[currentMode]} — 引擎数据</h3>
+        <h3>📊 ${modeNames[currentMode]} — 引擎数据（${modeLabel}模式）</h3>
         <pre>${data.engineData}</pre>
       </div>
+      ${data.context ? `<p class="info" style="margin-bottom:8px">🕐 ${data.context}</p>` : ''}
       <div class="result-section ai-result">
-        <h3>🤖 AI 解读（${currentMode}模式）</h3>
+        <h3>🤖 AI ${analysisType}（${modeNames[currentMode]}·${modeLabel}）</h3>
         <div class="text">${data.response.replace(/\n/g, '<br>')}</div>
       </div>
-      <p class="info">✅ 提问: "${question}" · 模式: ${modeNames[currentMode]}</p>
+      <p class="info">✅ ${question ? '问题: "' + question + '"' : '全面分析（无特定问题）'} · ${modeNames[currentMode]} · ${modeLabel}模式</p>
     `);
   } catch (e) {
     showResult(`
