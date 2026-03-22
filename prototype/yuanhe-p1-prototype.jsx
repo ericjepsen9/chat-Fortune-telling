@@ -27,9 +27,11 @@ const ELEMENTS = { 金: "#F4C542", 木: "#34D399", 水: "#45B7D1", 火: "#FF6B6B
 // ============ SCREENS ============
 const S = {
   SPLASH: 0, ONBOARD1: 1, ONBOARD2: 2, ONBOARD3: 3, BIRTH: 4, LOADING: 5,
+  LOGIN: 6, REGISTER: 7,
   HOME: 10, DISCOVER: 11, AI: 12, MSGS: 13, ME: 14,
   CHAT: 20, CARDS: 21, CARD_DETAIL: 22, DAILY: 23, TASKS: 24, MATCH_SUCCESS: 25, PROFILE_DETAIL: 26,
   PUBLISH: 30, POST_DETAIL: 31, SETTINGS: 32, MEMBERSHIP: 33, REPORTS: 34, MY_POSTS: 35, FOLLOWING: 36, SHARE_CARD: 37,
+  MY_PROFILE: 40, BLACKLIST: 41, EDIT_PROFILE: 42, ACCOUNT_SECURITY: 43, ABOUT: 44,
 };
 
 const AI_MODES = [
@@ -178,6 +180,240 @@ const LoadingScreen = ({ onDone }) => {
   );
 };
 
+// ============ LOGIN ============
+const LoginScreen = ({ onLogin, onRegister }) => {
+  const [phone, setPhone] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
+      <div style={{ flex: 1, padding: "80px 28px 0" }}>
+        <div style={{ fontSize: 36, fontWeight: 800, color: T.primary, marginBottom: 6 }}>缘合</div>
+        <div style={{ fontSize: 14, color: T.textSec, marginBottom: 48 }}>理解自己 · 遇见对的人</div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: T.textThi, fontWeight: 600, marginBottom: 6 }}>手机号</div>
+          <div style={{ display: "flex", alignItems: "center", borderRadius: 14, border: `2px solid ${phone?T.primary:T.border}`, background: "#fff" }}>
+            <span style={{ padding: "0 12px", fontSize: 14, color: T.textSec, fontWeight: 600, borderRight: `1px solid ${T.border}` }}>+86</span>
+            <input value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,'').slice(0,11))} type="tel" placeholder="请输入手机号" style={{ flex: 1, padding: "15px 14px", border: "none", background: "transparent", fontSize: 16, outline: "none", color: T.text }} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: T.textThi, fontWeight: 600, marginBottom: 6 }}>密码</div>
+          <div style={{ display: "flex", alignItems: "center", borderRadius: 14, border: `2px solid ${pwd?T.primary:T.border}`, background: "#fff" }}>
+            <input value={pwd} onChange={e=>setPwd(e.target.value)} type={showPwd?"text":"password"} placeholder="请输入密码" style={{ flex: 1, padding: "15px 14px", border: "none", background: "transparent", fontSize: 16, outline: "none", color: T.text }} />
+            <span onClick={()=>setShowPwd(!showPwd)} style={{ padding: "0 14px", cursor: "pointer", fontSize: 16, color: T.textThi }}>{showPwd?"🙈":"👁"}</span>
+          </div>
+        </div>
+        <div style={{ textAlign: "right", marginBottom: 32 }}><span style={{ fontSize: 13, color: T.primary, cursor: "pointer" }}>忘记密码？</span></div>
+        <Btn onClick={onLogin} full style={{ opacity: phone.length>=11&&pwd.length>=6?1:0.5 }}>登录</Btn>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "28px 0" }}>
+          <div style={{ flex: 1, height: 1, background: T.border }} /><span style={{ fontSize: 12, color: T.textThi }}>其他方式</span><div style={{ flex: 1, height: 1, background: T.border }} />
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 24 }}>
+          {[{i:"💬",l:"微信"},{i:"📱",l:"Apple"},{i:"🔵",l:"Google"}].map(s=>(
+            <div key={s.l} style={{ textAlign:"center",cursor:"pointer" }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: "#fff", boxShadow: T.shadow, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 4 }}>{s.i}</div>
+              <div style={{ fontSize: 10, color: T.textThi }}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ padding: "20px 28px 36px", textAlign: "center" }}>
+        <span style={{ fontSize: 14, color: T.textSec }}>没有账号？</span>
+        <span onClick={onRegister} style={{ fontSize: 14, color: T.primary, fontWeight: 600, cursor: "pointer", marginLeft: 4 }}>立即注册</span>
+      </div>
+    </div>
+  );
+};
+
+// ============ REGISTER ============
+const RegisterScreen = ({ onRegister, onBack }) => {
+  const [phone, setPhone] = useState(""); const [code, setCode] = useState(""); const [pwd, setPwd] = useState(""); const [nick, setNick] = useState("");
+  const [countdown, setCountdown] = useState(0); const [agreed, setAgreed] = useState(false);
+  const sendCode = () => { if(phone.length<11||countdown>0)return; setCountdown(60); const iv=setInterval(()=>setCountdown(v=>{if(v<=1){clearInterval(iv);return 0;}return v-1;}),1000); };
+  const canSubmit = phone.length>=11 && code.length>=4 && pwd.length>=6 && nick.trim() && agreed;
+  const Inp = ({label,value,onChange,placeholder,type="text",extra}) => (
+    <div style={{ marginBottom: 14 }}><div style={{ fontSize: 12, color: T.textThi, fontWeight: 600, marginBottom: 6 }}>{label}</div>
+    <div style={{ display: "flex", alignItems: "center", borderRadius: 14, border: `2px solid ${value?T.primary:T.border}`, background: "#fff" }}>
+      <input value={value} onChange={e=>onChange(e.target.value)} type={type} placeholder={placeholder} style={{ flex: 1, padding: "15px 14px", border: "none", background: "transparent", fontSize: 16, outline: "none", color: T.text }} />{extra}</div></div>
+  );
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
+      <div style={{ padding: "48px 28px 0", display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: T.text }}>←</button>
+        <div style={{ fontSize: 22, fontWeight: 700, color: T.text }}>注册新账号</div>
+      </div>
+      <div style={{ flex: 1, overflow: "auto", padding: "0 28px" }}>
+        <Inp label="昵称" value={nick} onChange={setNick} placeholder="给自己取个名字" />
+        <Inp label="手机号" value={phone} onChange={v=>setPhone(v.replace(/\D/g,'').slice(0,11))} placeholder="请输入手机号" type="tel" />
+        <Inp label="验证码" value={code} onChange={v=>setCode(v.replace(/\D/g,'').slice(0,6))} placeholder="请输入验证码" extra={
+          <button onClick={sendCode} disabled={phone.length<11||countdown>0} style={{ padding: "0 14px", border: "none", background: "transparent", color: countdown>0?T.textThi:T.primary, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>{countdown>0?`${countdown}s`:"发送验证码"}</button>
+        } />
+        <Inp label="设置密码" value={pwd} onChange={setPwd} placeholder="至少6位" type="password" />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 8, marginBottom: 24 }}>
+          <div onClick={()=>setAgreed(!agreed)} style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${agreed?T.primary:T.border}`, background: agreed?T.primary:"#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+            {agreed && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>✓</span>}
+          </div>
+          <span style={{ fontSize: 12, color: T.textThi, lineHeight: 1.5 }}>我已阅读并同意 <span style={{ color: T.primary }}>《用户协议》</span> 和 <span style={{ color: T.primary }}>《隐私政策》</span></span>
+        </div>
+      </div>
+      <div style={{ padding: "12px 28px 36px" }}>
+        <Btn onClick={onRegister} full style={{ opacity: canSubmit?1:0.5 }}>注册</Btn>
+      </div>
+    </div>
+  );
+};
+
+// ============ MY PROFILE (self view) ============
+const MyProfileScreen = ({ onBack, onNavigate }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="我的主页" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px" }}>
+      {/* Hero */}
+      <div style={{ padding: 24, borderRadius: 20, background: "#fff", boxShadow: T.shadowLg, marginBottom: 16, textAlign: "center" }}>
+        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B20, #FFB34720)", border: "3px solid #FF6B6B40", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, margin: "0 auto 12px" }}>✦</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: T.text }}>洞察者 · 辛金</div>
+        <div style={{ fontSize: 13, color: T.textSec, marginTop: 4 }}>偏印格 · 金水相生</div>
+        <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 10 }}>
+          <Badge color="#FF6B6B">♌ 狮子座</Badge><Badge color="#7C5CFC">INFP</Badge><Badge color="#FFB347">金象</Badge>
+        </div>
+        <div style={{ fontSize: 14, color: T.textSec, lineHeight: 1.7, marginTop: 14, textAlign: "left" }}>热爱设计与命理的创造者，相信每个人都有独特的生命密码。</div>
+        <button onClick={() => onNavigate(S.EDIT_PROFILE)} style={{ marginTop: 14, padding: "10px 28px", borderRadius: 20, border: `1px solid ${T.primary}`, background: "#fff", color: T.primary, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>编辑资料</button>
+      </div>
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
+        {[{l:"动态",v:"3"},{l:"好友",v:"5"},{l:"关注",v:"2"},{l:"粉丝",v:"8"}].map(s=>(
+          <div key={s.l} style={{ textAlign: "center", padding: 12, borderRadius: 14, background: "#fff", boxShadow: T.shadow }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: T.primary }}>{s.v}</div>
+            <div style={{ fontSize: 11, color: T.textThi }}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+      {/* Five elements */}
+      <div style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 10 }}>☯ 五行分布</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {Object.entries({金:3,木:1,水:1,火:2,土:1}).map(([k,v])=>{
+            const c={金:"#F4C542",木:"#34D399",水:"#45B7D1",火:"#FF6B6B",土:"#A0896B"}[k];
+            return <div key={k} style={{ flex: 1, textAlign: "center" }}><div style={{ height: 40, display: "flex", alignItems: "flex-end", justifyContent: "center" }}><div style={{ width: "70%", borderRadius: "4px 4px 0 0", background: c, height: `${v/3*100}%`, minHeight: 6 }} /></div><div style={{ fontSize: 11, fontWeight: 700, color: c, marginTop: 4 }}>{k}{v}</div></div>;
+          })}
+        </div>
+      </div>
+      {/* Personality cards preview */}
+      <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 10 }}>性格标签</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {["敏锐洞察","独立思考","审美力强","追求完美","情感深沉","慢热持久"].map(t=><Badge key={t} color={T.primary}>{t}</Badge>)}
+      </div>
+    </div>
+  </div>
+);
+
+// ============ EDIT PROFILE ============
+const EditProfileScreen = ({ onBack }) => {
+  const [nick, setNick] = useState("洞察者·辛金");
+  const [bio, setBio] = useState("热爱设计与命理的创造者");
+  const [saved, setSaved] = useState(false);
+  const save = () => { setSaved(true); setTimeout(()=>setSaved(false), 1500); };
+  return (
+    <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+      <div style={{ padding: "48px 20px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 15, color: T.textSec, cursor: "pointer" }}>取消</button>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>编辑资料</div>
+        <button onClick={save} style={{ padding: "6px 16px", borderRadius: 16, border: "none", background: T.primary, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{saved?"已保存✓":"保存"}</button>
+      </div>
+      <div style={{ padding: "16px 20px 32px" }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B20, #FFB34720)", border: "3px solid #FF6B6B40", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, margin: "0 auto 8px" }}>✦</div>
+          <span style={{ fontSize: 13, color: T.primary, cursor: "pointer" }}>更换头像</span>
+        </div>
+        {[{label:"昵称",value:nick,onChange:setNick,placeholder:"输入昵称"},
+          {label:"个性签名",value:bio,onChange:setBio,placeholder:"一句话介绍自己"}].map(f=>(
+          <div key={f.label} style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: T.textThi, fontWeight: 600, marginBottom: 6 }}>{f.label}</div>
+            <input value={f.value} onChange={e=>f.onChange(e.target.value)} placeholder={f.placeholder} style={{ width: "100%", padding: "14px 16px", borderRadius: 14, border: `2px solid ${T.border}`, background: "#fff", fontSize: 15, outline: "none", color: T.text }} />
+          </div>
+        ))}
+        {[{label:"出生时间",value:"1996年8月15日 未时"},{label:"性别",value:"女"},{label:"所在城市",value:"北京"}].map(f=>(
+          <div key={f.label} style={{ display: "flex", justifyContent: "space-between", padding: "14px 16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: "pointer" }}>
+            <span style={{ fontSize: 14, color: T.text }}>{f.label}</span>
+            <span style={{ fontSize: 14, color: T.textThi }}>{f.value} ›</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ============ ACCOUNT SECURITY ============
+const AccountSecurityScreen = ({ onBack }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="账号与安全" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px" }}>
+      {[{label:"手机号",value:"138****8888",action:"更换"},{label:"修改密码",value:"",action:"修改"},{label:"微信绑定",value:"已绑定",action:"管理"},{label:"Apple ID",value:"未绑定",action:"绑定"},{label:"注销账号",value:"",action:"",danger:true}].map(item=>(
+        <div key={item.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: "pointer" }}>
+          <span style={{ fontSize: 14, color: item.danger?"#FF6B6B":T.text }}>{item.label}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {item.value && <span style={{ fontSize: 13, color: T.textThi }}>{item.value}</span>}
+            <span style={{ color: T.textThi }}>›</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============ ABOUT ============
+const AboutScreen = ({ onBack }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="关于缘合" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px", textAlign: "center" }}>
+      <div style={{ padding: 40, marginBottom: 20 }}>
+        <div style={{ fontSize: 42, fontWeight: 800, color: T.primary, marginBottom: 6 }}>缘合</div>
+        <div style={{ fontSize: 14, color: T.textSec }}>版本 1.0.0</div>
+      </div>
+      <div style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, textAlign: "left", marginBottom: 12 }}>
+        <div style={{ fontSize: 14, color: T.text, lineHeight: 1.8 }}>缘合是一款基于中国传统命理与人工智能的关系匹配平台。我们相信，理解自己是建立美好关系的第一步。</div>
+      </div>
+      {["检查更新","给我们评分","官方网站","联系客服"].map(label=>(
+        <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: "pointer" }}>
+          <span style={{ fontSize: 14, color: T.text }}>{label}</span><span style={{ color: T.textThi }}>›</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============ BLACKLIST ============
+const BlacklistScreen = ({ onBack, blocked, onUnblock }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="黑名单" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px" }}>
+      {(!blocked || blocked.size === 0) ? (
+        <div style={{ textAlign: "center", padding: 60, color: T.textThi }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🚫</div>
+          <div style={{ fontSize: 15 }}>黑名单是空的</div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>在对方主页可以将其加入黑名单</div>
+        </div>
+      ) : (
+        [...blocked].map(id => {
+          const p = MATCH_PROFILES.find(x=>x.id===id) || FRIENDS.find(x=>x.id===id);
+          if (!p) return null;
+          return (
+            <div key={id} style={{ display: "flex", alignItems: "center", gap: 14, padding: 14, borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8 }}>
+              <Avatar emoji={p.photos?p.photos[0]:p.avatar} size={46} element={p.element} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{p.name}</div>
+                <div style={{ fontSize: 12, color: T.textThi }}>{p.element}象</div>
+              </div>
+              <button onClick={()=>onUnblock(id)} style={{ padding: "6px 14px", borderRadius: 14, border: `1px solid ${T.border}`, background: "#fff", color: T.textSec, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>移出黑名单</button>
+            </div>
+          );
+        })
+      )}
+    </div>
+  </div>
+);
+
 // ============ HOME — TINDER SWIPE ============
 const HomeScreen = ({ onNavigate }) => {
   const [ci, setCi] = useState(0);
@@ -315,7 +551,7 @@ const MatchSuccessScreen = ({ profile, onChat, onContinue }) => (
 );
 
 // ============ PROFILE DETAIL ============
-const ProfileDetailScreen = ({ profile, onBack, onNavigate, follows, onToggleFollow }) => {
+const ProfileDetailScreen = ({ profile, onBack, onNavigate, follows, onToggleFollow, onBlock }) => {
   const [activeTab, setActiveTab] = useState('info');
   const d = profile.detail || {};
   const c = ELEMENTS[profile.element];
@@ -502,11 +738,17 @@ const ProfileDetailScreen = ({ profile, onBack, onNavigate, follows, onToggleFol
       </div>
 
       {/* Bottom action bar */}
-      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 375, padding: "12px 20px 28px", background: "linear-gradient(transparent, #fff 20%)", display: "flex", gap: 12 }}>
-        <button onClick={onBack}
-          style={{ flex: 1, padding: "14px 0", borderRadius: 28, border: `2px solid ${T.border}`, background: "#fff", fontSize: 20, cursor: "pointer", color: "#FF6B6B" }}>✕ 跳过</button>
-        <button onClick={() => onNavigate(S.CHAT, { friend: { ...profile, avatar: profile.photos[0], lastMsg: "", unread: 0 } })}
-          style={{ flex: 2, padding: "14px 0", borderRadius: 28, border: "none", background: `linear-gradient(135deg, #34D399, #6EE7B7)`, fontSize: 15, fontWeight: 700, cursor: "pointer", color: "#fff", boxShadow: "0 4px 14px rgba(52,211,153,0.3)", letterSpacing: 1 }}>♥ 喜欢并发消息</button>
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 375, padding: "12px 20px 28px", background: "linear-gradient(transparent, #fff 20%)" }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+          <button onClick={onBack}
+            style={{ flex: 1, padding: "14px 0", borderRadius: 28, border: `2px solid ${T.border}`, background: "#fff", fontSize: 18, cursor: "pointer", color: "#FF6B6B" }}>✕ 跳过</button>
+          <button onClick={() => onNavigate(S.CHAT, { friend: { ...profile, avatar: profile.photos[0], lastMsg: "", unread: 0 } })}
+            style={{ flex: 2, padding: "14px 0", borderRadius: 28, border: "none", background: `linear-gradient(135deg, #34D399, #6EE7B7)`, fontSize: 15, fontWeight: 700, cursor: "pointer", color: "#fff", boxShadow: "0 4px 14px rgba(52,211,153,0.3)", letterSpacing: 1 }}>♥ 喜欢并发消息</button>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", gap: 24 }}>
+          <span onClick={() => onBlock && onBlock(profile.id)} style={{ fontSize: 12, color: T.textThi, cursor: "pointer" }}>🚫 加入黑名单</span>
+          <span style={{ fontSize: 12, color: T.textThi, cursor: "pointer" }}>⚠️ 举报</span>
+        </div>
       </div>
     </div>
   );
@@ -857,8 +1099,8 @@ const MeScreen = ({ onNavigate, myPosts, follows }) => {
   return (
     <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
       <div style={{ padding: "48px 20px 20px" }}>
-        {/* Profile header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+        {/* Profile header — clickable to my profile */}
+        <div onClick={() => onNavigate(S.MY_PROFILE)} style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, cursor: "pointer" }}>
           <div style={{ width: 70, height: 70, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B20, #FFB34720)", border: "3px solid #FF6B6B40", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>✦</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: T.text }}>洞察者 · 辛金</div>
@@ -917,6 +1159,7 @@ const MeScreen = ({ onNavigate, myPosts, follows }) => {
           { icon: "📅", label: "今日状态", screen: S.DAILY, badge: "" },
           { icon: "📝", label: "我的动态", screen: S.MY_POSTS, badge: `${(myPosts||[]).length}条` },
           { icon: "❤️", label: "我的关注", screen: S.FOLLOWING, badge: `${follows ? follows.size : 0}人` },
+          { icon: "🚫", label: "黑名单", screen: S.BLACKLIST, badge: "" },
           { icon: "📊", label: "周报 / 月报", screen: S.REPORTS, badge: "" },
           { icon: "🎯", label: "任务与成长", screen: S.TASKS, badge: "2个待完成" },
           { icon: "⚙️", label: "设置与隐私", screen: S.SETTINGS, badge: "" },
@@ -1177,7 +1420,7 @@ const PostDetailScreen = ({ post, onBack }) => {
 };
 
 // ============ SETTINGS ============
-const SettingsScreen = ({ onBack }) => {
+const SettingsScreen = ({ onBack, onNavigate, onLogout }) => {
   const [notif, setNotif] = useState(true);
   const [privacy, setPrivacy] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -1191,10 +1434,11 @@ const SettingsScreen = ({ onBack }) => {
       <TopBar title="设置与隐私" onBack={onBack} />
       <div style={{ padding: "0 20px 32px" }}>
         {[
-          { label: "账号与安全", desc: "修改手机号、密码", icon: "🔒" },
-          { label: "个人信息", desc: "编辑出生时间、昵称", icon: "👤" },
+          { label: "账号与安全", desc: "修改手机号、密码", icon: "🔒", screen: S.ACCOUNT_SECURITY },
+          { label: "个人信息", desc: "编辑出生时间、昵称", icon: "👤", screen: S.EDIT_PROFILE },
+          { label: "黑名单", desc: "管理已屏蔽的用户", icon: "🚫", screen: S.BLACKLIST },
         ].map(item => (
-          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: "pointer" }}>
+          <div key={item.label} onClick={() => onNavigate(item.screen)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: "pointer" }}>
             <span style={{ fontSize: 18 }}>{item.icon}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 15, fontWeight: 500, color: T.text }}>{item.label}</div>
@@ -1217,14 +1461,18 @@ const SettingsScreen = ({ onBack }) => {
           ))}
         </div>
         <div style={{ marginTop: 16, borderRadius: 14, background: "#fff", boxShadow: T.shadow, overflow: "hidden" }}>
-          {["清除缓存", "用户协议", "隐私政策", "关于缘合"].map(label => (
-            <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${T.border}`, cursor: "pointer" }}>
-              <span style={{ fontSize: 14, color: T.text }}>{label}</span>
+          {[
+            { label: "用户协议", screen: S.ABOUT },
+            { label: "隐私政策", screen: S.ABOUT },
+            { label: "关于缘合", screen: S.ABOUT },
+          ].map(item => (
+            <div key={item.label} onClick={() => onNavigate(item.screen)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${T.border}`, cursor: "pointer" }}>
+              <span style={{ fontSize: 14, color: T.text }}>{item.label}</span>
               <span style={{ color: T.textThi }}>›</span>
             </div>
           ))}
         </div>
-        <button style={{ width: "100%", marginTop: 24, padding: 14, borderRadius: 14, border: `1px solid #FF6B6B40`, background: "#fff", color: "#FF6B6B", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>退出登录</button>
+        <button onClick={onLogout} style={{ width: "100%", marginTop: 24, padding: 14, borderRadius: 14, border: `1px solid #FF6B6B40`, background: "#fff", color: "#FF6B6B", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>退出登录</button>
       </div>
     </div>
   );
@@ -1393,7 +1641,8 @@ export default function YuanHe() {
   const [scr, setScr] = useState(S.SPLASH);
   const [data, setData] = useState({});
   const [hist, setHist] = useState([]);
-  const [follows, setFollows] = useState(new Set([1, 3])); // followed user IDs
+  const [follows, setFollows] = useState(new Set([1, 3]));
+  const [blocked, setBlocked] = useState(new Set());
   const [myPosts, setMyPosts] = useState([
     { id: 'p1', content: '今天八字分析让我对自己有了新的认识，原来我是辛金日主～', time: '2天前', likes: 12, comments: 3 },
   ]);
@@ -1404,38 +1653,56 @@ export default function YuanHe() {
   const back = useCallback(() => { if (hist.length) { const p = hist[hist.length - 1]; setHist(h => h.slice(0, -1)); setScr(p.scr); setData(p.data); } else setScr(S.HOME); }, [hist]);
   const tabNav = useCallback((s) => { setHist([]); setScr(s); setData({}); }, []);
   const toggleFollow = useCallback((id) => setFollows(f => { const n = new Set(f); n.has(id) ? n.delete(id) : n.add(id); return n; }), []);
+  const blockUser = useCallback((id) => { setBlocked(b => { const n = new Set(b); n.add(id); return n; }); setFollows(f => { const n = new Set(f); n.delete(id); return n; }); }, []);
+  const unblockUser = useCallback((id) => setBlocked(b => { const n = new Set(b); n.delete(id); return n; }), []);
   const addPost = useCallback((text) => {
     const p = { id: `p${Date.now()}`, user: "金象·洞察者", avatar: "✦", element: "金", content: text, likes: 0, comments: 0, time: "刚刚", img: null };
     setAllPosts(prev => [p, ...prev]);
     setMyPosts(prev => [{ id: p.id, content: text, time: "刚刚", likes: 0, comments: 0 }, ...prev]);
   }, []);
   const likePost = useCallback((idx) => setAllPosts(p => p.map((x,i) => i===idx ? {...x, likes: x.likes+1} : x)), []);
+  const logout = useCallback(() => { setHist([]); setScr(S.LOGIN); }, []);
 
   const render = () => {
     switch (scr) {
-      case S.SPLASH: return <SplashScreen onNext={() => setScr(S.ONBOARD1)} />;
+      // Auth flow
+      case S.SPLASH: return <SplashScreen onNext={() => setScr(S.LOGIN)} />;
+      case S.LOGIN: return <LoginScreen onLogin={() => setScr(S.HOME)} onRegister={() => setScr(S.REGISTER)} />;
+      case S.REGISTER: return <RegisterScreen onRegister={() => setScr(S.ONBOARD1)} onBack={() => setScr(S.LOGIN)} />;
+      // Onboarding (only for new users)
       case S.ONBOARD1: return <OnboardScreen step={1} onNext={() => setScr(S.ONBOARD2)} onSkip={() => setScr(S.BIRTH)} />;
       case S.ONBOARD2: return <OnboardScreen step={2} onNext={() => setScr(S.ONBOARD3)} onSkip={() => setScr(S.BIRTH)} />;
       case S.ONBOARD3: return <OnboardScreen step={3} onNext={() => setScr(S.BIRTH)} onSkip={() => setScr(S.BIRTH)} />;
       case S.BIRTH: return <BirthScreen onSubmit={() => setScr(S.LOADING)} />;
       case S.LOADING: return <LoadingScreen onDone={() => setScr(S.HOME)} />;
+      // Main tabs
       case S.HOME: return <HomeScreen onNavigate={nav} />;
       case S.DISCOVER: return <DiscoverScreen onNavigate={nav} posts={allPosts} onLike={likePost} />;
       case S.AI: return <AIScreen isTab />;
       case S.MSGS: return <MsgsScreen onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} />;
       case S.ME: return <MeScreen onNavigate={nav} myPosts={myPosts} follows={follows} />;
+      // Detail screens
       case S.CHAT: return <ChatScreen friend={data.friend} onBack={back} />;
       case S.CARDS: return <CardsListScreen onNavigate={nav} onBack={back} />;
       case S.CARD_DETAIL: return <CardDetailScreen ci={data.ci} onBack={back} onNavigate={nav} />;
       case S.DAILY: return <DailyScreen onBack={back} />;
       case S.TASKS: return <TasksScreen onBack={back} />;
-      case S.PROFILE_DETAIL: return <ProfileDetailScreen profile={data.profile} onBack={back} onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} />;
+      case S.PROFILE_DETAIL: return <ProfileDetailScreen profile={data.profile} onBack={back} onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} onBlock={blockUser} />;
+      // Publish & posts
       case S.PUBLISH: return <PublishScreen onBack={back} onPublish={addPost} />;
       case S.POST_DETAIL: return <PostDetailScreen post={data.post} onBack={back} />;
-      case S.SETTINGS: return <SettingsScreen onBack={back} />;
+      // Settings & sub-pages
+      case S.SETTINGS: return <SettingsScreen onBack={back} onNavigate={nav} onLogout={logout} />;
+      case S.ACCOUNT_SECURITY: return <AccountSecurityScreen onBack={back} />;
+      case S.EDIT_PROFILE: return <EditProfileScreen onBack={back} />;
+      case S.ABOUT: return <AboutScreen onBack={back} />;
+      case S.BLACKLIST: return <BlacklistScreen onBack={back} blocked={blocked} onUnblock={unblockUser} />;
+      // Membership & reports
       case S.MEMBERSHIP: return <MembershipScreen onBack={back} />;
       case S.REPORTS: return <ReportsScreen onBack={back} />;
+      // My content
       case S.MY_POSTS: return <MyPostsScreen onBack={back} posts={myPosts} onDelete={(id) => setMyPosts(p => p.filter(x => x.id !== id))} />;
+      case S.MY_PROFILE: return <MyProfileScreen onBack={back} onNavigate={nav} />;
       case S.FOLLOWING: return <FollowingScreen onBack={back} onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} />;
       case S.SHARE_CARD: return <ShareCardScreen ci={data.ci} onBack={back} />;
       default: return <HomeScreen onNavigate={nav} />;
