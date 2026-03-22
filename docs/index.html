@@ -6,7 +6,6 @@
 <title>缘合 YuanHe</title>
 <link rel='manifest' href='manifest.json'>
 <meta name='apple-mobile-web-app-capable' content='yes'>
-<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#E8E6E0;overflow:hidden;-webkit-tap-highlight-color:transparent}@media(max-width:500px){body{display:flex;justify-content:center}}</style>
 </head>
 <body>
@@ -46,6 +45,7 @@ const S = {
   SPLASH: 0, ONBOARD1: 1, ONBOARD2: 2, ONBOARD3: 3, BIRTH: 4, LOADING: 5,
   HOME: 10, DISCOVER: 11, AI: 12, MSGS: 13, ME: 14,
   CHAT: 20, CARDS: 21, CARD_DETAIL: 22, DAILY: 23, TASKS: 24, MATCH_SUCCESS: 25, PROFILE_DETAIL: 26,
+  PUBLISH: 30, POST_DETAIL: 31, SETTINGS: 32, MEMBERSHIP: 33, REPORTS: 34, MY_POSTS: 35, FOLLOWING: 36, SHARE_CARD: 37,
 };
 
 const AI_MODES = [
@@ -331,10 +331,11 @@ const MatchSuccessScreen = ({ profile, onChat, onContinue }) => (
 );
 
 // ============ PROFILE DETAIL ============
-const ProfileDetailScreen = ({ profile, onBack, onNavigate }) => {
+const ProfileDetailScreen = ({ profile, onBack, onNavigate, follows, onToggleFollow }) => {
   const [activeTab, setActiveTab] = useState('info');
   const d = profile.detail || {};
   const c = ELEMENTS[profile.element];
+  const isFollowed = follows && follows.has(profile.id);
 
   const Section = ({ title, icon, children }) => (
     <div style={{ marginBottom: 16 }}>
@@ -356,6 +357,7 @@ const ProfileDetailScreen = ({ profile, onBack, onNavigate }) => {
       <div style={{ position: "sticky", top: 0, zIndex: 10, padding: "48px 20px 12px", background: T.bg, display: "flex", alignItems: "center", gap: 12 }}>
         <button onClick={onBack} style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${T.border}`, background: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
         <div style={{ flex: 1, fontSize: 17, fontWeight: 700, color: T.text }}>个人资料</div>
+        <button onClick={() => onToggleFollow && onToggleFollow(profile.id)} style={{ padding: "6px 14px", borderRadius: 16, border: isFollowed ? `1px solid ${T.border}` : "none", background: isFollowed ? "#fff" : T.primary, color: isFollowed ? T.textSec : "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", marginRight: 8 }}>{isFollowed ? "已关注" : "+ 关注"}</button>
         <Badge color={c} filled>{profile.score}% 匹配</Badge>
       </div>
 
@@ -527,41 +529,46 @@ const ProfileDetailScreen = ({ profile, onBack, onNavigate }) => {
 };
 
 // ============ DISCOVER ============
-const DiscoverScreen = ({ onNavigate }) => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
-    <div style={{ padding: "48px 20px 8px" }}>
-      <div style={{ fontSize: 22, fontWeight: 800, color: T.text, marginBottom: 4 }}>发现</div>
-      <div style={{ fontSize: 13, color: T.textSec }}>看看同频的人在聊什么</div>
-    </div>
-    {/* Tags */}
-    <div style={{ display: "flex", gap: 8, padding: "12px 20px", overflowX: "auto" }}>
-      {["全部", "金象人", "木象人", "水象人", "火象人", "土象人"].map((t, i) => (
-        <button key={t} style={{ padding: "8px 16px", borderRadius: 20, border: "none", background: i === 0 ? T.primary : "#fff", color: i === 0 ? "#fff" : T.textSec, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", boxShadow: i === 0 ? `0 2px 8px ${T.primary}33` : T.shadow }}>{t}</button>
-      ))}
-    </div>
-    {/* Posts */}
-    <div style={{ padding: "8px 20px" }}>
-      {DISCOVER_POSTS.map((post, i) => (
-        <div key={i} style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 12, animation: `fadeInUp 0.4s ease-out ${i * 0.08}s both` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-            <Avatar emoji={post.avatar} size={36} element={post.element} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{post.user}</div>
-              <div style={{ fontSize: 11, color: T.textThi }}>{post.time}</div>
-            </div>
-            <Badge color={ELEMENTS[post.element]}>{post.element}象</Badge>
-          </div>
-          <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, marginBottom: 12 }}>{post.content}</div>
-          <div style={{ display: "flex", gap: 20 }}>
-            <span style={{ fontSize: 13, color: T.textThi, cursor: "pointer" }}>♡ {post.likes}</span>
-            <span style={{ fontSize: 13, color: T.textThi, cursor: "pointer" }}>💬 {post.comments}</span>
-            <span style={{ fontSize: 13, color: T.textThi, cursor: "pointer", marginLeft: "auto" }}>↗ 分享</span>
-          </div>
+const DiscoverScreen = ({ onNavigate, posts, onLike }) => {
+  const [tag, setTag] = useState(0);
+  const displayPosts = posts || DISCOVER_POSTS;
+  return (
+    <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
+      <div style={{ padding: "48px 20px 8px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: T.text, marginBottom: 4 }}>发现</div>
+          <div style={{ fontSize: 13, color: T.textSec }}>看看同频的人在聊什么</div>
         </div>
-      ))}
+        <button onClick={() => onNavigate(S.PUBLISH)} style={{ padding: "8px 18px", borderRadius: 20, border: "none", background: T.primary, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: `0 2px 8px ${T.primary}33` }}>+ 发布</button>
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "12px 20px", overflowX: "auto" }}>
+        {["全部", "金象", "木象", "水象", "火象", "土象"].map((t, i) => (
+          <button key={t} onClick={() => setTag(i)} style={{ padding: "8px 16px", borderRadius: 20, border: "none", background: i === tag ? T.primary : "#fff", color: i === tag ? "#fff" : T.textSec, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", boxShadow: i === tag ? `0 2px 8px ${T.primary}33` : T.shadow }}>{t}</button>
+        ))}
+      </div>
+      <div style={{ padding: "8px 20px" }}>
+        {displayPosts.map((post, i) => (
+          <div key={post.id||i} onClick={() => onNavigate(S.POST_DETAIL, { post })} style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 12, cursor: "pointer", animation: `fadeInUp 0.4s ease-out ${i * 0.06}s both` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <Avatar emoji={post.avatar} size={36} element={post.element} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{post.user}</div>
+                <div style={{ fontSize: 11, color: T.textThi }}>{post.time}</div>
+              </div>
+              <Badge color={ELEMENTS[post.element]}>{post.element}象</Badge>
+            </div>
+            <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, marginBottom: 12 }}>{post.content}</div>
+            <div style={{ display: "flex", gap: 20 }} onClick={e => e.stopPropagation()}>
+              <span onClick={() => onLike && onLike(i)} style={{ fontSize: 13, color: T.textThi, cursor: "pointer" }}>♡ {post.likes}</span>
+              <span style={{ fontSize: 13, color: T.textThi }}>💬 {post.comments}</span>
+              <span style={{ fontSize: 13, color: T.textThi, marginLeft: "auto" }}>↗</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ============ AI CHAT ============
 const TAROT_DECK_MINI = ["愚者","魔术师","女祭司","女皇","皇帝","教皇","恋人","战车","力量","隐者","命运之轮","正义","倒吊人","死神","节制","恶魔","塔","星星","月亮","太阳","审判","世界"];
@@ -736,38 +743,72 @@ const AIScreen = ({ onBack, isTab }) => {
   );
 };
 
-// ============ MESSAGES LIST ============
-const MsgsScreen = ({ onNavigate }) => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
-    <div style={{ padding: "48px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ fontSize: 22, fontWeight: 800, color: T.text }}>消息</div>
-      <button style={{ background: T.primary, border: "none", borderRadius: 20, padding: "6px 16px", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: `0 2px 8px ${T.primary}33` }}>+ 添加</button>
-    </div>
-    <div style={{ padding: "4px 20px 12px" }}>
-      <div style={{ padding: "10px 16px", borderRadius: 14, background: "#fff", border: `1px solid ${T.border}`, color: T.textThi, fontSize: 14 }}>🔍 搜索好友...</div>
-    </div>
-    <div style={{ padding: "0 20px" }}>
-      {FRIENDS.map((f, i) => (
-        <div key={f.id} onClick={() => onNavigate(S.CHAT, { friend: f })} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: `1px solid ${T.border}`, cursor: "pointer", animation: `fadeInUp 0.3s ease-out ${i * 0.05}s both` }}>
-          <div style={{ position: "relative" }}>
-            <Avatar emoji={f.avatar} size={52} element={f.element} />
-            {f.online && <div style={{ position: "absolute", bottom: 1, right: 1, width: 12, height: 12, borderRadius: "50%", background: "#34D399", border: "2px solid #fff" }} />}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 15, fontWeight: f.unread ? 700 : 500, color: T.text }}>{f.name}</span>
-              <span style={{ fontSize: 12, color: T.textThi }}>{f.time}</span>
+// ============ MESSAGES + FRIENDS ============
+const MsgsScreen = ({ onNavigate, follows, onToggleFollow }) => {
+  const [tab, setTab] = useState('msgs'); // 'msgs' | 'friends'
+  const [search, setSearch] = useState('');
+  const allPeople = [...FRIENDS, ...MATCH_PROFILES.filter(p => !FRIENDS.find(f => f.id === p.id)).map(p => ({ id: p.id, name: p.name, avatar: p.photos[0], element: p.element, lastMsg: '', time: '', unread: 0, online: p.online, bio: p.bio }))];
+  const filtered = search ? allPeople.filter(p => p.name.includes(search)) : allPeople;
+
+  return (
+    <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
+      <div style={{ padding: "48px 20px 8px" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: T.text }}>消息</div>
+      </div>
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, margin: "0 20px 10px", background: "#fff", borderRadius: 12, padding: 4, boxShadow: T.shadow }}>
+        <button onClick={() => setTab('msgs')} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", background: tab==='msgs' ? T.primary : "transparent", color: tab==='msgs' ? "#fff" : T.textSec }}>💬 消息 <span style={{ fontSize: 11, opacity: 0.7 }}>{FRIENDS.filter(f=>f.unread>0).length||''}</span></button>
+        <button onClick={() => setTab('friends')} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", background: tab==='friends' ? T.primary : "transparent", color: tab==='friends' ? "#fff" : T.textSec }}>👥 好友 <span style={{ fontSize: 11, opacity: 0.7 }}>{allPeople.length}</span></button>
+      </div>
+      <div style={{ padding: "0 20px 8px" }}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 搜索好友..." style={{ width: "100%", padding: "10px 16px", borderRadius: 14, border: `1px solid ${T.border}`, background: "#fff", color: T.text, fontSize: 14, outline: "none" }} />
+      </div>
+
+      {tab === 'msgs' && (
+        <div style={{ padding: "0 20px" }}>
+          {FRIENDS.filter(f=>!search||f.name.includes(search)).map((f, i) => (
+            <div key={f.id} onClick={() => onNavigate(S.CHAT, { friend: f })} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: `1px solid ${T.border}`, cursor: "pointer", animation: `fadeInUp 0.3s ease-out ${i * 0.05}s both` }}>
+              <div style={{ position: "relative" }}>
+                <Avatar emoji={f.avatar} size={52} element={f.element} />
+                {f.online && <div style={{ position: "absolute", bottom: 1, right: 1, width: 12, height: 12, borderRadius: "50%", background: "#34D399", border: "2px solid #fff" }} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: f.unread ? 700 : 500, color: T.text }}>{f.name}</span>
+                  <span style={{ fontSize: 12, color: T.textThi }}>{f.time}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 13, color: f.unread ? T.text : T.textThi, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: f.unread ? 600 : 400 }}>{f.lastMsg}</span>
+                  {f.unread > 0 && <span style={{ minWidth: 20, height: 20, borderRadius: 10, background: T.primary, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{f.unread}</span>}
+                </div>
+              </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 13, color: f.unread ? T.text : T.textThi, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: f.unread ? 600 : 400 }}>{f.lastMsg}</span>
-              {f.unread > 0 && <span style={{ minWidth: 20, height: 20, borderRadius: 10, background: T.primary, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{f.unread}</span>}
-            </div>
-          </div>
+          ))}
         </div>
-      ))}
+      )}
+
+      {tab === 'friends' && (
+        <div style={{ padding: "0 20px" }}>
+          {filtered.map((f, i) => (
+            <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 0", borderBottom: `1px solid ${T.border}`, animation: `fadeInUp 0.3s ease-out ${i * 0.04}s both` }}>
+              <div onClick={() => onNavigate(S.CHAT, { friend: f })} style={{ cursor: "pointer", position: "relative" }}>
+                <Avatar emoji={f.avatar} size={46} element={f.element} />
+                {f.online && <div style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, borderRadius: "50%", background: "#34D399", border: "2px solid #fff" }} />}
+              </div>
+              <div style={{ flex: 1, cursor: "pointer" }} onClick={() => onNavigate(S.CHAT, { friend: f })}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{f.name}</div>
+                <div style={{ fontSize: 12, color: T.textThi }}>{f.element}象 · {f.bio ? f.bio.split('\n')[0].slice(0,15) : ''}</div>
+              </div>
+              <button onClick={() => onToggleFollow && onToggleFollow(f.id)} style={{ padding: "6px 14px", borderRadius: 16, border: follows && follows.has(f.id) ? `1px solid ${T.border}` : "none", background: follows && follows.has(f.id) ? "#fff" : T.primary, color: follows && follows.has(f.id) ? T.textSec : "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                {follows && follows.has(f.id) ? "已关注" : "+ 关注"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // ============ FRIEND CHAT ============
 const ChatScreen = ({ friend, onBack }) => {
@@ -824,7 +865,7 @@ const ChatScreen = ({ friend, onBack }) => {
 };
 
 // ============ ME (PROFILE) ============
-const MeScreen = ({ onNavigate }) => {
+const MeScreen = ({ onNavigate, myPosts, follows }) => {
   const wuxing = { 金: 3, 木: 1, 水: 1, 火: 2, 土: 1 };
   const maxWx = Math.max(...Object.values(wuxing));
   const wxColors = { 金: "#F4C542", 木: "#34D399", 水: "#45B7D1", 火: "#FF6B6B", 土: "#A0896B" };
@@ -890,10 +931,12 @@ const MeScreen = ({ onNavigate }) => {
         {[
           { icon: "✦", label: "我的性格卡片", screen: S.CARDS, badge: "5张" },
           { icon: "📅", label: "今日状态", screen: S.DAILY, badge: "" },
-          { icon: "📊", label: "周报 / 月报", screen: null, badge: "即将开放" },
+          { icon: "📝", label: "我的动态", screen: S.MY_POSTS, badge: `${(myPosts||[]).length}条` },
+          { icon: "❤️", label: "我的关注", screen: S.FOLLOWING, badge: `${follows ? follows.size : 0}人` },
+          { icon: "📊", label: "周报 / 月报", screen: S.REPORTS, badge: "" },
           { icon: "🎯", label: "任务与成长", screen: S.TASKS, badge: "2个待完成" },
-          { icon: "⚙️", label: "设置与隐私", screen: null, badge: "" },
-          { icon: "👑", label: "会员中心", screen: null, badge: "升级PRO" },
+          { icon: "⚙️", label: "设置与隐私", screen: S.SETTINGS, badge: "" },
+          { icon: "👑", label: "会员中心", screen: S.MEMBERSHIP, badge: "升级PRO" },
         ].map(item => (
           <div key={item.label} onClick={() => item.screen && onNavigate(item.screen)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: item.screen ? "pointer" : "default" }}>
             <span style={{ fontSize: 18 }}>{item.icon}</span>
@@ -927,7 +970,7 @@ const CardsListScreen = ({ onNavigate, onBack }) => (
 );
 
 // ============ CARD DETAIL ============
-const CardDetailScreen = ({ ci = 0, onBack }) => {
+const CardDetailScreen = ({ ci = 0, onBack, onNavigate }) => {
   const c = CARDS_DATA[ci];
   return (
     <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
@@ -942,7 +985,7 @@ const CardDetailScreen = ({ ci = 0, onBack }) => {
           </div>
           <div style={{ fontSize: 15, color: T.textSec, lineHeight: 1.8 }}>{c.content.desc}</div>
         </div>
-        <Btn full outline color={c.color}>分享给朋友</Btn>
+        <Btn full outline color={c.color} onClick={() => onNavigate && onNavigate(S.SHARE_CARD, { ci })}>分享给朋友</Btn>
       </div>
     </div>
   );
@@ -1055,16 +1098,334 @@ const TabBar = ({ active, onTap }) => {
   );
 };
 
+// ============ PUBLISH POST ============
+const PublishScreen = ({ onBack, onPublish }) => {
+  const [text, setText] = useState("");
+  const [posted, setPosted] = useState(false);
+  const doPublish = () => { if (!text.trim()) return; onPublish(text); setPosted(true); setTimeout(() => onBack(), 1200); };
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
+      <div style={{ padding: "48px 20px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 15, color: T.textSec, cursor: "pointer" }}>取消</button>
+        <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>发布动态</div>
+        <button onClick={doPublish} disabled={!text.trim()} style={{ padding: "8px 20px", borderRadius: 20, border: "none", background: text.trim() ? T.primary : T.border, color: "#fff", fontSize: 14, fontWeight: 600, cursor: text.trim() ? "pointer" : "default" }}>发布</button>
+      </div>
+      {posted ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: T.text }}>发布成功！</div>
+        </div>
+      ) : (
+        <div style={{ flex: 1, padding: 20 }}>
+          <textarea value={text} onChange={e => setText(e.target.value)} placeholder="分享你的想法、感悟或命理心得..." maxLength={500} style={{ width: "100%", height: 200, padding: 16, borderRadius: 16, border: `2px solid ${T.border}`, background: "#fff", fontSize: 15, lineHeight: 1.7, color: T.text, resize: "none", outline: "none", fontFamily: "inherit" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+            <div style={{ display: "flex", gap: 12 }}>
+              <span style={{ fontSize: 20, cursor: "pointer" }}>🖼️</span>
+              <span style={{ fontSize: 20, cursor: "pointer" }}>📍</span>
+              <span style={{ fontSize: 20, cursor: "pointer" }}>#️⃣</span>
+            </div>
+            <span style={{ fontSize: 12, color: T.textThi }}>{text.length}/500</span>
+          </div>
+          <div style={{ marginTop: 16, padding: 14, borderRadius: 12, background: `${T.primary}08`, border: `1px solid ${T.primary}10` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: T.primary, marginBottom: 6 }}>💡 写作灵感</div>
+            {["今天的命理分析让我发现了什么", "我对五行的新理解", "一段让我成长的关系感悟"].map(t => (
+              <div key={t} onClick={() => setText(t)} style={{ fontSize: 13, color: T.textSec, padding: "6px 0", cursor: "pointer", borderBottom: `1px solid ${T.border}` }}>• {t}</div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============ POST DETAIL ============
+const PostDetailScreen = ({ post, onBack }) => {
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([
+    { user: "木象·小林", avatar: "🌱", text: "说得太好了！我也有同感", time: "1小时前", likes: 5 },
+    { user: "水象·阿海", avatar: "🌊", text: "加油！一起成长", time: "3小时前", likes: 2 },
+  ]);
+  const addComment = () => { if (!comment.trim()) return; setComments([{ user: "金象·洞察者", avatar: "✦", text: comment, time: "刚刚", likes: 0 }, ...comments]); setComment(""); };
+  if (!post) return <div style={{ padding: 60, textAlign: "center" }}><TopBar title="动态详情" onBack={onBack} /><div style={{ color: T.textThi }}>内容不存在</div></div>;
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
+      <TopBar title="动态详情" onBack={onBack} />
+      <div style={{ flex: 1, overflow: "auto", padding: "0 20px 80px" }}>
+        {/* Post */}
+        <div style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <Avatar emoji={post.avatar || "✦"} size={40} element={post.element || "金"} />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: T.text }}>{post.user || "用户"}</div>
+              <div style={{ fontSize: 12, color: T.textThi }}>{post.time}</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 15, color: T.text, lineHeight: 1.8, marginBottom: 14 }}>{post.content}</div>
+          <div style={{ display: "flex", gap: 24, padding: "12px 0", borderTop: `1px solid ${T.border}` }}>
+            <span style={{ fontSize: 14, color: T.textThi }}>♡ {post.likes}</span>
+            <span style={{ fontSize: 14, color: T.textThi }}>💬 {comments.length}</span>
+            <span style={{ fontSize: 14, color: T.textThi, marginLeft: "auto" }}>↗ 分享</span>
+          </div>
+        </div>
+        {/* Comments */}
+        <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 12 }}>评论 ({comments.length})</div>
+        {comments.map((c, i) => (
+          <div key={i} style={{ display: "flex", gap: 10, marginBottom: 14, animation: `fadeInUp 0.3s ease-out ${i*0.05}s both` }}>
+            <Avatar emoji={c.avatar} size={32} element="水" />
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{c.user}</span>
+                <span style={{ fontSize: 11, color: T.textThi }}>{c.time}</span>
+              </div>
+              <div style={{ fontSize: 14, color: T.textSec, lineHeight: 1.6 }}>{c.text}</div>
+              <span style={{ fontSize: 12, color: T.textThi, cursor: "pointer" }}>♡ {c.likes}  ·  回复</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Comment input */}
+      <div style={{ padding: "10px 16px 28px", display: "flex", gap: 8, background: "#fff", borderTop: `1px solid ${T.border}` }}>
+        <input value={comment} onChange={e=>setComment(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addComment()} placeholder="写评论..." style={{ flex: 1, padding: "12px 18px", borderRadius: 24, border: `2px solid ${T.border}`, background: T.bg, fontSize: 14, outline: "none", color: T.text }} />
+        <button onClick={addComment} style={{ width: 44, height: 44, borderRadius: "50%", border: "none", background: comment.trim() ? T.primary : T.border, color: "#fff", fontSize: 17, cursor: "pointer" }}>↑</button>
+      </div>
+    </div>
+  );
+};
+
+// ============ SETTINGS ============
+const SettingsScreen = ({ onBack }) => {
+  const [notif, setNotif] = useState(true);
+  const [privacy, setPrivacy] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const Toggle = ({ on, onToggle }) => (
+    <div onClick={onToggle} style={{ width: 44, height: 26, borderRadius: 13, background: on ? T.success : T.border, cursor: "pointer", position: "relative", transition: "background 0.3s" }}>
+      <div style={{ width: 22, height: 22, borderRadius: 11, background: "#fff", position: "absolute", top: 2, left: on ? 20 : 2, transition: "left 0.3s", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }} />
+    </div>
+  );
+  return (
+    <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+      <TopBar title="设置与隐私" onBack={onBack} />
+      <div style={{ padding: "0 20px 32px" }}>
+        {[
+          { label: "账号与安全", desc: "修改手机号、密码", icon: "🔒" },
+          { label: "个人信息", desc: "编辑出生时间、昵称", icon: "👤" },
+        ].map(item => (
+          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: "pointer" }}>
+            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: T.text }}>{item.label}</div>
+              <div style={{ fontSize: 12, color: T.textThi }}>{item.desc}</div>
+            </div>
+            <span style={{ color: T.textThi }}>›</span>
+          </div>
+        ))}
+        <div style={{ marginTop: 8, borderRadius: 14, background: "#fff", boxShadow: T.shadow, overflow: "hidden" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.textSec, padding: "14px 16px 8px" }}>偏好设置</div>
+          {[
+            { label: "推送通知", val: notif, fn: () => setNotif(!notif) },
+            { label: "隐藏在线状态", val: privacy, fn: () => setPrivacy(!privacy) },
+            { label: "深色模式", val: darkMode, fn: () => setDarkMode(!darkMode) },
+          ].map(s => (
+            <div key={s.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${T.border}` }}>
+              <span style={{ fontSize: 14, color: T.text }}>{s.label}</span>
+              <Toggle on={s.val} onToggle={s.fn} />
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 16, borderRadius: 14, background: "#fff", boxShadow: T.shadow, overflow: "hidden" }}>
+          {["清除缓存", "用户协议", "隐私政策", "关于缘合"].map(label => (
+            <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${T.border}`, cursor: "pointer" }}>
+              <span style={{ fontSize: 14, color: T.text }}>{label}</span>
+              <span style={{ color: T.textThi }}>›</span>
+            </div>
+          ))}
+        </div>
+        <button style={{ width: "100%", marginTop: 24, padding: 14, borderRadius: 14, border: `1px solid #FF6B6B40`, background: "#fff", color: "#FF6B6B", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>退出登录</button>
+      </div>
+    </div>
+  );
+};
+
+// ============ MEMBERSHIP ============
+const MembershipScreen = ({ onBack }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="会员中心" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px" }}>
+      <div style={{ padding: 24, borderRadius: 20, background: "linear-gradient(135deg, #F4C542, #FFB347)", marginBottom: 20, textAlign: "center", boxShadow: "0 8px 24px rgba(244,197,66,0.3)" }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>👑</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 4 }}>缘合 PRO</div>
+        <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)" }}>解锁全部占术功能与深度分析</div>
+      </div>
+      {[
+        { plan: "月度会员", price: "¥28/月", desc: "全部占术 + 每日深度解读", popular: false },
+        { plan: "年度会员", price: "¥198/年", desc: "全部功能 + 年度命盘报告", popular: true },
+        { plan: "终身会员", price: "¥498", desc: "永久享有全部权益", popular: false },
+      ].map(p => (
+        <div key={p.plan} style={{ padding: 18, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 10, border: p.popular ? `2px solid ${T.gold}` : "none", position: "relative" }}>
+          {p.popular && <div style={{ position: "absolute", top: -10, right: 16, padding: "3px 12px", borderRadius: 10, background: T.gold, color: "#fff", fontSize: 11, fontWeight: 700 }}>最受欢迎</div>}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{p.plan}</div>
+              <div style={{ fontSize: 13, color: T.textSec, marginTop: 4 }}>{p.desc}</div>
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: T.primary }}>{p.price}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{ marginTop: 16, padding: 16, borderRadius: 14, background: "#fff", boxShadow: T.shadow }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 10 }}>PRO 权益</div>
+        {["无限次 AI 占术解读", "每日深度运势分析", "完整神煞排盘（专家模式）", "双人关系深度报告", "专属性格卡片定制", "优先匹配推荐", "去除广告"].map(f => (
+          <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0" }}>
+            <span style={{ color: T.success, fontSize: 14 }}>✓</span>
+            <span style={{ fontSize: 14, color: T.textSec }}>{f}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ============ REPORTS ============
+const ReportsScreen = ({ onBack }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="周报 / 月报" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px" }}>
+      {[
+        { title: "本周关系洞察", period: "3月17日 - 3月23日", status: "可查看", color: T.primary, items: ["互动最多的好友：林晓月", "新增好友 1 人", "完成任务 3 个", "情绪状态：平稳上升"] },
+        { title: "3月月度报告", period: "2026年3月", status: "生成中", color: T.accent4, items: ["匹配成功 2 次", "AI 对话 28 次", "成长值 +120", "五行状态变化趋势"] },
+        { title: "2月月度报告", period: "2026年2月", status: "可查看", color: T.accent1, items: ["匹配成功 1 次", "AI 对话 45 次", "成长值 +180", "本月关键词：沉淀"] },
+      ].map((r, i) => (
+        <div key={i} style={{ padding: 18, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 12, animation: `fadeInUp 0.3s ease-out ${i*0.08}s both` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{r.title}</div>
+            <span style={{ padding: "4px 12px", borderRadius: 12, background: `${r.color}15`, color: r.color, fontSize: 12, fontWeight: 600 }}>{r.status}</span>
+          </div>
+          <div style={{ fontSize: 12, color: T.textThi, marginBottom: 10 }}>{r.period}</div>
+          {r.items.map((it, j) => (
+            <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0" }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: r.color }} />
+              <span style={{ fontSize: 13, color: T.textSec }}>{it}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============ MY POSTS ============
+const MyPostsScreen = ({ onBack, posts, onDelete }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="我的动态" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px" }}>
+      {(!posts || posts.length === 0) ? (
+        <div style={{ textAlign: "center", padding: 40, color: T.textThi }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>📝</div>
+          <div>还没有发布任何动态</div>
+        </div>
+      ) : posts.map((p, i) => (
+        <div key={p.id} style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 10, animation: `fadeInUp 0.3s ease-out ${i*0.06}s both` }}>
+          <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, marginBottom: 10 }}>{p.content}</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 16 }}>
+              <span style={{ fontSize: 13, color: T.textThi }}>♡ {p.likes}</span>
+              <span style={{ fontSize: 13, color: T.textThi }}>💬 {p.comments}</span>
+              <span style={{ fontSize: 13, color: T.textThi }}>{p.time}</span>
+            </div>
+            <button onClick={() => onDelete && onDelete(p.id)} style={{ padding: "4px 12px", borderRadius: 10, border: `1px solid #FF6B6B40`, background: "#fff", color: "#FF6B6B", fontSize: 12, cursor: "pointer" }}>删除</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============ FOLLOWING LIST ============
+const FollowingScreen = ({ onBack, onNavigate, follows, onToggleFollow }) => {
+  const allPeople = [...MATCH_PROFILES, ...FRIENDS.filter(f => !MATCH_PROFILES.find(p => p.id === f.id)).map(f => ({ ...f, photos: [f.avatar], score: 0, tags: [], bio: '' }))];
+  const followedPeople = allPeople.filter(p => follows && follows.has(p.id));
+  return (
+    <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+      <TopBar title={`我的关注 (${followedPeople.length})`} onBack={onBack} />
+      <div style={{ padding: "0 20px 32px" }}>
+        {followedPeople.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 40, color: T.textThi }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>❤️</div>
+            <div>还没有关注任何人</div>
+          </div>
+        ) : followedPeople.map((p, i) => (
+          <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: 14, borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, animation: `fadeInUp 0.3s ease-out ${i*0.05}s both` }}>
+            <div onClick={() => onNavigate(S.PROFILE_DETAIL, { profile: p })} style={{ cursor: "pointer" }}>
+              <Avatar emoji={p.photos ? p.photos[0] : p.avatar} size={48} element={p.element} />
+            </div>
+            <div style={{ flex: 1, cursor: "pointer" }} onClick={() => onNavigate(S.PROFILE_DETAIL, { profile: p })}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: T.text }}>{p.name}{p.age ? `，${p.age}` : ''}</div>
+              <div style={{ fontSize: 12, color: T.textThi }}>{p.element}象 {p.score ? `· 匹配${p.score}%` : ''}</div>
+            </div>
+            <button onClick={() => onToggleFollow(p.id)} style={{ padding: "7px 16px", borderRadius: 16, border: `1px solid ${T.border}`, background: "#fff", color: T.textSec, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>取消关注</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ============ SHARE CARD ============
+const ShareCardScreen = ({ ci = 0, onBack }) => {
+  const c = CARDS_DATA[ci] || CARDS_DATA[0];
+  const [copied, setCopied] = useState(false);
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
+      <TopBar title="分享性格卡" onBack={onBack} />
+      <div style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        {/* Card preview */}
+        <div style={{ width: 260, padding: 28, borderRadius: 24, background: "#fff", boxShadow: T.shadowLg, textAlign: "center", marginBottom: 24 }}>
+          <div style={{ width: 50, height: 50, borderRadius: 14, background: c.gradient, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "#fff", marginBottom: 14 }}>{c.icon}</div>
+          <div style={{ fontSize: 12, color: c.color, fontWeight: 700, letterSpacing: 2, marginBottom: 6 }}>{c.title}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: T.text, marginBottom: 12 }}>{c.content.main}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", marginBottom: 14 }}>
+            {c.content.traits.map(t => <Badge key={t} color={c.color}>{t}</Badge>)}
+          </div>
+          <div style={{ fontSize: 13, color: T.textSec, lineHeight: 1.7 }}>{c.content.desc}</div>
+          <div style={{ marginTop: 16, padding: "8px 0", borderTop: `1px solid ${T.border}`, fontSize: 11, color: T.textThi }}>缘合 · 了解自己，遇见更好的关系</div>
+        </div>
+        {/* Share actions */}
+        <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
+          {[{ icon: "💬", label: "微信" }, { icon: "🔗", label: "复制链接" }, { icon: "📱", label: "朋友圈" }, { icon: "💾", label: "保存图片" }].map(s => (
+            <div key={s.label} onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }} style={{ textAlign: "center", cursor: "pointer" }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: "#fff", boxShadow: T.shadow, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
+              <div style={{ fontSize: 11, color: T.textThi }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        {copied && <div style={{ padding: "8px 20px", borderRadius: 10, background: T.success, color: "#fff", fontSize: 13, fontWeight: 600 }}>已复制到剪贴板！</div>}
+      </div>
+    </div>
+  );
+};
+
 // ============ MAIN ============
 export default function YuanHe() {
   const [scr, setScr] = useState(S.SPLASH);
   const [data, setData] = useState({});
   const [hist, setHist] = useState([]);
+  const [follows, setFollows] = useState(new Set([1, 3])); // followed user IDs
+  const [myPosts, setMyPosts] = useState([
+    { id: 'p1', content: '今天八字分析让我对自己有了新的认识，原来我是辛金日主～', time: '2天前', likes: 12, comments: 3 },
+  ]);
+  const [allPosts, setAllPosts] = useState([...DISCOVER_POSTS]);
   const TABS = [S.HOME, S.DISCOVER, S.AI, S.MSGS, S.ME];
 
   const nav = useCallback((s, d = {}) => { setHist(h => [...h, { scr, data }]); setScr(s); setData(d); }, [scr, data]);
   const back = useCallback(() => { if (hist.length) { const p = hist[hist.length - 1]; setHist(h => h.slice(0, -1)); setScr(p.scr); setData(p.data); } else setScr(S.HOME); }, [hist]);
   const tabNav = useCallback((s) => { setHist([]); setScr(s); setData({}); }, []);
+  const toggleFollow = useCallback((id) => setFollows(f => { const n = new Set(f); n.has(id) ? n.delete(id) : n.add(id); return n; }), []);
+  const addPost = useCallback((text) => {
+    const p = { id: `p${Date.now()}`, user: "金象·洞察者", avatar: "✦", element: "金", content: text, likes: 0, comments: 0, time: "刚刚", img: null };
+    setAllPosts(prev => [p, ...prev]);
+    setMyPosts(prev => [{ id: p.id, content: text, time: "刚刚", likes: 0, comments: 0 }, ...prev]);
+  }, []);
+  const likePost = useCallback((idx) => setAllPosts(p => p.map((x,i) => i===idx ? {...x, likes: x.likes+1} : x)), []);
 
   const render = () => {
     switch (scr) {
@@ -1075,16 +1436,24 @@ export default function YuanHe() {
       case S.BIRTH: return <BirthScreen onSubmit={() => setScr(S.LOADING)} />;
       case S.LOADING: return <LoadingScreen onDone={() => setScr(S.HOME)} />;
       case S.HOME: return <HomeScreen onNavigate={nav} />;
-      case S.DISCOVER: return <DiscoverScreen onNavigate={nav} />;
+      case S.DISCOVER: return <DiscoverScreen onNavigate={nav} posts={allPosts} onLike={likePost} />;
       case S.AI: return <AIScreen isTab />;
-      case S.MSGS: return <MsgsScreen onNavigate={nav} />;
-      case S.ME: return <MeScreen onNavigate={nav} />;
+      case S.MSGS: return <MsgsScreen onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} />;
+      case S.ME: return <MeScreen onNavigate={nav} myPosts={myPosts} follows={follows} />;
       case S.CHAT: return <ChatScreen friend={data.friend} onBack={back} />;
       case S.CARDS: return <CardsListScreen onNavigate={nav} onBack={back} />;
-      case S.CARD_DETAIL: return <CardDetailScreen ci={data.ci} onBack={back} />;
+      case S.CARD_DETAIL: return <CardDetailScreen ci={data.ci} onBack={back} onNavigate={nav} />;
       case S.DAILY: return <DailyScreen onBack={back} />;
       case S.TASKS: return <TasksScreen onBack={back} />;
-      case S.PROFILE_DETAIL: return <ProfileDetailScreen profile={data.profile} onBack={back} onNavigate={nav} />;
+      case S.PROFILE_DETAIL: return <ProfileDetailScreen profile={data.profile} onBack={back} onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} />;
+      case S.PUBLISH: return <PublishScreen onBack={back} onPublish={addPost} />;
+      case S.POST_DETAIL: return <PostDetailScreen post={data.post} onBack={back} />;
+      case S.SETTINGS: return <SettingsScreen onBack={back} />;
+      case S.MEMBERSHIP: return <MembershipScreen onBack={back} />;
+      case S.REPORTS: return <ReportsScreen onBack={back} />;
+      case S.MY_POSTS: return <MyPostsScreen onBack={back} posts={myPosts} onDelete={(id) => setMyPosts(p => p.filter(x => x.id !== id))} />;
+      case S.FOLLOWING: return <FollowingScreen onBack={back} onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} />;
+      case S.SHARE_CARD: return <ShareCardScreen ci={data.ci} onBack={back} />;
       default: return <HomeScreen onNavigate={nav} />;
     }
   };
