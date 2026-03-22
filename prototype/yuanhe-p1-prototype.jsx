@@ -1,681 +1,445 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// ============ CONSTANTS ============
-const SCREENS = {
-  SPLASH: "splash",
-  ONBOARD_1: "onboard1",
-  ONBOARD_2: "onboard2",
-  ONBOARD_3: "onboard3",
-  BIRTH_INFO: "birthInfo",
-  ANALYSIS: "analysis",
-  HOME: "home",
-  CARDS: "cards",
-  CARD_DETAIL: "cardDetail",
-  DAILY: "daily",
-  MATCH: "match",
-  CHAT: "chat",
-  FRIEND_CHAT: "friendChat",
-  CHAT_LIST: "chatList",
-  AI_CHAT: "aiChat",
-  COMMUNITY: "community",
-  PROFILE: "profile",
-  TASKS: "tasks",
-  ADD_FRIEND: "addFriend",
+// ============ THEME ============
+const T = {
+  bg: "#FAFAF7",
+  card: "#FFFFFF",
+  primary: "#FF6B6B",
+  primaryDark: "#E85555",
+  secondary: "#FFB347",
+  accent1: "#4ECDC4",  // teal
+  accent2: "#7C5CFC",  // purple
+  accent3: "#FF8A9B",  // pink
+  accent4: "#45B7D1",  // blue
+  gold: "#F4C542",
+  text: "#1A1A2E",
+  textSec: "#6B7280",
+  textThi: "#9CA3AF",
+  border: "#F0F0EC",
+  borderDark: "#E5E5E0",
+  success: "#34D399",
+  shadow: "0 2px 16px rgba(0,0,0,0.06)",
+  shadowLg: "0 8px 32px rgba(0,0,0,0.10)",
 };
 
-const FIVE_ELEMENTS = ["金", "木", "水", "火", "土"];
-const ELEMENT_COLORS = { 金: "#C9A96E", 木: "#6BAF7B", 水: "#5B8FB9", 火: "#D4654A", 土: "#B8935A" };
+const ELEMENTS = { 金: "#F4C542", 木: "#34D399", 水: "#45B7D1", 火: "#FF6B6B", 土: "#FFB347" };
+
+// ============ SCREENS ============
+const S = {
+  SPLASH: 0, ONBOARD1: 1, ONBOARD2: 2, ONBOARD3: 3, BIRTH: 4, LOADING: 5,
+  HOME: 10, DISCOVER: 11, AI: 12, MSGS: 13, ME: 14,
+  CHAT: 20, CARDS: 21, CARD_DETAIL: 22, DAILY: 23, TASKS: 24, MATCH_SUCCESS: 25,
+};
 
 const AI_MODES = [
-  { id: "bazi", name: "八字命理", icon: "☰", color: "#C9A96E", desc: "四柱八字·五行十神", greeting: "你好，我是八字命理AI。基于你的四柱八字，我可以为你解读命局、分析运势、指导关系。请问你想了解什么？" },
-  { id: "meihua", name: "梅花易数", icon: "❀", color: "#D4654A", desc: "即时起卦·决策分析", greeting: "你好，我是梅花易数AI。告诉我你当前面临的问题或选择，我将即时起卦，为你分析当下的趋势与建议。" },
-  { id: "tarot", name: "塔罗牌", icon: "✦", color: "#9B7FD4", desc: "牌阵解读·直觉指引", greeting: "你好，我是塔罗AI向导。集中你的心念，告诉我你想探索的问题——感情、事业或是人生方向，我将为你抽牌解读。" },
-  { id: "vedic", name: "印度占星", icon: "◎", color: "#5B8FB9", desc: "星盘解析·业力指引", greeting: "Namaste! 我是吠陀占星AI。基于你的出生信息，我将从印度占星术的角度为你解读星盘、分析达沙周期与行星影响。" },
+  { id: "bazi", name: "八字命理", icon: "☰", color: "#FF6B6B", gradient: "linear-gradient(135deg,#FF6B6B,#FF8A9B)", desc: "四柱八字·五行十神", greeting: "你好！基于你的四柱八字，我来为你解读命局与运势。想了解什么？" },
+  { id: "meihua", name: "梅花易数", icon: "❀", color: "#FFB347", gradient: "linear-gradient(135deg,#FFB347,#FFD280)", desc: "即时起卦·决策分析", greeting: "你好！告诉我你面临的问题，我将即时起卦为你分析趋势与建议。" },
+  { id: "tarot", name: "塔罗牌", icon: "✦", color: "#7C5CFC", gradient: "linear-gradient(135deg,#7C5CFC,#A78BFA)", desc: "牌阵解读·直觉指引", greeting: "你好！集中心念，告诉我你想探索的问题，我将为你抽牌解读。" },
+  { id: "vedic", name: "印度占星", icon: "◎", color: "#45B7D1", gradient: "linear-gradient(135deg,#45B7D1,#67D4E8)", desc: "星盘解析·业力指引", greeting: "Namaste! 我将从吠陀占星术角度为你解读星盘与行星影响。" },
 ];
 
-const PERSONALITY_CARDS = [
-  { id: "personality", title: "人格卡", icon: "✦", color: "#C9A96E", subtitle: "你的核心性格特质", content: { main: "洞察者·辛金", traits: ["敏锐洞察", "独立思考", "情感深沉", "追求真实"], desc: "你拥有辛金般的细腻与锋芒。外表平和，内心有着极强的辨别力和审美追求。" } },
-  { id: "relation", title: "关系模式卡", icon: "◈", color: "#5B8FB9", subtitle: "你在关系中的角色", content: { main: "守护者·偏印格", traits: ["深度连接", "忠诚稳定", "需要空间", "慢热持久"], desc: "你在关系中偏向深度而非广度。一旦建立信任，会成为最可靠的陪伴者。" } },
-  { id: "strength", title: "优势卡", icon: "◆", color: "#6BAF7B", subtitle: "你的关系优势", content: { main: "共情与理解力", traits: ["情绪感知力强", "善于倾听", "给予安全感", "有耐心"], desc: "你最大的关系优势是深度共情能力，让与你相处的人感到被理解和安全。" } },
-  { id: "risk", title: "风险提示卡", icon: "◇", color: "#D4654A", subtitle: "需要注意的模式", content: { main: "过度消耗与封闭", traits: ["容易过度付出", "压抑真实感受", "回避冲突", "完美主义"], desc: "你可能在关系中过度消耗自己的能量，同时将真实的不满隐藏起来。" } },
-  { id: "action", title: "行动建议卡", icon: "▸", color: "#9B7FD4", subtitle: "今天可以做的事", content: { main: "表达一次真实感受", traits: ["每日真实表达", "设定边界", "主动发起对话", "记录情绪"], desc: "今天尝试对一个你信任的人说出一件真实的感受，打破封闭模式的第一步。" } },
-];
-
-const MATCH_USERS = [
-  { id: 1, name: "林晓月", age: 26, avatar: "🌙", element: "木", score: 92, type: "互补型", reason: "你的辛金细腻与她的甲木生长力形成互补", tags: ["温柔共情", "艺术感知", "慢热型"], distance: "3km" },
-  { id: 2, name: "陈思远", age: 28, avatar: "⭐", element: "水", score: 87, type: "相似型", reason: "水金相生，思考方式和价值观上高度共鸣", tags: ["深度思考", "独立自主", "追求真实"], distance: "5km" },
-  { id: 3, name: "王雨桐", age: 25, avatar: "🌿", element: "土", score: 85, type: "成长型", reason: "土生金，她的稳定力量能给你安全感", tags: ["稳定可靠", "包容力强", "行动派"], distance: "8km" },
+const MATCH_PROFILES = [
+  { id: 1, name: "林晓月", age: 26, photos: ["🌸"], element: "木", score: 92, type: "互补型", bio: "喜欢画画和写诗的文艺少女\n相信每个人都有自己的节奏", reason: "你的辛金细腻与她的甲木生长力形成互补", tags: ["温柔共情", "艺术感知", "慢热型"], dist: "3km", online: true },
+  { id: 2, name: "苏雨晴", age: 24, photos: ["🌺"], element: "火", score: 88, type: "成长型", bio: "旅行博主 / 咖啡爱好者\n正在学习冥想和瑜伽", reason: "火金相克中藏着成长的力量，你们能互相磨砺", tags: ["活力四射", "热情开朗", "行动派"], dist: "5km", online: true },
+  { id: 3, name: "陈思远", age: 28, photos: ["🌊"], element: "水", score: 87, type: "相似型", bio: "产品经理 / 读书会组织者\n喜欢深度思考和哲学讨论", reason: "水金相生，思考方式和价值观高度共鸣", tags: ["深度思考", "独立自主", "追求真实"], dist: "8km", online: false },
+  { id: 4, name: "王雨桐", age: 25, photos: ["🌿"], element: "土", score: 85, type: "互补型", bio: "心理咨询师 / 猫猫妈妈\n温暖而有力量的倾听者", reason: "土生金，她的稳定力量能给你安全感", tags: ["稳定可靠", "包容力强", "善于倾听"], dist: "2km", online: true },
+  { id: 5, name: "张一鸣", age: 27, photos: ["🔥"], element: "火", score: 83, type: "成长型", bio: "健身教练 / 美食探店达人\n相信身体和心灵同样重要", reason: "火的热情能唤醒你内心深处的表达欲", tags: ["阳光健康", "热爱生活", "直接坦率"], dist: "6km", online: true },
 ];
 
 const FRIENDS = [
-  { id: 1, name: "林晓月", avatar: "🌙", element: "木", lastMsg: "好的，明天见！", time: "10:32", unread: 2, online: true },
-  { id: 2, name: "陈思远", avatar: "⭐", element: "水", lastMsg: "那篇文章我看了，很有共鸣", time: "昨天", unread: 0, online: true },
-  { id: 3, name: "王雨桐", avatar: "🌿", element: "土", lastMsg: "双人任务完成啦～默契值+15", time: "昨天", unread: 0, online: false },
-  { id: 4, name: "张一鸣", avatar: "🔥", element: "火", lastMsg: "哈哈哈 太准了吧", time: "周一", unread: 0, online: false },
-  { id: 5, name: "李诗韵", avatar: "💎", element: "金", lastMsg: "[图片]", time: "周日", unread: 0, online: true },
+  { id: 1, name: "林晓月", avatar: "🌸", element: "木", lastMsg: "好的，明天见！", time: "10:32", unread: 2, online: true },
+  { id: 2, name: "陈思远", avatar: "🌊", element: "水", lastMsg: "那篇文章很有共鸣", time: "昨天", unread: 0, online: true },
+  { id: 3, name: "王雨桐", avatar: "🌿", element: "土", lastMsg: "双人任务完成啦～", time: "昨天", unread: 0, online: false },
+  { id: 4, name: "苏雨晴", avatar: "🌺", element: "火", lastMsg: "哈哈哈太准了", time: "周一", unread: 0, online: true },
 ];
 
-const COMMUNITY_POSTS = [
-  { user: "水象人·小鱼", tag: "水", content: "今天终于对朋友说出了压在心里的话，虽然紧张但感觉好多了", likes: 42, comments: 8, time: "2小时前" },
-  { user: "金象人·阿诚", tag: "金", content: "做完关系分析才发现自己一直在重复同样的模式…", likes: 67, comments: 15, time: "4小时前" },
-  { user: "木象人·林夕", tag: "木", content: "和匹配的朋友完成了第一个双人任务，默契值+15！", likes: 89, comments: 23, time: "6小时前" },
+const DISCOVER_POSTS = [
+  { user: "水象·小鱼", avatar: "🐟", element: "水", content: "今天终于对朋友说出了压在心里的话，虽然紧张但感觉好多了～", likes: 42, comments: 8, time: "2小时前", img: null },
+  { user: "金象·阿诚", avatar: "💎", element: "金", content: "做完关系分析才发现自己一直在重复同样的模式…决定改变", likes: 67, comments: 15, time: "4小时前", img: null },
+  { user: "木象·林夕", avatar: "🌱", element: "木", content: "和匹配的朋友完成了第一个双人任务，默契值+15！太开心了", likes: 89, comments: 23, time: "6小时前", img: null },
+  { user: "火象·小阳", avatar: "☀️", element: "火", content: "塔罗抽到了星星牌！感觉最近运势要转了🌟", likes: 125, comments: 31, time: "8小时前", img: null },
 ];
 
-// ============ SMALL COMPONENTS ============
-const Badge = ({ children, color = "#C9A96E" }) => (
-  <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 500, background: `${color}18`, color, border: `1px solid ${color}30`, letterSpacing: 0.3 }}>
-    {children}
-  </span>
+const CARDS_DATA = [
+  { id: "personality", title: "人格卡", icon: "✦", color: "#FF6B6B", gradient: "linear-gradient(135deg,#FF6B6B,#FF8A9B)", subtitle: "核心性格特质", content: { main: "洞察者·辛金", traits: ["敏锐洞察", "独立思考", "情感深沉", "追求真实"], desc: "你拥有辛金般的细腻与锋芒。外表平和，内心有着极强的辨别力和审美追求。" } },
+  { id: "relation", title: "关系模式卡", icon: "◈", color: "#45B7D1", gradient: "linear-gradient(135deg,#45B7D1,#67D4E8)", subtitle: "关系中的角色", content: { main: "守护者·偏印格", traits: ["深度连接", "忠诚稳定", "需要空间", "慢热持久"], desc: "你在关系中偏向深度而非广度。一旦建立信任，会成为最可靠的陪伴者。" } },
+  { id: "strength", title: "优势卡", icon: "◆", color: "#34D399", gradient: "linear-gradient(135deg,#34D399,#6EE7B7)", subtitle: "关系优势", content: { main: "共情与理解力", traits: ["情绪感知力强", "善于倾听", "给予安全感", "有耐心"], desc: "你最大的关系优势是深度共情能力，让人感到被理解和安全。" } },
+  { id: "risk", title: "风险提示卡", icon: "◇", color: "#FFB347", gradient: "linear-gradient(135deg,#FFB347,#FFD280)", subtitle: "需要注意", content: { main: "过度消耗与封闭", traits: ["容易过度付出", "压抑感受", "回避冲突", "完美主义"], desc: "你可能在关系中过度消耗能量，同时将真实的不满隐藏起来。" } },
+  { id: "action", title: "行动建议卡", icon: "▸", color: "#7C5CFC", gradient: "linear-gradient(135deg,#7C5CFC,#A78BFA)", subtitle: "今天可以做的事", content: { main: "表达一次真实感受", traits: ["每日真实表达", "设定边界", "主动对话", "记录情绪"], desc: "今天尝试对一个你信任的人说出真实感受，打破封闭模式。" } },
+];
+
+// ============ COMPONENTS ============
+const Badge = ({ children, color = T.primary, filled }) => (
+  <span style={{ display: "inline-block", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: filled ? color : `${color}15`, color: filled ? "#fff" : color, letterSpacing: 0.3 }}>{children}</span>
 );
 
-const ProgressBar = ({ value, max, color = "#C9A96E", height = 4 }) => (
-  <div style={{ width: "100%", height, background: "rgba(255,255,255,0.08)", borderRadius: height / 2 }}>
-    <div style={{ width: `${(value / max) * 100}%`, height: "100%", background: `linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius: height / 2, transition: "width 0.8s cubic-bezier(0.4,0,0.2,1)" }} />
+const Btn = ({ children, onClick, color = T.primary, outline, full, style = {} }) => (
+  <button onClick={onClick} style={{ padding: "14px 28px", borderRadius: 28, border: outline ? `2px solid ${color}` : "none", background: outline ? "transparent" : `linear-gradient(135deg, ${color}, ${color}dd)`, color: outline ? color : "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", width: full ? "100%" : "auto", letterSpacing: 1, boxShadow: outline ? "none" : `0 4px 14px ${color}33`, ...style }}>{children}</button>
+);
+
+const Avatar = ({ emoji, size = 48, element = "金", ring }) => (
+  <div style={{ width: size, height: size, borderRadius: "50%", background: `linear-gradient(135deg, ${ELEMENTS[element]}30, ${ELEMENTS[element]}10)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.5, border: ring ? `3px solid ${ELEMENTS[element]}` : `2px solid ${ELEMENTS[element]}40`, flexShrink: 0, position: "relative" }}>{emoji}</div>
+);
+
+const TopBar = ({ title, onBack, right }) => (
+  <div style={{ padding: "48px 20px 12px", display: "flex", alignItems: "center", gap: 12 }}>
+    {onBack && <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 20, color: T.text, cursor: "pointer", padding: 0 }}>←</button>}
+    <div style={{ flex: 1, fontSize: 18, fontWeight: 700, color: T.text }}>{title}</div>
+    {right}
   </div>
 );
 
-const FloatingParticles = () => {
-  const p = Array.from({ length: 10 }, (_, i) => ({ id: i, l: Math.random() * 100, t: Math.random() * 100, s: 1 + Math.random() * 2, d: Math.random() * 5, dur: 3 + Math.random() * 4 }));
-  return (
-    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
-      {p.map((x) => (
-        <div key={x.id} style={{ position: "absolute", left: `${x.l}%`, top: `${x.t}%`, width: x.s, height: x.s, borderRadius: "50%", background: "rgba(201,169,110,0.4)", animation: `float ${x.dur}s ease-in-out ${x.d}s infinite alternate` }} />
-      ))}
-    </div>
-  );
-};
-
-const Header = ({ title, subtitle, onBack }) => (
-  <div style={{ padding: "44px 20px 16px" }}>
-    {onBack && (
-      <button onClick={onBack} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 13, cursor: "pointer", marginBottom: 12, padding: 0 }}>
-        ← 返回
-      </button>
-    )}
-    <div style={{ fontSize: 22, fontWeight: 500, color: "#fff", fontFamily: "'Noto Serif SC', serif", marginBottom: subtitle ? 4 : 0 }}>{title}</div>
-    {subtitle && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{subtitle}</div>}
-  </div>
-);
-
-// ============ SCREENS ============
-
-// --- Splash ---
+// ============ SPLASH ============
 const SplashScreen = ({ onNext }) => {
-  useEffect(() => { const t = setTimeout(onNext, 2200); return () => clearTimeout(t); }, [onNext]);
+  useEffect(() => { const t = setTimeout(onNext, 2000); return () => clearTimeout(t); }, [onNext]);
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at 50% 30%, #1a1520 0%, #0d0b10 70%)", position: "relative" }}>
-      <FloatingParticles />
-      <div style={{ fontSize: 56, fontWeight: 200, letterSpacing: 16, color: "#C9A96E", animation: "fadeInUp 1.2s ease-out", fontFamily: "'Noto Serif SC', serif" }}>缘合</div>
-      <div style={{ fontSize: 12, letterSpacing: 6, color: "rgba(201,169,110,0.5)", marginTop: 16, animation: "fadeInUp 1.2s ease-out 0.3s both" }}>理解自己 · 遇见对的人</div>
-      <div style={{ position: "absolute", bottom: 60, width: 24, height: 24, border: "2px solid rgba(201,169,110,0.3)", borderTop: "2px solid #C9A96E", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(160deg, #FF6B6B, #FF8A9B, #FFB347)" }}>
+      <div style={{ fontSize: 52, fontWeight: 300, letterSpacing: 12, color: "#fff", animation: "fadeInUp 0.8s ease-out" }}>缘合</div>
+      <div style={{ fontSize: 13, letterSpacing: 5, color: "rgba(255,255,255,0.8)", marginTop: 12, animation: "fadeInUp 0.8s ease-out 0.2s both" }}>理解自己 · 遇见对的人</div>
     </div>
   );
 };
 
-// --- Onboarding ---
+// ============ ONBOARDING ============
 const OnboardScreen = ({ step, onNext, onSkip }) => {
   const steps = [
-    { title: "认识真实的自己", desc: "通过千年命理智慧与AI分析\n生成你的专属性格画像", visual: (
-      <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 32 }}>
-        {FIVE_ELEMENTS.map((e, i) => (
-          <div key={e} style={{ width: 48, height: 48, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: `${ELEMENT_COLORS[e]}20`, border: `1px solid ${ELEMENT_COLORS[e]}40`, color: ELEMENT_COLORS[e], fontSize: 18, fontFamily: "'Noto Serif SC', serif", animation: `fadeInUp 0.6s ease-out ${i * 0.1}s both` }}>{e}</div>
-        ))}
-      </div>
-    )},
-    { title: "四种占术 · AI解读", desc: "八字命理、梅花易数、塔罗牌、印度占星\n多维度洞察你的人生", visual: (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: 200, margin: "0 auto 32px" }}>
-        {AI_MODES.map((m, i) => (
-          <div key={m.id} style={{ padding: "14px 10px", borderRadius: 14, background: `${m.color}10`, border: `1px solid ${m.color}20`, textAlign: "center", animation: `fadeInUp 0.5s ease-out ${i * 0.1}s both` }}>
-            <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
-            <div style={{ fontSize: 11, color: m.color, letterSpacing: 1 }}>{m.name}</div>
-          </div>
-        ))}
-      </div>
-    )},
-    { title: "在互动中成长", desc: "与志同道合的人深度交流\n通过任务推动关系自然发展", visual: (
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", marginBottom: 32 }}>
-        {["初识", "熟悉", "升温", "稳定", "成长"].map((s, i) => (
-          <div key={s} style={{ display: "flex", alignItems: "center", gap: 12, animation: `fadeInUp 0.5s ease-out ${i * 0.1}s both` }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: i < 3 ? "#C9A96E" : "rgba(201,169,110,0.3)" }} />
-            <span style={{ fontSize: 13, color: i < 3 ? "#C9A96E" : "rgba(255,255,255,0.3)", letterSpacing: 2 }}>{s}</span>
-          </div>
-        ))}
-      </div>
-    )},
+    { emoji: "✨", title: "认识真实的自己", desc: "通过千年命理智慧与AI分析\n生成你的专属性格画像", color: "#FF6B6B" },
+    { emoji: "🔮", title: "四种占术 · AI解读", desc: "八字命理、梅花易数、塔罗牌、印度占星\n多维度洞察你的人生", color: "#7C5CFC" },
+    { emoji: "💫", title: "滑动遇见对的人", desc: "基于性格深度与关系模式匹配\n向右滑动开启一段缘分", color: "#FFB347" },
   ];
   const s = steps[step - 1];
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", position: "relative" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", background: T.bg }}>
       <div style={{ position: "absolute", top: 16, right: 20 }}>
-        <button onClick={onSkip} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 13, cursor: "pointer" }}>跳过</button>
+        <button onClick={onSkip} style={{ background: "none", border: "none", color: T.textThi, fontSize: 14, cursor: "pointer" }}>跳过</button>
       </div>
-      {s.visual}
-      <div style={{ fontSize: 22, fontWeight: 500, color: "#fff", marginBottom: 12, letterSpacing: 1, fontFamily: "'Noto Serif SC', serif" }}>{s.title}</div>
-      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", textAlign: "center", lineHeight: 1.8, whiteSpace: "pre-line" }}>{s.desc}</div>
+      <div style={{ width: 120, height: 120, borderRadius: "50%", background: `${s.color}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, marginBottom: 40, animation: "fadeInUp 0.6s ease-out" }}>{s.emoji}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: T.text, marginBottom: 12 }}>{s.title}</div>
+      <div style={{ fontSize: 15, color: T.textSec, textAlign: "center", lineHeight: 1.8, whiteSpace: "pre-line" }}>{s.desc}</div>
       <div style={{ display: "flex", gap: 8, marginTop: 40 }}>
-        {[1, 2, 3].map((i) => (
-          <div key={i} style={{ width: i === step ? 24 : 6, height: 6, borderRadius: 3, background: i === step ? "#C9A96E" : "rgba(255,255,255,0.15)", transition: "all 0.3s ease" }} />
-        ))}
+        {[1, 2, 3].map((i) => <div key={i} style={{ width: i === step ? 24 : 8, height: 8, borderRadius: 4, background: i === step ? s.color : "#E5E5E0", transition: "all 0.3s" }} />)}
       </div>
-      <button onClick={onNext} style={{ marginTop: 32, padding: "14px 48px", borderRadius: 28, border: step === 3 ? "none" : "1px solid #C9A96E40", background: step === 3 ? "linear-gradient(135deg, #C9A96E, #A8884D)" : "transparent", color: step === 3 ? "#0d0b10" : "#C9A96E", fontSize: 15, fontWeight: 500, cursor: "pointer", letterSpacing: 2 }}>
-        {step === 3 ? "开始探索" : "继续"}
-      </button>
+      <Btn onClick={onNext} color={s.color} full style={{ marginTop: 32, maxWidth: 280 }}>{step === 3 ? "开始探索" : "继续"}</Btn>
     </div>
   );
 };
 
-// --- Birth Info ---
-const BirthInfoScreen = ({ onSubmit }) => {
-  const [year, setYear] = useState("1996");
-  const [month, setMonth] = useState("8");
-  const [day, setDay] = useState("15");
-  const [hour, setHour] = useState("14");
-  const [gender, setGender] = useState("female");
-  const Sel = ({ label, value, onChange, options }) => (
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: 1 }}>{label}</div>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ width: "100%", padding: "12px 4px", borderRadius: 12, border: "1px solid rgba(201,169,110,0.2)", background: "rgba(201,169,110,0.06)", color: "#C9A96E", fontSize: 15, fontFamily: "'Noto Serif SC', serif", outline: "none", appearance: "none", textAlign: "center" }}>
-        {options.map((o) => <option key={o.v} value={o.v} style={{ background: "#1a1520" }}>{o.l}</option>)}
-      </select>
-    </div>
-  );
+// ============ BIRTH INFO ============
+const BirthScreen = ({ onSubmit }) => {
+  const [year, setYear] = useState("1996"); const [month, setMonth] = useState("8"); const [day, setDay] = useState("15"); const [hour, setHour] = useState("14"); const [gender, setGender] = useState("f");
+  const selStyle = { width: "100%", padding: "14px 8px", borderRadius: 14, border: `2px solid ${T.border}`, background: "#fff", color: T.text, fontSize: 16, outline: "none", appearance: "none", textAlign: "center", fontWeight: 600 };
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "40px 24px 24px", animation: "fadeInUp 0.6s ease-out" }}>
-      <div style={{ fontSize: 11, color: "rgba(201,169,110,0.6)", letterSpacing: 4, marginBottom: 8 }}>STEP 1 / 2</div>
-      <div style={{ fontSize: 22, fontWeight: 500, color: "#fff", marginBottom: 8, fontFamily: "'Noto Serif SC', serif" }}>输入出生信息</div>
-      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 32, lineHeight: 1.6 }}>用于生成八字命盘与性格分析<br /><span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>所有数据加密存储，仅用于个人分析</span></div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        <Sel label="年" value={year} onChange={setYear} options={Array.from({ length: 40 }, (_, i) => ({ v: String(1980 + i), l: `${1980 + i}` }))} />
-        <Sel label="月" value={month} onChange={setMonth} options={Array.from({ length: 12 }, (_, i) => ({ v: String(i + 1), l: `${i + 1}月` }))} />
-        <Sel label="日" value={day} onChange={setDay} options={Array.from({ length: 31 }, (_, i) => ({ v: String(i + 1), l: `${i + 1}日` }))} />
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", padding: "48px 24px 24px", background: T.bg }}>
+      <div style={{ fontSize: 24, fontWeight: 700, color: T.text, marginBottom: 6 }}>输入出生信息</div>
+      <div style={{ fontSize: 14, color: T.textSec, marginBottom: 32 }}>用于生成八字命盘与性格分析 🔒</div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+        <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: T.textThi, marginBottom: 6, fontWeight: 600 }}>年</div><select value={year} onChange={e => setYear(e.target.value)} style={selStyle}>{Array.from({ length: 40 }, (_, i) => <option key={i} value={1980 + i}>{1980 + i}</option>)}</select></div>
+        <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: T.textThi, marginBottom: 6, fontWeight: 600 }}>月</div><select value={month} onChange={e => setMonth(e.target.value)} style={selStyle}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{i + 1}月</option>)}</select></div>
+        <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: T.textThi, marginBottom: 6, fontWeight: 600 }}>日</div><select value={day} onChange={e => setDay(e.target.value)} style={selStyle}>{Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}日</option>)}</select></div>
       </div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-        <Sel label="时辰" value={hour} onChange={setHour} options={[
-          { v: "0", l: "子时 (23-1)" }, { v: "2", l: "丑时 (1-3)" }, { v: "4", l: "寅时 (3-5)" }, { v: "6", l: "卯时 (5-7)" },
-          { v: "8", l: "辰时 (7-9)" }, { v: "10", l: "巳时 (9-11)" }, { v: "12", l: "午时 (11-13)" }, { v: "14", l: "未时 (13-15)" },
-          { v: "16", l: "申时 (15-17)" }, { v: "18", l: "酉时 (17-19)" }, { v: "20", l: "戌时 (19-21)" }, { v: "22", l: "亥时 (21-23)" },
-        ]} />
-      </div>
+      <div style={{ marginBottom: 16 }}><div style={{ fontSize: 12, color: T.textThi, marginBottom: 6, fontWeight: 600 }}>时辰</div><select value={hour} onChange={e => setHour(e.target.value)} style={selStyle}>{[["0","子时(23-1)"],["2","丑时(1-3)"],["4","寅时(3-5)"],["6","卯时(5-7)"],["8","辰时(7-9)"],["10","巳时(9-11)"],["12","午时(11-13)"],["14","未时(13-15)"],["16","申时(15-17)"],["18","酉时(17-19)"],["20","戌时(19-21)"],["22","亥时(21-23)"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: 1 }}>性别</div>
+        <div style={{ fontSize: 12, color: T.textThi, marginBottom: 8, fontWeight: 600 }}>性别</div>
         <div style={{ display: "flex", gap: 12 }}>
-          {["female", "male"].map((g) => (
-            <button key={g} onClick={() => setGender(g)} style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: `1px solid ${gender === g ? "#C9A96E" : "rgba(255,255,255,0.1)"}`, background: gender === g ? "rgba(201,169,110,0.1)" : "transparent", color: gender === g ? "#C9A96E" : "rgba(255,255,255,0.4)", fontSize: 14, cursor: "pointer", transition: "all 0.3s ease" }}>
-              {g === "female" ? "♀ 女" : "♂ 男"}
-            </button>
+          {[["f", "♀ 女"], ["m", "♂ 男"]].map(([v, l]) => (
+            <button key={v} onClick={() => setGender(v)} style={{ flex: 1, padding: "14px 0", borderRadius: 14, border: `2px solid ${gender === v ? T.primary : T.border}`, background: gender === v ? `${T.primary}10` : "#fff", color: gender === v ? T.primary : T.textSec, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>{l}</button>
           ))}
         </div>
       </div>
       <div style={{ flex: 1 }} />
-      <button onClick={onSubmit} style={{ width: "100%", padding: "16px 0", borderRadius: 28, border: "none", background: "linear-gradient(135deg, #C9A96E, #A8884D)", color: "#0d0b10", fontSize: 15, fontWeight: 600, cursor: "pointer", letterSpacing: 2 }}>
-        生成命盘分析
-      </button>
+      <Btn onClick={onSubmit} full>生成命盘分析</Btn>
     </div>
   );
 };
 
-// --- Analysis Loading ---
-const AnalysisScreen = ({ onComplete }) => {
-  const [progress, setProgress] = useState(0);
-  const stages = ["排列四柱八字...", "计算五行分布...", "分析十神关系...", "生成人格标签...", "绘制性格卡片..."];
-  useEffect(() => {
-    const iv = setInterval(() => {
-      setProgress((p) => { if (p >= 100) { clearInterval(iv); setTimeout(onComplete, 400); return 100; } return p + 1.8; });
-    }, 45);
-    return () => clearInterval(iv);
-  }, [onComplete]);
-  const stage = Math.min(Math.floor(progress / 20), 4);
+// ============ LOADING ============
+const LoadingScreen = ({ onDone }) => {
+  const [p, setP] = useState(0);
+  const labels = ["排列四柱八字...", "计算五行分布...", "分析十神关系...", "生成人格标签...", "绘制性格卡片..."];
+  useEffect(() => { const iv = setInterval(() => setP(v => { if (v >= 100) { clearInterval(iv); setTimeout(onDone, 300); return 100; } return v + 2; }), 40); return () => clearInterval(iv); }, [onDone]);
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", position: "relative" }}>
-      <FloatingParticles />
-      <div style={{ position: "relative", width: 120, height: 120, marginBottom: 40 }}>
-        <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: "rotate(-90deg)" }}>
-          <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(201,169,110,0.1)" strokeWidth="2" />
-          <circle cx="60" cy="60" r="54" fill="none" stroke="#C9A96E" strokeWidth="2" strokeDasharray={`${(progress / 100) * 339} 339`} strokeLinecap="round" style={{ transition: "stroke-dasharray 0.3s ease" }} />
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: T.bg }}>
+      <div style={{ position: "relative", width: 100, height: 100, marginBottom: 32 }}>
+        <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: "rotate(-90deg)" }}>
+          <circle cx="50" cy="50" r="44" fill="none" stroke={T.border} strokeWidth="4" />
+          <circle cx="50" cy="50" r="44" fill="none" stroke={T.primary} strokeWidth="4" strokeDasharray={`${p / 100 * 276} 276`} strokeLinecap="round" style={{ transition: "stroke-dasharray 0.2s" }} />
         </svg>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 200, color: "#C9A96E", fontFamily: "'Noto Serif SC', serif" }}>{Math.round(progress)}%</div>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: T.primary }}>{Math.round(p)}%</div>
       </div>
-      <div style={{ fontSize: 14, color: "#C9A96E", marginBottom: 8, letterSpacing: 2 }}>{stages[stage]}</div>
-      <div style={{ width: "60%", marginTop: 8 }}><ProgressBar value={progress} max={100} /></div>
+      <div style={{ fontSize: 15, color: T.textSec, fontWeight: 500 }}>{labels[Math.min(Math.floor(p / 20), 4)]}</div>
     </div>
   );
 };
 
-// --- HOME ---
+// ============ HOME — TINDER SWIPE ============
 const HomeScreen = ({ onNavigate }) => {
-  const [greeting, setGreeting] = useState("");
-  useEffect(() => { const h = new Date().getHours(); setGreeting(h < 12 ? "早安" : h < 18 ? "午安" : "晚安"); }, []);
-  return (
-    <div style={{ height: "100%", overflow: "auto", paddingBottom: 72 }}>
-      <div style={{ padding: "44px 20px 20px" }}>
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", letterSpacing: 2 }}>{greeting}</div>
-            <div style={{ fontSize: 20, fontWeight: 500, color: "#fff", fontFamily: "'Noto Serif SC', serif", marginTop: 4 }}>洞察者 · 辛金</div>
-          </div>
-          <div onClick={() => onNavigate(SCREENS.PROFILE)} style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #C9A96E33, #C9A96E11)", border: "1px solid #C9A96E30", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer" }}>✦</div>
-        </div>
-
-        {/* Daily */}
-        <div onClick={() => onNavigate(SCREENS.DAILY)} style={{ padding: 20, borderRadius: 20, background: "linear-gradient(135deg, rgba(201,169,110,0.12) 0%, rgba(201,169,110,0.04) 100%)", border: "1px solid rgba(201,169,110,0.15)", marginBottom: 20, cursor: "pointer", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,169,110,0.1) 0%, transparent 70%)" }} />
-          <div style={{ fontSize: 11, color: "rgba(201,169,110,0.7)", letterSpacing: 3, marginBottom: 10 }}>今日状态</div>
-          <div style={{ fontSize: 22, fontWeight: 500, color: "#C9A96E", fontFamily: "'Noto Serif SC', serif", marginBottom: 8 }}>内省 · 沉淀</div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>今天适合独处思考，整理近期的感受。</div>
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <Badge>偏印日</Badge><Badge color="#5B8FB9">宜独处</Badge><Badge color="#6BAF7B">宜反思</Badge>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-          {[
-            { icon: "✦", label: "性格卡片", screen: SCREENS.CARDS, color: "#C9A96E" },
-            { icon: "◈", label: "关系匹配", screen: SCREENS.MATCH, color: "#5B8FB9" },
-            { icon: "🎯", label: "今日任务", screen: SCREENS.TASKS, color: "#9B7FD4" },
-            { icon: "👥", label: "好友私聊", screen: SCREENS.CHAT_LIST, color: "#6BAF7B" },
-          ].map((item) => (
-            <div key={item.label} onClick={() => onNavigate(item.screen)} style={{ padding: "18px 16px", borderRadius: 16, background: `${item.color}08`, border: `1px solid ${item.color}18`, cursor: "pointer" }}>
-              <div style={{ fontSize: 22, marginBottom: 8, color: item.color }}>{item.icon}</div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", letterSpacing: 1 }}>{item.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Match Preview */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", letterSpacing: 1 }}>今日推荐</span>
-            <span onClick={() => onNavigate(SCREENS.MATCH)} style={{ fontSize: 12, color: "#C9A96E", cursor: "pointer" }}>查看全部 →</span>
-          </div>
-          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4 }}>
-            {MATCH_USERS.map((u) => (
-              <div key={u.id} onClick={() => onNavigate(SCREENS.MATCH)} style={{ minWidth: 130, padding: 14, borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", textAlign: "center" }}>
-                <div style={{ fontSize: 30, marginBottom: 6 }}>{u.avatar}</div>
-                <div style={{ fontSize: 13, color: "#fff" }}>{u.name}</div>
-                <div style={{ fontSize: 11, color: ELEMENT_COLORS[u.element] }}>{u.element}象 · {u.score}%</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Cards List ---
-const CardsScreen = ({ onNavigate, onBack }) => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 72 }}>
-    <Header title="我的性格卡片" subtitle="基于八字命盘生成的个人画像" onBack={onBack} />
-    <div style={{ padding: "0 20px" }}>
-      {PERSONALITY_CARDS.map((card, i) => (
-        <div key={card.id} onClick={() => onNavigate(SCREENS.CARD_DETAIL, { cardIndex: i })} style={{ padding: 18, borderRadius: 16, background: `${card.color}08`, border: `1px solid ${card.color}18`, cursor: "pointer", display: "flex", alignItems: "center", gap: 16, marginBottom: 10, animation: `fadeInUp 0.5s ease-out ${i * 0.06}s both` }}>
-          <div style={{ width: 48, height: 48, borderRadius: 14, background: `${card.color}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: card.color, flexShrink: 0 }}>{card.icon}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 15, color: "#fff", marginBottom: 3 }}>{card.title}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{card.subtitle}</div>
-          </div>
-          <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 16 }}>›</div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// --- Card Detail ---
-const CardDetailScreen = ({ cardIndex = 0, onBack }) => {
-  const c = PERSONALITY_CARDS[cardIndex];
-  return (
-    <div style={{ height: "100%", overflow: "auto", paddingBottom: 40 }}>
-      <Header title="" onBack={onBack} />
-      <div style={{ padding: "0 20px" }}>
-        <div style={{ padding: 28, borderRadius: 24, background: `linear-gradient(160deg, ${c.color}15 0%, ${c.color}05 100%)`, border: `1px solid ${c.color}25`, marginBottom: 20, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -30, right: -30, width: 100, height: 100, borderRadius: "50%", background: `radial-gradient(circle, ${c.color}15 0%, transparent 70%)` }} />
-          <div style={{ fontSize: 32, color: c.color, marginBottom: 12 }}>{c.icon}</div>
-          <div style={{ fontSize: 11, color: `${c.color}99`, letterSpacing: 3, marginBottom: 8 }}>{c.title}</div>
-          <div style={{ fontSize: 24, fontWeight: 500, color: "#fff", fontFamily: "'Noto Serif SC', serif", marginBottom: 16 }}>{c.content.main}</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-            {c.content.traits.map((t) => <Badge key={t} color={c.color}>{t}</Badge>)}
-          </div>
-          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.8 }}>{c.content.desc}</div>
-        </div>
-        <button style={{ width: "100%", padding: "14px 0", borderRadius: 24, border: `1px solid ${c.color}40`, background: "transparent", color: c.color, fontSize: 14, cursor: "pointer", letterSpacing: 2 }}>分享给朋友</button>
-      </div>
-    </div>
-  );
-};
-
-// --- Daily ---
-const DailyScreen = ({ onBack }) => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 40 }}>
-    <Header title="" onBack={onBack} />
-    <div style={{ padding: "0 20px" }}>
-      <div style={{ fontSize: 11, color: "rgba(201,169,110,0.6)", letterSpacing: 4, marginBottom: 8 }}>2026年3月20日 · 星期五</div>
-      <div style={{ fontSize: 24, fontWeight: 500, color: "#fff", fontFamily: "'Noto Serif SC', serif", marginBottom: 20 }}>今日状态详解</div>
-      <div style={{ padding: 24, borderRadius: 20, background: "linear-gradient(160deg, rgba(201,169,110,0.12) 0%, rgba(201,169,110,0.03) 100%)", border: "1px solid rgba(201,169,110,0.15)", marginBottom: 16, textAlign: "center" }}>
-        <div style={{ fontSize: 36, fontWeight: 300, color: "#C9A96E", fontFamily: "'Noto Serif SC', serif", marginBottom: 8 }}>内省 · 沉淀</div>
-        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>偏印日 · 水旺</div>
-      </div>
-      {[
-        { title: "今日关键词", items: ["独处", "反思", "整理", "沉淀"], color: "#C9A96E" },
-        { title: "关系建议", items: ["避免在情绪波动时做出承诺", "适合与老朋友深度对话", "给自己和伴侣一些空间"], color: "#5B8FB9" },
-        { title: "行动建议", items: ["写下最近困扰你的三件事", "用10分钟冥想或静坐", "整理你的社交关系清单"], color: "#6BAF7B" },
-      ].map((sec) => (
-        <div key={sec.title} style={{ padding: 18, borderRadius: 16, background: `${sec.color}06`, border: `1px solid ${sec.color}12`, marginBottom: 12 }}>
-          <div style={{ fontSize: 12, color: sec.color, letterSpacing: 2, marginBottom: 10 }}>{sec.title}</div>
-          {sec.items.map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 7 }}>
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: sec.color, marginTop: 6, flexShrink: 0 }} />
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{item}</div>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// --- Match ---
-const MatchScreen = ({ onNavigate, onBack }) => {
   const [ci, setCi] = useState(0);
-  const u = MATCH_USERS[ci];
-  return (
-    <div style={{ height: "100%", overflow: "auto", paddingBottom: 72 }}>
-      <Header title="今日推荐" subtitle="基于命盘与性格模式匹配" onBack={onBack} />
-      <div style={{ padding: "0 20px" }}>
-        <div key={ci} style={{ padding: 24, borderRadius: 24, background: `linear-gradient(160deg, ${ELEMENT_COLORS[u.element]}12 0%, transparent 100%)`, border: `1px solid ${ELEMENT_COLORS[u.element]}20`, marginBottom: 16, animation: "fadeInUp 0.4s ease-out" }}>
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 56, marginBottom: 10 }}>{u.avatar}</div>
-            <div style={{ fontSize: 20, color: "#fff", fontFamily: "'Noto Serif SC', serif" }}>{u.name}，{u.age}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>{u.distance}</div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 20 }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 28, fontWeight: 300, color: "#C9A96E", fontFamily: "'Noto Serif SC', serif" }}>{u.score}%</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>匹配度</div>
-            </div>
-            <div style={{ width: 1, background: "rgba(255,255,255,0.08)" }} />
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 14, color: ELEMENT_COLORS[u.element], marginBottom: 2 }}>{u.type}</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>匹配类型</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", marginBottom: 16 }}>
-            {u.tags.map((t) => <Badge key={t} color={ELEMENT_COLORS[u.element]}>{t}</Badge>)}
-          </div>
-          <div style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontSize: 11, color: "rgba(201,169,110,0.7)", letterSpacing: 2, marginBottom: 6 }}>推荐理由</div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.7 }}>{u.reason}</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-          <button onClick={() => setCi((i) => Math.min(i + 1, MATCH_USERS.length - 1))} style={{ width: 56, height: 56, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.4)", fontSize: 20, cursor: "pointer" }}>✕</button>
-          <button onClick={() => onNavigate(SCREENS.FRIEND_CHAT, { friend: { ...u, lastMsg: "", unread: 0, online: true } })} style={{ width: 56, height: 56, borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #C9A96E, #A8884D)", color: "#0d0b10", fontSize: 22, cursor: "pointer" }}>♡</button>
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 16 }}>
-          {MATCH_USERS.map((_, i) => (
-            <div key={i} style={{ width: i === ci ? 20 : 6, height: 6, borderRadius: 3, background: i === ci ? "#C9A96E" : "rgba(255,255,255,0.1)", transition: "all 0.3s ease", cursor: "pointer" }} onClick={() => setCi(i)} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
+  const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [exiting, setExiting] = useState(null); // 'left' | 'right'
+  const [matched, setMatched] = useState(false);
+  const startX = useRef(0);
+  const profile = MATCH_PROFILES[ci];
 
-// --- Chat List (Friends) ---
-const ChatListScreen = ({ onNavigate, onBack }) => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 72 }}>
-    <div style={{ padding: "44px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div>
-        <div style={{ fontSize: 22, fontWeight: 500, color: "#fff", fontFamily: "'Noto Serif SC', serif" }}>消息</div>
-      </div>
-      <button onClick={() => onNavigate(SCREENS.ADD_FRIEND)} style={{ background: "none", border: "1px solid rgba(201,169,110,0.3)", borderRadius: 20, padding: "6px 14px", color: "#C9A96E", fontSize: 12, cursor: "pointer" }}>+ 添加好友</button>
-    </div>
-
-    {/* Search */}
-    <div style={{ padding: "8px 20px 16px" }}>
-      <div style={{ padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)", fontSize: 13 }}>🔍 搜索好友...</div>
-    </div>
-
-    {/* Friend list */}
-    <div style={{ padding: "0 20px" }}>
-      {FRIENDS.map((f, i) => (
-        <div key={f.id} onClick={() => onNavigate(SCREENS.FRIEND_CHAT, { friend: f })} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both` }}>
-          <div style={{ position: "relative", flexShrink: 0 }}>
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: `${ELEMENT_COLORS[f.element]}15`, border: `1px solid ${ELEMENT_COLORS[f.element]}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{f.avatar}</div>
-            {f.online && <div style={{ position: "absolute", bottom: 1, right: 1, width: 10, height: 10, borderRadius: "50%", background: "#6BAF7B", border: "2px solid #0d0b10" }} />}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <span style={{ fontSize: 15, color: "#fff", fontWeight: f.unread ? 500 : 400 }}>{f.name}</span>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", flexShrink: 0 }}>{f.time}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 13, color: f.unread ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.lastMsg}</span>
-              {f.unread > 0 && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: "#D4654A", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px", flexShrink: 0 }}>{f.unread}</span>}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// --- Friend Chat (1-on-1) ---
-const FriendChatScreen = ({ friend, onBack, onNavigate }) => {
-  const [msgs, setMsgs] = useState([
-    { from: "system", text: `你们的关系类型：互补型 · 匹配度 92%` },
-    { from: "other", text: "嗨～看到匹配通知就过来了，你今天的每日状态是什么呀？" },
-    { from: "me", text: "是「内省·沉淀」，说让我今天多独处思考 😂" },
-    { from: "other", text: "哈哈 我今天是「行动·突破」，完全相反！" },
-    { from: "ai_hint", text: "💡 AI话题建议：你们的五行互补很有趣，可以聊聊各自最近的一个重要决定" },
-  ]);
-  const [input, setInput] = useState("");
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [msgs]);
-
-  const send = () => {
-    if (!input.trim()) return;
-    setMsgs((m) => [...m, { from: "me", text: input }]);
-    setInput("");
-    setTimeout(() => {
-      setMsgs((m) => [...m, { from: "other", text: "说得好有道理！我之前也有类似的感觉～" }]);
-    }, 1500);
+  const onStart = (x) => { startX.current = x; setDragging(true); };
+  const onMove = (x) => { if (dragging) setOffset(x - startX.current); };
+  const onEnd = () => {
+    setDragging(false);
+    if (Math.abs(offset) > 80) {
+      const dir = offset > 0 ? "right" : "left";
+      setExiting(dir);
+      if (dir === "right" && ci === 0) {
+        setTimeout(() => { setMatched(true); }, 400);
+      } else {
+        setTimeout(() => { setCi(i => Math.min(i + 1, MATCH_PROFILES.length - 1)); setExiting(null); setOffset(0); }, 400);
+      }
+    } else {
+      setOffset(0);
+    }
   };
 
-  const f = friend || FRIENDS[0];
+  if (matched) return <MatchSuccessScreen profile={MATCH_PROFILES[0]} onChat={() => { setMatched(false); onNavigate(S.CHAT, { friend: { ...MATCH_PROFILES[0], avatar: MATCH_PROFILES[0].photos[0], lastMsg: "", unread: 0 } }); }} onContinue={() => { setMatched(false); setCi(i => Math.min(i + 1, MATCH_PROFILES.length - 1)); setExiting(null); setOffset(0); }} />;
+
+  if (!profile) return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: T.bg, padding: 32 }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>✨</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: T.text, marginBottom: 8 }}>今日推荐已看完</div>
+      <div style={{ fontSize: 14, color: T.textSec }}>明天会有新的缘分等着你</div>
+    </div>
+  );
+
+  const rot = offset * 0.05;
+  const opa = Math.min(Math.abs(offset) / 100, 1);
+
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <div style={{ padding: "44px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 18, cursor: "pointer", padding: 0 }}>←</button>
-        <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${ELEMENT_COLORS[f.element]}15`, border: `1px solid ${ELEMENT_COLORS[f.element]}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{f.avatar}</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, color: "#fff" }}>{f.name}</div>
-          <div style={{ fontSize: 11, color: f.online !== false ? "#6BAF7B" : "rgba(255,255,255,0.3)" }}>{f.online !== false ? "在线" : "离线"}</div>
-        </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 16, cursor: "pointer" }}>📞</button>
-          <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 16, cursor: "pointer" }}>⋯</button>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg, paddingBottom: 68 }}>
+      {/* Top */}
+      <div style={{ padding: "48px 20px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: T.primary }}>缘合</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => onNavigate(S.CARDS)} style={{ width: 36, height: 36, borderRadius: "50%", border: `2px solid ${T.border}`, background: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✦</button>
+          <button onClick={() => onNavigate(S.DAILY)} style={{ width: 36, height: 36, borderRadius: "50%", border: `2px solid ${T.border}`, background: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>📅</button>
         </div>
       </div>
 
-      {/* Messages */}
-      <div ref={scrollRef} style={{ flex: 1, overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-        {msgs.map((m, i) => {
-          if (m.from === "system") return (
-            <div key={i} style={{ alignSelf: "center", padding: "6px 14px", borderRadius: 12, background: "rgba(201,169,110,0.08)", fontSize: 11, color: "rgba(201,169,110,0.7)", letterSpacing: 0.5 }}>{m.text}</div>
-          );
-          if (m.from === "ai_hint") return (
-            <div key={i} style={{ alignSelf: "center", padding: "10px 14px", borderRadius: 12, background: "rgba(155,127,212,0.06)", border: "1px solid rgba(155,127,212,0.12)", fontSize: 12, color: "rgba(155,127,212,0.85)", maxWidth: "90%", textAlign: "center", lineHeight: 1.5 }}>{m.text}</div>
-          );
-          const isMe = m.from === "me";
-          return (
-            <div key={i} style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", gap: 8, alignItems: "flex-end" }}>
-              {!isMe && <div style={{ width: 28, height: 28, borderRadius: "50%", background: `${ELEMENT_COLORS[f.element]}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{f.avatar}</div>}
-              <div style={{ maxWidth: "70%", padding: "10px 14px", borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: isMe ? "linear-gradient(135deg, #C9A96E, #A8884D)" : "rgba(255,255,255,0.06)", color: isMe ? "#0d0b10" : "rgba(255,255,255,0.85)", fontSize: 14, lineHeight: 1.6 }}>
-                {m.text}
-              </div>
+      {/* Card stack */}
+      <div style={{ flex: 1, position: "relative", margin: "0 16px", perspective: 800 }}>
+        {/* Next card (behind) */}
+        {ci + 1 < MATCH_PROFILES.length && (
+          <div style={{ position: "absolute", inset: 8, borderRadius: 20, background: "#fff", boxShadow: T.shadow, transform: "scale(0.95)", opacity: 0.6 }} />
+        )}
+        {/* Current card */}
+        <div
+          onMouseDown={e => onStart(e.clientX)}
+          onMouseMove={e => dragging && onMove(e.clientX)}
+          onMouseUp={onEnd}
+          onMouseLeave={() => dragging && onEnd()}
+          onTouchStart={e => onStart(e.touches[0].clientX)}
+          onTouchMove={e => onMove(e.touches[0].clientX)}
+          onTouchEnd={onEnd}
+          style={{
+            position: "absolute", inset: 0, borderRadius: 20, background: "#fff", boxShadow: T.shadowLg,
+            transform: exiting ? `translateX(${exiting === "right" ? 400 : -400}px) rotate(${exiting === "right" ? 20 : -20}deg)` : `translateX(${offset}px) rotate(${rot}deg)`,
+            transition: dragging ? "none" : "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
+            cursor: "grab", userSelect: "none", overflow: "hidden", display: "flex", flexDirection: "column",
+          }}
+        >
+          {/* Like/Nope indicators */}
+          {offset > 20 && <div style={{ position: "absolute", top: 24, left: 24, padding: "8px 20px", borderRadius: 8, border: "3px solid #34D399", color: "#34D399", fontSize: 22, fontWeight: 800, transform: "rotate(-15deg)", opacity: opa, zIndex: 10, letterSpacing: 2 }}>LIKE</div>}
+          {offset < -20 && <div style={{ position: "absolute", top: 24, right: 24, padding: "8px 20px", borderRadius: 8, border: "3px solid #FF6B6B", color: "#FF6B6B", fontSize: 22, fontWeight: 800, transform: "rotate(15deg)", opacity: opa, zIndex: 10, letterSpacing: 2 }}>NOPE</div>}
+
+          {/* Photo area */}
+          <div style={{ flex: 1, background: `linear-gradient(135deg, ${ELEMENTS[profile.element]}25, ${ELEMENTS[profile.element]}08)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", minHeight: 0 }}>
+            <div style={{ fontSize: 100 }}>{profile.photos[0]}</div>
+            {/* Score badge */}
+            <div style={{ position: "absolute", top: 16, right: 16, padding: "6px 14px", borderRadius: 20, background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: T.primary, fontWeight: 800, fontSize: 16 }}>{profile.score}%</span>
+              <span style={{ color: T.textThi, fontSize: 11 }}>匹配</span>
             </div>
-          );
-        })}
+            {/* Online */}
+            {profile.online && <div style={{ position: "absolute", top: 16, left: 16, padding: "4px 12px", borderRadius: 12, background: "rgba(52,211,153,0.15)", color: "#34D399", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34D399" }} />在线</div>}
+          </div>
+
+          {/* Info area */}
+          <div style={{ padding: "16px 20px 20px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 22, fontWeight: 700, color: T.text }}>{profile.name}，{profile.age}</span>
+              <Badge color={ELEMENTS[profile.element]} filled>{profile.element}象·{profile.type}</Badge>
+            </div>
+            <div style={{ fontSize: 13, color: T.textSec, marginBottom: 10, lineHeight: 1.6, whiteSpace: "pre-line" }}>{profile.bio}</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+              {profile.tags.map(t => <Badge key={t} color={ELEMENTS[profile.element]}>{t}</Badge>)}
+            </div>
+            <div style={{ padding: "10px 14px", borderRadius: 12, background: `${ELEMENTS[profile.element]}08`, border: `1px solid ${ELEMENTS[profile.element]}15` }}>
+              <div style={{ fontSize: 11, color: ELEMENTS[profile.element], fontWeight: 700, marginBottom: 4 }}>✦ 推荐理由</div>
+              <div style={{ fontSize: 13, color: T.textSec, lineHeight: 1.5 }}>{profile.reason}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Input */}
-      <div style={{ padding: "10px 16px 28px", display: "flex", gap: 8, alignItems: "center" }}>
-        <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 20, cursor: "pointer", padding: 0, flexShrink: 0 }}>+</button>
-        <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="发消息..." style={{ flex: 1, padding: "10px 16px", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 14, outline: "none" }} />
-        <button onClick={send} style={{ width: 40, height: 40, borderRadius: "50%", border: "none", background: input.trim() ? "linear-gradient(135deg, #C9A96E, #A8884D)" : "rgba(255,255,255,0.06)", color: input.trim() ? "#0d0b10" : "rgba(255,255,255,0.3)", fontSize: 16, cursor: "pointer", flexShrink: 0 }}>↑</button>
+      {/* Action buttons */}
+      <div style={{ display: "flex", gap: 16, justifyContent: "center", padding: "12px 0 4px" }}>
+        <button onClick={() => { setExiting("left"); setTimeout(() => { setCi(i => i + 1); setExiting(null); setOffset(0); }, 400); }}
+          style={{ width: 56, height: 56, borderRadius: "50%", border: `2px solid ${T.border}`, background: "#fff", fontSize: 22, cursor: "pointer", boxShadow: T.shadow, display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6B6B" }}>✕</button>
+        <button onClick={() => onNavigate(S.CARDS)}
+          style={{ width: 44, height: 44, borderRadius: "50%", border: `2px solid ${T.border}`, background: "#fff", fontSize: 16, cursor: "pointer", boxShadow: T.shadow, display: "flex", alignItems: "center", justifyContent: "center", color: "#7C5CFC", alignSelf: "center" }}>✦</button>
+        <button onClick={() => { setExiting("right"); if (ci === 0) { setTimeout(() => setMatched(true), 400); } else { setTimeout(() => { setCi(i => i + 1); setExiting(null); setOffset(0); }, 400); } }}
+          style={{ width: 56, height: 56, borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #34D399, #6EE7B7)", fontSize: 24, cursor: "pointer", boxShadow: "0 4px 14px rgba(52,211,153,0.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>♥</button>
       </div>
     </div>
   );
 };
 
-// --- AI CHAT (Center Tab) with mode switcher ---
-const AIChatScreen = ({ onBack, isTab }) => {
+// ============ MATCH SUCCESS ============
+const MatchSuccessScreen = ({ profile, onChat, onContinue }) => (
+  <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(160deg, #FF6B6B, #FFB347)", padding: 32, animation: "fadeInUp 0.5s ease-out" }}>
+    <div style={{ fontSize: 52, marginBottom: 16 }}>🎉</div>
+    <div style={{ fontSize: 28, fontWeight: 800, color: "#fff", marginBottom: 8 }}>匹配成功！</div>
+    <div style={{ fontSize: 15, color: "rgba(255,255,255,0.85)", marginBottom: 32, textAlign: "center" }}>你和 {profile.name} 的缘分值 {profile.score}%</div>
+    <div style={{ display: "flex", gap: 24, marginBottom: 40 }}>
+      <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "3px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>✦</div>
+      <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "3px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>{profile.photos[0]}</div>
+    </div>
+    <Btn onClick={onChat} color="#fff" style={{ color: T.primary, marginBottom: 12, width: 220 }}>发消息</Btn>
+    <button onClick={onContinue} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.8)", fontSize: 14, cursor: "pointer" }}>继续滑动</button>
+  </div>
+);
+
+// ============ DISCOVER ============
+const DiscoverScreen = ({ onNavigate }) => (
+  <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
+    <div style={{ padding: "48px 20px 8px" }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: T.text, marginBottom: 4 }}>发现</div>
+      <div style={{ fontSize: 13, color: T.textSec }}>看看同频的人在聊什么</div>
+    </div>
+    {/* Tags */}
+    <div style={{ display: "flex", gap: 8, padding: "12px 20px", overflowX: "auto" }}>
+      {["全部", "金象人", "木象人", "水象人", "火象人", "土象人"].map((t, i) => (
+        <button key={t} style={{ padding: "8px 16px", borderRadius: 20, border: "none", background: i === 0 ? T.primary : "#fff", color: i === 0 ? "#fff" : T.textSec, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", boxShadow: i === 0 ? `0 2px 8px ${T.primary}33` : T.shadow }}>{t}</button>
+      ))}
+    </div>
+    {/* Posts */}
+    <div style={{ padding: "8px 20px" }}>
+      {DISCOVER_POSTS.map((post, i) => (
+        <div key={i} style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 12, animation: `fadeInUp 0.4s ease-out ${i * 0.08}s both` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <Avatar emoji={post.avatar} size={36} element={post.element} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{post.user}</div>
+              <div style={{ fontSize: 11, color: T.textThi }}>{post.time}</div>
+            </div>
+            <Badge color={ELEMENTS[post.element]}>{post.element}象</Badge>
+          </div>
+          <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, marginBottom: 12 }}>{post.content}</div>
+          <div style={{ display: "flex", gap: 20 }}>
+            <span style={{ fontSize: 13, color: T.textThi, cursor: "pointer" }}>♡ {post.likes}</span>
+            <span style={{ fontSize: 13, color: T.textThi, cursor: "pointer" }}>💬 {post.comments}</span>
+            <span style={{ fontSize: 13, color: T.textThi, cursor: "pointer", marginLeft: "auto" }}>↗ 分享</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============ AI CHAT ============
+const AIScreen = ({ onBack, isTab }) => {
   const [mode, setMode] = useState(0);
-  const [msgs, setMsgs] = useState({});
+  const [allMsgs, setAllMsgs] = useState({});
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
-  const [showModes, setShowModes] = useState(false);
   const scrollRef = useRef(null);
   const m = AI_MODES[mode];
+  const msgs = allMsgs[m.id] || [{ from: "ai", text: m.greeting }];
 
-  // Init greeting per mode
-  const getMessages = () => msgs[m.id] || [{ from: "ai", text: m.greeting }];
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [allMsgs, mode, typing]);
 
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [msgs, mode, typing]);
-
-  const quickQs = {
-    bazi: ["我的感情运势如何？", "今年事业方向？", "如何改善沟通？", "我的性格弱点？"],
-    meihua: ["现在适合跳槽吗？", "这段感情该继续吗？", "今天出行顺利吗？", "投资决策分析"],
-    tarot: ["抽一张指引牌", "三张牌阵·感情", "本周运势解读", "做一个抉择指引"],
-    vedic: ["我的星盘解读", "土星回归影响？", "婚姻宫分析", "当前大运周期"],
-  };
-
-  const aiResponses = {
-    bazi: "根据你的辛金日主命盘，今年偏印流年带来的是内在整理的能量。你的食神生财格局在下半年会明显活跃，感情和事业都有新的突破口。关键是上半年做好积累与反思。",
-    meihua: "刚才为你起卦，得「天火同人」变「天雷无妄」。卦象显示当前局面虽然看起来平稳，但内部已有变动之兆。建议近期保持观察，不宜贸然行动。三日内会有新的信息出现。",
-    tarot: "为你抽到的是「星星」牌。这张牌代表希望、灵感与内在指引。在你当前的处境中，它提示你保持信心——你正在经历一个净化和重生的阶段。跟随直觉，答案就在你心中。",
-    vedic: "从你的吠陀星盘来看，当前正处于金星大运期（Shukra Dasha），这对感情和艺术创造力都是有利的时期。月亮在你的第七宫（伴侣宫）过境，近期可能会有重要的关系进展。",
-  };
+  const quickQs = { bazi: ["我的感情运势？", "今年事业方向？", "性格弱点分析", "如何改善沟通？"], meihua: ["现在适合跳槽吗？", "这段感情继续吗？", "投资决策分析", "今日出行运势"], tarot: ["抽一张指引牌", "三张牌阵·感情", "本周运势解读", "做一个抉择指引"], vedic: ["我的星盘解读", "土星回归影响？", "婚姻宫分析", "当前大运周期"] };
+  const aiResp = { bazi: "根据你的辛金日主命盘，今年偏印流年带来内在整理的能量。下半年食神生财格局活跃，感情和事业都有突破口。关键是上半年做好积累与反思。", meihua: "为你起卦得「天火同人」变「天雷无妄」。卦象显示当前局面内部已有变动之兆，建议保持观察，三日内会有新信息出现。", tarot: "为你抽到「星星」牌——代表希望与内在指引。你正经历净化和重生的阶段，跟随直觉，答案就在心中。", vedic: "你当前处于金星大运期（Shukra Dasha），对感情和创造力有利。月亮过境第七宫，近期可能有重要关系进展。" };
 
   const send = (text) => {
     const t = text || input;
     if (!t.trim()) return;
-    const cur = getMessages();
-    const newMsgs = [...cur, { from: "me", text: t }];
-    setMsgs((prev) => ({ ...prev, [m.id]: newMsgs }));
+    const cur = [...msgs, { from: "me", text: t }];
+    setAllMsgs(prev => ({ ...prev, [m.id]: cur }));
     setInput("");
     setTyping(true);
     setTimeout(() => {
       setTyping(false);
-      setMsgs((prev) => ({
-        ...prev,
-        [m.id]: [...(prev[m.id] || [{ from: "ai", text: m.greeting }]), { from: "me", text: t }, { from: "ai", text: aiResponses[m.id] }],
-      }));
-    }, 1800);
+      setAllMsgs(prev => ({ ...prev, [m.id]: [...cur, { from: "ai", text: aiResp[m.id] }] }));
+    }, 1500);
   };
 
-  const currentMsgs = getMessages();
-
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
       {/* Header */}
-      <div style={{ padding: isTab ? "44px 16px 0" : "44px 16px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ padding: isTab ? "48px 16px 0" : "48px 16px 0", background: "#fff", borderBottom: `1px solid ${T.border}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-          {!isTab && <button onClick={onBack} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 18, cursor: "pointer", padding: 0 }}>←</button>}
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${m.color}18`, border: `1px solid ${m.color}30`, display: "flex", alignItems: "center", justifyContent: "center", color: m.color, fontSize: 18 }}>{m.icon}</div>
+          {!isTab && <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 20, color: T.text, cursor: "pointer" }}>←</button>}
+          <div style={{ width: 40, height: 40, borderRadius: 14, background: m.gradient, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18 }}>{m.icon}</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 15, color: "#fff" }}>{m.name}</div>
-            <div style={{ fontSize: 11, color: `${m.color}99` }}>{m.desc}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{m.name}</div>
+            <div style={{ fontSize: 11, color: T.textThi }}>{m.desc}</div>
           </div>
-          <button onClick={() => setShowModes(!showModes)} style={{ background: `${m.color}12`, border: `1px solid ${m.color}25`, borderRadius: 8, padding: "6px 10px", color: m.color, fontSize: 11, cursor: "pointer", letterSpacing: 1 }}>
-            切换 ▾
-          </button>
         </div>
-
-        {/* Mode switcher dropdown */}
-        {showModes && (
-          <div style={{ padding: "8px 0 12px", display: "flex", gap: 8 }}>
-            {AI_MODES.map((am, i) => (
-              <button key={am.id} onClick={() => { setMode(i); setShowModes(false); }} style={{ flex: 1, padding: "10px 4px", borderRadius: 12, background: i === mode ? `${am.color}18` : "rgba(255,255,255,0.02)", border: `1px solid ${i === mode ? `${am.color}35` : "rgba(255,255,255,0.06)"}`, cursor: "pointer", textAlign: "center", transition: "all 0.3s ease" }}>
-                <div style={{ fontSize: 18, marginBottom: 4 }}>{am.icon}</div>
-                <div style={{ fontSize: 10, color: i === mode ? am.color : "rgba(255,255,255,0.4)", letterSpacing: 0.5 }}>{am.name}</div>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Mode tabs */}
+        <div style={{ display: "flex", gap: 4, paddingBottom: 10 }}>
+          {AI_MODES.map((am, i) => (
+            <button key={am.id} onClick={() => setMode(i)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, border: "none", background: i === mode ? `${am.color}15` : "transparent", cursor: "pointer", textAlign: "center", transition: "all 0.2s" }}>
+              <div style={{ fontSize: 16 }}>{am.icon}</div>
+              <div style={{ fontSize: 10, color: i === mode ? am.color : T.textThi, fontWeight: 600, marginTop: 2 }}>{am.name}</div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Messages */}
       <div ref={scrollRef} style={{ flex: 1, overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-        {currentMsgs.map((msg, i) => (
-          <div key={`${m.id}-${i}`} style={{ alignSelf: msg.from === "me" ? "flex-end" : "flex-start", maxWidth: "82%", padding: "11px 15px", borderRadius: msg.from === "me" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: msg.from === "me" ? "linear-gradient(135deg, #C9A96E, #A8884D)" : `${m.color}0a`, border: msg.from === "ai" ? `1px solid ${m.color}18` : "none", color: msg.from === "me" ? "#0d0b10" : "rgba(255,255,255,0.8)", fontSize: 14, lineHeight: 1.7, animation: "fadeInUp 0.3s ease-out" }}>
-            {msg.text}
+        {msgs.map((msg, i) => (
+          <div key={`${m.id}-${i}`} style={{ alignSelf: msg.from === "me" ? "flex-end" : "flex-start", maxWidth: "82%" }}>
+            <div style={{ padding: "12px 16px", borderRadius: msg.from === "me" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.from === "me" ? m.gradient : "#fff", boxShadow: msg.from === "me" ? "none" : T.shadow, color: msg.from === "me" ? "#fff" : T.text, fontSize: 14, lineHeight: 1.7 }}>{msg.text}</div>
           </div>
         ))}
-        {typing && (
-          <div style={{ alignSelf: "flex-start", padding: "11px 15px", borderRadius: "16px 16px 16px 4px", background: `${m.color}0a`, border: `1px solid ${m.color}18` }}>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[0, 1, 2].map((j) => <div key={j} style={{ width: 6, height: 6, borderRadius: "50%", background: m.color, animation: `bounce 1s ease-in-out ${j * 0.15}s infinite` }} />)}
-            </div>
-          </div>
-        )}
-
-        {/* Quick questions */}
-        {currentMsgs.length <= 1 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-            {quickQs[m.id].map((q) => (
-              <button key={q} onClick={() => send(q)} style={{ padding: "8px 14px", borderRadius: 20, border: `1px solid ${m.color}25`, background: `${m.color}08`, color: `${m.color}cc`, fontSize: 12, cursor: "pointer", transition: "all 0.2s ease" }}>
-                {q}
-              </button>
-            ))}
-          </div>
-        )}
+        {typing && <div style={{ alignSelf: "flex-start", padding: "12px 16px", borderRadius: "18px 18px 18px 4px", background: "#fff", boxShadow: T.shadow }}><div style={{ display: "flex", gap: 5 }}>{[0, 1, 2].map(j => <div key={j} style={{ width: 7, height: 7, borderRadius: "50%", background: m.color, animation: `bounce 1s ease-in-out ${j * 0.15}s infinite` }} />)}</div></div>}
+        {msgs.length <= 1 && <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>{quickQs[m.id].map(q => <button key={q} onClick={() => send(q)} style={{ padding: "9px 16px", borderRadius: 20, border: "none", background: "#fff", boxShadow: T.shadow, color: m.color, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{q}</button>)}</div>}
       </div>
 
       {/* Input */}
-      <div style={{ padding: "10px 16px 28px", display: "flex", gap: 8 }}>
-        <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder={`问${m.name}任何问题...`} style={{ flex: 1, padding: "11px 16px", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 14, outline: "none" }} />
-        <button onClick={() => send()} style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: input.trim() ? `linear-gradient(135deg, ${m.color}, ${m.color}bb)` : "rgba(255,255,255,0.06)", color: input.trim() ? "#0d0b10" : "rgba(255,255,255,0.3)", fontSize: 16, cursor: "pointer", flexShrink: 0 }}>↑</button>
+      <div style={{ padding: "10px 16px 28px", display: "flex", gap: 8, background: "#fff", borderTop: `1px solid ${T.border}` }}>
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder={`问${m.name}...`} style={{ flex: 1, padding: "12px 18px", borderRadius: 24, border: `2px solid ${T.border}`, background: T.bg, color: T.text, fontSize: 14, outline: "none" }} />
+        <button onClick={() => send()} style={{ width: 44, height: 44, borderRadius: "50%", border: "none", background: input.trim() ? m.gradient : T.border, color: "#fff", fontSize: 17, cursor: "pointer", flexShrink: 0 }}>↑</button>
       </div>
     </div>
   );
 };
 
-// --- Community ---
-const CommunityScreen = () => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 72 }}>
-    <div style={{ padding: "44px 20px 16px" }}>
-      <div style={{ fontSize: 22, fontWeight: 500, color: "#fff", fontFamily: "'Noto Serif SC', serif", marginBottom: 4 }}>同类人社区</div>
-      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 16 }}>找到和你同频的人</div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto" }}>
-        {["全部", "金象人", "木象人", "水象人", "火象人", "土象人"].map((tag, i) => (
-          <button key={tag} style={{ padding: "8px 14px", borderRadius: 20, border: i === 0 ? "1px solid #C9A96E40" : "1px solid rgba(255,255,255,0.08)", background: i === 0 ? "rgba(201,169,110,0.1)" : "transparent", color: i === 0 ? "#C9A96E" : "rgba(255,255,255,0.4)", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>{tag}</button>
-        ))}
-      </div>
+// ============ MESSAGES LIST ============
+const MsgsScreen = ({ onNavigate }) => (
+  <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
+    <div style={{ padding: "48px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: T.text }}>消息</div>
+      <button style={{ background: T.primary, border: "none", borderRadius: 20, padding: "6px 16px", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", boxShadow: `0 2px 8px ${T.primary}33` }}>+ 添加</button>
+    </div>
+    <div style={{ padding: "4px 20px 12px" }}>
+      <div style={{ padding: "10px 16px", borderRadius: 14, background: "#fff", border: `1px solid ${T.border}`, color: T.textThi, fontSize: 14 }}>🔍 搜索好友...</div>
     </div>
     <div style={{ padding: "0 20px" }}>
-      {COMMUNITY_POSTS.map((post, i) => (
-        <div key={i} style={{ padding: 16, borderRadius: 16, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", marginBottom: 12, animation: `fadeInUp 0.4s ease-out ${i * 0.1}s both` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${ELEMENT_COLORS[post.tag]}20`, border: `1px solid ${ELEMENT_COLORS[post.tag]}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: ELEMENT_COLORS[post.tag] }}>{post.tag}</div>
-            <div>
-              <div style={{ fontSize: 13, color: "#fff" }}>{post.user}</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{post.time}</div>
-            </div>
+      {FRIENDS.map((f, i) => (
+        <div key={f.id} onClick={() => onNavigate(S.CHAT, { friend: f })} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: `1px solid ${T.border}`, cursor: "pointer", animation: `fadeInUp 0.3s ease-out ${i * 0.05}s both` }}>
+          <div style={{ position: "relative" }}>
+            <Avatar emoji={f.avatar} size={52} element={f.element} />
+            {f.online && <div style={{ position: "absolute", bottom: 1, right: 1, width: 12, height: 12, borderRadius: "50%", background: "#34D399", border: "2px solid #fff" }} />}
           </div>
-          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, marginBottom: 12 }}>{post.content}</div>
-          <div style={{ display: "flex", gap: 16 }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>♡ {post.likes}</span>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>💬 {post.comments}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 15, fontWeight: f.unread ? 700 : 500, color: T.text }}>{f.name}</span>
+              <span style={{ fontSize: 12, color: T.textThi }}>{f.time}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: f.unread ? T.text : T.textThi, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: f.unread ? 600 : 400 }}>{f.lastMsg}</span>
+              {f.unread > 0 && <span style={{ minWidth: 20, height: 20, borderRadius: 10, background: T.primary, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{f.unread}</span>}
+            </div>
           </div>
         </div>
       ))}
@@ -683,63 +447,193 @@ const CommunityScreen = () => (
   </div>
 );
 
-// --- Profile ---
-const ProfileScreen = ({ onBack, onNavigate }) => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 72 }}>
-    <div style={{ padding: "44px 20px 20px" }}>
-      <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg, #C9A96E33, #C9A96E11)", border: "2px solid #C9A96E40", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 10px" }}>✦</div>
-        <div style={{ fontSize: 20, color: "#fff", fontFamily: "'Noto Serif SC', serif" }}>洞察者 · 辛金</div>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>偏印格 · 金水相生</div>
+// ============ FRIEND CHAT ============
+const ChatScreen = ({ friend, onBack }) => {
+  const f = friend || FRIENDS[0];
+  const [msgs, setMsgs] = useState([
+    { from: "sys", text: `匹配类型：互补型 · 缘分值 92%` },
+    { from: "other", text: "嗨～看到匹配通知就过来了！你今天的每日状态是什么呀？" },
+    { from: "me", text: "是「内省·沉淀」，说让我多独处思考 😂" },
+    { from: "other", text: "哈哈我今天是「行动·突破」，完全相反！" },
+    { from: "ai", text: "💡 AI建议：你们五行互补很有趣，可以聊聊各自最近的一个重要决定" },
+  ]);
+  const [input, setInput] = useState("");
+  const scrollRef = useRef(null);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [msgs]);
+
+  const send = () => {
+    if (!input.trim()) return;
+    setMsgs(m => [...m, { from: "me", text: input }]);
+    setInput("");
+    setTimeout(() => setMsgs(m => [...m, { from: "other", text: "说得好有道理！我之前也有类似的感觉～" }]), 1200);
+  };
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
+      <div style={{ padding: "48px 16px 10px", background: "#fff", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 20, color: T.text, cursor: "pointer" }}>←</button>
+        <Avatar emoji={f.avatar} size={38} element={f.element} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{f.name}</div>
+          <div style={{ fontSize: 11, color: f.online !== false ? "#34D399" : T.textThi, fontWeight: 600 }}>{f.online !== false ? "在线" : "离线"}</div>
+        </div>
+        <button style={{ background: "none", border: "none", fontSize: 18, color: T.textSec, cursor: "pointer" }}>⋯</button>
+      </div>
+      <div ref={scrollRef} style={{ flex: 1, overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        {msgs.map((m, i) => {
+          if (m.from === "sys") return <div key={i} style={{ alignSelf: "center", padding: "6px 16px", borderRadius: 14, background: `${T.primary}10`, fontSize: 12, color: T.primary, fontWeight: 600 }}>{m.text}</div>;
+          if (m.from === "ai") return <div key={i} style={{ alignSelf: "center", padding: "10px 16px", borderRadius: 14, background: `${T.accent2}10`, border: `1px solid ${T.accent2}20`, fontSize: 12, color: T.accent2, fontWeight: 500, maxWidth: "90%", textAlign: "center", lineHeight: 1.6 }}>{m.text}</div>;
+          const isMe = m.from === "me";
+          return (
+            <div key={i} style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", gap: 8, alignItems: "flex-end" }}>
+              {!isMe && <Avatar emoji={f.avatar} size={28} element={f.element} />}
+              <div style={{ maxWidth: "70%", padding: "11px 16px", borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: isMe ? "linear-gradient(135deg, #FF6B6B, #FF8A9B)" : "#fff", boxShadow: isMe ? "none" : T.shadow, color: isMe ? "#fff" : T.text, fontSize: 14, lineHeight: 1.6 }}>{m.text}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ padding: "10px 16px 28px", display: "flex", gap: 8, background: "#fff", borderTop: `1px solid ${T.border}` }}>
+        <button style={{ background: "none", border: "none", color: T.textThi, fontSize: 22, cursor: "pointer" }}>+</button>
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder="发消息..." style={{ flex: 1, padding: "11px 18px", borderRadius: 24, border: `2px solid ${T.border}`, background: T.bg, color: T.text, fontSize: 14, outline: "none" }} />
+        <button onClick={send} style={{ width: 42, height: 42, borderRadius: "50%", border: "none", background: input.trim() ? "linear-gradient(135deg, #FF6B6B, #FF8A9B)" : T.border, color: "#fff", fontSize: 17, cursor: "pointer" }}>↑</button>
+      </div>
+    </div>
+  );
+};
+
+// ============ ME (PROFILE) ============
+const MeScreen = ({ onNavigate }) => (
+  <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
+    <div style={{ padding: "48px 20px 20px" }}>
+      <div style={{ textAlign: "center", marginBottom: 24 }}>
+        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B20, #FFB34720)", border: "3px solid #FF6B6B40", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, margin: "0 auto 10px" }}>✦</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: T.text }}>洞察者 · 辛金</div>
+        <div style={{ fontSize: 13, color: T.textSec, marginTop: 4 }}>偏印格 · 金水相生</div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 24 }}>
-        {[{ label: "互动天数", value: "28" }, { label: "好友", value: "5" }, { label: "成长值", value: "860" }].map((s) => (
-          <div key={s.label} style={{ textAlign: "center", padding: 14, borderRadius: 14, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontSize: 20, fontWeight: 300, color: "#C9A96E", fontFamily: "'Noto Serif SC', serif" }}>{s.value}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>{s.label}</div>
+        {[{ l: "互动天数", v: "28" }, { l: "好友", v: "5" }, { l: "成长值", v: "860" }].map(s => (
+          <div key={s.l} style={{ textAlign: "center", padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: T.primary }}>{s.v}</div>
+            <div style={{ fontSize: 12, color: T.textThi, marginTop: 4 }}>{s.l}</div>
           </div>
         ))}
       </div>
       {[
-        { icon: "✦", label: "我的性格卡片", screen: SCREENS.CARDS },
-        { icon: "👥", label: "好友列表", screen: SCREENS.CHAT_LIST },
+        { icon: "✦", label: "我的性格卡片", screen: S.CARDS },
         { icon: "📊", label: "周报 / 月报", screen: null },
-        { icon: "🎯", label: "成长记录", screen: null },
+        { icon: "🎯", label: "任务与成长", screen: S.TASKS },
         { icon: "⚙️", label: "设置与隐私", screen: null },
         { icon: "👑", label: "会员中心", screen: null },
-      ].map((item) => (
-        <div key={item.label} onClick={() => item.screen && onNavigate(item.screen)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 16px", borderRadius: 12, cursor: item.screen ? "pointer" : "default", marginBottom: 2 }}>
-          <span style={{ fontSize: 17 }}>{item.icon}</span>
-          <span style={{ flex: 1, fontSize: 14, color: "rgba(255,255,255,0.7)" }}>{item.label}</span>
-          <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
+      ].map(item => (
+        <div key={item.label} onClick={() => item.screen && onNavigate(item.screen)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: item.screen ? "pointer" : "default" }}>
+          <span style={{ fontSize: 18 }}>{item.icon}</span>
+          <span style={{ flex: 1, fontSize: 15, fontWeight: 500, color: T.text }}>{item.label}</span>
+          <span style={{ color: T.textThi, fontSize: 16 }}>›</span>
         </div>
       ))}
     </div>
   </div>
 );
 
-// --- Tasks ---
-const TasksScreen = ({ onBack }) => {
-  const [checks, setChecks] = useState({});
-  const tasks = [
-    { id: 1, title: "表达练习：对一个人说出真实感受", type: "表达", color: "#C9A96E" },
-    { id: 2, title: "情绪记录：写下今天最强烈的一种情绪", type: "情绪", color: "#9B7FD4" },
-    { id: 3, title: "关系练习：主动发起一次对话", type: "关系", color: "#5B8FB9" },
-  ];
-  return (
-    <div style={{ height: "100%", overflow: "auto", paddingBottom: 72 }}>
-      <Header title="今日任务" subtitle="完成任务，推动成长" onBack={onBack} />
-      <div style={{ padding: "0 20px" }}>
-        <div style={{ marginBottom: 16 }}>
-          <ProgressBar value={Object.values(checks).filter(Boolean).length} max={3} height={6} />
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6, textAlign: "right" }}>{Object.values(checks).filter(Boolean).length}/3 已完成</div>
+// ============ CARDS LIST ============
+const CardsListScreen = ({ onNavigate, onBack }) => (
+  <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
+    <TopBar title="我的性格卡片" onBack={onBack} />
+    <div style={{ padding: "4px 20px" }}>
+      {CARDS_DATA.map((c, i) => (
+        <div key={c.id} onClick={() => onNavigate(S.CARD_DETAIL, { ci: i })} style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 10, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", animation: `fadeInUp 0.4s ease-out ${i * 0.06}s both` }}>
+          <div style={{ width: 48, height: 48, borderRadius: 14, background: c.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#fff", flexShrink: 0 }}>{c.icon}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{c.title}</div>
+            <div style={{ fontSize: 12, color: T.textSec, marginTop: 2 }}>{c.subtitle}</div>
+          </div>
+          <div style={{ color: T.textThi }}>›</div>
         </div>
-        {tasks.map((task) => (
-          <div key={task.id} onClick={() => setChecks((c) => ({ ...c, [task.id]: !c[task.id] }))} style={{ padding: 16, borderRadius: 16, background: checks[task.id] ? `${task.color}10` : "rgba(255,255,255,0.02)", border: `1px solid ${checks[task.id] ? `${task.color}30` : "rgba(255,255,255,0.06)"}`, marginBottom: 10, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", transition: "all 0.3s ease" }}>
-            <div style={{ width: 24, height: 24, borderRadius: "50%", border: `2px solid ${checks[task.id] ? task.color : "rgba(255,255,255,0.15)"}`, background: checks[task.id] ? task.color : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#0d0b10", transition: "all 0.3s ease", flexShrink: 0 }}>{checks[task.id] && "✓"}</div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============ CARD DETAIL ============
+const CardDetailScreen = ({ ci = 0, onBack }) => {
+  const c = CARDS_DATA[ci];
+  return (
+    <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+      <TopBar title="" onBack={onBack} />
+      <div style={{ padding: "0 20px 32px" }}>
+        <div style={{ padding: 28, borderRadius: 24, background: "#fff", boxShadow: T.shadowLg, marginBottom: 16 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: c.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: "#fff", marginBottom: 16 }}>{c.icon}</div>
+          <div style={{ fontSize: 12, color: c.color, fontWeight: 700, letterSpacing: 2, marginBottom: 8 }}>{c.title}</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: T.text, marginBottom: 16 }}>{c.content.main}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {c.content.traits.map(t => <Badge key={t} color={c.color}>{t}</Badge>)}
+          </div>
+          <div style={{ fontSize: 15, color: T.textSec, lineHeight: 1.8 }}>{c.content.desc}</div>
+        </div>
+        <Btn full outline color={c.color}>分享给朋友</Btn>
+      </div>
+    </div>
+  );
+};
+
+// ============ DAILY ============
+const DailyScreen = ({ onBack }) => (
+  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+    <TopBar title="" onBack={onBack} />
+    <div style={{ padding: "0 20px 32px" }}>
+      <div style={{ fontSize: 13, color: T.textThi, fontWeight: 600, marginBottom: 8 }}>2026年3月21日 · 星期六</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: T.text, marginBottom: 16 }}>今日状态</div>
+      <div style={{ padding: 24, borderRadius: 20, background: "linear-gradient(135deg, #FF6B6B15, #FFB34710)", border: `1px solid #FF6B6B20`, marginBottom: 16, textAlign: "center" }}>
+        <div style={{ fontSize: 36, fontWeight: 700, color: T.primary, marginBottom: 6 }}>内省 · 沉淀</div>
+        <div style={{ fontSize: 14, color: T.textSec }}>偏印日 · 水旺</div>
+      </div>
+      {[
+        { title: "今日关键词", items: ["独处", "反思", "整理", "沉淀"], color: T.primary },
+        { title: "关系建议", items: ["避免情绪波动时做承诺", "适合与老朋友深度对话", "给自己和伴侣一些空间"], color: T.accent4 },
+        { title: "行动建议", items: ["写下困扰你的三件事", "用10分钟冥想静坐", "整理社交关系清单"], color: T.accent1 },
+      ].map(sec => (
+        <div key={sec.title} style={{ padding: 18, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 10 }}>
+          <div style={{ fontSize: 13, color: sec.color, fontWeight: 700, marginBottom: 10 }}>{sec.title}</div>
+          {sec.items.map((it, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: sec.color, marginTop: 7, flexShrink: 0 }} />
+              <div style={{ fontSize: 14, color: T.textSec, lineHeight: 1.6 }}>{it}</div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ============ TASKS ============
+const TasksScreen = ({ onBack }) => {
+  const [done, setDone] = useState({});
+  const tasks = [
+    { id: 1, title: "表达练习：对一个人说出真实感受", tag: "表达", color: T.primary },
+    { id: 2, title: "情绪记录：写下今天最强烈的情绪", tag: "情绪", color: T.accent2 },
+    { id: 3, title: "关系练习：主动发起一次对话", tag: "关系", color: T.accent4 },
+  ];
+  const cnt = Object.values(done).filter(Boolean).length;
+  return (
+    <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+      <TopBar title="今日任务" onBack={onBack} />
+      <div style={{ padding: "0 20px 32px" }}>
+        <div style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: T.text }}>完成进度</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: T.primary }}>{cnt}/3</span>
+          </div>
+          <div style={{ width: "100%", height: 8, background: T.border, borderRadius: 4 }}>
+            <div style={{ width: `${cnt / 3 * 100}%`, height: "100%", background: "linear-gradient(90deg, #FF6B6B, #FFB347)", borderRadius: 4, transition: "width 0.5s" }} />
+          </div>
+        </div>
+        {tasks.map(t => (
+          <div key={t.id} onClick={() => setDone(d => ({ ...d, [t.id]: !d[t.id] }))} style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 10, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${done[t.id] ? t.color : T.borderDark}`, background: done[t.id] ? t.color : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff", fontWeight: 700, transition: "all 0.3s", flexShrink: 0 }}>{done[t.id] && "✓"}</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, color: checks[task.id] ? "rgba(255,255,255,0.4)" : "#fff", textDecoration: checks[task.id] ? "line-through" : "none" }}>{task.title}</div>
-              <div style={{ marginTop: 6 }}><Badge color={task.color}>{task.type}</Badge></div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: done[t.id] ? T.textThi : T.text, textDecoration: done[t.id] ? "line-through" : "none" }}>{t.title}</div>
+              <div style={{ marginTop: 6 }}><Badge color={t.color}>{t.tag}</Badge></div>
             </div>
           </div>
         ))}
@@ -748,31 +642,27 @@ const TasksScreen = ({ onBack }) => {
   );
 };
 
-// ============ BOTTOM TAB BAR (5 Tabs) ============
-const BottomTabBar = ({ active, onNavigate, unread }) => {
+// ============ BOTTOM TAB ============
+const TabBar = ({ active, onTap }) => {
   const tabs = [
-    { id: SCREENS.HOME, icon: "◎", label: "首页" },
-    { id: SCREENS.CHAT_LIST, icon: "💬", label: "消息", badge: unread },
-    { id: SCREENS.AI_CHAT, icon: "✦", label: "AI问答", center: true },
-    { id: SCREENS.COMMUNITY, icon: "👥", label: "发现" },
-    { id: SCREENS.PROFILE, icon: "☰", label: "我的" },
+    { id: S.HOME, icon: "🔥", label: "首页" },
+    { id: S.DISCOVER, icon: "🌍", label: "发现" },
+    { id: S.AI, icon: "✦", label: "AI占卜", center: true },
+    { id: S.MSGS, icon: "💬", label: "消息", badge: 2 },
+    { id: S.ME, icon: "👤", label: "我的" },
   ];
   return (
-    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 68, background: "rgba(13,11,16,0.96)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "flex-end", justifyContent: "space-around", padding: "0 4px 6px", zIndex: 100 }}>
-      {tabs.map((tab) => {
-        const isActive = active === tab.id;
-        if (tab.center) {
-          return (
-            <button key={tab.id} onClick={() => onNavigate(tab.id)} style={{ background: "linear-gradient(135deg, #C9A96E, #A8884D)", border: "none", width: 50, height: 50, borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", marginBottom: 4, boxShadow: "0 2px 16px rgba(201,169,110,0.3)", position: "relative", top: -10 }}>
-              <span style={{ fontSize: 20, color: "#0d0b10", lineHeight: 1 }}>{tab.icon}</span>
-            </button>
-          );
-        }
+    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 64, background: "#fff", borderTop: `1px solid ${T.border}`, display: "flex", alignItems: "flex-end", justifyContent: "space-around", padding: "0 4px 4px", zIndex: 100 }}>
+      {tabs.map(tab => {
+        const act = active === tab.id;
+        if (tab.center) return (
+          <button key={tab.id} onClick={() => onTap(tab.id)} style={{ background: "linear-gradient(135deg, #FF6B6B, #FFB347)", border: "none", width: 52, height: 52, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", marginBottom: 6, boxShadow: "0 4px 16px rgba(255,107,107,0.35)", position: "relative", top: -12, fontSize: 22, color: "#fff" }}>{tab.icon}</button>
+        );
         return (
-          <button key={tab.id} onClick={() => onNavigate(tab.id)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer", padding: "6px 12px", position: "relative" }}>
-            <span style={{ fontSize: 17, color: isActive ? "#C9A96E" : "rgba(255,255,255,0.3)", transition: "color 0.3s ease", lineHeight: 1 }}>{tab.icon}</span>
-            <span style={{ fontSize: 10, color: isActive ? "#C9A96E" : "rgba(255,255,255,0.25)", letterSpacing: 0.5 }}>{tab.label}</span>
-            {tab.badge > 0 && <span style={{ position: "absolute", top: 2, right: 6, minWidth: 16, height: 16, borderRadius: 8, background: "#D4654A", color: "#fff", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>{tab.badge}</span>}
+          <button key={tab.id} onClick={() => onTap(tab.id)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: "pointer", padding: "6px 14px", position: "relative" }}>
+            <span style={{ fontSize: 18, filter: act ? "none" : "grayscale(100%)", opacity: act ? 1 : 0.5, transition: "all 0.2s" }}>{tab.icon}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: act ? T.primary : T.textThi }}>{tab.label}</span>
+            {tab.badge > 0 && <span style={{ position: "absolute", top: 2, right: 8, minWidth: 16, height: 16, borderRadius: 8, background: T.primary, color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{tab.badge}</span>}
           </button>
         );
       })}
@@ -780,77 +670,53 @@ const BottomTabBar = ({ active, onNavigate, unread }) => {
   );
 };
 
-// ============ MAIN APP ============
-export default function YuanHeApp() {
-  const [screen, setScreen] = useState(SCREENS.SPLASH);
-  const [screenData, setScreenData] = useState({});
-  const [history, setHistory] = useState([]);
+// ============ MAIN ============
+export default function YuanHe() {
+  const [scr, setScr] = useState(S.SPLASH);
+  const [data, setData] = useState({});
+  const [hist, setHist] = useState([]);
+  const TABS = [S.HOME, S.DISCOVER, S.AI, S.MSGS, S.ME];
 
-  const TAB_SCREENS = [SCREENS.HOME, SCREENS.CHAT_LIST, SCREENS.AI_CHAT, SCREENS.COMMUNITY, SCREENS.PROFILE];
-  const showTab = TAB_SCREENS.includes(screen);
+  const nav = useCallback((s, d = {}) => { setHist(h => [...h, { scr, data }]); setScr(s); setData(d); }, [scr, data]);
+  const back = useCallback(() => { if (hist.length) { const p = hist[hist.length - 1]; setHist(h => h.slice(0, -1)); setScr(p.scr); setData(p.data); } else setScr(S.HOME); }, [hist]);
+  const tabNav = useCallback((s) => { setHist([]); setScr(s); setData({}); }, []);
 
-  const navigate = useCallback((s, data = {}) => {
-    setHistory((h) => [...h, { screen, data: screenData }]);
-    setScreen(s);
-    setScreenData(data);
-  }, [screen, screenData]);
-
-  const goBack = useCallback(() => {
-    if (history.length > 0) {
-      const prev = history[history.length - 1];
-      setHistory((h) => h.slice(0, -1));
-      setScreen(prev.screen);
-      setScreenData(prev.data);
-    } else {
-      setScreen(SCREENS.HOME);
-    }
-  }, [history]);
-
-  const tabNavigate = useCallback((s) => {
-    setHistory([]);
-    setScreen(s);
-    setScreenData({});
-  }, []);
-
-  const renderScreen = () => {
-    switch (screen) {
-      case SCREENS.SPLASH: return <SplashScreen onNext={() => setScreen(SCREENS.ONBOARD_1)} />;
-      case SCREENS.ONBOARD_1: return <OnboardScreen step={1} onNext={() => setScreen(SCREENS.ONBOARD_2)} onSkip={() => setScreen(SCREENS.BIRTH_INFO)} />;
-      case SCREENS.ONBOARD_2: return <OnboardScreen step={2} onNext={() => setScreen(SCREENS.ONBOARD_3)} onSkip={() => setScreen(SCREENS.BIRTH_INFO)} />;
-      case SCREENS.ONBOARD_3: return <OnboardScreen step={3} onNext={() => setScreen(SCREENS.BIRTH_INFO)} onSkip={() => setScreen(SCREENS.BIRTH_INFO)} />;
-      case SCREENS.BIRTH_INFO: return <BirthInfoScreen onSubmit={() => setScreen(SCREENS.ANALYSIS)} />;
-      case SCREENS.ANALYSIS: return <AnalysisScreen onComplete={() => setScreen(SCREENS.HOME)} />;
-      case SCREENS.HOME: return <HomeScreen onNavigate={navigate} />;
-      case SCREENS.CARDS: return <CardsScreen onNavigate={navigate} onBack={goBack} />;
-      case SCREENS.CARD_DETAIL: return <CardDetailScreen cardIndex={screenData.cardIndex} onBack={goBack} />;
-      case SCREENS.DAILY: return <DailyScreen onBack={goBack} />;
-      case SCREENS.MATCH: return <MatchScreen onNavigate={navigate} onBack={goBack} />;
-      case SCREENS.CHAT_LIST: return <ChatListScreen onNavigate={navigate} onBack={goBack} />;
-      case SCREENS.FRIEND_CHAT: return <FriendChatScreen friend={screenData.friend} onBack={goBack} onNavigate={navigate} />;
-      case SCREENS.AI_CHAT: return <AIChatScreen onBack={goBack} isTab={true} />;
-      case SCREENS.COMMUNITY: return <CommunityScreen />;
-      case SCREENS.PROFILE: return <ProfileScreen onBack={goBack} onNavigate={navigate} />;
-      case SCREENS.TASKS: return <TasksScreen onBack={goBack} />;
-      default: return <HomeScreen onNavigate={navigate} />;
+  const render = () => {
+    switch (scr) {
+      case S.SPLASH: return <SplashScreen onNext={() => setScr(S.ONBOARD1)} />;
+      case S.ONBOARD1: return <OnboardScreen step={1} onNext={() => setScr(S.ONBOARD2)} onSkip={() => setScr(S.BIRTH)} />;
+      case S.ONBOARD2: return <OnboardScreen step={2} onNext={() => setScr(S.ONBOARD3)} onSkip={() => setScr(S.BIRTH)} />;
+      case S.ONBOARD3: return <OnboardScreen step={3} onNext={() => setScr(S.BIRTH)} onSkip={() => setScr(S.BIRTH)} />;
+      case S.BIRTH: return <BirthScreen onSubmit={() => setScr(S.LOADING)} />;
+      case S.LOADING: return <LoadingScreen onDone={() => setScr(S.HOME)} />;
+      case S.HOME: return <HomeScreen onNavigate={nav} />;
+      case S.DISCOVER: return <DiscoverScreen onNavigate={nav} />;
+      case S.AI: return <AIScreen isTab />;
+      case S.MSGS: return <MsgsScreen onNavigate={nav} />;
+      case S.ME: return <MeScreen onNavigate={nav} />;
+      case S.CHAT: return <ChatScreen friend={data.friend} onBack={back} />;
+      case S.CARDS: return <CardsListScreen onNavigate={nav} onBack={back} />;
+      case S.CARD_DETAIL: return <CardDetailScreen ci={data.ci} onBack={back} />;
+      case S.DAILY: return <DailyScreen onBack={back} />;
+      case S.TASKS: return <TasksScreen onBack={back} />;
+      default: return <HomeScreen onNavigate={nav} />;
     }
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#080610", fontFamily: "'Noto Sans SC', -apple-system, sans-serif" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@200;300;400;500;600&family=Noto+Serif+SC:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#E8E6E0", fontFamily: "-apple-system, 'SF Pro Display', 'PingFang SC', sans-serif" }}>
       <style>{`
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes float { from { transform: translateY(0) scale(1); opacity: 0.3; } to { transform: translateY(-20px) scale(1.5); opacity: 0.6; } }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-4px); opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bounce { 0%,100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-5px); opacity: 1; } }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 0; }
-        input::placeholder { color: rgba(255,255,255,0.25); }
-        select option { background: #1a1520; }
+        input::placeholder { color: #9CA3AF; }
+        select { color: #1A1A2E; }
+        select option { background: #fff; }
       `}</style>
-      <div style={{ width: 375, height: 740, borderRadius: 32, overflow: "hidden", background: "linear-gradient(180deg, #12101a 0%, #0d0b10 100%)", position: "relative", boxShadow: "0 0 60px rgba(201,169,110,0.08), 0 0 120px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        {renderScreen()}
-        {showTab && <BottomTabBar active={screen} onNavigate={tabNavigate} unread={2} />}
+      <div style={{ width: 375, height: 740, borderRadius: 36, overflow: "hidden", background: T.bg, position: "relative", boxShadow: "0 20px 60px rgba(0,0,0,0.15)", border: "8px solid #1a1a1a" }}>
+        {render()}
+        {TABS.includes(scr) && <TabBar active={scr} onTap={tabNav} />}
       </div>
     </div>
   );
