@@ -1,6 +1,12 @@
 /**
  * 缘合 — 区域化占术配置
- * 5种占术，按用户地区展示4种
+ * 5种占术，中国展示全部5种，其他区域展示4种
+ * 
+ * 中文文案规范：
+ * - 西方占星术 → 中国叫"星座运势"
+ * - 印度占星术 → 中国叫"印度占星"
+ * - 八字/梅花 → 仅中文名
+ * - 塔罗牌 → 中英相同
  */
 
 // ============ 全部5种占术定义 ============
@@ -60,17 +66,17 @@ const ALL_MODES = {
 
   astrology: {
     id: 'astrology',
-    name: { zh: '星座占星', en: 'Astrology' },
+    name: { zh: '星座运势', en: 'Astrology' },
     icon: '★',
     color: '#7C5CFC',
     gradient: 'linear-gradient(135deg,#7C5CFC,#A78BFA)',
-    desc: { zh: '星座运势·星盘解读', en: 'Horoscope · Birth Chart' },
+    desc: { zh: '每日运势·星座配对·星盘解读', en: 'Horoscope · Birth Chart · Compatibility' },
     inputRequired: 'birthDate',      // 只需出生日期（基础）或+时间地点（完整星盘）
     engine: 'local',
     library: 'astronomia',           // 天文计算库
     sessionTurns: 15,
     greeting: {
-      zh: '你好！我来为你解读星座运势。告诉我你想了解什么——感情、事业还是整体运势？',
+      zh: '你好！我是你的星座顾问。想了解今日运势、星座配对，还是深度星盘解读？',
       en: 'Hi! I\'m here to read your stars. What would you like to explore — love, career, or your overall forecast?'
     },
     systemPrompt: `You are YuanHe's astrology consultant.
@@ -119,21 +125,21 @@ Rules:
     icon: '◎',
     color: '#45B7D1',
     gradient: 'linear-gradient(135deg,#45B7D1,#67D4E8)',
-    desc: { zh: '星盘解析·业力指引', en: 'Kundli · Dasha · Karma' },
+    desc: { zh: '吠陀星盘·行星能量·业力解读', en: 'Kundli · Dasha · Karma' },
     inputRequired: 'birthDateTime',  // 需要精确出生时间和地点
     engine: 'local',
     library: 'swiss-ephemeris',      // 瑞士星历表
     sessionTurns: 15,
     greeting: {
-      zh: 'Namaste！基于你的吠陀星盘，我将为你解读行星影响与达沙周期。',
-      en: 'Namaste! Based on your Vedic birth chart, I\'ll interpret planetary influences and Dasha periods.'
+      zh: 'Namaste！我是你的吠陀占星顾问。基于你的出生星盘，我将为你解读行星能量对你人生各方面的影响，并提供切实的化解建议。',
+      en: 'Namaste! Based on your Vedic birth chart, I\'ll interpret planetary influences and Dasha periods for you.'
     },
     systemPrompt: `You are YuanHe's Vedic astrology (Jyotish) consultant.
 Knowledge: Sidereal zodiac, Nakshatras, Dashas, planetary transits, Kundli houses, Yogas.
 User's Vedic chart (calculated by system):
 {{VEDIC_CHART}}
 Rules:
-- Use Sanskrit terms with clear translations
+- Use Sanskrit terms with clear translations in the user's language
 - Focus on current Dasha period and active transits
 - Suggest practical remedies (gemstones, mantras, colors)
 - Keep responses under 200 words
@@ -146,9 +152,8 @@ Rules:
 // ============ 区域配置 ============
 
 const REGION_CONFIG = {
-  // 中国大陆、港澳台
+  // 中国大陆、港澳台 — 5种全部展示
   CN: {
-    modes: ['bazi', 'astrology', 'tarot', 'meihua'],
     language: 'zh',
     currency: 'CNY',
     defaultMode: 'bazi',
@@ -156,7 +161,6 @@ const REGION_CONFIG = {
 
   // 美国、加拿大
   US: {
-    modes: ['astrology', 'tarot', 'vedic', 'vedic'],  // vedic出现两次是错误
     language: 'en',
     currency: 'USD',
     defaultMode: 'astrology',
@@ -164,15 +168,13 @@ const REGION_CONFIG = {
 
   // 欧洲
   EU: {
-    modes: ['astrology', 'tarot', 'vedic', 'vedic'],
-    language: 'en',  // 可按国家细分
+    language: 'en',
     currency: 'EUR',
     defaultMode: 'astrology',
   },
 
   // 印度、南亚
   IN: {
-    modes: ['vedic', 'astrology', 'tarot', 'vedic'],
     language: 'en',
     currency: 'INR',
     defaultMode: 'vedic',
@@ -180,39 +182,28 @@ const REGION_CONFIG = {
 
   // 东南亚（华人多）
   SEA: {
-    modes: ['astrology', 'tarot', 'bazi', 'vedic'],
-    language: 'en',  // 或 zh for 新马
+    language: 'en',
     currency: 'USD',
     defaultMode: 'astrology',
   },
 
   // 其他地区（默认）
   OTHER: {
-    modes: ['astrology', 'tarot', 'vedic', 'vedic'],
     language: 'en',
     currency: 'USD',
     defaultMode: 'astrology',
   },
 };
 
-// 修正：去掉重复，确保每个区域4个不同的模式
-const REGION_MODES = {
-  CN:    ['bazi', 'astrology', 'tarot', 'meihua'],
-  US:    ['astrology', 'vedic', 'tarot', 'meihua'],   // 梅花换成简化版"I Ching Oracle"
-  EU:    ['astrology', 'tarot', 'vedic', 'meihua'],
-  IN:    ['vedic', 'astrology', 'tarot', 'meihua'],
-  SEA:   ['bazi', 'astrology', 'tarot', 'vedic'],
-  OTHER: ['astrology', 'tarot', 'vedic', 'meihua'],
-};
-
-// 最终确定版 — 每区域4个不重复模式
+// 最终区域模式分配
+// 中国展示全部5种，其他区域展示4种
 const FINAL_REGION_MODES = {
-  CN:    ['bazi', 'astrology', 'tarot', 'meihua'],     // 中国：八字 + 占星 + 塔罗 + 梅花
-  US:    ['astrology', 'tarot', 'vedic', 'bazi'],       // 美国：占星 + 塔罗 + 印度占星 + 八字(作为Eastern Astrology)
-  EU:    ['astrology', 'tarot', 'vedic', 'meihua'],     // 欧洲：占星 + 塔罗 + 印度占星 + 梅花(作为I Ching Oracle)
-  IN:    ['vedic', 'astrology', 'tarot', 'bazi'],       // 印度：印度占星 + 占星 + 塔罗 + 八字(作为Chinese Astrology)
-  SEA:   ['bazi', 'astrology', 'tarot', 'vedic'],       // 东南亚：八字 + 占星 + 塔罗 + 印度占星
-  OTHER: ['astrology', 'tarot', 'vedic', 'meihua'],     // 其他：占星 + 塔罗 + 印度占星 + 梅花
+  CN:    ['bazi', 'astrology', 'tarot', 'meihua', 'vedic'],  // 中国：八字 + 星座运势 + 塔罗 + 梅花易数 + 印度占星（全部5种）
+  US:    ['astrology', 'tarot', 'vedic', 'bazi'],             // 美国：星座 + 塔罗 + 印度占星 + 八字(Eastern Astrology)
+  EU:    ['astrology', 'tarot', 'vedic', 'meihua'],           // 欧洲：星座 + 塔罗 + 印度占星 + 梅花(I Ching Oracle)
+  IN:    ['vedic', 'astrology', 'tarot', 'bazi'],             // 印度：印度占星 + 星座 + 塔罗 + 八字(Chinese Astrology)
+  SEA:   ['bazi', 'astrology', 'tarot', 'vedic'],             // 东南亚：八字 + 星座 + 塔罗 + 印度占星
+  OTHER: ['astrology', 'tarot', 'vedic', 'meihua'],           // 其他：星座 + 塔罗 + 印度占星 + 梅花(I Ching Oracle)
 };
 
 
