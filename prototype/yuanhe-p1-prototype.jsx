@@ -465,7 +465,7 @@ const WuxingRing = ({ size = 120, spin = false, highlight = null, glow = false }
 };
 
 // ============ CASINO DESTINY WHEEL (12 slots, hidden→reveal, full overlay) ============
-const CasinoWheel = ({ profiles, onResult, onClose, spinNum = 1, maxSpins = 2 }) => {
+const CasinoWheel = ({ profiles, onResult, onClose, onDismiss, spinNum = 1, maxSpins = 2 }) => {
   const [phase, setPhase] = useState("ready"); // ready → spinning → result
   const [rotation, setRotation] = useState(0);
   const [resultIdx, setResultIdx] = useState(-1);
@@ -499,7 +499,7 @@ const CasinoWheel = ({ profiles, onResult, onClose, spinNum = 1, maxSpins = 2 })
 
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at center, #1a1030 0%, #0a0410 100%)", animation: "fadeInUp 0.25s ease-out" }}>
-      <button onClick={onClose} style={{ position: "absolute", top: 48, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: 22, cursor: "pointer", zIndex: 10 }}>✕</button>
+      <button onClick={phase === "result" ? (onDismiss || onClose) : onClose} style={{ position: "absolute", top: 48, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: 22, cursor: "pointer", zIndex: 10, display: phase === "spinning" ? "none" : "block" }}>✕</button>
 
       <div style={{ marginBottom: 14, textAlign: "center" }}>
         <div style={{ fontSize: 10, letterSpacing: 6, color: "#F4C54290", fontWeight: 700 }}>WHEEL OF DESTINY</div>
@@ -591,7 +591,7 @@ const CasinoWheel = ({ profiles, onResult, onClose, spinNum = 1, maxSpins = 2 })
             </div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: "12px 0", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>返回</button>
+            <button onClick={onDismiss || onClose} style={{ flex: 1, padding: "12px 0", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>返回</button>
             <button onClick={() => onResult(res)} style={{ flex: 1, padding: "12px 0", borderRadius: 16, border: "none", background: "linear-gradient(135deg, #F4C542, #FFB347)", color: "#1a0e28", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(244,197,66,0.4)" }}>查看 TA ★</button>
           </div>
         </div>
@@ -618,35 +618,51 @@ const WuxingBar = ({ data, size = "sm" }) => {
 };
 
 // ============ HOME — AUTO WHEEL (2x/day) + FORTUNE CARDS ============
-const HomeScreen = ({ onNavigate }) => {
+const HomeScreen = ({ onNavigate, wheelCount = 0, onWheelUse }) => {
   const [ci, setCi] = useState(0);
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [exiting, setExiting] = useState(null);
   const [matched, setMatched] = useState(false);
-  const [showWheel, setShowWheel] = useState(true); // auto-show on mount
-  const [wheelCount, setWheelCount] = useState(0); // 0, 1, 2 = used times today
+  const [showWheel, setShowWheel] = useState(false);
   const startX = useRef(0);
+  const autoShown1 = useRef(false);
+  const autoShown2 = useRef(false);
   const profile = MATCH_PROFILES[ci];
   const maxWheelPerDay = 2;
+  const wheelLeft = maxWheelPerDay - wheelCount;
 
-  // Auto-popup second wheel after browsing 3 cards
-  const triggerRef = useRef(false);
+  // Auto-popup first wheel on first mount (only if not used yet)
   useEffect(() => {
-    if (ci >= 3 && wheelCount === 1 && !triggerRef.current) {
-      triggerRef.current = true;
+    if (wheelCount === 0 && !autoShown1.current) {
+      autoShown1.current = true;
+      setShowWheel(true);
+    }
+  }, []);
+
+  // Auto-popup second wheel after browsing 3+ cards
+  useEffect(() => {
+    if (ci >= 3 && wheelCount === 1 && !autoShown2.current) {
+      autoShown2.current = true;
       setTimeout(() => setShowWheel(true), 600);
     }
   }, [ci, wheelCount]);
 
+  // Wheel completed (user spun and chose to view result)
   const onWheelComplete = (p) => {
     setShowWheel(false);
-    setWheelCount(c => c + 1);
+    onWheelUse(); // increment count at App level
     onNavigate(S.PROFILE_DETAIL, { profile: p });
   };
-  const onWheelClose = () => {
+  // Wheel closed without spinning or skipped result — does NOT consume a spin
+  const onWheelSkip = () => {
     setShowWheel(false);
-    setWheelCount(c => c + 1);
+    // NOT incrementing wheelCount — user can still use this spin later
+  };
+  // Wheel spun but user chose "返回" instead of viewing profile — DOES consume a spin
+  const onWheelDismiss = () => {
+    setShowWheel(false);
+    onWheelUse();
   };
 
   const onStart = (x) => { startX.current = x; setDragging(true); };
@@ -676,7 +692,6 @@ const HomeScreen = ({ onNavigate }) => {
   const rot = offset * 0.05, opa = Math.min(Math.abs(offset) / 100, 1);
   const ec = ELEMENTS[profile.element];
   const wxData = profile.detail?.wuxing || { 金: 2, 木: 2, 水: 2, 火: 2, 土: 2 };
-  const wheelLeft = maxWheelPerDay - wheelCount;
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg, paddingBottom: 68, position: "relative" }}>
@@ -768,7 +783,8 @@ const HomeScreen = ({ onNavigate }) => {
       {showWheel && wheelCount < maxWheelPerDay && <CasinoWheel profiles={WHEEL_POOL}
         spinNum={wheelCount + 1} maxSpins={maxWheelPerDay}
         onResult={onWheelComplete}
-        onClose={onWheelClose} />}
+        onClose={onWheelSkip}
+        onDismiss={onWheelDismiss} />}
     </div>
   );
 };
@@ -1912,6 +1928,7 @@ export default function YuanHe() {
   const [hist, setHist] = useState([]);
   const [follows, setFollows] = useState(new Set([1, 3]));
   const [blocked, setBlocked] = useState(new Set());
+  const [wheelCount, setWheelCount] = useState(0);
   const [myPosts, setMyPosts] = useState([
     { id: 'p1', content: '今天八字分析让我对自己有了新的认识，原来我是辛金日主～', time: '2天前', likes: 12, comments: 3 },
   ]);
@@ -1945,7 +1962,7 @@ export default function YuanHe() {
       case S.BIRTH: return <BirthScreen onSubmit={() => setScr(S.LOADING)} />;
       case S.LOADING: return <LoadingScreen onDone={() => setScr(S.HOME)} />;
       // Main tabs
-      case S.HOME: return <HomeScreen onNavigate={nav} />;
+      case S.HOME: return <HomeScreen onNavigate={nav} wheelCount={wheelCount} onWheelUse={() => setWheelCount(c => c + 1)} />;
       case S.DISCOVER: return <DiscoverScreen onNavigate={nav} posts={allPosts} onLike={likePost} />;
       case S.AI: return <AIScreen isTab />;
       case S.MSGS: return <MsgsScreen onNavigate={nav} follows={follows} onToggleFollow={toggleFollow} />;
