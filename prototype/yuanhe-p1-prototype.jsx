@@ -55,6 +55,22 @@ const MATCH_PROFILES = [
     detail: { bazi: "丁火日主·比肩格", zodiac: "白羊座", mbti: "ESTP", height: "182cm", job: "健身教练", edu: "体育大学", city: "北京·丰台", hobbies: ["健身", "烹饪", "极限运动", "音乐节"], lifeGoal: "开一家融合健身和健康饮食的生活空间", idealPartner: "能一起运动一起吃，笑起来很好看的人", wuxing: { 金: 1, 木: 1, 水: 0, 火: 4, 土: 2 }, compatibility: { score: 83, strengths: ["带来活力与行动力", "直接沟通无猜测", "丰富社交体验"], challenges: ["性格差异需要包容", "火金相克的张力", "需学会放慢节奏"] } } },
 ];
 
+// 轮盘候选人池（12人，含匹配档 + 额外推荐）
+const WHEEL_POOL = [
+  { id: 101, name: "林晓月", photos: ["🌸"], element: "木", score: 92, age: 26 },
+  { id: 102, name: "苏雨晴", photos: ["🌺"], element: "火", score: 88, age: 24 },
+  { id: 103, name: "陈思远", photos: ["🌊"], element: "水", score: 87, age: 28 },
+  { id: 104, name: "王雨桐", photos: ["🌿"], element: "土", score: 85, age: 25 },
+  { id: 105, name: "张一鸣", photos: ["🔥"], element: "火", score: 83, age: 27 },
+  { id: 106, name: "周诗涵", photos: ["🦋"], element: "木", score: 81, age: 23 },
+  { id: 107, name: "李墨白", photos: ["🏔️"], element: "金", score: 79, age: 29 },
+  { id: 108, name: "赵小棠", photos: ["🍑"], element: "土", score: 77, age: 22 },
+  { id: 109, name: "沈星河", photos: ["⭐"], element: "水", score: 90, age: 26 },
+  { id: 110, name: "顾清欢", photos: ["🌙"], element: "金", score: 86, age: 25 },
+  { id: 111, name: "叶知秋", photos: ["🍂"], element: "木", score: 84, age: 27 },
+  { id: 112, name: "温如玉", photos: ["💎"], element: "土", score: 82, age: 24 },
+];
+
 const FRIENDS = [
   { id: 1, name: "林晓月", avatar: "🌸", element: "木", lastMsg: "好的，明天见！", time: "10:32", unread: 2, online: true },
   { id: 2, name: "陈思远", avatar: "🌊", element: "水", lastMsg: "那篇文章很有共鸣", time: "昨天", unread: 0, online: true },
@@ -448,19 +464,21 @@ const WuxingRing = ({ size = 120, spin = false, highlight = null, glow = false }
   );
 };
 
-// ============ CASINO DESTINY WHEEL (full overlay) ============
+// ============ CASINO DESTINY WHEEL (12 slots, hidden→reveal, full overlay) ============
 const CasinoWheel = ({ profiles, onResult, onClose }) => {
-  const [phase, setPhase] = useState("ready");
+  const [phase, setPhase] = useState("ready"); // ready → spinning → result
   const [rotation, setRotation] = useState(0);
   const [resultIdx, setResultIdx] = useState(-1);
   const [tick, setTick] = useState(0);
+  const [revealed, setRevealed] = useState(false);
   const count = profiles.length;
   const sliceAngle = 360 / count;
-  const SEG_COLORS = ["#FF6B6B","#FFB347","#34D399","#45B7D1","#7C5CFC","#FF8A9B","#F4C542","#A0896B"];
+  const SEG = ["#C62828","#FF6B6B","#AD1457","#FFB347","#6A1B9A","#7C5CFC","#00695C","#34D399","#E65100","#45B7D1","#BF360C","#F4C542"];
 
   useEffect(() => {
     if (phase === "spinning" || phase === "result") {
-      const iv = setInterval(() => setTick(t => t + 1), phase === "spinning" ? 120 : 500);
+      const ms = phase === "spinning" ? 100 : 450;
+      const iv = setInterval(() => setTick(t => t + 1), ms);
       return () => clearInterval(iv);
     }
   }, [phase]);
@@ -468,125 +486,112 @@ const CasinoWheel = ({ profiles, onResult, onClose }) => {
   const spin = () => {
     if (phase !== "ready") return;
     setPhase("spinning");
+    // Reveal faces after 0.8s of spinning
+    setTimeout(() => setRevealed(true), 800);
     const ti = Math.floor(Math.random() * count);
-    const sp = 1440 + Math.random() * 720;
+    const sp = 2160 + Math.random() * 720;
     setRotation(r => r - sp - ti * sliceAngle + sliceAngle / 2);
-    setTimeout(() => { setPhase("result"); setResultIdx(ti); }, 4200);
+    setTimeout(() => { setPhase("result"); setResultIdx(ti); }, 5000);
   };
 
   const res = resultIdx >= 0 ? profiles[resultIdx] : null;
-  const W = 290, cx = W / 2;
+  const W = 296, cx = W / 2;
 
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(8,4,18,0.94)", animation: "fadeInUp 0.3s ease-out" }}>
-      <button onClick={onClose} style={{ position: "absolute", top: 48, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 22, cursor: "pointer", zIndex: 10 }}>✕</button>
+    <div style={{ position: "absolute", inset: 0, zIndex: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at center, #1a1030 0%, #0a0410 100%)", animation: "fadeInUp 0.25s ease-out" }}>
+      <button onClick={onClose} style={{ position: "absolute", top: 48, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: 22, cursor: "pointer", zIndex: 10 }}>✕</button>
 
-      <div style={{ marginBottom: 12, textAlign: "center" }}>
-        <div style={{ fontSize: 10, letterSpacing: 5, color: "#F4C542", fontWeight: 700 }}>DESTINY WHEEL</div>
-        <div style={{ fontSize: 24, fontWeight: 800, color: "#fff", marginTop: 4 }}>天命转轮</div>
+      <div style={{ marginBottom: 14, textAlign: "center" }}>
+        <div style={{ fontSize: 10, letterSpacing: 6, color: "#F4C54290", fontWeight: 700 }}>WHEEL OF DESTINY</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#fff", marginTop: 4, textShadow: "0 0 20px rgba(244,197,66,0.3)" }}>天命转轮</div>
       </div>
 
-      <div style={{ position: "relative", width: W + 48, height: W + 48 }}>
-        {/* Light bulbs around rim */}
-        {Array.from({ length: 20 }).map((_, i) => {
-          const a = (i * 18) * Math.PI / 180;
-          const dr = (W + 40) / 2;
+      <div style={{ position: "relative", width: W + 52, height: W + 52 }}>
+        {/* Outer light bulbs — 24 */}
+        {Array.from({ length: 24 }).map((_, i) => {
+          const a = (i * 15) * Math.PI / 180, dr = (W + 44) / 2;
+          const on = tick % 3 === (i % 3);
+          return <div key={i} style={{ position: "absolute", left: 26 + cx + dr * Math.cos(a) - 5, top: 26 + cx + dr * Math.sin(a) - 5, width: 10, height: 10, borderRadius: "50%", background: on ? "#F4C542" : "#F4C54215", boxShadow: on ? "0 0 8px 3px #F4C54280" : "none", transition: "all 0.08s" }} />;
+        })}
+        {/* Inner light ring — 16 */}
+        {Array.from({ length: 16 }).map((_, i) => {
+          const a = (i * 22.5 + 11) * Math.PI / 180, dr = (W + 18) / 2;
           const on = tick % 2 === (i % 2);
-          return <div key={i} style={{
-            position: "absolute",
-            left: 24 + cx + dr * Math.cos(a) - 5,
-            top: 24 + cx + dr * Math.sin(a) - 5,
-            width: 10, height: 10, borderRadius: "50%",
-            background: on ? "#F4C542" : "#F4C54225",
-            boxShadow: on ? "0 0 6px 2px #F4C54280" : "none",
-            transition: "all 0.1s",
-          }} />;
+          return <div key={`in${i}`} style={{ position: "absolute", left: 26 + cx + dr * Math.cos(a) - 3, top: 26 + cx + dr * Math.sin(a) - 3, width: 6, height: 6, borderRadius: "50%", background: on ? "#FF6B6B" : "#FF6B6B15", boxShadow: on ? "0 0 5px 1px #FF6B6B60" : "none", transition: "all 0.08s" }} />;
         })}
 
-        {/* Gold border ring */}
-        <div style={{ position: "absolute", inset: 16, borderRadius: "50%", border: "4px solid #F4C54260", boxShadow: phase !== "ready" ? "0 0 40px #F4C54230, inset 0 0 40px #F4C54210" : "none" }} />
+        {/* Gold ring */}
+        <div style={{ position: "absolute", inset: 18, borderRadius: "50%", border: "3px solid #F4C54250", boxShadow: phase !== "ready" ? "0 0 60px #F4C54220, inset 0 0 40px #F4C54210" : "none", transition: "box-shadow 0.5s" }} />
 
         {/* Pointer */}
-        <div style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", zIndex: 20 }}>
-          <div style={{ width: 0, height: 0, borderLeft: "15px solid transparent", borderRight: "15px solid transparent", borderTop: "28px solid #F4C542", filter: "drop-shadow(0 3px 6px rgba(244,197,66,0.6))" }} />
+        <div style={{ position: "absolute", top: 2, left: "50%", transform: "translateX(-50%)", zIndex: 20 }}>
+          <div style={{ width: 0, height: 0, borderLeft: "16px solid transparent", borderRight: "16px solid transparent", borderTop: "30px solid #F4C542", filter: "drop-shadow(0 4px 8px rgba(244,197,66,0.6))" }} />
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F4C542", margin: "-6px auto 0", boxShadow: "0 0 10px #F4C542" }} />
         </div>
 
-        {/* Wheel SVG */}
-        <svg width={W} height={W} viewBox={`0 0 ${W} ${W}`}
-          style={{ position: "absolute", top: 24, left: 24,
-            transform: `rotate(${rotation}deg)`,
-            transition: phase === "spinning" ? "transform 4.2s cubic-bezier(0.12,0.8,0.18,1)" : "none",
-          }}>
-          {profiles.slice(0, count).map((p, i) => {
+        {/* Wheel SVG — 12 segments */}
+        <svg width={W} height={W} viewBox={`0 0 ${W} ${W}`} style={{ position: "absolute", top: 26, left: 26, transform: `rotate(${rotation}deg)`, transition: phase === "spinning" ? "transform 5s cubic-bezier(0.10,0.75,0.15,1)" : "none" }}>
+          {profiles.map((p, i) => {
             const a1r = (i * sliceAngle - 90) * Math.PI / 180;
             const a2r = ((i + 1) * sliceAngle - 90) * Math.PI / 180;
             const R = cx - 2;
             const x1 = cx + R * Math.cos(a1r), y1 = cx + R * Math.sin(a1r);
             const x2 = cx + R * Math.cos(a2r), y2 = cx + R * Math.sin(a2r);
             const midA = i * sliceAngle + sliceAngle / 2 - 90;
-            const mx = cx + R * 0.55 * Math.cos(midA * Math.PI / 180);
-            const my = cx + R * 0.55 * Math.sin(midA * Math.PI / 180);
+            const mx = cx + R * 0.62 * Math.cos(midA * Math.PI / 180);
+            const my = cx + R * 0.62 * Math.sin(midA * Math.PI / 180);
             return (
               <g key={p.id}>
-                <path d={`M${cx},${cx} L${x1},${y1} A${R},${R} 0 0,1 ${x2},${y2} Z`}
-                  fill={SEG_COLORS[i % SEG_COLORS.length]} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-                <text x={mx} y={my - 8} textAnchor="middle" dominantBaseline="central"
-                  fontSize="26" transform={`rotate(${midA + 90},${mx},${my - 4})`}>{p.photos[0]}</text>
-                <text x={mx} y={my + 14} textAnchor="middle" dominantBaseline="central"
-                  fontSize="9" fontWeight="700" fill="#fff"
-                  transform={`rotate(${midA + 90},${mx},${my + 14})`}>{p.name}</text>
+                <path d={`M${cx},${cx} L${x1},${y1} A${R},${R} 0 0,1 ${x2},${y2} Z`} fill={i % 2 === 0 ? SEG[i % SEG.length] : `${SEG[i % SEG.length]}CC`} stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+                {revealed ? (
+                  <><text x={mx} y={my - 6} textAnchor="middle" dominantBaseline="central" fontSize="20" transform={`rotate(${midA + 90},${mx},${my - 4})`}>{p.photos[0]}</text>
+                  <text x={mx} y={my + 12} textAnchor="middle" dominantBaseline="central" fontSize="8" fontWeight="700" fill="rgba(255,255,255,0.9)" transform={`rotate(${midA + 90},${mx},${my + 12})`}>{p.name}</text></>
+                ) : (
+                  <text x={mx} y={my} textAnchor="middle" dominantBaseline="central" fontSize="22" fontWeight="800" fill="rgba(255,255,255,0.2)" transform={`rotate(${midA + 90},${mx},${my})`}>?</text>
+                )}
               </g>
             );
           })}
+          <circle cx={cx} cy={cx} r={cx * 0.32} fill="none" stroke="rgba(244,197,66,0.3)" strokeWidth="2" />
         </svg>
 
         {/* Center hub */}
-        <div onClick={spin} style={{
-          position: "absolute", top: 24 + cx - 38, left: 24 + cx - 38, width: 76, height: 76, borderRadius: "50%", zIndex: 10,
-          background: phase === "spinning" ? "linear-gradient(135deg, #F4C542, #FF6B6B)" : "linear-gradient(135deg, #1a1028, #2a1a40)",
-          border: "5px solid #F4C542", cursor: phase === "ready" ? "pointer" : "default",
-          boxShadow: "0 0 24px rgba(244,197,66,0.5), inset 0 2px 12px rgba(0,0,0,0.4)",
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        }}>
-          {phase === "ready" && <><div style={{ fontSize: 20, color: "#F4C542", fontWeight: 800 }}>缘</div><div style={{ fontSize: 8, color: "#F4C54280", fontWeight: 700, letterSpacing: 2 }}>SPIN</div></>}
-          {phase === "spinning" && <div style={{ fontSize: 24, animation: "wuxingSpin 0.6s linear infinite" }}>✦</div>}
-          {phase === "result" && <div style={{ fontSize: 24, color: "#F4C542" }}>★</div>}
+        <div onClick={spin} style={{ position: "absolute", top: 26 + cx - 42, left: 26 + cx - 42, width: 84, height: 84, borderRadius: "50%", zIndex: 10, background: phase === "spinning" ? "conic-gradient(from 0deg, #F4C542, #FF6B6B, #7C5CFC, #34D399, #F4C542)" : phase === "result" ? "linear-gradient(135deg, #F4C542, #FFB347)" : "linear-gradient(135deg, #1a0e28, #2d1a42)", border: "5px solid #F4C542", boxShadow: phase !== "ready" ? "0 0 30px rgba(244,197,66,0.6), inset 0 2px 12px rgba(0,0,0,0.3)" : "0 0 16px rgba(244,197,66,0.3), inset 0 2px 12px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: phase === "ready" ? "pointer" : "default", animation: phase === "spinning" ? "wuxingSpin 1s linear infinite" : "none" }}>
+          {phase === "ready" && <><div style={{ fontSize: 22, color: "#F4C542", fontWeight: 800 }}>缘</div><div style={{ fontSize: 9, color: "#F4C54280", fontWeight: 700, letterSpacing: 2 }}>SPIN</div></>}
+          {phase === "spinning" && <div style={{ fontSize: 28, color: "#fff" }}>✦</div>}
+          {phase === "result" && <div style={{ fontSize: 28, color: "#1a0e28" }}>★</div>}
         </div>
       </div>
 
-      {/* Bottom area */}
+      {/* Bottom */}
       {phase === "ready" && (
-        <div style={{ marginTop: 16, textAlign: "center" }}>
-          <button onClick={spin} style={{ padding: "14px 44px", borderRadius: 28, border: "2px solid #F4C542", background: "linear-gradient(135deg, #F4C54220, #FFB34710)", color: "#F4C542", fontSize: 17, fontWeight: 800, cursor: "pointer", letterSpacing: 3, animation: "pulse 2s infinite", boxShadow: "0 0 24px #F4C54220" }}>
-            转动命运
-          </button>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>每日一次 · 天命难违</div>
+        <div style={{ marginTop: 18, textAlign: "center" }}>
+          <button onClick={spin} style={{ padding: "15px 48px", borderRadius: 30, border: "2px solid #F4C542", background: "linear-gradient(135deg, #F4C54220, #FF6B6B10)", color: "#F4C542", fontSize: 18, fontWeight: 800, cursor: "pointer", letterSpacing: 4, animation: "pulse 2s infinite", boxShadow: "0 0 30px #F4C54220, inset 0 0 20px #F4C54210" }}>转 动 命 运</button>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 10 }}>每日一次 · 12位有缘人等待揭晓</div>
         </div>
       )}
-
       {phase === "spinning" && (
-        <div style={{ marginTop: 16, fontSize: 15, color: "#F4C542", fontWeight: 700, letterSpacing: 3, animation: "pulse 1s infinite" }}>缘分转动中...</div>
+        <div style={{ marginTop: 16, textAlign: "center" }}>
+          <div style={{ fontSize: 16, color: "#F4C542", fontWeight: 700, letterSpacing: 4, animation: "pulse 0.8s infinite" }}>命运齿轮转动中...</div>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>有缘人即将揭晓</div>
+        </div>
       )}
-
       {phase === "result" && res && (
-        <div style={{ marginTop: 16, width: 300, padding: 18, borderRadius: 20, textAlign: "center",
-          background: "linear-gradient(135deg, #F4C54218, #FF6B6B10)", border: "1px solid #F4C54230",
-          animation: "fadeInUp 0.5s ease-out", boxShadow: "0 8px 40px #F4C54220",
-        }}>
-          <div style={{ fontSize: 10, letterSpacing: 4, color: "#F4C542", fontWeight: 700, marginBottom: 10 }}>TODAY'S FATED MATCH</div>
+        <div style={{ marginTop: 18, width: 310, padding: 20, borderRadius: 22, textAlign: "center", background: "linear-gradient(160deg, rgba(244,197,66,0.12), rgba(255,107,107,0.08))", border: "1.5px solid rgba(244,197,66,0.35)", animation: "fadeInUp 0.5s ease-out", boxShadow: "0 12px 48px rgba(244,197,66,0.15)" }}>
+          <div style={{ fontSize: 10, letterSpacing: 4, color: "#F4C542", fontWeight: 700, marginBottom: 12 }}>★ TODAY'S FATED MATCH ★</div>
           <div style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 14 }}>
-            <div style={{ width: 58, height: 58, borderRadius: "50%", background: `${ELEMENTS[res.element]}30`, border: `3px solid ${ELEMENTS[res.element]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, boxShadow: `0 0 20px ${ELEMENTS[res.element]}50` }}>{res.photos[0]}</div>
+            <div style={{ width: 62, height: 62, borderRadius: "50%", background: `${ELEMENTS[res.element]}25`, border: `3px solid ${ELEMENTS[res.element]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, boxShadow: `0 0 20px ${ELEMENTS[res.element]}40`, animation: "pulse 2s infinite" }}>{res.photos[0]}</div>
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 19, fontWeight: 700, color: "#fff" }}>{res.name}，{res.age}</div>
-              <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
-                <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: `${ELEMENTS[res.element]}30`, color: ELEMENTS[res.element] }}>{res.element}象</span>
-                <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "#FF6B6B25", color: "#FF6B6B" }}>{res.score}%</span>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{res.name}，{res.age}</div>
+              <div style={{ display: "flex", gap: 5, marginTop: 5 }}>
+                <span style={{ padding: "3px 10px", borderRadius: 10, fontSize: 11, fontWeight: 600, background: `${ELEMENTS[res.element]}30`, color: ELEMENTS[res.element] }}>{res.element}象</span>
+                <span style={{ padding: "3px 10px", borderRadius: 10, fontSize: 11, fontWeight: 700, background: "#FF6B6B20", color: "#FF8A9B" }}>缘分 {res.score}%</span>
               </div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>返回</button>
-            <button onClick={() => onResult(res)} style={{ flex: 1, padding: "12px 0", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #F4C542, #FFB347)", color: "#1a1028", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px #F4C54240" }}>查看 TA ★</button>
+            <button onClick={onClose} style={{ flex: 1, padding: "12px 0", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>返回</button>
+            <button onClick={() => onResult(res)} style={{ flex: 1, padding: "12px 0", borderRadius: 16, border: "none", background: "linear-gradient(135deg, #F4C542, #FFB347)", color: "#1a0e28", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 20px rgba(244,197,66,0.4)" }}>查看 TA ★</button>
           </div>
         </div>
       )}
@@ -698,7 +703,7 @@ const HomeScreen = ({ onNavigate }) => {
       </div>
 
       {/* Casino wheel overlay */}
-      {showWheel && <CasinoWheel profiles={MATCH_PROFILES}
+      {showWheel && <CasinoWheel profiles={WHEEL_POOL}
         onResult={p => { setShowWheel(false); setDestinyUsed(true); onNavigate(S.PROFILE_DETAIL, { profile: p }); }}
         onClose={() => setShowWheel(false)} />}
     </div>
