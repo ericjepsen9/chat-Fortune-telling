@@ -28,7 +28,7 @@ const ELEMENTS = { 金: "#F4C542", 木: "#34D399", 水: "#45B7D1", 火: "#FF6B6B
 const S = {
   SPLASH: 0, ONBOARD1: 1, ONBOARD2: 2, ONBOARD3: 3, BIRTH: 4, LOADING: 5,
   HOME: 10, DISCOVER: 11, AI: 12, MSGS: 13, ME: 14,
-  CHAT: 20, CARDS: 21, CARD_DETAIL: 22, DAILY: 23, TASKS: 24, MATCH_SUCCESS: 25,
+  CHAT: 20, CARDS: 21, CARD_DETAIL: 22, DAILY: 23, TASKS: 24, MATCH_SUCCESS: 25, PROFILE_DETAIL: 26,
 };
 
 const AI_MODES = [
@@ -39,11 +39,16 @@ const AI_MODES = [
 ];
 
 const MATCH_PROFILES = [
-  { id: 1, name: "林晓月", age: 26, photos: ["🌸"], element: "木", score: 92, type: "互补型", bio: "喜欢画画和写诗的文艺少女\n相信每个人都有自己的节奏", reason: "你的辛金细腻与她的甲木生长力形成互补", tags: ["温柔共情", "艺术感知", "慢热型"], dist: "3km", online: true },
-  { id: 2, name: "苏雨晴", age: 24, photos: ["🌺"], element: "火", score: 88, type: "成长型", bio: "旅行博主 / 咖啡爱好者\n正在学习冥想和瑜伽", reason: "火金相克中藏着成长的力量，你们能互相磨砺", tags: ["活力四射", "热情开朗", "行动派"], dist: "5km", online: true },
-  { id: 3, name: "陈思远", age: 28, photos: ["🌊"], element: "水", score: 87, type: "相似型", bio: "产品经理 / 读书会组织者\n喜欢深度思考和哲学讨论", reason: "水金相生，思考方式和价值观高度共鸣", tags: ["深度思考", "独立自主", "追求真实"], dist: "8km", online: false },
-  { id: 4, name: "王雨桐", age: 25, photos: ["🌿"], element: "土", score: 85, type: "互补型", bio: "心理咨询师 / 猫猫妈妈\n温暖而有力量的倾听者", reason: "土生金，她的稳定力量能给你安全感", tags: ["稳定可靠", "包容力强", "善于倾听"], dist: "2km", online: true },
-  { id: 5, name: "张一鸣", age: 27, photos: ["🔥"], element: "火", score: 83, type: "成长型", bio: "健身教练 / 美食探店达人\n相信身体和心灵同样重要", reason: "火的热情能唤醒你内心深处的表达欲", tags: ["阳光健康", "热爱生活", "直接坦率"], dist: "6km", online: true },
+  { id: 1, name: "林晓月", age: 26, photos: ["🌸"], element: "木", score: 92, type: "互补型", bio: "喜欢画画和写诗的文艺少女\n相信每个人都有自己的节奏", reason: "你的辛金细腻与她的甲木生长力形成互补", tags: ["温柔共情", "艺术感知", "慢热型"], dist: "3km", online: true,
+    detail: { bazi: "甲木日主·食神格", zodiac: "双鱼座", mbti: "INFP", height: "165cm", job: "插画师", edu: "中央美院", city: "北京·朝阳", hobbies: ["水彩画", "写诗", "咖啡", "猫"], lifeGoal: "希望用画笔记录每段感情的温度", idealPartner: "能一起安静看展、也能深夜聊哲学的人", wuxing: { 金: 1, 木: 3, 水: 2, 火: 1, 土: 1 }, compatibility: { score: 92, strengths: ["情感共鸣深", "互补性强", "审美同频"], challenges: ["都偏慢热，需要主动破冰", "可能过度在意对方感受"] } } },
+  { id: 2, name: "苏雨晴", age: 24, photos: ["🌺"], element: "火", score: 88, type: "成长型", bio: "旅行博主 / 咖啡爱好者\n正在学习冥想和瑜伽", reason: "火金相克中藏着成长的力量，你们能互相磨砺", tags: ["活力四射", "热情开朗", "行动派"], dist: "5km", online: true,
+    detail: { bazi: "丙火日主·伤官格", zodiac: "射手座", mbti: "ENFP", height: "168cm", job: "旅行博主", edu: "传媒大学", city: "北京·海淀", hobbies: ["旅行", "冲浪", "瑜伽", "摄影"], lifeGoal: "30岁前走遍50个国家", idealPartner: "能跟我一起冒险，也能在我疲惫时给我港湾", wuxing: { 金: 0, 木: 1, 水: 1, 火: 4, 土: 2 }, compatibility: { score: 88, strengths: ["激发彼此成长", "互相带来新视角", "生活从不无聊"], challenges: ["节奏差异大", "火金相克需要耐心磨合"] } } },
+  { id: 3, name: "陈思远", age: 28, photos: ["🌊"], element: "水", score: 87, type: "相似型", bio: "产品经理 / 读书会组织者\n喜欢深度思考和哲学讨论", reason: "水金相生，思考方式和价值观高度共鸣", tags: ["深度思考", "独立自主", "追求真实"], dist: "8km", online: false,
+    detail: { bazi: "壬水日主·偏印格", zodiac: "天蝎座", mbti: "INTJ", height: "178cm", job: "产品经理", edu: "清华大学", city: "北京·西城", hobbies: ["哲学", "围棋", "跑步", "精酿"], lifeGoal: "做一款改变人们思考方式的产品", idealPartner: "不需要时刻在一起，但精神世界高度契合", wuxing: { 金: 2, 木: 0, 水: 3, 火: 1, 土: 2 }, compatibility: { score: 87, strengths: ["思想深度匹配", "水金相生自然和谐", "尊重彼此空间"], challenges: ["双方都偏理性，需刻意表达柔软", "容易沉浸各自世界"] } } },
+  { id: 4, name: "王雨桐", age: 25, photos: ["🌿"], element: "土", score: 85, type: "互补型", bio: "心理咨询师 / 猫猫妈妈\n温暖而有力量的倾听者", reason: "土生金，她的稳定力量能给你安全感", tags: ["稳定可靠", "包容力强", "善于倾听"], dist: "2km", online: true,
+    detail: { bazi: "己土日主·正印格", zodiac: "金牛座", mbti: "ISFJ", height: "162cm", job: "心理咨询师", edu: "北师大", city: "北京·朝阳", hobbies: ["心理学", "烘焙", "养猫", "园艺"], lifeGoal: "帮助更多人找到内心的平静", idealPartner: "愿意分享内心世界、也愿意被温柔对待的人", wuxing: { 金: 1, 木: 1, 水: 1, 火: 1, 土: 4 }, compatibility: { score: 85, strengths: ["土生金，天然滋养关系", "情绪稳定的港湾", "互相信任度高"], challenges: ["节奏都偏慢", "需避免过度依赖舒适区"] } } },
+  { id: 5, name: "张一鸣", age: 27, photos: ["🔥"], element: "火", score: 83, type: "成长型", bio: "健身教练 / 美食探店达人\n相信身体和心灵同样重要", reason: "火的热情能唤醒你内心深处的表达欲", tags: ["阳光健康", "热爱生活", "直接坦率"], dist: "6km", online: true,
+    detail: { bazi: "丁火日主·比肩格", zodiac: "白羊座", mbti: "ESTP", height: "182cm", job: "健身教练", edu: "体育大学", city: "北京·丰台", hobbies: ["健身", "烹饪", "极限运动", "音乐节"], lifeGoal: "开一家融合健身和健康饮食的生活空间", idealPartner: "能一起运动一起吃，笑起来很好看的人", wuxing: { 金: 1, 木: 1, 水: 0, 火: 4, 土: 2 }, compatibility: { score: 83, strengths: ["带来活力与行动力", "直接沟通无猜测", "丰富社交体验"], challenges: ["性格差异需要包容", "火金相克的张力", "需学会放慢节奏"] } } },
 ];
 
 const FRIENDS = [
@@ -261,7 +266,7 @@ const HomeScreen = ({ onNavigate }) => {
           </div>
 
           {/* Info area */}
-          <div style={{ padding: "16px 20px 20px" }}>
+          <div onClick={() => { if (Math.abs(offset) < 5) onNavigate(S.PROFILE_DETAIL, { profile }); }} style={{ padding: "16px 20px 20px", cursor: "pointer" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <span style={{ fontSize: 22, fontWeight: 700, color: T.text }}>{profile.name}，{profile.age}</span>
               <Badge color={ELEMENTS[profile.element]} filled>{profile.element}象·{profile.type}</Badge>
@@ -274,6 +279,7 @@ const HomeScreen = ({ onNavigate }) => {
               <div style={{ fontSize: 11, color: ELEMENTS[profile.element], fontWeight: 700, marginBottom: 4 }}>✦ 推荐理由</div>
               <div style={{ fontSize: 13, color: T.textSec, lineHeight: 1.5 }}>{profile.reason}</div>
             </div>
+            <div style={{ marginTop: 10, textAlign: "center", fontSize: 12, color: T.primary, fontWeight: 600, opacity: 0.7 }}>点击查看完整资料 →</div>
           </div>
         </div>
       </div>
@@ -305,6 +311,202 @@ const MatchSuccessScreen = ({ profile, onChat, onContinue }) => (
     <button onClick={onContinue} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.8)", fontSize: 14, cursor: "pointer" }}>继续滑动</button>
   </div>
 );
+
+// ============ PROFILE DETAIL ============
+const ProfileDetailScreen = ({ profile, onBack, onNavigate }) => {
+  const [activeTab, setActiveTab] = useState('info');
+  const d = profile.detail || {};
+  const c = ELEMENTS[profile.element];
+
+  const Section = ({ title, icon, children }) => (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: c, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>{icon} {title}</div>
+      {children}
+    </div>
+  );
+
+  const InfoChip = ({ label, value }) => (
+    <div style={{ flex: "1 0 45%", padding: "10px 12px", borderRadius: 12, background: `${c}08`, border: `1px solid ${c}10` }}>
+      <div style={{ fontSize: 11, color: T.textThi, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{value}</div>
+    </div>
+  );
+
+  return (
+    <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+      {/* Header with back button */}
+      <div style={{ position: "sticky", top: 0, zIndex: 10, padding: "48px 20px 12px", background: T.bg, display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={onBack} style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${T.border}`, background: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
+        <div style={{ flex: 1, fontSize: 17, fontWeight: 700, color: T.text }}>个人资料</div>
+        <Badge color={c} filled>{profile.score}% 匹配</Badge>
+      </div>
+
+      {/* Hero card */}
+      <div style={{ margin: "0 16px 16px", borderRadius: 20, background: "#fff", boxShadow: T.shadowLg, overflow: "hidden" }}>
+        {/* Photo / avatar area */}
+        <div style={{ height: 200, background: `linear-gradient(160deg, ${c}30, ${c}08)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+          <div style={{ fontSize: 100 }}>{profile.photos[0]}</div>
+          {profile.online && <div style={{ position: "absolute", top: 16, left: 16, padding: "4px 12px", borderRadius: 12, background: "rgba(52,211,153,0.15)", color: "#34D399", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34D399" }} />在线</div>}
+          <div style={{ position: "absolute", bottom: 16, right: 16, padding: "4px 12px", borderRadius: 12, background: "rgba(0,0,0,0.4)", color: "#fff", fontSize: 12 }}>📍 {profile.dist}</div>
+        </div>
+        {/* Name & basic */}
+        <div style={{ padding: "16px 20px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 24, fontWeight: 800, color: T.text }}>{profile.name}</span>
+            <span style={{ fontSize: 16, color: T.textSec }}>{profile.age}岁</span>
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+            <Badge color={c} filled>{profile.element}象·{profile.type}</Badge>
+            {d.zodiac && <Badge color="#7C5CFC">{d.zodiac}</Badge>}
+            {d.mbti && <Badge color="#45B7D1">{d.mbti}</Badge>}
+          </div>
+          <div style={{ fontSize: 14, color: T.textSec, lineHeight: 1.7, whiteSpace: "pre-line" }}>{profile.bio}</div>
+        </div>
+      </div>
+
+      {/* Tab switcher */}
+      <div style={{ display: "flex", gap: 4, margin: "0 16px 12px", background: "#fff", borderRadius: 12, padding: 4, boxShadow: T.shadow }}>
+        {[{id: 'info', label: '基本信息'}, {id: 'match', label: '匹配分析'}, {id: 'wuxing', label: '五行对比'}].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              background: activeTab === tab.id ? c : "transparent",
+              color: activeTab === tab.id ? "#fff" : T.textSec,
+              transition: "all 0.2s" }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div style={{ padding: "0 16px 100px", animation: "fadeInUp 0.3s ease-out" }}>
+
+        {activeTab === 'info' && (
+          <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: T.shadow }}>
+            <Section title="基本资料" icon="📋">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {d.bazi && <InfoChip label="八字日主" value={d.bazi} />}
+                {d.height && <InfoChip label="身高" value={d.height} />}
+                {d.job && <InfoChip label="职业" value={d.job} />}
+                {d.edu && <InfoChip label="学校" value={d.edu} />}
+                {d.city && <InfoChip label="所在地" value={d.city} />}
+                {d.zodiac && <InfoChip label="星座" value={d.zodiac} />}
+              </div>
+            </Section>
+
+            {d.hobbies && (
+              <Section title="兴趣爱好" icon="🎯">
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {d.hobbies.map(h => <Badge key={h} color={c}>{h}</Badge>)}
+                </div>
+              </Section>
+            )}
+
+            {d.lifeGoal && (
+              <Section title="人生目标" icon="🌟">
+                <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, padding: "10px 14px", borderRadius: 12, background: `${c}06`, borderLeft: `3px solid ${c}` }}>{d.lifeGoal}</div>
+              </Section>
+            )}
+
+            {d.idealPartner && (
+              <Section title="理想伴侣" icon="💫">
+                <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, padding: "10px 14px", borderRadius: 12, background: `${c}06`, borderLeft: `3px solid ${c}` }}>{d.idealPartner}</div>
+              </Section>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'match' && d.compatibility && (
+          <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: T.shadow }}>
+            {/* Score ring */}
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <div style={{ width: 100, height: 100, borderRadius: "50%", border: `4px solid ${c}`, display: "inline-flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: `${c}08` }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: c }}>{d.compatibility.score}%</div>
+                <div style={{ fontSize: 10, color: T.textSec }}>匹配度</div>
+              </div>
+            </div>
+
+            <Section title="匹配优势" icon="💚">
+              {d.compatibility.strengths.map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: i < d.compatibility.strengths.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#34D39920", color: "#34D399", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>✓</div>
+                  <div style={{ fontSize: 14, color: T.text }}>{s}</div>
+                </div>
+              ))}
+            </Section>
+
+            <Section title="需要关注" icon="💛">
+              {d.compatibility.challenges.map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: i < d.compatibility.challenges.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#FFB34720", color: "#FFB347", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>!</div>
+                  <div style={{ fontSize: 14, color: T.text }}>{s}</div>
+                </div>
+              ))}
+            </Section>
+
+            <div style={{ padding: "12px 14px", borderRadius: 12, background: `${c}08`, border: `1px solid ${c}15`, marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: c, fontWeight: 700, marginBottom: 4 }}>✦ AI推荐理由</div>
+              <div style={{ fontSize: 13, color: T.textSec, lineHeight: 1.6 }}>{profile.reason}</div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'wuxing' && d.wuxing && (
+          <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: T.shadow }}>
+            <Section title={`${profile.name}的五行分布`} icon="☯">
+              <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+                {Object.entries(d.wuxing).map(([k, v]) => {
+                  const colors = { 金: "#FFB347", 木: "#34D399", 水: "#45B7D1", 火: "#FF6B6B", 土: "#A0896B" };
+                  const maxVal = Math.max(...Object.values(d.wuxing));
+                  return (
+                    <div key={k} style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ height: 80, display: "flex", alignItems: "flex-end", justifyContent: "center", marginBottom: 6 }}>
+                        <div style={{ width: "60%", borderRadius: "6px 6px 0 0", background: `${colors[k]}`, height: `${(v / maxVal) * 100}%`, minHeight: 8, transition: "height 0.5s ease" }} />
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: colors[k] }}>{k}</div>
+                      <div style={{ fontSize: 11, color: T.textThi }}>{v}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
+
+            <Section title="你的五行分布" icon="✦">
+              <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+                {Object.entries({ 金: 3, 木: 1, 水: 1, 火: 2, 土: 1 }).map(([k, v]) => {
+                  const colors = { 金: "#FFB347", 木: "#34D399", 水: "#45B7D1", 火: "#FF6B6B", 土: "#A0896B" };
+                  return (
+                    <div key={k} style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ height: 80, display: "flex", alignItems: "flex-end", justifyContent: "center", marginBottom: 6 }}>
+                        <div style={{ width: "60%", borderRadius: "6px 6px 0 0", background: `${colors[k]}`, height: `${(v / 3) * 100}%`, minHeight: 8, transition: "height 0.5s ease" }} />
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: colors[k] }}>{k}</div>
+                      <div style={{ fontSize: 11, color: T.textThi }}>{v}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
+
+            <div style={{ padding: "12px 14px", borderRadius: 12, background: "#f8f8f5", textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: T.textSec, lineHeight: 1.7 }}>
+                TA以<span style={{ fontWeight: 700, color: ELEMENTS[profile.element] }}>{profile.element}</span>为主 × 你以<span style={{ fontWeight: 700, color: "#FFB347" }}>金</span>为主
+                <br />关系类型：<span style={{ fontWeight: 700, color: c }}>{profile.type}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom action bar */}
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 375, padding: "12px 20px 28px", background: "linear-gradient(transparent, #fff 20%)", display: "flex", gap: 12 }}>
+        <button onClick={onBack}
+          style={{ flex: 1, padding: "14px 0", borderRadius: 28, border: `2px solid ${T.border}`, background: "#fff", fontSize: 20, cursor: "pointer", color: "#FF6B6B" }}>✕ 跳过</button>
+        <button onClick={() => onNavigate(S.CHAT, { friend: { ...profile, avatar: profile.photos[0], lastMsg: "", unread: 0 } })}
+          style={{ flex: 2, padding: "14px 0", borderRadius: 28, border: "none", background: `linear-gradient(135deg, #34D399, #6EE7B7)`, fontSize: 15, fontWeight: 700, cursor: "pointer", color: "#fff", boxShadow: "0 4px 14px rgba(52,211,153,0.3)", letterSpacing: 1 }}>♥ 喜欢并发消息</button>
+      </div>
+    </div>
+  );
+};
 
 // ============ DISCOVER ============
 const DiscoverScreen = ({ onNavigate }) => (
@@ -699,6 +901,7 @@ export default function YuanHe() {
       case S.CARD_DETAIL: return <CardDetailScreen ci={data.ci} onBack={back} />;
       case S.DAILY: return <DailyScreen onBack={back} />;
       case S.TASKS: return <TasksScreen onBack={back} />;
+      case S.PROFILE_DETAIL: return <ProfileDetailScreen profile={data.profile} onBack={back} onNavigate={nav} />;
       default: return <HomeScreen onNavigate={nav} />;
     }
   };
