@@ -414,30 +414,32 @@ const BlacklistScreen = ({ onBack, blocked, onUnblock }) => (
   </div>
 );
 
-// ============ HOME — HYBRID: CARD SWIPE + DESTINY WHEEL ============
-const WuxingRing = ({ size = 120, spin = false, highlight = null }) => {
+// ============ WUXING ENERGY RING ============
+const WuxingRing = ({ size = 120, spin = false, highlight = null, glow = false }) => {
   const els = [
     { n: "金", c: "#F4C542", a: 0 }, { n: "水", c: "#45B7D1", a: 72 },
     { n: "木", c: "#34D399", a: 144 }, { n: "火", c: "#FF6B6B", a: 216 }, { n: "土", c: "#A0896B", a: 288 },
   ];
-  const r = size / 2, ir = r * 0.68;
+  const r = size / 2, ir = r * 0.58;
   return (
-    <div style={{ width: size, height: size, position: "relative", flexShrink: 0 }}>
+    <div style={{ width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ animation: spin ? "wuxingSpin 8s linear infinite" : "none" }}>
-        {els.map((e, i) => {
+        {els.map(e => {
           const a1 = (e.a - 36) * Math.PI / 180, a2 = (e.a + 36) * Math.PI / 180;
-          const x1 = r + r * 0.92 * Math.cos(a1), y1 = r + r * 0.92 * Math.sin(a1);
-          const x2 = r + r * 0.92 * Math.cos(a2), y2 = r + r * 0.92 * Math.sin(a2);
+          const ox = r * 0.92;
+          const x1 = r + ox * Math.cos(a1), y1 = r + ox * Math.sin(a1);
+          const x2 = r + ox * Math.cos(a2), y2 = r + ox * Math.sin(a2);
           const x3 = r + ir * Math.cos(a2), y3 = r + ir * Math.sin(a2);
           const x4 = r + ir * Math.cos(a1), y4 = r + ir * Math.sin(a1);
-          const isHi = highlight === e.n;
+          const hi = highlight === e.n;
           return (
             <g key={e.n}>
-              <path d={`M${x1},${y1} A${r*0.92},${r*0.92} 0 0,1 ${x2},${y2} L${x3},${y3} A${ir},${ir} 0 0,0 ${x4},${y4} Z`}
-                fill={isHi ? e.c : `${e.c}30`} stroke={e.c} strokeWidth={isHi ? 2 : 0.5} style={{ transition: "all 0.5s" }} />
-              <text x={r + (r * 0.8) * Math.cos(e.a * Math.PI / 180)} y={r + (r * 0.8) * Math.sin(e.a * Math.PI / 180)}
-                textAnchor="middle" dominantBaseline="central" fontSize={size > 80 ? 13 : 10} fontWeight={isHi ? 700 : 500}
-                fill={isHi ? "#fff" : e.c} style={{ transition: "all 0.5s" }}>{e.n}</text>
+              <path d={`M${x1},${y1} A${ox},${ox} 0 0,1 ${x2},${y2} L${x3},${y3} A${ir},${ir} 0 0,0 ${x4},${y4} Z`}
+                fill={hi ? e.c : `${e.c}18`} stroke={hi ? e.c : `${e.c}40`} strokeWidth={hi ? 2.5 : 0.5}
+                style={{ transition: "all 0.5s", filter: hi && glow ? `drop-shadow(0 0 ${size/8}px ${e.c})` : "none" }} />
+              <text x={r + (r * 0.76) * Math.cos(e.a * Math.PI / 180)} y={r + (r * 0.76) * Math.sin(e.a * Math.PI / 180)}
+                textAnchor="middle" dominantBaseline="central" fontSize={size > 60 ? 13 : 10} fontWeight={hi ? 800 : 400}
+                fill={hi ? "#fff" : `${e.c}60`} style={{ transition: "all 0.5s" }}>{e.n}</text>
             </g>
           );
         })}
@@ -446,140 +448,160 @@ const WuxingRing = ({ size = 120, spin = false, highlight = null }) => {
   );
 };
 
-const DestinyWheel = ({ profiles, onResult }) => {
-  const [phase, setPhase] = useState("idle"); // idle | spinning | result
+// ============ CASINO DESTINY WHEEL (full overlay) ============
+const CasinoWheel = ({ profiles, onResult, onClose }) => {
+  const [phase, setPhase] = useState("ready");
   const [rotation, setRotation] = useState(0);
   const [resultIdx, setResultIdx] = useState(-1);
+  const [tick, setTick] = useState(0);
   const count = profiles.length;
   const sliceAngle = 360 / count;
+  const SEG_COLORS = ["#FF6B6B","#FFB347","#34D399","#45B7D1","#7C5CFC","#FF8A9B","#F4C542","#A0896B"];
+
+  useEffect(() => {
+    if (phase === "spinning" || phase === "result") {
+      const iv = setInterval(() => setTick(t => t + 1), phase === "spinning" ? 120 : 500);
+      return () => clearInterval(iv);
+    }
+  }, [phase]);
 
   const spin = () => {
-    if (phase !== "idle") return;
+    if (phase !== "ready") return;
     setPhase("spinning");
-    const targetIdx = Math.floor(Math.random() * count);
-    const spins = 1080 + Math.random() * 360;
-    setRotation(r => r - spins - targetIdx * sliceAngle);
-    setTimeout(() => {
-      setPhase("result");
-      setResultIdx(targetIdx);
-    }, 3000);
+    const ti = Math.floor(Math.random() * count);
+    const sp = 1440 + Math.random() * 720;
+    setRotation(r => r - sp - ti * sliceAngle + sliceAngle / 2);
+    setTimeout(() => { setPhase("result"); setResultIdx(ti); }, 4200);
   };
 
-  const dismiss = () => { setPhase("idle"); setResultIdx(-1); };
+  const res = resultIdx >= 0 ? profiles[resultIdx] : null;
+  const W = 290, cx = W / 2;
 
   return (
-    <div style={{ textAlign: "center" }}>
-      {phase === "idle" && (
-        <div onClick={spin} style={{ cursor: "pointer", padding: "10px 0" }}>
-          <div style={{ position: "relative", width: 130, height: 130, margin: "0 auto" }}>
-            {/* Mini pointer */}
-            <div style={{ position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "10px solid #FF6B6B", zIndex: 5 }} />
-            <div style={{
-              width: 130, height: 130, borderRadius: "50%", position: "relative",
-              transform: `rotate(${rotation}deg)`, transition: "transform 3s cubic-bezier(0.15,0.85,0.25,1)",
-            }}>
-              {profiles.slice(0, 8).map((p, i) => {
-                const a = i * sliceAngle;
-                return (
-                  <div key={p.id} style={{
-                    position: "absolute", left: "50%", top: "50%", width: 32, height: 32, marginLeft: -16, marginTop: -16,
-                    transform: `rotate(${a}deg) translateY(-42px) rotate(${-a - rotation}deg)`,
-                    transition: "transform 3s cubic-bezier(0.15,0.85,0.25,1)",
-                  }}>
-                    <div style={{
-                      width: 32, height: 32, borderRadius: "50%", background: `${ELEMENTS[p.element]}20`,
-                      border: `2px solid ${ELEMENTS[p.element]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
-                    }}>{p.photos[0]}</div>
-                  </div>
-                );
-              })}
-              {/* Center */}
-              <div style={{
-                position: "absolute", left: "50%", top: "50%", width: 44, height: 44, marginLeft: -22, marginTop: -22,
-                borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B, #FFB347)",
-                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3,
-                transform: `rotate(${-rotation}deg)`, transition: "transform 3s cubic-bezier(0.15,0.85,0.25,1)",
-                boxShadow: "0 2px 12px rgba(255,107,107,0.3)",
-              }}>
-                <span style={{ color: "#fff", fontSize: 16, fontWeight: 700 }}>缘</span>
-              </div>
-            </div>
-          </div>
-          <div style={{ fontSize: 12, color: T.primary, fontWeight: 600, marginTop: 6 }}>点击转动 · 今日天命匹配</div>
+    <div style={{ position: "absolute", inset: 0, zIndex: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(8,4,18,0.94)", animation: "fadeInUp 0.3s ease-out" }}>
+      <button onClick={onClose} style={{ position: "absolute", top: 48, right: 16, background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 22, cursor: "pointer", zIndex: 10 }}>✕</button>
+
+      <div style={{ marginBottom: 12, textAlign: "center" }}>
+        <div style={{ fontSize: 10, letterSpacing: 5, color: "#F4C542", fontWeight: 700 }}>DESTINY WHEEL</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: "#fff", marginTop: 4 }}>天命转轮</div>
+      </div>
+
+      <div style={{ position: "relative", width: W + 48, height: W + 48 }}>
+        {/* Light bulbs around rim */}
+        {Array.from({ length: 20 }).map((_, i) => {
+          const a = (i * 18) * Math.PI / 180;
+          const dr = (W + 40) / 2;
+          const on = tick % 2 === (i % 2);
+          return <div key={i} style={{
+            position: "absolute",
+            left: 24 + cx + dr * Math.cos(a) - 5,
+            top: 24 + cx + dr * Math.sin(a) - 5,
+            width: 10, height: 10, borderRadius: "50%",
+            background: on ? "#F4C542" : "#F4C54225",
+            boxShadow: on ? "0 0 6px 2px #F4C54280" : "none",
+            transition: "all 0.1s",
+          }} />;
+        })}
+
+        {/* Gold border ring */}
+        <div style={{ position: "absolute", inset: 16, borderRadius: "50%", border: "4px solid #F4C54260", boxShadow: phase !== "ready" ? "0 0 40px #F4C54230, inset 0 0 40px #F4C54210" : "none" }} />
+
+        {/* Pointer */}
+        <div style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", zIndex: 20 }}>
+          <div style={{ width: 0, height: 0, borderLeft: "15px solid transparent", borderRight: "15px solid transparent", borderTop: "28px solid #F4C542", filter: "drop-shadow(0 3px 6px rgba(244,197,66,0.6))" }} />
+        </div>
+
+        {/* Wheel SVG */}
+        <svg width={W} height={W} viewBox={`0 0 ${W} ${W}`}
+          style={{ position: "absolute", top: 24, left: 24,
+            transform: `rotate(${rotation}deg)`,
+            transition: phase === "spinning" ? "transform 4.2s cubic-bezier(0.12,0.8,0.18,1)" : "none",
+          }}>
+          {profiles.slice(0, count).map((p, i) => {
+            const a1r = (i * sliceAngle - 90) * Math.PI / 180;
+            const a2r = ((i + 1) * sliceAngle - 90) * Math.PI / 180;
+            const R = cx - 2;
+            const x1 = cx + R * Math.cos(a1r), y1 = cx + R * Math.sin(a1r);
+            const x2 = cx + R * Math.cos(a2r), y2 = cx + R * Math.sin(a2r);
+            const midA = i * sliceAngle + sliceAngle / 2 - 90;
+            const mx = cx + R * 0.55 * Math.cos(midA * Math.PI / 180);
+            const my = cx + R * 0.55 * Math.sin(midA * Math.PI / 180);
+            return (
+              <g key={p.id}>
+                <path d={`M${cx},${cx} L${x1},${y1} A${R},${R} 0 0,1 ${x2},${y2} Z`}
+                  fill={SEG_COLORS[i % SEG_COLORS.length]} stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
+                <text x={mx} y={my - 8} textAnchor="middle" dominantBaseline="central"
+                  fontSize="26" transform={`rotate(${midA + 90},${mx},${my - 4})`}>{p.photos[0]}</text>
+                <text x={mx} y={my + 14} textAnchor="middle" dominantBaseline="central"
+                  fontSize="9" fontWeight="700" fill="#fff"
+                  transform={`rotate(${midA + 90},${mx},${my + 14})`}>{p.name}</text>
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Center hub */}
+        <div onClick={spin} style={{
+          position: "absolute", top: 24 + cx - 38, left: 24 + cx - 38, width: 76, height: 76, borderRadius: "50%", zIndex: 10,
+          background: phase === "spinning" ? "linear-gradient(135deg, #F4C542, #FF6B6B)" : "linear-gradient(135deg, #1a1028, #2a1a40)",
+          border: "5px solid #F4C542", cursor: phase === "ready" ? "pointer" : "default",
+          boxShadow: "0 0 24px rgba(244,197,66,0.5), inset 0 2px 12px rgba(0,0,0,0.4)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        }}>
+          {phase === "ready" && <><div style={{ fontSize: 20, color: "#F4C542", fontWeight: 800 }}>缘</div><div style={{ fontSize: 8, color: "#F4C54280", fontWeight: 700, letterSpacing: 2 }}>SPIN</div></>}
+          {phase === "spinning" && <div style={{ fontSize: 24, animation: "wuxingSpin 0.6s linear infinite" }}>✦</div>}
+          {phase === "result" && <div style={{ fontSize: 24, color: "#F4C542" }}>★</div>}
+        </div>
+      </div>
+
+      {/* Bottom area */}
+      {phase === "ready" && (
+        <div style={{ marginTop: 16, textAlign: "center" }}>
+          <button onClick={spin} style={{ padding: "14px 44px", borderRadius: 28, border: "2px solid #F4C542", background: "linear-gradient(135deg, #F4C54220, #FFB34710)", color: "#F4C542", fontSize: 17, fontWeight: 800, cursor: "pointer", letterSpacing: 3, animation: "pulse 2s infinite", boxShadow: "0 0 24px #F4C54220" }}>
+            转动命运
+          </button>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>每日一次 · 天命难违</div>
         </div>
       )}
 
       {phase === "spinning" && (
-        <div style={{ padding: "10px 0" }}>
-          <div style={{ position: "relative", width: 130, height: 130, margin: "0 auto" }}>
-            <div style={{ position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "10px solid #FF6B6B", zIndex: 5 }} />
-            <div style={{
-              width: 130, height: 130, borderRadius: "50%", position: "relative",
-              transform: `rotate(${rotation}deg)`, transition: "transform 3s cubic-bezier(0.15,0.85,0.25,1)",
-            }}>
-              {profiles.slice(0, 8).map((p, i) => {
-                const a = i * sliceAngle;
-                return (
-                  <div key={p.id} style={{
-                    position: "absolute", left: "50%", top: "50%", width: 32, height: 32, marginLeft: -16, marginTop: -16,
-                    transform: `rotate(${a}deg) translateY(-42px) rotate(${-a - rotation}deg)`,
-                    transition: "transform 3s cubic-bezier(0.15,0.85,0.25,1)",
-                  }}>
-                    <div style={{
-                      width: 32, height: 32, borderRadius: "50%", background: `${ELEMENTS[p.element]}20`,
-                      border: `2px solid ${ELEMENTS[p.element]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
-                    }}>{p.photos[0]}</div>
-                  </div>
-                );
-              })}
-              <div style={{
-                position: "absolute", left: "50%", top: "50%", width: 44, height: 44, marginLeft: -22, marginTop: -22,
-                borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B, #FFB347)",
-                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3,
-                transform: `rotate(${-rotation}deg)`, transition: "transform 3s cubic-bezier(0.15,0.85,0.25,1)",
-              }}>
-                <span style={{ color: "#fff", fontSize: 14 }}>✨</span>
-              </div>
-            </div>
-          </div>
-          <div style={{ fontSize: 12, color: T.textThi, marginTop: 6 }}>缘分转动中...</div>
-        </div>
+        <div style={{ marginTop: 16, fontSize: 15, color: "#F4C542", fontWeight: 700, letterSpacing: 3, animation: "pulse 1s infinite" }}>缘分转动中...</div>
       )}
 
-      {phase === "result" && resultIdx >= 0 && (() => {
-        const p = profiles[resultIdx];
-        return (
-          <div style={{ animation: "fadeInUp 0.4s ease-out" }}>
-            <div style={{ padding: 14, borderRadius: 16, background: `linear-gradient(135deg, ${ELEMENTS[p.element]}12, ${ELEMENTS[p.element]}04)`, border: `2px solid ${ELEMENTS[p.element]}30` }}>
-              <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, letterSpacing: 2, marginBottom: 8 }}>今日天命匹配</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${ELEMENTS[p.element]}20`, border: `2px solid ${ELEMENTS[p.element]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, animation: "pulse 2s infinite" }}>{p.photos[0]}</div>
-                <div style={{ flex: 1, textAlign: "left" }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{p.name}，{p.age}</div>
-                  <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                    <span style={{ padding: "2px 8px", borderRadius: 8, fontSize: 10, fontWeight: 600, background: `${ELEMENTS[p.element]}15`, color: ELEMENTS[p.element] }}>{p.element}象</span>
-                    <span style={{ padding: "2px 8px", borderRadius: 8, fontSize: 10, fontWeight: 600, background: `${T.primary}15`, color: T.primary }}>{p.score}% 缘分</span>
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                <button onClick={dismiss} style={{ flex: 1, padding: "8px 0", borderRadius: 14, border: `1px solid ${T.border}`, background: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", color: T.textSec }}>下次再说</button>
-                <button onClick={() => { dismiss(); onResult(p); }} style={{ flex: 1, padding: "8px 0", borderRadius: 14, border: "none", background: ELEMENTS[p.element], fontSize: 12, fontWeight: 700, cursor: "pointer", color: "#fff" }}>查看 TA</button>
+      {phase === "result" && res && (
+        <div style={{ marginTop: 16, width: 300, padding: 18, borderRadius: 20, textAlign: "center",
+          background: "linear-gradient(135deg, #F4C54218, #FF6B6B10)", border: "1px solid #F4C54230",
+          animation: "fadeInUp 0.5s ease-out", boxShadow: "0 8px 40px #F4C54220",
+        }}>
+          <div style={{ fontSize: 10, letterSpacing: 4, color: "#F4C542", fontWeight: 700, marginBottom: 10 }}>TODAY'S FATED MATCH</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, justifyContent: "center", marginBottom: 14 }}>
+            <div style={{ width: 58, height: 58, borderRadius: "50%", background: `${ELEMENTS[res.element]}30`, border: `3px solid ${ELEMENTS[res.element]}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, boxShadow: `0 0 20px ${ELEMENTS[res.element]}50` }}>{res.photos[0]}</div>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 19, fontWeight: 700, color: "#fff" }}>{res.name}，{res.age}</div>
+              <div style={{ display: "flex", gap: 4, marginTop: 5 }}>
+                <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600, background: `${ELEMENTS[res.element]}30`, color: ELEMENTS[res.element] }}>{res.element}象</span>
+                <span style={{ padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "#FF6B6B25", color: "#FF6B6B" }}>{res.score}%</span>
               </div>
             </div>
           </div>
-        );
-      })()}
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>返回</button>
+            <button onClick={() => onResult(res)} style={{ flex: 1, padding: "12px 0", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #F4C542, #FFB347)", color: "#1a1028", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px #F4C54240" }}>查看 TA ★</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
+// ============ HOME — CARD SWIPE + CASINO WHEEL TRIGGER ============
 const HomeScreen = ({ onNavigate }) => {
   const [ci, setCi] = useState(0);
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [exiting, setExiting] = useState(null);
   const [matched, setMatched] = useState(false);
+  const [showWheel, setShowWheel] = useState(false);
   const [destinyUsed, setDestinyUsed] = useState(false);
   const startX = useRef(0);
   const profile = MATCH_PROFILES[ci];
@@ -591,15 +613,14 @@ const HomeScreen = ({ onNavigate }) => {
     if (Math.abs(offset) > 80) {
       const dir = offset > 0 ? "right" : "left";
       setExiting(dir);
-      if (dir === "right" && ci === 0) {
-        setTimeout(() => { setMatched(true); }, 400);
-      } else {
-        setTimeout(() => { setCi(i => Math.min(i + 1, MATCH_PROFILES.length - 1)); setExiting(null); setOffset(0); }, 400);
-      }
+      if (dir === "right" && ci === 0) { setTimeout(() => setMatched(true), 400); }
+      else { setTimeout(() => { setCi(i => Math.min(i + 1, MATCH_PROFILES.length - 1)); setExiting(null); setOffset(0); }, 400); }
     } else { setOffset(0); }
   };
 
-  if (matched) return <MatchSuccessScreen profile={MATCH_PROFILES[ci] || MATCH_PROFILES[0]} onChat={() => { setMatched(false); const mp = MATCH_PROFILES[ci] || MATCH_PROFILES[0]; onNavigate(S.CHAT, { friend: { ...mp, avatar: mp.photos[0], lastMsg: "", unread: 0 } }); }} onContinue={() => { setMatched(false); setCi(i => Math.min(i + 1, MATCH_PROFILES.length - 1)); setExiting(null); setOffset(0); }} />;
+  if (matched) return <MatchSuccessScreen profile={MATCH_PROFILES[ci] || MATCH_PROFILES[0]}
+    onChat={() => { setMatched(false); const mp = MATCH_PROFILES[ci] || MATCH_PROFILES[0]; onNavigate(S.CHAT, { friend: { ...mp, avatar: mp.photos[0], lastMsg: "", unread: 0 } }); }}
+    onContinue={() => { setMatched(false); setCi(i => Math.min(i + 1, MATCH_PROFILES.length - 1)); setExiting(null); setOffset(0); }} />;
 
   if (!profile) return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: T.bg, padding: 32, paddingBottom: 68 }}>
@@ -609,34 +630,29 @@ const HomeScreen = ({ onNavigate }) => {
     </div>
   );
 
-  const rot = offset * 0.05;
-  const opa = Math.min(Math.abs(offset) / 100, 1);
+  const rot = offset * 0.05, opa = Math.min(Math.abs(offset) / 100, 1);
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg, paddingBottom: 68 }}>
-      {/* Header with energy ring */}
-      <div style={{ padding: "44px 16px 0", display: "flex", alignItems: "center", gap: 12 }}>
-        <WuxingRing size={42} highlight={profile.element} />
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg, paddingBottom: 68, position: "relative" }}>
+      {/* Header with wuxing ring (reacts to current card) */}
+      <div style={{ padding: "44px 16px 6px", display: "flex", alignItems: "center", gap: 10 }}>
+        <WuxingRing size={44} highlight={profile.element} glow />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: T.primary }}>缘合</div>
-          <div style={{ fontSize: 11, color: T.textThi }}>今日{profile.element}象能量活跃</div>
+          <div style={{ fontSize: 11, color: T.textThi }}>今日<span style={{ color: ELEMENTS[profile.element], fontWeight: 700 }}>{profile.element}</span>象能量活跃</div>
         </div>
+        {!destinyUsed && (
+          <button onClick={() => setShowWheel(true)} style={{ padding: "7px 14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #1a1028, #2a1a40)", color: "#F4C542", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, boxShadow: "0 2px 10px rgba(244,197,66,0.2)", animation: "pulse 2.5s infinite" }}>
+            ★ 天命轮
+          </button>
+        )}
         <button onClick={() => onNavigate(S.CARDS)} style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${T.border}`, background: "#fff", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✦</button>
         <button onClick={() => onNavigate(S.DAILY)} style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${T.border}`, background: "#fff", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>📅</button>
       </div>
 
-      {/* Destiny wheel (collapsible, once per day) */}
-      {!destinyUsed && (
-        <div style={{ margin: "6px 16px 0", padding: "4px 12px 8px", borderRadius: 16, background: "#fff", boxShadow: T.shadow }}>
-          <DestinyWheel profiles={MATCH_PROFILES} onResult={(p) => { setDestinyUsed(true); onNavigate(S.PROFILE_DETAIL, { profile: p }); }} />
-        </div>
-      )}
-
       {/* Card stack */}
-      <div style={{ flex: 1, position: "relative", margin: destinyUsed ? "8px 16px 0" : "6px 16px 0", perspective: 800, minHeight: 0 }}>
-        {ci + 1 < MATCH_PROFILES.length && (
-          <div style={{ position: "absolute", inset: 6, borderRadius: 20, background: "#fff", boxShadow: T.shadow, transform: "scale(0.96)", opacity: 0.5 }} />
-        )}
+      <div style={{ flex: 1, position: "relative", margin: "6px 16px 0", perspective: 800, minHeight: 0 }}>
+        {ci + 1 < MATCH_PROFILES.length && <div style={{ position: "absolute", inset: 6, borderRadius: 20, background: "#fff", boxShadow: T.shadow, transform: "scale(0.96)", opacity: 0.5 }} />}
         <div
           onMouseDown={e => onStart(e.clientX)} onMouseMove={e => dragging && onMove(e.clientX)}
           onMouseUp={onEnd} onMouseLeave={() => dragging && onEnd()}
@@ -646,22 +662,17 @@ const HomeScreen = ({ onNavigate }) => {
             transform: exiting ? `translateX(${exiting === "right" ? 400 : -400}px) rotate(${exiting === "right" ? 20 : -20}deg)` : `translateX(${offset}px) rotate(${rot}deg)`,
             transition: dragging ? "none" : "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
             cursor: "grab", userSelect: "none", overflow: "hidden", display: "flex", flexDirection: "column",
-          }}
-        >
+          }}>
           {offset > 20 && <div style={{ position: "absolute", top: 20, left: 20, padding: "6px 16px", borderRadius: 8, border: "3px solid #34D399", color: "#34D399", fontSize: 20, fontWeight: 800, transform: "rotate(-15deg)", opacity: opa, zIndex: 10, letterSpacing: 2 }}>LIKE</div>}
           {offset < -20 && <div style={{ position: "absolute", top: 20, right: 20, padding: "6px 16px", borderRadius: 8, border: "3px solid #FF6B6B", color: "#FF6B6B", fontSize: 20, fontWeight: 800, transform: "rotate(15deg)", opacity: opa, zIndex: 10, letterSpacing: 2 }}>NOPE</div>}
-
-          {/* Photo */}
           <div style={{ flex: 1, background: `linear-gradient(135deg, ${ELEMENTS[profile.element]}25, ${ELEMENTS[profile.element]}08)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", minHeight: 0 }}>
-            <div style={{ fontSize: destinyUsed ? 90 : 72 }}>{profile.photos[0]}</div>
+            <div style={{ fontSize: 90 }}>{profile.photos[0]}</div>
             <div style={{ position: "absolute", top: 12, right: 12, padding: "5px 12px", borderRadius: 16, background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: 5 }}>
               <span style={{ color: T.primary, fontWeight: 800, fontSize: 15 }}>{profile.score}%</span>
               <span style={{ color: T.textThi, fontSize: 10 }}>匹配</span>
             </div>
             {profile.online && <div style={{ position: "absolute", top: 12, left: 12, padding: "3px 10px", borderRadius: 10, background: "rgba(52,211,153,0.15)", color: "#34D399", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 5, height: 5, borderRadius: "50%", background: "#34D399" }} />在线</div>}
           </div>
-
-          {/* Info */}
           <div onClick={() => { if (Math.abs(offset) < 5) onNavigate(S.PROFILE_DETAIL, { profile }); }} style={{ padding: "12px 16px 16px", cursor: "pointer" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 20, fontWeight: 700, color: T.text }}>{profile.name}，{profile.age}</span>
@@ -685,13 +696,18 @@ const HomeScreen = ({ onNavigate }) => {
         <button onClick={() => { setExiting("right"); if (ci === 0) { setTimeout(() => setMatched(true), 400); } else { setTimeout(() => { setCi(i => i + 1); setExiting(null); setOffset(0); }, 400); } }}
           style={{ width: 52, height: 52, borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #34D399, #6EE7B7)", fontSize: 22, cursor: "pointer", boxShadow: "0 4px 14px rgba(52,211,153,0.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>♥</button>
       </div>
+
+      {/* Casino wheel overlay */}
+      {showWheel && <CasinoWheel profiles={MATCH_PROFILES}
+        onResult={p => { setShowWheel(false); setDestinyUsed(true); onNavigate(S.PROFILE_DETAIL, { profile: p }); }}
+        onClose={() => setShowWheel(false)} />}
     </div>
   );
 };
 
-// ============ MATCH SUCCESS (with wheel animation) ============
+// ============ MATCH SUCCESS (with wuxing alignment) ============
 const MatchSuccessScreen = ({ profile, onChat, onContinue }) => {
-  const [phase, setPhase] = useState(0); // 0=wheel align, 1=reveal
+  const [phase, setPhase] = useState(0);
   useEffect(() => { const t = setTimeout(() => setPhase(1), 1200); return () => clearTimeout(t); }, []);
   const ec = ELEMENTS[profile.element];
   return (
@@ -699,7 +715,7 @@ const MatchSuccessScreen = ({ profile, onChat, onContinue }) => {
       {phase === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ position: "relative", width: 160, height: 160, marginBottom: 20 }}>
-            <WuxingRing size={160} spin highlight={profile.element} />
+            <WuxingRing size={160} spin highlight={profile.element} glow />
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div style={{ width: 50, height: 50, borderRadius: "50%", background: "rgba(255,255,255,0.3)", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>{profile.photos[0]}</div>
             </div>
@@ -723,7 +739,7 @@ const MatchSuccessScreen = ({ profile, onChat, onContinue }) => {
             </div>
           </div>
           <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 24 }}>
-            {["金", "木", "水", "火", "土"].map(e => (
+            {["金","木","水","火","土"].map(e => (
               <div key={e} style={{ width: 28, height: 28, borderRadius: "50%", background: e === profile.element ? ELEMENTS[e] : "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: e === profile.element ? "#fff" : "rgba(255,255,255,0.4)", fontWeight: 600, border: e === profile.element ? "2px solid #fff" : "none" }}>{e}</div>
             ))}
           </div>
