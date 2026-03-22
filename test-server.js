@@ -99,7 +99,7 @@ async function callLLM(systemPrompt, userMessage) {
 
 function calculateEngine(mode, profile, displayMode, ctxOptions) {
   const ctx = aiService.createContext(ctxOptions || {});
-  return aiService.calculateAll(mode, profile, ctx, { displayMode: displayMode || 'simple' });
+  return aiService.calculateAll(mode, profile, ctx, { displayMode: displayMode || 'simple', ...(ctxOptions || {}) });
 }
 
 async function handleDivination(mode, profile, question, displayMode, ctxOptions) {
@@ -141,15 +141,23 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // API：塔罗牌组（前端用于展示选牌界面）
+  if (parsedUrl.pathname === '/api/tarot/deck') {
+    const tarotDeck = require('./src/engines/tarot').DECK;
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(tarotDeck.map(c => ({ id: c.id, zh: c.zh, en: c.en, type: c.type }))));
+    return;
+  }
+
   // API：仅计算引擎（不调 LLM）
   if (parsedUrl.pathname === '/api/calculate' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', () => {
       try {
-        const { mode, year, month, day, hour, displayMode, city, latitude, longitude } = JSON.parse(body);
+        const { mode, year, month, day, hour, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType } = JSON.parse(body);
         const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour) };
-        const data = calculateEngine(mode, profile, displayMode || 'simple', { city, latitude, longitude });
+        const data = calculateEngine(mode, profile, displayMode || 'simple', { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType });
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ mode, displayMode: displayMode || 'simple', engineData: data }));
       } catch (e) {
@@ -166,9 +174,9 @@ const server = http.createServer(async (req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
-        const { mode, year, month, day, hour, question, displayMode, city, latitude, longitude } = JSON.parse(body);
+        const { mode, year, month, day, hour, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType } = JSON.parse(body);
         const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour) };
-        const ctxOptions = { city, latitude, longitude };
+        const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType };
         // 空问题或默认问题 → 全面分析；有具体问题 → 聚焦分析
         const result = await handleDivination(mode, profile, question || '', displayMode || 'simple', ctxOptions);
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });

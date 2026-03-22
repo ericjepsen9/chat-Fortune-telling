@@ -97,8 +97,62 @@
       </div>
     </div>
 
+    <!-- 塔罗牌选牌面板（仅tarot模式显示） -->
+    <div id="tarotPanel" style="display:none;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;color:#4ECDC4;margin-bottom:8px">✦ 选择3张牌（点击翻牌）</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div class="tarot-slot" id="slot0" onclick="openCardPicker(0)" style="flex:1;height:100px;border-radius:12px;border:2px dashed #4ECDC450;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#4ECDC408;transition:all 0.2s">
+          <div style="font-size:20px;margin-bottom:4px">🂠</div>
+          <div style="font-size:11px;color:#4ECDC4;font-weight:600">过去</div>
+        </div>
+        <div class="tarot-slot" id="slot1" onclick="openCardPicker(1)" style="flex:1;height:100px;border-radius:12px;border:2px dashed #4ECDC450;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#4ECDC408;transition:all 0.2s">
+          <div style="font-size:20px;margin-bottom:4px">🂠</div>
+          <div style="font-size:11px;color:#4ECDC4;font-weight:600">现在</div>
+        </div>
+        <div class="tarot-slot" id="slot2" onclick="openCardPicker(2)" style="flex:1;height:100px;border-radius:12px;border:2px dashed #4ECDC450;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#4ECDC408;transition:all 0.2s">
+          <div style="font-size:20px;margin-bottom:4px">🂠</div>
+          <div style="font-size:11px;color:#4ECDC4;font-weight:600">未来</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button onclick="randomTarot()" style="padding:8px 14px;border-radius:8px;border:1px solid #4ECDC4;background:#fff;color:#4ECDC4;font-size:12px;font-weight:600;cursor:pointer">🎲 随机抽牌</button>
+        <button onclick="clearTarot()" style="padding:8px 14px;border-radius:8px;border:1px solid #e5e5e0;background:#fff;color:#9ca3af;font-size:12px;cursor:pointer">清空重选</button>
+        <span id="tarotStatus" style="font-size:11px;color:#9ca3af;margin-left:auto">已选 0/3</span>
+      </div>
+      <!-- 牌库弹出层 -->
+      <div id="cardPicker" style="display:none;margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid #e5e5e0;border-radius:12px;padding:8px;background:#fff">
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:6px" id="pickerTitle">选择一张牌：</div>
+        <div id="pickerGrid" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      </div>
+    </div>
+
+    <!-- 梅花易数起卦面板（仅meihua模式显示） -->
+    <div id="meihuaPanel" style="display:none;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;color:#FFB347;margin-bottom:8px">❀ 起卦方式</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button id="mhTimeBtn" onclick="setMeihuaMode('time')" style="flex:1;padding:10px;border-radius:10px;border:2px solid #FFB347;background:#FFB347;color:#fff;font-size:12px;font-weight:600;cursor:pointer">⏰ 时间起卦<br><span style="font-weight:400;font-size:10px;opacity:0.8">自动·当前时辰</span></button>
+        <button id="mhNumBtn" onclick="setMeihuaMode('number')" style="flex:1;padding:10px;border-radius:10px;border:2px solid #e5e5e0;background:#fff;color:#6b7280;font-size:12px;font-weight:600;cursor:pointer">🔢 数字起卦<br><span style="font-weight:400;font-size:10px;opacity:0.8">手动/随机报数</span></button>
+      </div>
+      <div id="mhNumberInputs" style="display:none">
+        <div style="display:flex;gap:8px;align-items:end">
+          <label style="flex:1;font-size:12px;color:#6b7280;font-weight:600">
+            第一个数（上卦）
+            <input type="number" id="mhNum1" min="1" max="999" style="width:100%;padding:10px;border-radius:10px;border:1px solid #e5e5e0;font-size:16px;font-weight:700;text-align:center;margin-top:4px" placeholder="1-999">
+          </label>
+          <label style="flex:1;font-size:12px;color:#6b7280;font-weight:600">
+            第二个数（下卦，可选）
+            <input type="number" id="mhNum2" min="1" max="999" style="width:100%;padding:10px;border-radius:10px;border:1px solid #e5e5e0;font-size:16px;font-weight:700;text-align:center;margin-top:4px" placeholder="可不填">
+          </label>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button onclick="randomMeihua()" style="padding:8px 14px;border-radius:8px;border:1px solid #FFB347;background:#fff;color:#FFB347;font-size:12px;font-weight:600;cursor:pointer">🎲 随机报数</button>
+          <span style="font-size:11px;color:#9ca3af;align-self:center">心中想着问题，然后随意报一个数</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 提问 -->
-    <input class="question-input" id="question" placeholder="留空=全面分析（性格/事业/感情/财运/健康/今年运势） | 输入具体问题=深度聚焦" value="">
+    <input class="question-input" id="question" placeholder="留空=全面分析 | 输入具体问题=深度聚焦" value="">
 
     <!-- 显示模式 -->
     <div style="display:flex;gap:6px;margin-bottom:12px">
@@ -134,6 +188,109 @@ function selectMode(mode) {
   currentMode = mode;
   document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+  // Show/hide mode-specific panels
+  document.getElementById('tarotPanel').style.display = mode === 'tarot' ? 'block' : 'none';
+  document.getElementById('meihuaPanel').style.display = mode === 'meihua' ? 'block' : 'none';
+}
+
+// ========== 塔罗牌选牌 ==========
+let tarotDeck = [];
+let selectedCards = [null, null, null]; // 3 slots
+let activeSlot = -1;
+
+async function loadTarotDeck() {
+  try {
+    const res = await fetch('/api/tarot/deck');
+    tarotDeck = await res.json();
+  } catch(e) { console.log('Failed to load tarot deck'); }
+}
+
+function openCardPicker(slotIdx) {
+  activeSlot = slotIdx;
+  const picker = document.getElementById('cardPicker');
+  const grid = document.getElementById('pickerGrid');
+  const title = document.getElementById('pickerTitle');
+  const posNames = ['过去', '现在', '未来'];
+  title.textContent = `为「${posNames[slotIdx]}」位选择一张牌：`;
+  // Build grid
+  const usedIds = selectedCards.filter(c => c).map(c => c.cardId);
+  grid.innerHTML = tarotDeck.map(c => {
+    const used = usedIds.includes(c.id);
+    return `<button onclick="pickCard(${c.id})" ${used?'disabled':''} style="padding:6px 8px;border-radius:6px;border:1px solid ${used?'#e5e5e0':'#4ECDC4'};background:${used?'#f5f5f0':'#fff'};color:${used?'#ccc':'#333'};font-size:11px;cursor:${used?'not-allowed':'pointer'};white-space:nowrap;transition:all 0.15s" ${used?'':'onmouseover="this.style.background=\'#4ECDC420\'" onmouseout="this.style.background=\'#fff\'"'}>${c.zh}</button>`;
+  }).join('');
+  picker.style.display = 'block';
+}
+
+function pickCard(cardId) {
+  if (activeSlot < 0) return;
+  const card = tarotDeck.find(c => c.id === cardId);
+  const reversed = Math.random() > 0.7; // 30% chance reversed
+  selectedCards[activeSlot] = { cardId: card.id, zh: card.zh, reversed };
+  // Update slot display
+  const slot = document.getElementById('slot' + activeSlot);
+  slot.innerHTML = `<div style="font-size:14px;font-weight:700;color:#4ECDC4">${card.zh}</div><div style="font-size:10px;color:${reversed?'#FF6B6B':'#34D399'}">${reversed?'逆位':'正位'}</div>`;
+  slot.style.border = '2px solid #4ECDC4';
+  slot.style.background = '#4ECDC415';
+  document.getElementById('cardPicker').style.display = 'none';
+  activeSlot = -1;
+  updateTarotStatus();
+}
+
+function randomTarot() {
+  // Pick 3 random cards
+  const shuffled = [...tarotDeck].sort(() => Math.random() - 0.5);
+  for (let i = 0; i < 3; i++) {
+    const c = shuffled[i];
+    const reversed = Math.random() > 0.7;
+    selectedCards[i] = { cardId: c.id, zh: c.zh, reversed };
+    const slot = document.getElementById('slot' + i);
+    slot.innerHTML = `<div style="font-size:14px;font-weight:700;color:#4ECDC4">${c.zh}</div><div style="font-size:10px;color:${reversed?'#FF6B6B':'#34D399'}">${reversed?'逆位':'正位'}</div>`;
+    slot.style.border = '2px solid #4ECDC4';
+    slot.style.background = '#4ECDC415';
+  }
+  document.getElementById('cardPicker').style.display = 'none';
+  updateTarotStatus();
+}
+
+function clearTarot() {
+  selectedCards = [null, null, null];
+  const posNames = ['过去', '现在', '未来'];
+  for (let i = 0; i < 3; i++) {
+    const slot = document.getElementById('slot' + i);
+    slot.innerHTML = `<div style="font-size:20px;margin-bottom:4px">🂠</div><div style="font-size:11px;color:#4ECDC4;font-weight:600">${posNames[i]}</div>`;
+    slot.style.border = '2px dashed #4ECDC450';
+    slot.style.background = '#4ECDC408';
+  }
+  document.getElementById('cardPicker').style.display = 'none';
+  updateTarotStatus();
+}
+
+function updateTarotStatus() {
+  const count = selectedCards.filter(c => c).length;
+  document.getElementById('tarotStatus').textContent = `已选 ${count}/3`;
+}
+
+// ========== 梅花易数报数 ==========
+let meihuaMode = 'time';
+
+function setMeihuaMode(mode) {
+  meihuaMode = mode;
+  document.getElementById('mhTimeBtn').style.background = mode === 'time' ? '#FFB347' : '#fff';
+  document.getElementById('mhTimeBtn').style.color = mode === 'time' ? '#fff' : '#6b7280';
+  document.getElementById('mhTimeBtn').style.borderColor = mode === 'time' ? '#FFB347' : '#e5e5e0';
+  document.getElementById('mhNumBtn').style.background = mode === 'number' ? '#FFB347' : '#fff';
+  document.getElementById('mhNumBtn').style.color = mode === 'number' ? '#fff' : '#6b7280';
+  document.getElementById('mhNumBtn').style.borderColor = mode === 'number' ? '#FFB347' : '#e5e5e0';
+  document.getElementById('mhNumberInputs').style.display = mode === 'number' ? 'block' : 'none';
+}
+
+function randomMeihua() {
+  document.getElementById('mhNum1').value = Math.floor(Math.random() * 999) + 1;
+  if (Math.random() > 0.5) {
+    document.getElementById('mhNum2').value = Math.floor(Math.random() * 999) + 1;
+  } else {
+    document.getElementById('mhNum2').value = '';
+  }
 }
 
 function getProfile() {
@@ -150,7 +307,23 @@ function showResult(html) {
   document.getElementById('results').innerHTML = html;
 }
 
-// 健康检查
+// 获取模式特定参数
+function getModeExtra() {
+  const extra = {};
+  if (currentMode === 'tarot') {
+    const filled = selectedCards.filter(c => c);
+    if (filled.length === 3) extra.selectedCards = filled;
+  }
+  if (currentMode === 'meihua' && meihuaMode === 'number') {
+    const n1 = document.getElementById('mhNum1').value;
+    if (n1) extra.meihuaNum1 = n1;
+    const n2 = document.getElementById('mhNum2').value;
+    if (n2) extra.meihuaNum2 = n2;
+  }
+  return extra;
+}
+
+// 健康检查 + 加载塔罗牌组
 async function checkHealth() {
   const dot = document.getElementById('statusDot');
   const text = document.getElementById('statusText');
@@ -159,6 +332,7 @@ async function checkHealth() {
     const data = await res.json();
     dot.className = 'dot ok';
     text.textContent = `已连接 · 模型: ${data.llm.model} · LLM: ${data.llm.baseUrl}`;
+    loadTarotDeck();
   } catch (e) {
     dot.className = 'dot err';
     text.textContent = '无法连接测试服务器，请确认 node test-server.js 正在运行';
@@ -168,13 +342,14 @@ async function checkHealth() {
 // 仅引擎计算
 async function runCalculateOnly() {
   const profile = getProfile();
+  const extra = getModeExtra();
   showResult('<div class="result-section engine-result"><h3>⏳ 计算中...</h3><div class="loading"></div></div>');
 
   try {
     const res = await fetch('/api/calculate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: currentMode, ...profile, displayMode }),
+      body: JSON.stringify({ mode: currentMode, ...profile, displayMode, ...extra }),
     });
     const data = await res.json();
     const modeNames = { bazi: '八字命理', astrology: '星座运势', tarot: '塔罗牌', meihua: '梅花易数', vedic: '印度占星' };
@@ -194,6 +369,7 @@ async function runCalculateOnly() {
 async function runDivine() {
   const profile = getProfile();
   const question = document.getElementById('question').value;
+  const extra = getModeExtra();
   const btn = document.getElementById('btnDivine');
   btn.disabled = true;
   btn.textContent = '🔮 AI 解读中...';
@@ -205,7 +381,7 @@ async function runDivine() {
     const res = await fetch('/api/divine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: currentMode, ...profile, question, displayMode, city: profile.city }),
+      body: JSON.stringify({ mode: currentMode, ...profile, question, displayMode, city: profile.city, ...extra }),
     });
     const data = await res.json();
 

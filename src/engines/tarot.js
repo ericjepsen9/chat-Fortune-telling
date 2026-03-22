@@ -49,4 +49,21 @@ function formatForAI(result, mode='simple') {
   return o;
 }
 
-module.exports={drawCards,formatForAI,stableSeed,DECK,SPREADS};
+/**
+ * 用户手动选牌：接收选中的卡牌ID数组
+ * selectedCards: [{cardId: 5, reversed: false}, {cardId: 22, reversed: true}, ...]
+ */
+function drawFromSelection(selectedCards, spreadType='threeCard') {
+  const spread = SPREADS[spreadType] || SPREADS.threeCard;
+  const cards = selectedCards.slice(0, spread.pos.length).map((sel, i) => {
+    const card = DECK.find(c => c.id === sel.cardId) || DECK[sel.cardId] || DECK[0];
+    return {
+      ...card,
+      position: spread.pos[i],
+      reversed: !!sel.reversed,
+    };
+  });
+  return { spread: { name: spread.zh, type: spreadType }, cards, seed: 'user-selected' };
+}
+
+module.exports={drawCards,drawFromSelection,formatForAI,stableSeed,DECK,SPREADS};

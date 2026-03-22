@@ -8,6 +8,41 @@ function generateHexagram(date){
   const y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate(),h=d.getHours();
   const sc=Math.floor(((h+1)%24)/2)+1;
   const un=((y+m+day)%8)||8, ln=((y+m+day+sc)%8)||8, cl=((y+m+day+sc)%6)||6;
+  return _buildHexagram(un, ln, cl, 'time', `年${y}+月${m}+日${day}+时辰${sc}`);
+}
+
+/**
+ * 数字起卦：用户提供1-2个数字
+ * 单数模式：num1的各位数之和 → 上卦/下卦/动爻
+ * 双数模式：num1→上卦, num2→下卦, (num1+num2)→动爻
+ */
+function generateFromNumbers(num1, num2) {
+  num1 = parseInt(num1);
+  if (num2 !== undefined && num2 !== null && num2 !== '') {
+    // 双数模式
+    num2 = parseInt(num2);
+    const un = (num1 % 8) || 8;
+    const ln = (num2 % 8) || 8;
+    const cl = ((num1 + num2) % 6) || 6;
+    return _buildHexagram(un, ln, cl, 'numbers', `上卦数${num1}→${un}, 下卦数${num2}→${ln}, 动爻(${num1}+${num2})%6→${cl}`);
+  } else {
+    // 单数模式：拆分数字各位
+    const digits = String(num1).split('').map(Number);
+    const sum = digits.reduce((a, b) => a + b, 0);
+    const half = Math.ceil(digits.length / 2);
+    const firstHalf = digits.slice(0, half).reduce((a, b) => a + b, 0);
+    const secondHalf = digits.slice(half).reduce((a, b) => a + b, 0) || sum;
+    const un = (firstHalf % 8) || 8;
+    const ln = (secondHalf % 8) || 8;
+    const cl = (sum % 6) || 6;
+    return _buildHexagram(un, ln, cl, 'number', `数字${num1}→前半${firstHalf}(上卦${un})+后半${secondHalf}(下卦${ln})+总和${sum}(动爻${cl})`);
+  }
+}
+
+/**
+ * 内部：根据上卦号、下卦号、动爻构建完整卦象
+ */
+function _buildHexagram(un, ln, cl, method, methodDesc) {
   const ut=TRI[un-1],lt=TRI[ln-1],hn=HEX_NAMES[un-1][ln-1];
   const isUpper=cl>3, ti=isUpper?lt:ut, yong=isUpper?ut:lt;
   let rel;
@@ -18,13 +53,17 @@ function generateHexagram(date){
   else rel={type:'用克体',zh:'有压力阻碍',en:'Challenging'};
   const cun=cl>3?((un+cl-3)%8)||8:un, cln=cl<=3?((ln+cl)%8)||8:ln;
   const chn=HEX_NAMES[cun-1][cln-1];
-  return{hexagram:{name:hn,upper:ut,lower:lt},changed:{name:chn,upper:TRI[cun-1],lower:TRI[cln-1]},changingLine:cl,ti,yong,relation:rel,timestamp:d.toISOString()};
+  return{hexagram:{name:hn,upper:ut,lower:lt},changed:{name:chn,upper:TRI[cun-1],lower:TRI[cln-1]},changingLine:cl,ti,yong,relation:rel,method,methodDesc,timestamp:new Date().toISOString()};
 }
 
 function formatForAI(result,mode='simple'){
   const r=result;
+  const methodLine = r.method === 'time' ? `起卦方式：时间起卦（${r.methodDesc}）` :
+    r.method === 'numbers' ? `起卦方式：双数起卦（${r.methodDesc}）` :
+    r.method === 'number' ? `起卦方式：数字起卦（${r.methodDesc}）` : '';
   if(mode==='expert'){
     return `【梅花易数排盘】
+${methodLine}
 本卦：${r.hexagram.name}
 上卦：${r.hexagram.upper.n}（${r.hexagram.upper.s} ${r.hexagram.upper.na}·${r.hexagram.upper.el}）${r.hexagram.upper.tr}
 下卦：${r.hexagram.lower.n}（${r.hexagram.lower.s} ${r.hexagram.lower.na}·${r.hexagram.lower.el}）${r.hexagram.lower.tr}
@@ -47,7 +86,7 @@ function formatForAI(result,mode='simple'){
   else if(r.relation.type==='体生用')verdict='需要付出较多精力，注意量力而行';
   else verdict='有一定阻碍，建议谨慎观望';
   return `你的卦象：${r.hexagram.name}（${r.hexagram.upper.n}${r.hexagram.upper.s}上·${r.hexagram.lower.n}${r.hexagram.lower.s}下）
-
+${methodLine ? methodLine + '\n' : ''}
 核心能量：
 · 你的状态（体卦）：${r.ti.n} — ${r.ti.na}的能量，${r.ti.tr}
 · 事情走向（用卦）：${r.yong.n} — ${r.yong.na}的能量，${r.yong.tr}
@@ -58,4 +97,4 @@ function formatForAI(result,mode='simple'){
 变化趋势：事情最终走向「${r.changed.name}」的状态`;
 }
 
-module.exports={generateHexagram,formatForAI,TRI};
+module.exports={generateHexagram,generateFromNumbers,formatForAI,TRI};

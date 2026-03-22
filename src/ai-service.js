@@ -92,25 +92,43 @@ function calculateAll(mode, profile, ctx, opts = {}) {
     }
     case 'tarot': {
       const spread = opts.spreadType || 'threeCard';
-      const uid = profile.id || `${p.year}-${p.month}-${p.day}`;
-      const seed = tarotEngine.stableSeed(uid, ctx.now);
-      const r = tarotEngine.drawCards(spread, seed);
+      let r;
+      if (opts.selectedCards && opts.selectedCards.length > 0) {
+        // 用户手动选牌模式
+        r = tarotEngine.drawFromSelection(opts.selectedCards, spread);
+      } else {
+        // 自动抽牌
+        const uid = profile.id || `${p.year}-${p.month}-${p.day}`;
+        const seed = tarotEngine.stableSeed(uid, ctx.now);
+        r = tarotEngine.drawCards(spread, seed);
+      }
       let o = tarotEngine.formatForAI(r, dm);
       o += `\n\n【起牌背景·系统记录】`;
       o += `\n抽牌时间：${ctx.fullStr}`;
-      o += `\n牌阵种子：${seed}（同一天同一用户结果固定）`;
+      o += `\n抽牌方式：${opts.selectedCards ? '用户手动选择' : '系统随机抽取'}`;
       o += `\n当前季节能量：${ctx.season}季`;
       o += `\n当前星座季：太阳在${ctx.currentSunSign.zh}`;
       return o;
     }
     case 'meihua': {
-      const r = meihuaEngine.generateHexagram(ctx.now);
+      let r;
+      if (opts.meihuaNum1 !== undefined && opts.meihuaNum1 !== '') {
+        // 数字起卦模式
+        r = meihuaEngine.generateFromNumbers(opts.meihuaNum1, opts.meihuaNum2);
+      } else {
+        // 时间起卦
+        r = meihuaEngine.generateHexagram(ctx.now);
+      }
       let o = meihuaEngine.formatForAI(r, dm);
       o += `\n\n【起卦背景·系统记录】`;
       o += `\n起卦时间：${ctx.fullStr}`;
-      o += `\n起卦参数：年${ctx.year}+月${ctx.month}+日${ctx.day}=${ctx.year+ctx.month+ctx.day}→上卦 / 加时辰${ctx.shichenIdx+1}→下卦`;
+      if (r.method === 'time') {
+        o += `\n起卦方式：时间自动起卦`;
+        o += `\n注意：同一时辰（2小时）内结果相同`;
+      } else {
+        o += `\n起卦方式：用户报数`;
+      }
       o += `\n流年：${ctx.liunian}  流月：${ctx.liuyue}`;
-      o += `\n注意：同一时辰（2小时）内起卦结果相同`;
       if (ctx.city) o += `\n问卦地点：${ctx.city}`;
       return o;
     }
