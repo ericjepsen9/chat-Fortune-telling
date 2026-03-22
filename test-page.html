@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>缘合 · 占术引擎测试</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'PingFang SC', sans-serif; background: #f5f5f0; color: #1a1a2e; min-height: 100vh; }
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+  .status { padding: 10px 16px; border-radius: 10px; background: #fff; border: 1px solid #e5e5e0; margin-bottom: 16px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status .dot.ok { background: #34d399; }
+  .status .dot.err { background: #f87171; }
+  .card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .card h2 { font-size: 16px; margin-bottom: 12px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .input-row label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #6b7280; font-weight: 600; }
+  .input-row input, .input-row select { padding: 10px 12px; border-radius: 10px; border: 1px solid #e5e5e0; font-size: 14px; width: 100px; }
+  .input-row input:focus, .input-row select:focus { outline: none; border-color: #7c5cfc; }
+  .mode-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .mode-tab { padding: 10px 16px; border-radius: 12px; border: 2px solid #e5e5e0; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+  .mode-tab:hover { border-color: #c4c4be; }
+  .mode-tab.active { border-color: var(--c); background: var(--bg); color: var(--c); }
+  .question-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e5e0; font-size: 14px; margin-bottom: 12px; }
+  .question-input:focus { outline: none; border-color: #7c5cfc; }
+  .btn-row { display: flex; gap: 10px; }
+  .btn { padding: 12px 24px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, #7c5cfc, #a78bfa); color: #fff; box-shadow: 0 2px 8px rgba(124,92,252,0.3); }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary { background: #f5f5f0; color: #1a1a2e; border: 1px solid #e5e5e0; }
+  .result-box { margin-top: 16px; }
+  .result-section { padding: 16px; border-radius: 12px; margin-bottom: 10px; }
+  .result-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .result-section pre { font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; font-family: 'SF Mono', monospace; }
+  .engine-result { background: #f0f9ff; border: 1px solid #bae6fd; }
+  .engine-result h3 { color: #0369a1; }
+  .ai-result { background: #fdf4ff; border: 1px solid #e9d5ff; }
+  .ai-result h3 { color: #7c3aed; }
+  .ai-result .text { font-size: 15px; line-height: 1.8; font-family: -apple-system, sans-serif; }
+  .error-result { background: #fef2f2; border: 1px solid #fecaca; }
+  .error-result h3 { color: #dc2626; }
+  .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid #e5e5e0; border-top-color: #7c5cfc; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .info { font-size: 12px; color: #9ca3af; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>缘合 · 占术引擎测试</h1>
+  <p class="subtitle">5种占术引擎 + Cherry Studio LLM 本地测试</p>
+
+  <!-- 状态 -->
+  <div class="status" id="status">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">检测连接中...</span>
+  </div>
+
+  <!-- 出生信息 -->
+  <div class="card">
+    <h2>📅 出生信息</h2>
+    <div class="input-row">
+      <label>年 <input type="number" id="year" value="1996" min="1940" max="2020"></label>
+      <label>月 <input type="number" id="month" value="8" min="1" max="12"></label>
+      <label>日 <input type="number" id="day" value="15" min="1" max="31"></label>
+      <label>时(24h) <input type="number" id="hour" value="14" min="0" max="23"></label>
+      <label>性别
+        <select id="gender"><option value="female">女</option><option value="male">男</option></select>
+      </label>
+    </div>
+  </div>
+
+  <!-- 模式选择 -->
+  <div class="card">
+    <h2>🔮 选择占术模式</h2>
+    <div class="mode-tabs">
+      <div class="mode-tab active" data-mode="bazi" style="--c:#FF6B6B;--bg:#FF6B6B15" onclick="selectMode('bazi')">
+        ☰ 八字命理
+      </div>
+      <div class="mode-tab" data-mode="astrology" style="--c:#7C5CFC;--bg:#7C5CFC15" onclick="selectMode('astrology')">
+        ★ 星座运势
+      </div>
+      <div class="mode-tab" data-mode="tarot" style="--c:#4ECDC4;--bg:#4ECDC415" onclick="selectMode('tarot')">
+        ✦ 塔罗牌
+      </div>
+      <div class="mode-tab" data-mode="meihua" style="--c:#FFB347;--bg:#FFB34715" onclick="selectMode('meihua')">
+        ❀ 梅花易数
+      </div>
+      <div class="mode-tab" data-mode="vedic" style="--c:#45B7D1;--bg:#45B7D115" onclick="selectMode('vedic')">
+        ◎ 印度占星
+      </div>
+    </div>
+
+    <!-- 提问 -->
+    <input class="question-input" id="question" placeholder="输入你的问题（如：我的感情运势如何？）" value="请分析我的性格特点和近期运势">
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="runCalculateOnly()">仅计算引擎</button>
+      <button class="btn btn-primary" id="btnDivine" onclick="runDivine()">🔮 引擎 + AI 解读</button>
+    </div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="results"></div>
+</div>
+
+<script>
+let currentMode = 'bazi';
+
+function selectMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+}
+
+function getProfile() {
+  return {
+    year: document.getElementById('year').value,
+    month: document.getElementById('month').value,
+    day: document.getElementById('day').value,
+    hour: document.getElementById('hour').value,
+  };
+}
+
+function showResult(html) {
+  document.getElementById('results').innerHTML = html;
+}
+
+// 健康检查
+async function checkHealth() {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    dot.className = 'dot ok';
+    text.textContent = `已连接 · 模型: ${data.llm.model} · LLM: ${data.llm.baseUrl}`;
+  } catch (e) {
+    dot.className = 'dot err';
+    text.textContent = '无法连接测试服务器，请确认 node test-server.js 正在运行';
+  }
+}
+
+// 仅引擎计算
+async function runCalculateOnly() {
+  const profile = getProfile();
+  showResult('<div class="result-section engine-result"><h3>⏳ 计算中...</h3><div class="loading"></div></div>');
+
+  try {
+    const res = await fetch('/api/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: currentMode, ...profile }),
+    });
+    const data = await res.json();
+    const modeNames = { bazi: '八字命理', astrology: '星座运势', tarot: '塔罗牌', meihua: '梅花易数', vedic: '印度占星' };
+    showResult(`
+      <div class="result-section engine-result">
+        <h3>📊 ${modeNames[currentMode]} — 引擎计算结果</h3>
+        <pre>${typeof data.engineData === 'string' ? data.engineData : JSON.stringify(data.engineData, null, 2)}</pre>
+      </div>
+      <p class="info">✅ 引擎计算成功（本地计算，未调用 LLM）</p>
+    `);
+  } catch (e) {
+    showResult(`<div class="result-section error-result"><h3>❌ 错误</h3><pre>${e.message}</pre></div>`);
+  }
+}
+
+// 引擎 + AI 解读
+async function runDivine() {
+  const profile = getProfile();
+  const question = document.getElementById('question').value;
+  const btn = document.getElementById('btnDivine');
+  btn.disabled = true;
+  btn.textContent = '🔮 AI 解读中...';
+
+  showResult('<div class="result-section ai-result"><h3>⏳ 引擎计算 + AI 解读中（可能需要10-30秒）...</h3><div class="loading"></div></div>');
+
+  try {
+    const res = await fetch('/api/divine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: currentMode, ...profile, question }),
+    });
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    const modeNames = { bazi: '八字命理', astrology: '星座运势', tarot: '塔罗牌', meihua: '梅花易数', vedic: '印度占星' };
+    showResult(`
+      <div class="result-section engine-result">
+        <h3>📊 ${modeNames[currentMode]} — 引擎数据</h3>
+        <pre>${data.engineData}</pre>
+      </div>
+      <div class="result-section ai-result">
+        <h3>🤖 AI 解读（${currentMode}模式）</h3>
+        <div class="text">${data.response.replace(/\n/g, '<br>')}</div>
+      </div>
+      <p class="info">✅ 提问: "${question}" · 模式: ${modeNames[currentMode]}</p>
+    `);
+  } catch (e) {
+    showResult(`
+      <div class="result-section error-result">
+        <h3>❌ AI 调用失败</h3>
+        <pre>${e.message}</pre>
+        <p style="margin-top:8px;font-size:13px">常见原因：<br>
+        1. Cherry Studio 未启动或 API 服务未开启<br>
+        2. .env 中的 LLM_BASE_URL 地址不对<br>
+        3. 模型名称 LLM_MODEL 写错了<br>
+        4. 模型正在加载中，请稍后重试</p>
+      </div>
+    `);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔮 引擎 + AI 解读';
+  }
+}
+
+// 页面加载时检查
+checkHealth();
+</script>
+</body>
+</html>
