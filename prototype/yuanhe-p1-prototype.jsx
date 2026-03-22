@@ -465,7 +465,7 @@ const WuxingRing = ({ size = 120, spin = false, highlight = null, glow = false }
 };
 
 // ============ CASINO DESTINY WHEEL (12 slots, hidden→reveal, full overlay) ============
-const CasinoWheel = ({ profiles, onResult, onClose }) => {
+const CasinoWheel = ({ profiles, onResult, onClose, spinNum = 1, maxSpins = 2 }) => {
   const [phase, setPhase] = useState("ready"); // ready → spinning → result
   const [rotation, setRotation] = useState(0);
   const [resultIdx, setResultIdx] = useState(-1);
@@ -504,6 +504,7 @@ const CasinoWheel = ({ profiles, onResult, onClose }) => {
       <div style={{ marginBottom: 14, textAlign: "center" }}>
         <div style={{ fontSize: 10, letterSpacing: 6, color: "#F4C54290", fontWeight: 700 }}>WHEEL OF DESTINY</div>
         <div style={{ fontSize: 24, fontWeight: 800, color: "#fff", marginTop: 4, textShadow: "0 0 20px rgba(244,197,66,0.3)" }}>天命转轮</div>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>第 {spinNum} / {maxSpins} 次</div>
       </div>
 
       <div style={{ position: "relative", width: W + 52, height: W + 52 }}>
@@ -567,7 +568,7 @@ const CasinoWheel = ({ profiles, onResult, onClose }) => {
       {phase === "ready" && (
         <div style={{ marginTop: 18, textAlign: "center" }}>
           <button onClick={spin} style={{ padding: "15px 48px", borderRadius: 30, border: "2px solid #F4C542", background: "linear-gradient(135deg, #F4C54220, #FF6B6B10)", color: "#F4C542", fontSize: 18, fontWeight: 800, cursor: "pointer", letterSpacing: 4, animation: "pulse 2s infinite", boxShadow: "0 0 30px #F4C54220, inset 0 0 20px #F4C54210" }}>转 动 命 运</button>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 10 }}>每日一次 · 12位有缘人等待揭晓</div>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 10 }}>每日 {maxSpins} 次 · 第 {spinNum} 次天命揭晓</div>
         </div>
       )}
       {phase === "spinning" && (
@@ -599,17 +600,54 @@ const CasinoWheel = ({ profiles, onResult, onClose }) => {
   );
 };
 
-// ============ HOME — CARD SWIPE + CASINO WHEEL TRIGGER ============
+// ============ WUXING MINI BAR (inline energy visualization) ============
+const WuxingBar = ({ data, size = "sm" }) => {
+  const wx = data || { 金: 2, 木: 2, 水: 2, 火: 2, 土: 2 };
+  const max = Math.max(...Object.values(wx), 1);
+  const h = size === "sm" ? 18 : 28;
+  return (
+    <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: h }}>
+      {Object.entries(wx).map(([k, v]) => (
+        <div key={k} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: size === "sm" ? 16 : 22 }}>
+          <div style={{ width: "100%", borderRadius: "3px 3px 0 0", background: ELEMENTS[k], height: `${(v / max) * (h - 8)}px`, minHeight: 3, transition: "height 0.5s ease" }} />
+          <div style={{ fontSize: size === "sm" ? 8 : 10, color: ELEMENTS[k], fontWeight: 600, marginTop: 1 }}>{k}</div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ============ HOME — AUTO WHEEL (2x/day) + FORTUNE CARDS ============
 const HomeScreen = ({ onNavigate }) => {
   const [ci, setCi] = useState(0);
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [exiting, setExiting] = useState(null);
   const [matched, setMatched] = useState(false);
-  const [showWheel, setShowWheel] = useState(false);
-  const [destinyUsed, setDestinyUsed] = useState(false);
+  const [showWheel, setShowWheel] = useState(true); // auto-show on mount
+  const [wheelCount, setWheelCount] = useState(0); // 0, 1, 2 = used times today
   const startX = useRef(0);
   const profile = MATCH_PROFILES[ci];
+  const maxWheelPerDay = 2;
+
+  // Auto-popup second wheel after browsing 3 cards
+  const triggerRef = useRef(false);
+  useEffect(() => {
+    if (ci >= 3 && wheelCount === 1 && !triggerRef.current) {
+      triggerRef.current = true;
+      setTimeout(() => setShowWheel(true), 600);
+    }
+  }, [ci, wheelCount]);
+
+  const onWheelComplete = (p) => {
+    setShowWheel(false);
+    setWheelCount(c => c + 1);
+    onNavigate(S.PROFILE_DETAIL, { profile: p });
+  };
+  const onWheelClose = () => {
+    setShowWheel(false);
+    setWheelCount(c => c + 1);
+  };
 
   const onStart = (x) => { startX.current = x; setDragging(true); };
   const onMove = (x) => { if (dragging) setOffset(x - startX.current); };
@@ -636,20 +674,25 @@ const HomeScreen = ({ onNavigate }) => {
   );
 
   const rot = offset * 0.05, opa = Math.min(Math.abs(offset) / 100, 1);
+  const ec = ELEMENTS[profile.element];
+  const wxData = profile.detail?.wuxing || { 金: 2, 木: 2, 水: 2, 火: 2, 土: 2 };
+  const wheelLeft = maxWheelPerDay - wheelCount;
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg, paddingBottom: 68, position: "relative" }}>
-      {/* Header with wuxing ring (reacts to current card) */}
+      {/* Header */}
       <div style={{ padding: "44px 16px 6px", display: "flex", alignItems: "center", gap: 10 }}>
         <WuxingRing size={44} highlight={profile.element} glow />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: T.primary }}>缘合</div>
-          <div style={{ fontSize: 11, color: T.textThi }}>今日<span style={{ color: ELEMENTS[profile.element], fontWeight: 700 }}>{profile.element}</span>象能量活跃</div>
+          <div style={{ fontSize: 11, color: T.textThi }}>今日<span style={{ color: ec, fontWeight: 700 }}>{profile.element}</span>象能量活跃</div>
         </div>
-        {!destinyUsed && (
-          <button onClick={() => setShowWheel(true)} style={{ padding: "7px 14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #1a1028, #2a1a40)", color: "#F4C542", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, boxShadow: "0 2px 10px rgba(244,197,66,0.2)", animation: "pulse 2.5s infinite" }}>
-            ★ 天命轮
-          </button>
+        {/* Wheel remaining indicator */}
+        {wheelLeft > 0 && (
+          <div onClick={() => setShowWheel(true)} style={{ padding: "5px 10px", borderRadius: 12, background: "linear-gradient(135deg, #1a1028, #2a1a40)", display: "flex", alignItems: "center", gap: 4, cursor: "pointer", boxShadow: "0 2px 8px rgba(244,197,66,0.15)" }}>
+            <span style={{ fontSize: 12, color: "#F4C542", fontWeight: 700 }}>★</span>
+            <span style={{ fontSize: 10, color: "#F4C54280", fontWeight: 600 }}>{wheelLeft}</span>
+          </div>
         )}
         <button onClick={() => onNavigate(S.CARDS)} style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${T.border}`, background: "#fff", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✦</button>
         <button onClick={() => onNavigate(S.DAILY)} style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${T.border}`, background: "#fff", fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>📅</button>
@@ -668,44 +711,64 @@ const HomeScreen = ({ onNavigate }) => {
             transition: dragging ? "none" : "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
             cursor: "grab", userSelect: "none", overflow: "hidden", display: "flex", flexDirection: "column",
           }}>
-          {offset > 20 && <div style={{ position: "absolute", top: 20, left: 20, padding: "6px 16px", borderRadius: 8, border: "3px solid #34D399", color: "#34D399", fontSize: 20, fontWeight: 800, transform: "rotate(-15deg)", opacity: opa, zIndex: 10, letterSpacing: 2 }}>LIKE</div>}
-          {offset < -20 && <div style={{ position: "absolute", top: 20, right: 20, padding: "6px 16px", borderRadius: 8, border: "3px solid #FF6B6B", color: "#FF6B6B", fontSize: 20, fontWeight: 800, transform: "rotate(15deg)", opacity: opa, zIndex: 10, letterSpacing: 2 }}>NOPE</div>}
-          <div style={{ flex: 1, background: `linear-gradient(135deg, ${ELEMENTS[profile.element]}25, ${ELEMENTS[profile.element]}08)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", minHeight: 0 }}>
-            <div style={{ fontSize: 90 }}>{profile.photos[0]}</div>
-            <div style={{ position: "absolute", top: 12, right: 12, padding: "5px 12px", borderRadius: 16, background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: 5 }}>
-              <span style={{ color: T.primary, fontWeight: 800, fontSize: 15 }}>{profile.score}%</span>
-              <span style={{ color: T.textThi, fontSize: 10 }}>匹配</span>
+          {/* LIKE/NOPE with fortune flavor */}
+          {offset > 20 && <div style={{ position: "absolute", top: 16, left: 16, padding: "8px 18px", borderRadius: 12, background: "rgba(52,211,153,0.12)", border: "2px solid #34D399", color: "#34D399", fontSize: 16, fontWeight: 800, transform: "rotate(-12deg)", opacity: opa, zIndex: 10 }}>有缘 ♥</div>}
+          {offset < -20 && <div style={{ position: "absolute", top: 16, right: 16, padding: "8px 18px", borderRadius: 12, background: "rgba(255,107,107,0.12)", border: "2px solid #FF6B6B", color: "#FF6B6B", fontSize: 16, fontWeight: 800, transform: "rotate(12deg)", opacity: opa, zIndex: 10 }}>无缘</div>}
+
+          {/* Photo area */}
+          <div style={{ flex: 1, background: `linear-gradient(160deg, ${ec}22, ${ec}08)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", minHeight: 0 }}>
+            <div style={{ fontSize: 88 }}>{profile.photos[0]}</div>
+            {/* Score + wuxing mini */}
+            <div style={{ position: "absolute", top: 10, right: 10, padding: "6px 10px", borderRadius: 14, background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: 6 }}>
+              <WuxingBar data={wxData} />
+              <div style={{ borderLeft: `1px solid ${T.border}`, paddingLeft: 6 }}>
+                <div style={{ color: T.primary, fontWeight: 800, fontSize: 16, lineHeight: 1 }}>{profile.score}%</div>
+                <div style={{ color: T.textThi, fontSize: 8 }}>缘分值</div>
+              </div>
             </div>
-            {profile.online && <div style={{ position: "absolute", top: 12, left: 12, padding: "3px 10px", borderRadius: 10, background: "rgba(52,211,153,0.15)", color: "#34D399", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 5, height: 5, borderRadius: "50%", background: "#34D399" }} />在线</div>}
+            {profile.online && <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 10px", borderRadius: 10, background: "rgba(52,211,153,0.15)", color: "#34D399", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 5, height: 5, borderRadius: "50%", background: "#34D399" }} />在线</div>}
           </div>
-          <div onClick={() => { if (Math.abs(offset) < 5) onNavigate(S.PROFILE_DETAIL, { profile }); }} style={{ padding: "12px 16px 16px", cursor: "pointer" }}>
+
+          {/* Info area — fortune-themed */}
+          <div onClick={() => { if (Math.abs(offset) < 5) onNavigate(S.PROFILE_DETAIL, { profile }); }} style={{ padding: "10px 16px 14px", cursor: "pointer" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 20, fontWeight: 700, color: T.text }}>{profile.name}，{profile.age}</span>
-              <Badge color={ELEMENTS[profile.element]} filled>{profile.element}象</Badge>
+              <Badge color={ec} filled>{profile.element}象·{profile.type}</Badge>
             </div>
             <div style={{ fontSize: 13, color: T.textSec, marginBottom: 8, lineHeight: 1.5 }}>{profile.bio}</div>
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-              {profile.tags.map(t => <Badge key={t} color={ELEMENTS[profile.element]}>{t}</Badge>)}
+            {/* Match reasoning — fortune style */}
+            <div style={{ padding: "8px 12px", borderRadius: 10, background: `${ec}08`, border: `1px solid ${ec}12`, marginBottom: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
+                <span style={{ fontSize: 11, color: ec, fontWeight: 700 }}>☯ 缘分解读</span>
+              </div>
+              <div style={{ fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>{profile.reason}</div>
             </div>
-            <div style={{ marginTop: 8, textAlign: "center", fontSize: 11, color: T.primary, fontWeight: 600, opacity: 0.6 }}>点击查看完整资料 →</div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+              {profile.tags.map(t => <Badge key={t} color={ec}>{t}</Badge>)}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Action buttons */}
-      <div style={{ display: "flex", gap: 16, justifyContent: "center", padding: "8px 0 2px" }}>
+      <div style={{ display: "flex", gap: 14, justifyContent: "center", padding: "8px 0 2px" }}>
         <button onClick={() => { setExiting("left"); setTimeout(() => { setCi(i => i + 1); setExiting(null); setOffset(0); }, 400); }}
-          style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${T.border}`, background: "#fff", fontSize: 20, cursor: "pointer", boxShadow: T.shadow, display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6B6B" }}>✕</button>
+          style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${T.border}`, background: "#fff", fontSize: 18, cursor: "pointer", boxShadow: T.shadow, display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6B6B" }}>✕</button>
+        {wheelLeft > 0 && (
+          <button onClick={() => setShowWheel(true)}
+            style={{ width: 46, height: 46, borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #1a1028, #2d1a42)", fontSize: 16, cursor: "pointer", boxShadow: "0 2px 12px rgba(244,197,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#F4C542", alignSelf: "center" }}>★</button>
+        )}
         <button onClick={() => onNavigate(S.CARDS)}
           style={{ width: 40, height: 40, borderRadius: "50%", border: `2px solid ${T.border}`, background: "#fff", fontSize: 14, cursor: "pointer", boxShadow: T.shadow, display: "flex", alignItems: "center", justifyContent: "center", color: "#7C5CFC", alignSelf: "center" }}>✦</button>
         <button onClick={() => { setExiting("right"); if (ci === 0) { setTimeout(() => setMatched(true), 400); } else { setTimeout(() => { setCi(i => i + 1); setExiting(null); setOffset(0); }, 400); } }}
           style={{ width: 52, height: 52, borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #34D399, #6EE7B7)", fontSize: 22, cursor: "pointer", boxShadow: "0 4px 14px rgba(52,211,153,0.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>♥</button>
       </div>
 
-      {/* Casino wheel overlay */}
-      {showWheel && <CasinoWheel profiles={WHEEL_POOL}
-        onResult={p => { setShowWheel(false); setDestinyUsed(true); onNavigate(S.PROFILE_DETAIL, { profile: p }); }}
-        onClose={() => setShowWheel(false)} />}
+      {/* Casino wheel overlay — auto-popup */}
+      {showWheel && wheelCount < maxWheelPerDay && <CasinoWheel profiles={WHEEL_POOL}
+        spinNum={wheelCount + 1} maxSpins={maxWheelPerDay}
+        onResult={onWheelComplete}
+        onClose={onWheelClose} />}
     </div>
   );
 };
