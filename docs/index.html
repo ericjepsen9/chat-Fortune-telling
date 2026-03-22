@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang='zh-CN'>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no'>
 <title>缘合 YuanHe</title>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel='manifest' href='manifest.json'>
+<meta name='apple-mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#E8E6E0;overflow:hidden;-webkit-tap-highlight-color:transparent}@media(max-width:500px){body{display:flex;justify-content:center}}</style>
 </head>
 <body>
-<div id="root"></div>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script type="text/babel">
+<div id='root'></div>
+<script crossorigin src='https://unpkg.com/react@18/umd/react.production.min.js'></script>
+<script crossorigin src='https://unpkg.com/react-dom@18/umd/react-dom.production.min.js'></script>
+<script src='https://unpkg.com/@babel/standalone/babel.min.js'></script>
+<script type='text/babel'>
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ============ THEME ============
@@ -50,9 +50,10 @@ const S = {
 
 const AI_MODES = [
   { id: "bazi", name: "八字命理", icon: "☰", color: "#FF6B6B", gradient: "linear-gradient(135deg,#FF6B6B,#FF8A9B)", desc: "四柱八字·五行十神", greeting: "你好！基于你的四柱八字，我来为你解读命局与运势。想了解什么？" },
-  { id: "meihua", name: "梅花易数", icon: "❀", color: "#FFB347", gradient: "linear-gradient(135deg,#FFB347,#FFD280)", desc: "即时起卦·决策分析", greeting: "你好！告诉我你面临的问题，我将即时起卦为你分析趋势与建议。" },
-  { id: "tarot", name: "塔罗牌", icon: "✦", color: "#7C5CFC", gradient: "linear-gradient(135deg,#7C5CFC,#A78BFA)", desc: "牌阵解读·直觉指引", greeting: "你好！集中心念，告诉我你想探索的问题，我将为你抽牌解读。" },
-  { id: "vedic", name: "印度占星", icon: "◎", color: "#45B7D1", gradient: "linear-gradient(135deg,#45B7D1,#67D4E8)", desc: "星盘解析·业力指引", greeting: "Namaste! 我将从吠陀占星术角度为你解读星盘与行星影响。" },
+  { id: "astrology", name: "星座运势", icon: "★", color: "#A78BFA", gradient: "linear-gradient(135deg,#7C5CFC,#A78BFA)", desc: "每日运势·星座配对", greeting: "你好！我是你的星座顾问。想了解今日运势、星座配对还是深度星盘解读？" },
+  { id: "tarot", name: "塔罗牌", icon: "✦", color: "#7C5CFC", gradient: "linear-gradient(135deg,#9B5CFC,#C78BFA)", desc: "牌阵解读·直觉指引", greeting: "你好！集中心念，选择你被吸引的牌，我将为你解读。" },
+  { id: "meihua", name: "梅花易数", icon: "❀", color: "#FFB347", gradient: "linear-gradient(135deg,#FFB347,#FFD280)", desc: "即时起卦·决策分析", greeting: "你好！心中想着问题，然后报一个数字，我将为你起卦分析。" },
+  { id: "vedic", name: "印度占星", icon: "◎", color: "#45B7D1", gradient: "linear-gradient(135deg,#45B7D1,#67D4E8)", desc: "吠陀星盘·行星能量", greeting: "Namaste！基于你的出生星盘，我将为你解读行星能量与人生周期。" },
 ];
 
 const MATCH_PROFILES = [
@@ -563,32 +564,73 @@ const DiscoverScreen = ({ onNavigate }) => (
 );
 
 // ============ AI CHAT ============
+const TAROT_DECK_MINI = ["愚者","魔术师","女祭司","女皇","皇帝","教皇","恋人","战车","力量","隐者","命运之轮","正义","倒吊人","死神","节制","恶魔","塔","星星","月亮","太阳","审判","世界"];
 const AIScreen = ({ onBack, isTab }) => {
   const [mode, setMode] = useState(0);
   const [allMsgs, setAllMsgs] = useState({});
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [tarotCards, setTarotCards] = useState([null,null,null]);
+  const [tarotFlipped, setTarotFlipped] = useState([false,false,false]);
+  const [mhMode, setMhMode] = useState("time"); // "time" | "number"
+  const [mhNum, setMhNum] = useState("");
   const scrollRef = useRef(null);
   const m = AI_MODES[mode];
   const msgs = allMsgs[m.id] || [{ from: "ai", text: m.greeting }];
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [allMsgs, mode, typing]);
+  useEffect(() => { setTarotCards([null,null,null]); setTarotFlipped([false,false,false]); setMhNum(""); }, [mode]);
 
-  const quickQs = { bazi: ["我的感情运势？", "今年事业方向？", "性格弱点分析", "如何改善沟通？"], meihua: ["现在适合跳槽吗？", "这段感情继续吗？", "投资决策分析", "今日出行运势"], tarot: ["抽一张指引牌", "三张牌阵·感情", "本周运势解读", "做一个抉择指引"], vedic: ["我的星盘解读", "土星回归影响？", "婚姻宫分析", "当前大运周期"] };
-  const aiResp = { bazi: "根据你的辛金日主命盘，今年偏印流年带来内在整理的能量。下半年食神生财格局活跃，感情和事业都有突破口。关键是上半年做好积累与反思。", meihua: "为你起卦得「天火同人」变「天雷无妄」。卦象显示当前局面内部已有变动之兆，建议保持观察，三日内会有新信息出现。", tarot: "为你抽到「星星」牌——代表希望与内在指引。你正经历净化和重生的阶段，跟随直觉，答案就在心中。", vedic: "你当前处于金星大运期（Shukra Dasha），对感情和创造力有利。月亮过境第七宫，近期可能有重要关系进展。" };
+  const quickQs = {
+    bazi: ["分析我的性格", "今年运势如何？", "感情运势", "事业方向建议"],
+    astrology: ["我和天秤座配吗？", "本月运势", "上升星座影响", "星座性格分析"],
+    tarot: ["我该不该表白？", "近期工作运", "这段感情走向", "给我一个指引"],
+    meihua: ["现在适合跳槽吗？", "这段感情继续吗？", "投资这个项目？", "今天出门顺利吗？"],
+    vedic: ["我的大运周期", "婚姻运分析", "适合的宝石", "当前人生阶段"]
+  };
+
+  const aiResp = {
+    bazi: "根据你的命盘分析，今年丙午流年食神透干，创造力和表达能力会特别旺盛。月支桃花加持下，人际关系中会有新的机遇。建议把握春季的木旺时节，主动出击。",
+    astrology: "你的太阳狮子+月亮处女组合，外在热情大方，内心却很注重细节。当前太阳在白羊座，与你的火象能量高度共振，是展现自我的好时期！",
+    tarot: "根据你选的三张牌，过去的稳定基础正在转化为现在的新机遇。注意未来牌提示你需要保持方向感，不要被太多选择分散精力。具体来说...",
+    meihua: "卦象显示体卦得到用卦的生助，整体趋势向好。变卦指向事情最终会有积极的转化，但需要耐心等待合适的时机。建议在本周内做出决定。",
+    vedic: "你当前处于罗睺大运后期（已行72%），这意味着之前几年的变革和探索即将收获成果。2031年进入木星大运后，会迎来扩展和好运的周期。"
+  };
+
+  const flipTarot = (idx) => {
+    if (tarotFlipped[idx]) return;
+    const available = TAROT_DECK_MINI.filter(c => !tarotCards.includes(c));
+    const card = available[Math.floor(Math.random() * available.length)];
+    const nc = [...tarotCards]; nc[idx] = card;
+    const nf = [...tarotFlipped]; nf[idx] = true;
+    setTarotCards(nc); setTarotFlipped(nf);
+  };
 
   const send = (text) => {
-    const t = text || input;
+    let t = text || input;
     if (!t.trim()) return;
-    const cur = [...msgs, { from: "me", text: t }];
+    // 塔罗模式附加选牌信息
+    if (m.id === "tarot" && tarotCards.filter(Boolean).length > 0) {
+      const posNames = ["过去","现在","未来"];
+      const cardInfo = tarotCards.map((c,i) => c ? `${posNames[i]}：${c}` : null).filter(Boolean).join("，");
+      t = t + `\n（已选牌：${cardInfo}）`;
+    }
+    // 梅花附加数字
+    if (m.id === "meihua" && mhMode === "number" && mhNum) {
+      t = t + `\n（报数：${mhNum}）`;
+    }
+    const cur = [...msgs, { from: "me", text: text || input }];
     setAllMsgs(prev => ({ ...prev, [m.id]: cur }));
     setInput("");
     setTyping(true);
     setTimeout(() => {
       setTyping(false);
       setAllMsgs(prev => ({ ...prev, [m.id]: [...cur, { from: "ai", text: aiResp[m.id] }] }));
-    }, 1500);
+    }, 1800);
   };
+
+  const posNames = ["过去","现在","未来"];
+  const tarotAllSelected = tarotCards.filter(Boolean).length === 3;
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: T.bg }}>
@@ -602,26 +644,87 @@ const AIScreen = ({ onBack, isTab }) => {
             <div style={{ fontSize: 11, color: T.textThi }}>{m.desc}</div>
           </div>
         </div>
-        {/* Mode tabs */}
-        <div style={{ display: "flex", gap: 4, paddingBottom: 10 }}>
+        {/* Mode tabs — scrollable for 5 modes */}
+        <div style={{ display: "flex", gap: 2, paddingBottom: 10, overflowX: "auto" }}>
           {AI_MODES.map((am, i) => (
-            <button key={am.id} onClick={() => setMode(i)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, border: "none", background: i === mode ? `${am.color}15` : "transparent", cursor: "pointer", textAlign: "center", transition: "all 0.2s" }}>
-              <div style={{ fontSize: 16 }}>{am.icon}</div>
-              <div style={{ fontSize: 10, color: i === mode ? am.color : T.textThi, fontWeight: 600, marginTop: 2 }}>{am.name}</div>
+            <button key={am.id} onClick={() => setMode(i)} style={{ flex: "0 0 auto", padding: "7px 10px", borderRadius: 10, border: "none", background: i === mode ? `${am.color}15` : "transparent", cursor: "pointer", textAlign: "center", transition: "all 0.2s", minWidth: 56 }}>
+              <div style={{ fontSize: 15 }}>{am.icon}</div>
+              <div style={{ fontSize: 9, color: i === mode ? am.color : T.textThi, fontWeight: 600, marginTop: 2, whiteSpace: "nowrap" }}>{am.name}</div>
             </button>
           ))}
         </div>
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} style={{ flex: 1, overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div ref={scrollRef} style={{ flex: 1, overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10, paddingBottom: m.id === "tarot" || m.id === "meihua" ? 180 : 68 }}>
         {msgs.map((msg, i) => (
           <div key={`${m.id}-${i}`} style={{ alignSelf: msg.from === "me" ? "flex-end" : "flex-start", maxWidth: "82%" }}>
             <div style={{ padding: "12px 16px", borderRadius: msg.from === "me" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.from === "me" ? m.gradient : "#fff", boxShadow: msg.from === "me" ? "none" : T.shadow, color: msg.from === "me" ? "#fff" : T.text, fontSize: 14, lineHeight: 1.7 }}>{msg.text}</div>
           </div>
         ))}
         {typing && <div style={{ alignSelf: "flex-start", padding: "12px 16px", borderRadius: "18px 18px 18px 4px", background: "#fff", boxShadow: T.shadow }}><div style={{ display: "flex", gap: 5 }}>{[0, 1, 2].map(j => <div key={j} style={{ width: 7, height: 7, borderRadius: "50%", background: m.color, animation: `bounce 1s ease-in-out ${j * 0.15}s infinite` }} />)}</div></div>}
-        {msgs.length <= 1 && <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>{quickQs[m.id].map(q => <button key={q} onClick={() => send(q)} style={{ padding: "9px 16px", borderRadius: 20, border: "none", background: "#fff", boxShadow: T.shadow, color: m.color, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{q}</button>)}</div>}
+
+        {/* Quick questions — show when no user messages yet */}
+        {msgs.length <= 1 && !typing && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+            {/* Tarot card selection */}
+            {m.id === "tarot" && (
+              <div style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: m.color, marginBottom: 10 }}>✦ 翻牌 — 点击卡牌翻转</div>
+                <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 12 }}>
+                  {[0,1,2].map(idx => (
+                    <div key={idx} onClick={() => flipTarot(idx)} style={{
+                      width: 85, height: 120, borderRadius: 12, cursor: tarotFlipped[idx] ? "default" : "pointer",
+                      background: tarotFlipped[idx] ? `linear-gradient(160deg, ${m.color}15, ${m.color}05)` : m.gradient,
+                      border: `2px solid ${tarotFlipped[idx] ? m.color : 'transparent'}`,
+                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.5s", transform: tarotFlipped[idx] ? "rotateY(0)" : "rotateY(0)",
+                      boxShadow: tarotFlipped[idx] ? T.shadow : "0 4px 16px rgba(124,92,252,0.25)",
+                    }}>
+                      {tarotFlipped[idx] ? (
+                        <>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: m.color, textAlign: "center", padding: "0 4px" }}>{tarotCards[idx]}</div>
+                          <div style={{ fontSize: 10, color: T.textThi, marginTop: 4 }}>{posNames[idx]}</div>
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: 28, color: "#fff", marginBottom: 4 }}>🂠</div>
+                          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>{posNames[idx]}</div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {tarotAllSelected && <div style={{ textAlign: "center", fontSize: 12, color: T.success, fontWeight: 600 }}>✓ 三张牌已翻开 · 请输入问题或直接点击下方提问</div>}
+              </div>
+            )}
+
+            {/* Meihua number input */}
+            {m.id === "meihua" && (
+              <div style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: m.color, marginBottom: 10 }}>❀ 起卦方式</div>
+                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                  <button onClick={() => setMhMode("time")} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", background: mhMode === "time" ? m.color : "#f5f5f0", color: mhMode === "time" ? "#fff" : T.textSec }}>⏰ 时间起卦</button>
+                  <button onClick={() => setMhMode("number")} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", background: mhMode === "number" ? m.color : "#f5f5f0", color: mhMode === "number" ? "#fff" : T.textSec }}>🔢 报数起卦</button>
+                </div>
+                {mhMode === "number" && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input value={mhNum} onChange={e => setMhNum(e.target.value)} type="number" placeholder="心中想着问题，报一个数" style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: `2px solid ${T.border}`, fontSize: 18, fontWeight: 700, textAlign: "center", color: m.color }} />
+                    <button onClick={() => setMhNum(String(Math.floor(Math.random()*999)+1))} style={{ padding: "10px 14px", borderRadius: 10, border: `1px solid ${m.color}`, background: "#fff", color: m.color, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>🎲 随机</button>
+                  </div>
+                )}
+                {mhMode === "time" && <div style={{ fontSize: 12, color: T.textThi, textAlign: "center" }}>将根据当前时辰自动起卦</div>}
+              </div>
+            )}
+
+            {/* Quick question buttons */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {(quickQs[m.id] || []).map(q => (
+                <button key={q} onClick={() => send(q)} style={{ padding: "9px 16px", borderRadius: 20, border: "none", background: "#fff", boxShadow: T.shadow, color: m.color, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>{q}</button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input */}
@@ -721,38 +824,88 @@ const ChatScreen = ({ friend, onBack }) => {
 };
 
 // ============ ME (PROFILE) ============
-const MeScreen = ({ onNavigate }) => (
-  <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
-    <div style={{ padding: "48px 20px 20px" }}>
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B20, #FFB34720)", border: "3px solid #FF6B6B40", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, margin: "0 auto 10px" }}>✦</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: T.text }}>洞察者 · 辛金</div>
-        <div style={{ fontSize: 13, color: T.textSec, marginTop: 4 }}>偏印格 · 金水相生</div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 24 }}>
-        {[{ l: "互动天数", v: "28" }, { l: "好友", v: "5" }, { l: "成长值", v: "860" }].map(s => (
-          <div key={s.l} style={{ textAlign: "center", padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: T.primary }}>{s.v}</div>
-            <div style={{ fontSize: 12, color: T.textThi, marginTop: 4 }}>{s.l}</div>
+const MeScreen = ({ onNavigate }) => {
+  const wuxing = { 金: 3, 木: 1, 水: 1, 火: 2, 土: 1 };
+  const maxWx = Math.max(...Object.values(wuxing));
+  const wxColors = { 金: "#F4C542", 木: "#34D399", 水: "#45B7D1", 火: "#FF6B6B", 土: "#A0896B" };
+
+  return (
+    <div style={{ height: "100%", overflow: "auto", paddingBottom: 68, background: T.bg }}>
+      <div style={{ padding: "48px 20px 20px" }}>
+        {/* Profile header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+          <div style={{ width: 70, height: 70, borderRadius: "50%", background: "linear-gradient(135deg, #FF6B6B20, #FFB34720)", border: "3px solid #FF6B6B40", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>✦</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: T.text }}>洞察者 · 辛金</div>
+            <div style={{ fontSize: 13, color: T.textSec, marginTop: 2 }}>偏印格 · 金水相生</div>
+            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+              <span style={{ padding: "2px 10px", borderRadius: 12, background: "#FF6B6B15", color: "#FF6B6B", fontSize: 11, fontWeight: 600 }}>♌ 狮子座</span>
+              <span style={{ padding: "2px 10px", borderRadius: 12, background: "#7C5CFC15", color: "#7C5CFC", fontSize: 11, fontWeight: 600 }}>INFP</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+          {[{ l: "互动天数", v: "28", c: T.primary }, { l: "好友", v: "5", c: T.accent1 }, { l: "成长值", v: "860", c: T.accent2 }].map(s => (
+            <div key={s.l} style={{ textAlign: "center", padding: 14, borderRadius: 16, background: "#fff", boxShadow: T.shadow }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: s.c }}>{s.v}</div>
+              <div style={{ fontSize: 11, color: T.textThi, marginTop: 2 }}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Five Elements */}
+        <div style={{ padding: 16, borderRadius: 16, background: "#fff", boxShadow: T.shadow, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 12 }}>☯ 我的五行分布</div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80 }}>
+            {Object.entries(wuxing).map(([k, v]) => (
+              <div key={k} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: wxColors[k], marginBottom: 4 }}>{v}</div>
+                <div style={{ width: "100%", borderRadius: "6px 6px 0 0", background: wxColors[k], height: `${(v / maxWx) * 55}px`, minHeight: 8, transition: "height 0.6s ease" }} />
+                <div style={{ fontSize: 12, fontWeight: 700, color: wxColors[k], marginTop: 6 }}>{k}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: T.textThi, marginTop: 8, textAlign: "center" }}>金旺 · 喜木水 · 身强</div>
+        </div>
+
+        {/* Today mini fortune */}
+        <div style={{ padding: 16, borderRadius: 16, background: "linear-gradient(135deg, #FF6B6B08, #FFB34708)", border: `1px solid #FF6B6B15`, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.primary }}>📅 今日运势速览</div>
+            <div style={{ fontSize: 11, color: T.textThi }}>{new Date().getMonth()+1}月{new Date().getDate()}日</div>
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            {[{l:"综合",v:78,c:T.primary},{l:"感情",v:85,c:"#FF8A9B"},{l:"事业",v:72,c:T.accent4},{l:"财运",v:68,c:T.secondary}].map(it => (
+              <div key={it.l} style={{ flex: 1, textAlign: "center" }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", border: `2px solid ${it.c}40`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: it.c }}>{it.v}</div>
+                <div style={{ fontSize: 10, color: T.textThi, marginTop: 4 }}>{it.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Menu items */}
+        {[
+          { icon: "✦", label: "我的性格卡片", screen: S.CARDS, badge: "5张" },
+          { icon: "📅", label: "今日状态", screen: S.DAILY, badge: "" },
+          { icon: "📊", label: "周报 / 月报", screen: null, badge: "即将开放" },
+          { icon: "🎯", label: "任务与成长", screen: S.TASKS, badge: "2个待完成" },
+          { icon: "⚙️", label: "设置与隐私", screen: null, badge: "" },
+          { icon: "👑", label: "会员中心", screen: null, badge: "升级PRO" },
+        ].map(item => (
+          <div key={item.label} onClick={() => item.screen && onNavigate(item.screen)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: item.screen ? "pointer" : "default" }}>
+            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ flex: 1, fontSize: 15, fontWeight: 500, color: T.text }}>{item.label}</span>
+            {item.badge && <span style={{ fontSize: 11, color: T.textThi, padding: "2px 8px", borderRadius: 10, background: "#f5f5f0" }}>{item.badge}</span>}
+            <span style={{ color: T.textThi, fontSize: 16 }}>›</span>
           </div>
         ))}
       </div>
-      {[
-        { icon: "✦", label: "我的性格卡片", screen: S.CARDS },
-        { icon: "📊", label: "周报 / 月报", screen: null },
-        { icon: "🎯", label: "任务与成长", screen: S.TASKS },
-        { icon: "⚙️", label: "设置与隐私", screen: null },
-        { icon: "👑", label: "会员中心", screen: null },
-      ].map(item => (
-        <div key={item.label} onClick={() => item.screen && onNavigate(item.screen)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "15px 16px", borderRadius: 14, background: "#fff", boxShadow: T.shadow, marginBottom: 8, cursor: item.screen ? "pointer" : "default" }}>
-          <span style={{ fontSize: 18 }}>{item.icon}</span>
-          <span style={{ flex: 1, fontSize: 15, fontWeight: 500, color: T.text }}>{item.label}</span>
-          <span style={{ color: T.textThi, fontSize: 16 }}>›</span>
-        </div>
-      ))}
     </div>
-  </div>
-);
+  );
+};
 
 // ============ CARDS LIST ============
 const CardsListScreen = ({ onNavigate, onBack }) => (
@@ -796,16 +949,28 @@ const CardDetailScreen = ({ ci = 0, onBack }) => {
 };
 
 // ============ DAILY ============
-const DailyScreen = ({ onBack }) => (
-  <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
-    <TopBar title="" onBack={onBack} />
-    <div style={{ padding: "0 20px 32px" }}>
-      <div style={{ fontSize: 13, color: T.textThi, fontWeight: 600, marginBottom: 8 }}>2026年3月21日 · 星期六</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: T.text, marginBottom: 16 }}>今日状态</div>
-      <div style={{ padding: 24, borderRadius: 20, background: "linear-gradient(135deg, #FF6B6B15, #FFB34710)", border: `1px solid #FF6B6B20`, marginBottom: 16, textAlign: "center" }}>
-        <div style={{ fontSize: 36, fontWeight: 700, color: T.primary, marginBottom: 6 }}>内省 · 沉淀</div>
-        <div style={{ fontSize: 14, color: T.textSec }}>偏印日 · 水旺</div>
-      </div>
+const DailyScreen = ({ onBack }) => {
+  const now = new Date();
+  const weekDays = ["日","一","二","三","四","五","六"];
+  const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 · 星期${weekDays[now.getDay()]}`;
+  const TG = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  const DZ = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const base = new Date(2000, 0, 7);
+  const diff = Math.round((now - base) / 864e5);
+  const idx = ((diff % 60) + 60) % 60;
+  const dayGZ = TG[idx%10] + DZ[idx%12];
+  const dayWx = {甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'}[TG[idx%10]];
+  const themes = {木:'生长·进取',火:'表达·行动',土:'稳定·积累',金:'决断·整理',水:'思考·沉淀'};
+  return (
+    <div style={{ height: "100%", overflow: "auto", background: T.bg }}>
+      <TopBar title="" onBack={onBack} />
+      <div style={{ padding: "0 20px 32px" }}>
+        <div style={{ fontSize: 13, color: T.textThi, fontWeight: 600, marginBottom: 8 }}>{dateStr}</div>
+        <div style={{ fontSize: 24, fontWeight: 700, color: T.text, marginBottom: 16 }}>今日状态</div>
+        <div style={{ padding: 24, borderRadius: 20, background: `linear-gradient(135deg, ${ELEMENTS[dayWx]}15, ${ELEMENTS[dayWx]}05)`, border: `1px solid ${ELEMENTS[dayWx]}20`, marginBottom: 16, textAlign: "center" }}>
+          <div style={{ fontSize: 36, fontWeight: 700, color: ELEMENTS[dayWx], marginBottom: 6 }}>{themes[dayWx]}</div>
+          <div style={{ fontSize: 14, color: T.textSec }}>{dayGZ}日 · {dayWx}旺</div>
+        </div>
       {[
         { title: "今日关键词", items: ["独处", "反思", "整理", "沉淀"], color: T.primary },
         { title: "关系建议", items: ["避免情绪波动时做承诺", "适合与老朋友深度对话", "给自己和伴侣一些空间"], color: T.accent4 },
@@ -823,7 +988,8 @@ const DailyScreen = ({ onBack }) => (
       ))}
     </div>
   </div>
-);
+  );
+};
 
 // ============ TASKS ============
 const TasksScreen = ({ onBack }) => {
