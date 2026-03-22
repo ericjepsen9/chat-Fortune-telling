@@ -85,6 +85,42 @@ function calculate(input) {
   const shensha=getShensha(dp.tg,yp.dz,allDz);
   const dzRels=getDzRelations(allDz);
   const wuxingLack=Object.entries(wuxing).filter(([_,v])=>v===0).map(([k])=>k);
+
+  // ===== 流年计算（当前年份） =====
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const lnTg = TIANGAN[(curYear-4)%10];
+  const lnDz = DIZHI[(curYear-4)%12];
+  const lnGanZhi = lnTg + lnDz;
+  const lnNayin = getNy(lnTg, lnDz);
+  const lnSS = SHISHEN[dp.tg][lnTg]; // 流年天干对日主的十神
+  const lnStage = getStage(dp.tg, lnDz); // 流年地支对日主的十二长生
+  const lnWx = WUXING_TG[lnTg];
+  const lnDzWx = WUXING_DZ[lnDz];
+  // 流年地支与命局地支的关系
+  const lnDzRels = [];
+  const pos = ['年','月','日','时'];
+  allDz.forEach((dz, i) => {
+    if (LIUHE[lnDz] === dz) lnDzRels.push({type:'六合',target:`${pos[i]}支${dz}`,desc:'和合顺利'});
+    if (LIUCHONG[lnDz] === dz) lnDzRels.push({type:'六冲',target:`${pos[i]}支${dz}`,desc:'冲动变化'});
+  });
+  // 流年对喜忌的判断
+  const lnIsXi = xiyong.includes(lnWx);
+  const lnIsJi = jishen.includes(lnWx);
+  const liunian = {
+    year: curYear,
+    ganzhi: lnGanZhi,
+    nayin: lnNayin,
+    tianganSS: lnSS,
+    tianganWx: lnWx,
+    dizhiWx: lnDzWx,
+    stage: lnStage,
+    dizhiRels: lnDzRels,
+    isXiyong: lnIsXi,
+    isJishen: lnIsJi,
+    summary: lnIsXi ? '流年天干为喜用，整体有利' : lnIsJi ? '流年天干为忌神，需谨慎应对' : '流年天干为闲神，影响中性',
+  };
+
   const PERS={
     '甲':{type:'参天大树',traits:['正直刚毅','有领导力','追求成长','重情义'],simple:'你像一棵大树，正直有担当，天生的领导者'},
     '乙':{type:'花草藤蔓',traits:['温柔细腻','善于适应','有韧性','重人情'],simple:'你像春天的花草，柔韧且善于适应环境'},
@@ -97,7 +133,7 @@ function calculate(input) {
     '壬':{type:'江河大海',traits:['聪明机敏','思维活跃','适应力强','胸怀宽广'],simple:'你像大海一样包容，思维活跃，充满智慧'},
     '癸':{type:'雨露溪流',traits:['直觉敏锐','善解人意','内心柔软','想象力丰富'],simple:'你像清晨的露水，敏感细腻，富有想象力'},
   };
-  return {fourPillars:{year:yp.tg+yp.dz,month:mp.tg+mp.dz,day:dp.tg+dp.dz,hour:hp.tg+hp.dz},dayMaster:dp.tg,dayMasterElement:WUXING_TG[dp.tg],yinyang:YINYANG[dp.tg],dayStrength,geju,nayin,wuxing,wuxingLack,xiyong,jishen,shishen,cangganShishen:cgss,stages,shensha,dizhiRelations:dzRels,personality:PERS[dp.tg]||{type:'未知',traits:[],simple:''},gender};
+  return {fourPillars:{year:yp.tg+yp.dz,month:mp.tg+mp.dz,day:dp.tg+dp.dz,hour:hp.tg+hp.dz},dayMaster:dp.tg,dayMasterElement:WUXING_TG[dp.tg],yinyang:YINYANG[dp.tg],dayStrength,geju,nayin,wuxing,wuxingLack,xiyong,jishen,shishen,cangganShishen:cgss,stages,shensha,dizhiRelations:dzRels,liunian,personality:PERS[dp.tg]||{type:'未知',traits:[],simple:''},gender};
 }
 function getYearPillar(y){return{tg:TIANGAN[(y-4)%10],dz:DIZHI[(y-4)%12]};}
 function getMonthPillar(yt,m){const s={甲:2,己:2,乙:4,庚:4,丙:6,辛:6,丁:8,壬:8,戊:0,癸:0};return{tg:TIANGAN[(s[yt]+m-1)%10],dz:DIZHI[(m+1)%12]};}
@@ -106,6 +142,7 @@ function getHourPillar(dt,h){const di=h===23?0:Math.floor(((h+1)%24)/2),s={甲:0
 
 function formatForAI(result, mode='simple') {
   const r = result;
+  const ln = r.liunian;
   if (mode === 'expert') {
     let o=`【四柱排盘】\n年柱：${r.fourPillars.year}（${r.nayin.year}） ${r.shishen.yearTg}  ${r.stages.year}\n月柱：${r.fourPillars.month}（${r.nayin.month}） ${r.shishen.monthTg}  ${r.stages.month}\n日柱：${r.fourPillars.day}（${r.nayin.day}） 日主  ${r.stages.day}\n时柱：${r.fourPillars.hour}（${r.nayin.hour}） ${r.shishen.hourTg}  ${r.stages.hour}`;
     o+=`\n\n【日主】${r.dayMaster}${r.dayMasterElement}（${r.yinyang}${r.dayMasterElement}）·${r.dayStrength}\n格局：${r.geju}\n喜用：${r.xiyong}  忌：${r.jishen}`;
@@ -114,6 +151,14 @@ function formatForAI(result, mode='simple') {
     if(r.shensha.length){o+=`\n\n【神煞】`;r.shensha.forEach(s=>{o+=`\n${s.pos}支·${s.name}：${s.desc}`;});}
     if(r.dizhiRelations.length){o+=`\n\n【地支关系】`;r.dizhiRelations.forEach(s=>{o+=`\n${s.pair}（${s.type}）：${s.desc}`;});}
     o+=`\n\n【藏干】`;['year','month','hour'].forEach(p=>{const l={year:'年',month:'月',hour:'时'}[p];r.cangganShishen[p].forEach(c=>{o+=`\n${l}支藏${c.gan}${c.wx}（${c.ss}）`;});});
+    // 流年
+    if(ln){
+      o+=`\n\n【${ln.year}年流年：${ln.ganzhi}（${ln.nayin}）】`;
+      o+=`\n流年天干${ln.ganzhi[0]}${ln.tianganWx}，对日主为${ln.tianganSS}`;
+      o+=`\n流年地支${ln.ganzhi[1]}${ln.dizhiWx}，日主临${ln.stage}`;
+      o+=`\n流年天干五行属${ln.tianganWx}，${ln.isXiyong?'为喜用神→有利':ln.isJishen?'为忌神→需谨慎':'为闲神→影响中性'}`;
+      if(ln.dizhiRels.length){ln.dizhiRels.forEach(rel=>{o+=`\n流年${ln.ganzhi[1]}与${rel.target}${rel.type}：${rel.desc}`;});}
+    }
     return o;
   }
   // simple mode
@@ -123,6 +168,16 @@ function formatForAI(result, mode='simple') {
   o+=`\n适合方向：喜${r.xiyong}属性的环境`;
   if(r.shensha.length){o+=`\n\n你的特殊能量：`;r.shensha.forEach(s=>{o+=`\n· ${s.name} — ${s.desc}`;});}
   if(r.dizhiRelations.length){o+=`\n\n命局互动：`;r.dizhiRelations.forEach(s=>{o+=`\n· ${s.type} — ${s.desc}`;});}
+  // 流年白话
+  if(ln){
+    o+=`\n\n今年（${ln.year}年·${ln.ganzhi}年）对你的影响：`;
+    o+=`\n${ln.summary}`;
+    if(ln.dizhiRels.length){ln.dizhiRels.forEach(rel=>{
+      if(rel.type==='六合') o+=`\n· 今年与你有合的能量，贵人运好`;
+      if(rel.type==='六冲') o+=`\n· 今年有冲的能量，注意变动和调整`;
+    });}
+    o+=`\n今年的能量关键词：${ln.tianganSS}（${ln.tianganWx}${ln.dizhiWx}）`;
+  }
   return o;
 }
 
