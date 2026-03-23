@@ -449,16 +449,14 @@ function calculate(input) {
     金: { organ:'肺部', risk:'呼吸系统、肺、大肠、皮肤过敏', advice:'忌吸烟、防风寒、宜呼吸锻炼' },
     水: { organ:'肾脏', risk:'肾、泌尿系统、腰肩、关节、睡眠', advice:'忌受寒、防湿气、宜温补' },
   };
-  // 旺的五行→该脏腑过亢；缺的五行→该脏腑虚弱
   const healthWarn = [];
   const sortedWx = Object.entries(wuxing).sort((a,b) => b[1]-a[1]);
   if (sortedWx[0][1] >= 3) healthWarn.push({ type:'旺', wx:sortedWx[0][0], ...WX_HEALTH[sortedWx[0][0]], desc:`${sortedWx[0][0]}旺（${sortedWx[0][1]}）→ ${WX_HEALTH[sortedWx[0][0]].organ}功能过亢` });
   wuxingLack.forEach(wx => { if (WX_HEALTH[wx]) healthWarn.push({ type:'缺', wx, ...WX_HEALTH[wx], desc:`缺${wx} → ${WX_HEALTH[wx].organ}偏弱` }); });
-  // 凶月（忌神月份）
   const badMonths = liuyueList.filter(m => m.rating.startsWith('凶')).map(m => m.month);
   const goodMonths = liuyueList.filter(m => m.rating.startsWith('吉')).map(m => m.month);
 
-  // 日主+时支深层性格
+  // 时支性格
   const DZ_TRAIT = {
     子:'深沉内敛、思维活跃、夜间精力旺', 丑:'踏实稳重、善于积累、大器晚成',
     寅:'有冲劲、敢闯敢拼、早起型', 卯:'温和有礼、审美好、细腻敏感',
@@ -469,17 +467,90 @@ function calculate(input) {
   };
   const hourTrait = DZ_TRAIT[tGZ[1]] || '';
 
+  // 三前法（年月柱→早年 / 日柱→中年 / 时柱→晚年）
+  const sanqianfa = {
+    early: {
+      label: '早年运（1-30岁）看年月柱',
+      pillars: yGZ + ' ' + mGZ,
+      wx: [WX_MAP[yGZ[0]], DZ_WX[yGZ[1]], WX_MAP[mGZ[0]], DZ_WX[mGZ[1]]],
+      analysis: (() => {
+        const ywx = [WX_MAP[yGZ[0]], DZ_WX[yGZ[1]], WX_MAP[mGZ[0]], DZ_WX[mGZ[1]]];
+        const xiCount = ywx.filter(w => xiyong.includes(w)).length;
+        return xiCount >= 3 ? '早年得助力，家境和学业较顺' : xiCount >= 2 ? '早年平稳，靠自己积累' : '早年辛苦，少享福，多磨砺';
+      })()
+    },
+    middle: {
+      label: '中年运（30-50岁）看日柱',
+      pillars: dGZ,
+      wx: [WX_MAP[dGZ[0]], DZ_WX[dGZ[1]]],
+      analysis: (() => {
+        const dwx = [dmWx, DZ_WX[dGZ[1]]];
+        const xiCount = dwx.filter(w => xiyong.includes(w)).length;
+        const dzSS = SS_TABLE[dm]?.[TG[TG.indexOf(dGZ[0])]] || '';
+        return xiCount >= 1 ? '中年自身能力发挥，事业有成' : '中年压力较大，需努力突破';
+      })()
+    },
+    late: {
+      label: '晚年运（50岁后）看时柱',
+      pillars: tGZ,
+      wx: [WX_MAP[tGZ[0]], DZ_WX[tGZ[1]]],
+      analysis: (() => {
+        const twx = [WX_MAP[tGZ[0]], DZ_WX[tGZ[1]]];
+        const xiCount = twx.filter(w => xiyong.includes(w)).length;
+        const timeSS = SS_TABLE[dm][tGZ[0]];
+        const childLuck = ['食神','伤官','偏财','正财'].includes(timeSS) ? '子女有出息' : ['正印','偏印'].includes(timeSS) ? '晚年有贵人照顾' : '晚年需自立';
+        return xiCount >= 1 ? `晚年安康享福，${childLuck}` : `晚年需注意养生，${childLuck}`;
+      })()
+    }
+  };
+
+  // 地支组合特征提示（双某+某水之类）
+  const dzCounts = {};
+  dzArr4.forEach(z => { dzCounts[z] = (dzCounts[z]||0) + 1; });
+  const dzComboTraits = [];
+  Object.entries(dzCounts).filter(([,c]) => c >= 2).forEach(([z,c]) => {
+    const trait = { 子:'水势汹涌，聪明但多虑', 丑:'土厚积累深，大器晚成', 寅:'木气双旺，冲劲十足',
+      卯:'双木温柔，但优柔寡断', 辰:'双龙志高，不甘平凡', 巳:'火力双份，口才极佳',
+      午:'火气双旺，急性子但行动力强', 未:'双土温厚，人缘极好', 申:'金气锋锐，精明强干',
+      酉:'双金桃花旺，重品味', 戌:'双土忠义，正义感强', 亥:'双水重情，心软易被拖累' }[z] || '';
+    if (trait) dzComboTraits.push(`双${z}${DZ_WX[z]}：${trait}`);
+  });
+  // 五行旺组合
+  const wxCombo = [];
+  const wxSorted = Object.entries(wuxing).sort((a,b)=>b[1]-a[1]);
+  if (wxSorted[0][1] >= 3 && wxSorted[1][1] >= 2) {
+    const combo = wxSorted[0][0] + wxSorted[1][0];
+    const comboDesc = { '水金':'外柔内刚、有韧性、能扛事', '金水':'聪明灵活、善变通、不服输',
+      '木火':'热情上进、理想主义、有创造力', '火木':'光明磊落、敢作敢为', '土金':'稳重可靠、善积累',
+      '金土':'务实有毅力、重信用', '水木':'聪慧好学、有文采', '木水':'灵活多变、善交际',
+      '火土':'热心踏实、乐于助人', '土火':'温厚有能力' }[combo] || `${combo}旺`;
+    wxCombo.push(`${wxSorted[0][0]}${wxSorted[1][0]}旺：${comboDesc}`);
+  }
+
+  // 顺逆排
+  const isForward = yun.isForward();
+  const startAge = yun.getStartYear() + '年' + yun.getStartMonth() + '月' + (yun.getStartDay() ? yun.getStartDay()+'日' : '') + '起运';
+  const yunDirection = isForward ? '顺排' : '逆排';
+
+  // 时柱看子女
+  const timeSS = SS_TABLE[dm][tGZ[0]];
+  const childAnalysis = ['食神','伤官'].includes(timeSS) ? '子女聪明有出息，但个性强' :
+    ['正财','偏财'].includes(timeSS) ? '子女孝顺，晚年可靠子女享福' :
+    ['正印','偏印'].includes(timeSS) ? '子女缘好，有贵人相助' :
+    ['正官','七杀'].includes(timeSS) ? '子女有管束力，家教严' : '子女缘一般';
+
   return {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, tianganChong, kongwang: kongwangInfo, isSpecialGeju,
     taiyuan, mingGong, tiaohou, trueSolarTimeAdj, taohuaInfo, monthCommander,
     healthWarn, badMonths, goodMonths, hourTrait,
+    sanqianfa, dzComboTraits, wxCombo, childAnalysis,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
       dayunInteraction: dayunLiunianAnalysis },
-    dayun: { list:dayuns, current:currentDayun, startInfo:`${yun.getStartYear()}年${yun.getStartMonth()}月起运` },
+    dayun: { list:dayuns, current:currentDayun, startInfo:`${startAge}（${gender==='female'||gender==='f'?'女':'男'}命${yunDirection}）` },
     xiaoyun, liuyueList,
     personality: DM_PERSONA[dm]||DM_PERSONA['甲'],
     lunarDate,
@@ -550,6 +621,15 @@ function formatForAI(result, mode='simple') {
       if (r.goodMonths.length) o+=`\n吉月（宜调理）：农历${r.goodMonths.join('、')}月`;
     }
     if (r.hourTrait) o+=`\n\n【时支性格】${r.fourPillars.hour[1]}时生人：${r.hourTrait}`;
+    if (r.dzComboTraits && r.dzComboTraits.length) { o+=`\n\n【地支组合特征】`; r.dzComboTraits.forEach(t => { o+=`\n${t}`; }); }
+    if (r.wxCombo && r.wxCombo.length) { r.wxCombo.forEach(t => { o+=`\n${t}`; }); }
+    if (r.sanqianfa) {
+      o+=`\n\n【三前法·一生概览】`;
+      o+=`\n${r.sanqianfa.early.label}：${r.sanqianfa.early.pillars} → ${r.sanqianfa.early.analysis}`;
+      o+=`\n${r.sanqianfa.middle.label}：${r.sanqianfa.middle.pillars} → ${r.sanqianfa.middle.analysis}`;
+      o+=`\n${r.sanqianfa.late.label}：${r.sanqianfa.late.pillars} → ${r.sanqianfa.late.analysis}`;
+    }
+    if (r.childAnalysis) o+=`\n\n【子女缘】时柱${r.fourPillars.hour}（${SS_TABLE[r.dayMaster]?.[r.fourPillars.hour[0]]||''}）：${r.childAnalysis}`;
     if (r.taiyuan) o+=`\n\n【胎元】${r.taiyuan}  【命宫】${r.mingGong}`;
     return o;
   }
