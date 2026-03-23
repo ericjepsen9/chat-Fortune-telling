@@ -168,6 +168,15 @@ function formatForAI(result, mode = 'simple') {
   o += `\n⬆️ 上升${r.lagna.zh}座 — 人生的整体方向`;
   o += `\n\n你当前处于「${r.currentDasha.zh}」大运周期（${r.currentDasha.start}-${r.currentDasha.end}）`;
   o += `\n${effects[r.currentDasha.planet] || ''}`;
+  if (r.currentAntardasha) o += `\n当前细分阶段：${r.currentDasha.zh}/${r.currentAntardasha.zh}子运`;
+  if (r.grahas) {
+    const GZH = { Jupiter:'木星', Saturn:'土星', Rahu:'罗睺', Venus:'金星' };
+    const keyPlanets = ['Jupiter','Saturn','Rahu','Venus'].filter(p => r.grahas[p]);
+    if (keyPlanets.length) {
+      o += `\n\n关键行星位置：`;
+      keyPlanets.forEach(p => { o += `\n· ${GZH[p]}在${r.grahas[p].rashi.zh}座`; });
+    }
+  }
   return o;
 }
 

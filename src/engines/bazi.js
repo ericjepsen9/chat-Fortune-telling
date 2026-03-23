@@ -258,6 +258,12 @@ function calculate(input) {
   const jinyuMap = {甲:'辰',乙:'巳',丙:'未',丁:'申',戊:'未',己:'申',庚:'戌',辛:'亥',壬:'丑',癸:'寅'};
   if (dzArr4.includes(jinyuMap[dm])) shensha.push({ name: '金舆', pos: '命中', desc: '出行有助、配偶条件好' });
 
+  // 流年桃花分析（今年哪些月份桃花旺）
+  const taohuaTarget = taohua[dGZ[1]]; // 日支推桃花位
+  const lnDzNow = Solar.fromYmdHms(new Date().getFullYear(), 6, 15, 12, 0, 0).getLunar().getEightChar().getYear()[1];
+  const taohuaInfo = { target: taohuaTarget || '', inNatalChart: taohuaTarget && dzArr4.some((z,i)=>i!==2&&z===taohuaTarget), liunianHit: taohuaTarget === lnDzNow };
+  if (taohuaInfo.liunianHit) shensha.push({ name: '流年桃花', pos: '流年', desc: '今年异性缘特别旺，感情机会多' });
+
   // 地支关系（冲/合/刑/害/三合/三会）
   const dzLabeled = [{z:yGZ[1],l:'年'},{z:mGZ[1],l:'月'},{z:dGZ[1],l:'日'},{z:tGZ[1],l:'时'}];
   const dizhiRelations = [];
@@ -376,6 +382,7 @@ function calculate(input) {
       let rating = isXi ? '吉' : isJi ? '凶' : '平';
       if (CHONG[mDz2] === dGZ[1]) rating += '（冲日）';
       if (LIUHE[mDz2] === dGZ[1]) rating += '（合日）';
+      if (taohuaTarget && mDz2 === taohuaTarget) rating += '（桃花月）';
       const nowMonth = new Date().getMonth() + 1;
       liuyueList.push({ month: mi, gz: mGZStr, ss: mSS, rating, isCurrent: mi === nowMonth });
     } catch(e) { /* skip */ }
@@ -385,7 +392,7 @@ function calculate(input) {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, kongwang: kongwangInfo, isSpecialGeju,
-    taiyuan, mingGong, tiaohou, trueSolarTimeAdj,
+    taiyuan, mingGong, tiaohou, trueSolarTimeAdj, taohuaInfo,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',

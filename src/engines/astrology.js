@@ -165,6 +165,14 @@ function formatForAI(result, mode = 'simple') {
   const sc = getCompat(s, m);
   o += `\n\n你的太阳与月亮${sc >= 80 ? '高度和谐' : sc >= 60 ? '互相配合' : sc >= 50 ? '需要磨合' : '存在张力'}（协调度${sc}%）`;
   if (r.moonTransit) o += `\n\n今日月相：${r.moonTransit.phaseName}，月亮在${r.moonTransit.sign}座`;
+  if (r.transits) {
+    const PZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
+    const retroList = Object.entries(r.transits).filter(([,v]) => v.retrograde).map(([k]) => PZH[k]||k);
+    if (retroList.length) o += `\n当前${retroList.join('、')}逆行中，相关领域宜回顾反思`;
+    // Key transits
+    const jup = r.transits.Jupiter; if (jup) o += `\n木星在${jup.sign}座：${jup.sign === s.zh.replace('座','') ? '木星过境你的太阳星座，好运期！' : '扩展与机遇在'+jup.sign+'座领域'}`;
+    const sat = r.transits.Saturn; if (sat) o += `\n土星在${sat.sign}座：${sat.sign === s.zh.replace('座','') ? '土星回归，考验与成长期' : '需要在'+sat.sign+'座领域建立纪律'}`;
+  }
   return o;
 }
 

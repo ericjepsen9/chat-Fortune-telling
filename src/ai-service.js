@@ -300,7 +300,9 @@ function buildPrompt(mode, displayMode, question) {
 
   const instruction = hasQ ? focusedInstruction : fullInstructions[mode];
 
-  return `${roles[mode]}${ban}\n\n${instruction}\n\n以下是系统精确计算的数据（只能引用，不可修改或补充）：\n`;
+  const followUp = `\n\n最后，用一句话建议用户可以进一步追问的2个方向（用「你还可以问我：……」的格式）。`;
+
+  return `${roles[mode]}${ban}\n\n${instruction}${followUp}\n\n以下是系统精确计算的数据（只能引用，不可修改或补充）：\n`;
 }
 
 // ============ 安全过滤 ============

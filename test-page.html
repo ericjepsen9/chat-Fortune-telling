@@ -100,6 +100,15 @@
       <div class="mode-tab" data-mode="vedic" style="--c:#45B7D1;--bg:#45B7D115" onclick="selectMode('vedic')">
         ◎ 印度占星
       </div>
+      <div class="mode-tab" data-mode="hehun" style="--c:#E91E63;--bg:#E91E6315" onclick="selectMode('hehun')">
+        💑 八字合婚
+      </div>
+      <div class="mode-tab" data-mode="synastry" style="--c:#9C27B0;--bg:#9C27B015" onclick="selectMode('synastry')">
+        💫 星座配对
+      </div>
+      <div class="mode-tab" data-mode="hepan" style="--c:#F44336;--bg:#F4433615" onclick="selectMode('hepan')">
+        ❤ 综合合盘
+      </div>
     </div>
 
     <!-- 塔罗牌选牌面板（仅tarot模式显示） -->
@@ -153,6 +162,20 @@
           <button onclick="randomMeihua()" style="padding:8px 14px;border-radius:8px;border:1px solid #FFB347;background:#fff;color:#FFB347;font-size:12px;font-weight:600;cursor:pointer">🎲 随机报数</button>
           <span style="font-size:11px;color:#9ca3af;align-self:center">心中想着问题，然后随意报一个数</span>
         </div>
+      </div>
+    </div>
+
+    <!-- 对方信息（合婚/配对模式） -->
+    <div id="partnerPanel" style="display:none;margin-bottom:12px;padding:14px;border-radius:12px;background:linear-gradient(135deg,#E91E6308,#9C27B008);border:1px solid #E91E6330">
+      <div style="font-size:13px;font-weight:600;color:#E91E63;margin-bottom:10px">💑 对方出生信息（公历）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <label style="font-size:12px;color:#666">年 <input type="number" id="p2year" value="1992" min="1940" max="2020" style="width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px"></label>
+        <label style="font-size:12px;color:#666">月 <input type="number" id="p2month" value="3" min="1" max="12" style="width:40px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px"></label>
+        <label style="font-size:12px;color:#666">日 <input type="number" id="p2day" value="22" min="1" max="31" style="width:40px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px"></label>
+        <label style="font-size:12px;color:#666">时 <input type="number" id="p2hour" value="8" min="0" max="23" style="width:40px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px"></label>
+        <label style="font-size:12px;color:#666">性别
+          <select id="p2gender" style="padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px"><option value="female">女</option><option value="male">男</option></select>
+        </label>
       </div>
     </div>
 
@@ -212,6 +235,8 @@ function selectMode(mode) {
   // Show/hide mode-specific panels
   document.getElementById('tarotPanel').style.display = mode === 'tarot' ? 'block' : 'none';
   document.getElementById('meihuaPanel').style.display = mode === 'meihua' ? 'block' : 'none';
+  const isPartnerMode = ['hehun','synastry','hepan'].includes(mode);
+  document.getElementById('partnerPanel').style.display = isPartnerMode ? 'block' : 'none';
 }
 
 // ========== 塔罗牌选牌 ==========
@@ -342,6 +367,15 @@ function getModeExtra() {
     if (n1) extra.meihuaNum1 = n1;
     const n2 = document.getElementById('mhNum2').value;
     if (n2) extra.meihuaNum2 = n2;
+  }
+  if (['hehun','synastry','hepan'].includes(currentMode)) {
+    extra.profileB = {
+      year: document.getElementById('p2year').value,
+      month: document.getElementById('p2month').value,
+      day: document.getElementById('p2day').value,
+      hour: document.getElementById('p2hour').value,
+      gender: document.getElementById('p2gender').value,
+    };
   }
   return extra;
 }
