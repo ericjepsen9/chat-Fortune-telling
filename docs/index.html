@@ -1922,7 +1922,7 @@ const ShareCardScreen = ({ ci = 0, onBack }) => {
 };
 
 // ============ MAIN ============
-export default function YuanHe() {
+function YuanHe() {
   const [scr, setScr] = useState(S.SPLASH);
   const [data, setData] = useState({});
   const [hist, setHist] = useState([]);
@@ -2016,4 +2016,4 @@ export default function YuanHe() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);</script></body></html>
+ReactDOM.createRoot(document.getElementById('root')).render(<YuanHe />);</script></body></html>
