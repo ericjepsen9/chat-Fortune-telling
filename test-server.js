@@ -50,7 +50,7 @@ async function callLLM(systemPrompt, userMessage) {
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    max_tokens: 800,
+    max_tokens: 4096,
     temperature: 0.5,
     stream: false,
   });
