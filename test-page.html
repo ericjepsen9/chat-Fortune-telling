@@ -75,7 +75,9 @@
       农历：加载中...
     </div>
     <div class="input-row" style="margin-top:4px">
-      <label>当前城市 <input type="text" id="city" value="北京" style="width:140px" placeholder="如：上海"></label>
+      <label>当前城市 <input type="text" id="city" value="北京" style="width:100px" placeholder="如：上海"></label>
+      <label>经度 <input type="number" id="longitude" value="116.4" step="0.1" style="width:80px" placeholder="116.4" onchange="updateLunar()"></label>
+      <span style="font-size:11px;color:#9CA3AF">（用于真太阳时校正）</span>
     </div>
   </div>
 
@@ -318,7 +320,9 @@ function getProfile() {
     month: document.getElementById('month').value,
     day: document.getElementById('day').value,
     hour: document.getElementById('hour').value,
+    gender: document.getElementById('gender').value || 'male',
     city: document.getElementById('city').value || '北京',
+    longitude: document.getElementById('longitude').value || '116.4',
   };
 }
 
@@ -403,6 +407,11 @@ async function runDivine() {
       body: JSON.stringify({ mode: currentMode, ...profile, question, displayMode, city: profile.city, ...extra }),
     });
     const data = await res.json();
+
+    if (data.blocked) {
+      showResult(`<div class="result-section" style="border-left:4px solid #EF4444;padding:16px;background:#FEF2F2;border-radius:8px"><h3 style="color:#EF4444">⚠️ 无法处理此问题</h3><p>${data.reason}</p></div>`);
+      btn.disabled = false; btn.textContent = '🔮 AI 深度解读'; return;
+    }
 
     if (data.error) throw new Error(data.error);
 

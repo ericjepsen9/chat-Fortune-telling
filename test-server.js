@@ -107,8 +107,14 @@ async function handleDivination(mode, profile, question, displayMode, ctxOptions
     displayMode: displayMode || 'simple',
     ...(ctxOptions || {}),
   });
+
+  // 安全过滤：被拦截的问题不调用LLM
+  if (req.blocked) {
+    return { mode, blocked: true, reason: req.reason, engineData: '', response: req.reason };
+  }
+
   const response = await callLLM(req.systemPrompt, req.userMessage);
-  return { mode, displayMode: req.displayMode, engineData: req.engineData, context: req.context.fullStr, response };
+  return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response };
 }
 
 // ============ HTTP 服务器 ============
@@ -182,8 +188,8 @@ const server = http.createServer(async (req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', () => {
       try {
-        const { mode, year, month, day, hour, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType } = JSON.parse(body);
-        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour) };
+        const { mode, year, month, day, hour, gender, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType } = JSON.parse(body);
+        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
         const data = calculateEngine(mode, profile, displayMode || 'simple', { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType });
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ mode, displayMode: displayMode || 'simple', engineData: data }));
@@ -201,8 +207,8 @@ const server = http.createServer(async (req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
-        const { mode, year, month, day, hour, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType } = JSON.parse(body);
-        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour) };
+        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType } = JSON.parse(body);
+        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
         const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType };
         // 空问题或默认问题 → 全面分析；有具体问题 → 聚焦分析
         const result = await handleDivination(mode, profile, question || '', displayMode || 'simple', ctxOptions);

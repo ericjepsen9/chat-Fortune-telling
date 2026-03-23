@@ -41,9 +41,23 @@ const LIUHE = { 子:'丑',丑:'子',寅:'亥',卯:'戌',辰:'酉',巳:'申',午:
 const SANHE = { 申子辰:'水', 寅午戌:'火', 亥卯未:'木', 巳酉丑:'金' };
 
 function calculate(input) {
-  const { year, month, day, hour, gender } = input;
-  const h = parseInt(hour) || 0;
-  const solar = Solar.fromYmdHms(parseInt(year), parseInt(month), parseInt(day), h, 0, 0);
+  const { year, month, day, hour, gender, longitude } = input;
+  let h = parseInt(hour) || 0;
+
+  // 真太阳时校正（基于出生地经度）
+  // 北京时间基于东经120°，每差1°=4分钟
+  let trueSolarTimeAdj = 0;
+  const lng = parseFloat(longitude);
+  if (lng && !isNaN(lng)) {
+    trueSolarTimeAdj = Math.round((lng - 120) * 4); // 分钟
+    const adjHour = h + trueSolarTimeAdj / 60;
+    // 如果调整后跨了时辰边界（奇数小时），用调整后的时间
+    h = Math.floor(adjHour);
+    if (h < 0) h += 24;
+    if (h >= 24) h -= 24;
+  }
+
+  const solar = Solar.fromYmdHms(parseInt(year), parseInt(month), parseInt(day), h, Math.abs(trueSolarTimeAdj) % 60, 0);
   const lunar = solar.getLunar();
   const ec = lunar.getEightChar();
 
@@ -52,7 +66,7 @@ function calculate(input) {
     full: `农历${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
     shengxiao: lunar.getYearShengXiao(),
     yearGanzhi: ec.getYear(),
-    solarStr: `公历${year}年${month}月${day}日 ${h}时`,
+    solarStr: `公历${year}年${month}月${day}日 ${parseInt(hour)||0}时${trueSolarTimeAdj ? '（真太阳时校正' + (trueSolarTimeAdj > 0 ? '+' : '') + trueSolarTimeAdj + '分钟）' : ''}`,
   };
 
   const yGZ = ec.getYear(), mGZ = ec.getMonth(), dGZ = ec.getDay(), tGZ = ec.getTime();
@@ -308,30 +322,46 @@ function calculate(input) {
   if (currentDayun) {
     const dyTg = currentDayun.gz[0], dyDz = currentDayun.gz[1];
     const parts = [];
-    // 天干关系
     if (HE_MAP[dyTg] === lnTg) parts.push(`大运天干${dyTg}合流年天干${lnTg}（合化${HE_WX[dyTg]}）`);
     if (dyTg === lnTg) parts.push(`大运天干${dyTg}与流年天干${lnTg}比肩并行`);
-    // 地支关系
     if (CHONG[dyDz] === lnDz) parts.push(`大运地支${dyDz}冲流年地支${lnDz}（变动剧烈）`);
     if (LIUHE[dyDz] === lnDz) parts.push(`大运地支${dyDz}合流年地支${lnDz}（顺利）`);
     const HAI_MAP = {子:'未',丑:'午',寅:'巳',卯:'辰',申:'亥',酉:'戌',未:'子',午:'丑',巳:'寅',辰:'卯',亥:'申',戌:'酉'};
     if (HAI_MAP[dyDz] === lnDz) parts.push(`大运地支${dyDz}害流年地支${lnDz}（暗耗）`);
-    // 十神意义
     const dySS = SS_TABLE[dm][dyTg];
     parts.push(`大运天干${dyTg}对日主为${dySS}`);
     dayunLiunianAnalysis = parts.join('；');
+  }
+
+  // 十年小运（当前大运内逐年流年）
+  const xiaoyun = [];
+  if (currentDayun) {
+    for (let yr = currentDayun.startYear; yr < currentDayun.endYear; yr++) {
+      const yrEc = Solar.fromYmdHms(yr, 6, 15, 12, 0, 0).getLunar().getEightChar();
+      const yrGZ = yrEc.getYear();
+      const yrTg = yrGZ[0], yrDz = yrGZ[1];
+      const yrSS = SS_TABLE[dm][yrTg];
+      const yrTgWx = WX_MAP[yrTg];
+      const isXi = xiyong.includes(yrTgWx);
+      const isJi = jishen.includes(yrTgWx);
+      let rating = isXi ? '吉' : isJi ? '凶' : '平';
+      // 冲日支加凶
+      if (CHONG[yrDz] === dGZ[1]) rating = rating === '吉' ? '吉中有变' : '凶（冲日）';
+      xiaoyun.push({ year: yr, gz: yrGZ, ss: yrSS, rating, isCurrent: yr === nowYear });
+    }
   }
 
   return {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, kongwang: kongwangInfo, isSpecialGeju,
-    taiyuan, mingGong, tiaohou,
+    taiyuan, mingGong, tiaohou, trueSolarTimeAdj,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
       dayunInteraction: dayunLiunianAnalysis },
     dayun: { list:dayuns, current:currentDayun, startInfo:`${yun.getStartYear()}年${yun.getStartMonth()}月起运` },
+    xiaoyun,
     personality: DM_PERSONA[dm]||DM_PERSONA['甲'],
     lunarDate,
     gender: gender||'male',
@@ -373,6 +403,10 @@ function formatForAI(result, mode='simple') {
     o+=`\n${r.liunian.summary}`;
     r.liunian.dizhiRels.forEach(d=>{o+=`\n流年${r.liunian.ganzhi[1]}与${d.target}${d.type}：${d.desc}`;});
     if (r.liunian.dayunInteraction) o+=`\n\n【大运流年交互】${r.liunian.dayunInteraction}`;
+    if (r.xiaoyun && r.xiaoyun.length) {
+      o+=`\n\n【十年运程概览】`;
+      r.xiaoyun.forEach(xy => { o+=`\n${xy.year}年 ${xy.gz}（${xy.ss}）${xy.rating}${xy.isCurrent ? ' ← 今年' : ''}`; });
+    }
     if (r.taiyuan) o+=`\n\n【胎元】${r.taiyuan}  【命宫】${r.mingGong}`;
     return o;
   }

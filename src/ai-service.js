@@ -49,6 +49,7 @@ function calculateAll(mode, profile, ctx, opts = {}) {
     day: parseInt(profile.day || profile.birthDay),
     hour: parseInt(profile.hour || profile.birthHour),
     gender: profile.gender || 'male',
+    longitude: profile.longitude || opts.longitude,
   };
 
   switch (mode) {
