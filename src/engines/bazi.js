@@ -5,6 +5,7 @@
 const { Solar } = require('lunar-javascript');
 
 const TG = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const DZ_ALL = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
 const WX_MAP = { 甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水' };
 const DZ_WX = { 子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水' };
 const YY_MAP = { 甲:'阳',乙:'阴',丙:'阳',丁:'阴',戊:'阳',己:'阴',庚:'阳',辛:'阴',壬:'阳',癸:'阴' };
@@ -159,16 +160,27 @@ function calculate(input) {
     jishen = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
   }
 
-  // 天干五合检测
+  // 天干五合检测（含合化判断）
   const HE_MAP = {甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
   const HE_WX = {甲:'土',己:'土',乙:'金',庚:'金',丙:'水',辛:'水',丁:'木',壬:'木',戊:'火',癸:'火'};
   const tgArr = [{g:yGZ[0],l:'年'},{g:mGZ[0],l:'月'},{g:dGZ[0],l:'日'},{g:tGZ[0],l:'时'}];
   const tianganHe = [];
   for (let i=0;i<4;i++) for (let j=i+1;j<4;j++) {
     if (HE_MAP[tgArr[i].g] === tgArr[j].g) {
-      tianganHe.push({ pair:`${tgArr[i].l}干${tgArr[i].g}${tgArr[j].l}干${tgArr[j].g}`, huaWx: HE_WX[tgArr[i].g], desc:`合化${HE_WX[tgArr[i].g]}` });
+      const huaWx = HE_WX[tgArr[i].g];
+      // 化成条件：月令五行为化神（或化神旺于月令）
+      const isHua = monthDzWx === huaWx || SHENG_MAP[huaWx] === monthDzWx;
+      tianganHe.push({ pair:`${tgArr[i].l}干${tgArr[i].g}${tgArr[j].l}干${tgArr[j].g}`, huaWx, isHua, desc: isHua ? `合化${huaWx}（化成）` : `合而不化${huaWx}（合绊）` });
     }
   }
+
+  // 胎元（月干进一位 + 月支进三位）
+  const taiyuan = TG[(TG.indexOf(mGZ[0]) + 1) % 10] + DZ_ALL[(DZ_ALL.indexOf(mGZ[1]) + 3) % 12];
+  // 命宫（用月支和时支推算：14-月支序号-时支序号→寅起排）
+  const mDzIdx = DZ_ALL.indexOf(mGZ[1]), tDzIdx = DZ_ALL.indexOf(tGZ[1]);
+  const mingGongDzIdx = ((14 - mDzIdx - tDzIdx) % 12 + 12) % 12;
+  const mingGongTgIdx = (TG.indexOf(yGZ[0]) * 2 + 2 + mingGongDzIdx) % 10; // 年干定月干起头
+  const mingGong = TG[mingGongTgIdx] + DZ_ALL[mingGongDzIdx];
 
   // 神煞
   const shensha = [];
@@ -229,7 +241,6 @@ function calculate(input) {
   }
 
   // 空亡（日柱旬中空亡）
-  const DZ_ALL = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
   const dayTgIdx = TG.indexOf(dGZ[0]);
   const dayDzIdx = DZ_ALL.indexOf(dGZ[1]);
   const xunStart = ((dayDzIdx - dayTgIdx) % 12 + 12) % 12; // 旬首地支index
@@ -256,13 +267,34 @@ function calculate(input) {
   const dayuns = yun.getDaYun().filter(d => d.getGanZhi()).map(d => ({ gz:d.getGanZhi(), startAge:d.getStartAge(), startYear:d.getStartYear(), endYear:d.getStartYear()+10 }));
   const currentDayun = dayuns.find(d => nowYear>=d.startYear && nowYear<d.endYear) || dayuns[0];
 
+  // 大运流年交互分析
+  let dayunLiunianAnalysis = '';
+  if (currentDayun) {
+    const dyTg = currentDayun.gz[0], dyDz = currentDayun.gz[1];
+    const parts = [];
+    // 天干关系
+    if (HE_MAP[dyTg] === lnTg) parts.push(`大运天干${dyTg}合流年天干${lnTg}（合化${HE_WX[dyTg]}）`);
+    if (dyTg === lnTg) parts.push(`大运天干${dyTg}与流年天干${lnTg}比肩并行`);
+    // 地支关系
+    if (CHONG[dyDz] === lnDz) parts.push(`大运地支${dyDz}冲流年地支${lnDz}（变动剧烈）`);
+    if (LIUHE[dyDz] === lnDz) parts.push(`大运地支${dyDz}合流年地支${lnDz}（顺利）`);
+    const HAI_MAP = {子:'未',丑:'午',寅:'巳',卯:'辰',申:'亥',酉:'戌',未:'子',午:'丑',巳:'寅',辰:'卯',亥:'申',戌:'酉'};
+    if (HAI_MAP[dyDz] === lnDz) parts.push(`大运地支${dyDz}害流年地支${lnDz}（暗耗）`);
+    // 十神意义
+    const dySS = SS_TABLE[dm][dyTg];
+    parts.push(`大运天干${dyTg}对日主为${dySS}`);
+    dayunLiunianAnalysis = parts.join('；');
+  }
+
   return {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, kongwang: kongwangInfo, isSpecialGeju,
+    taiyuan, mingGong,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
-      summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性' },
+      summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
+      dayunInteraction: dayunLiunianAnalysis },
     dayun: { list:dayuns, current:currentDayun, startInfo:`${yun.getStartYear()}年${yun.getStartMonth()}月起运` },
     personality: DM_PERSONA[dm]||DM_PERSONA['甲'],
     lunarDate,
@@ -303,6 +335,8 @@ function formatForAI(result, mode='simple') {
     o+=`\n流年天干${r.liunian.ganzhi[0]}${r.liunian.tianganWx}，对日主为${r.liunian.tianganSS}`;
     o+=`\n${r.liunian.summary}`;
     r.liunian.dizhiRels.forEach(d=>{o+=`\n流年${r.liunian.ganzhi[1]}与${d.target}${d.type}：${d.desc}`;});
+    if (r.liunian.dayunInteraction) o+=`\n\n【大运流年交互】${r.liunian.dayunInteraction}`;
+    if (r.taiyuan) o+=`\n\n【胎元】${r.taiyuan}  【命宫】${r.mingGong}`;
     return o;
   }
   const p=r.personality;

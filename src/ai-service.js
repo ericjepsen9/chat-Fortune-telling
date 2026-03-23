@@ -229,13 +229,78 @@ function buildPrompt(mode, displayMode, question) {
   return `${roles[mode]}${ban}\n\n${instruction}\n\n以下是系统精确计算的数据（只能引用，不可修改或补充）：\n`;
 }
 
+// ============ 安全过滤 ============
+const BLOCKED_PATTERNS = [
+  /自[杀死伤残害]|[吞跳割].*死|不想活|结束生命|轻生/,
+  /[杀害打砍刺].*[人谁他她]/,
+  /[制造买卖].*[毒枪炸]/,
+  /色情|裸照|性交易/,
+  /怎么[偷骗黑]|诈骗.*方法/,
+];
+const SENSITIVE_PATTERNS = [
+  /[离婚分手].*什么时候|什么时候.*[死亡离婚]/,
+  /[疾]?病.*什么时候[好治愈]|癌|绝症/,
+  /官司.*输赢|牢|坐牢/,
+  /前[男女]友.*[复合回来]/,
+];
+
+function safetyCheck(question) {
+  if (!question) return { safe: true, level: 'normal' };
+  const q = question.trim();
+  for (const p of BLOCKED_PATTERNS) {
+    if (p.test(q)) return { safe: false, level: 'blocked', reason: '该问题涉及敏感话题，无法提供分析。如需帮助请联系专业人士。' };
+  }
+  for (const p of SENSITIVE_PATTERNS) {
+    if (p.test(q)) return { safe: true, level: 'sensitive' };
+  }
+  return { safe: true, level: 'normal' };
+}
+
+// ============ 问题分类 ============
+function classifyQuestion(question) {
+  if (!question || question.trim().length < 2) return 'general';
+  const q = question.toLowerCase();
+  if (/感情|恋爱|婚姻|对象|伴侣|喜欢|暗恋|复合|桃花|姻缘|另一半|脱单|分手/.test(q)) return 'relationship';
+  if (/工作|事业|跳槽|升职|加薪|创业|职业|考试|面试|转行|找工作/.test(q)) return 'career';
+  if (/财运|投资|理财|买房|赚钱|亏损|破财|发财|股票|生意/.test(q)) return 'wealth';
+  if (/健康|身体|生病|手术|怀孕|备孕|减肥|失眠|抑郁/.test(q)) return 'health';
+  if (/学业|考研|留学|出国|移民|签证/.test(q)) return 'study';
+  if (/运势|今年|今天|这个月|下半年|明年/.test(q)) return 'fortune';
+  return 'general';
+}
+
+// 分类补充提示
+const CATEGORY_HINTS = {
+  relationship: '\n\n【分析重点】围绕感情关系展开，包括：当前感情状态的能量、对方的特质匹配度、感情发展趋势、具体行动建议。',
+  career: '\n\n【分析重点】围绕事业发展展开，包括：当前职业运势、适合的行动时机、机遇和风险、具体建议。',
+  wealth: '\n\n【分析重点】围绕财运展开，包括：当前财运走势、投资适宜性、收入趋势、理财建议。',
+  health: '\n\n【分析重点】围绕健康展开，包括：五行对应的身体弱项、当前需要注意的健康问题、调理建议。注意：命理分析不替代医学诊断，请就医。',
+  study: '\n\n【分析重点】围绕学业发展展开，包括：学习运势、考试时机、方向选择、具体建议。',
+  fortune: '\n\n【分析重点】围绕运势趋势展开，按时间线分析，指出关键月份、有利/不利时段、应对策略。',
+  general: '',
+};
+
 // ============ 组装 ============
 function buildRequest(mode, profile, question, options = {}) {
+  // 安全检查
+  const safety = safetyCheck(question);
+  if (!safety.safe) {
+    return { blocked: true, reason: safety.reason, engineData: '', systemPrompt: '', userMessage: question, mode };
+  }
+
   const dm = options.displayMode || 'simple';
   const ctx = createContext(options);
   const engineData = calculateAll(mode, profile, ctx, options);
-  const systemPrompt = buildPrompt(mode, dm, question) + engineData;
-  return { systemPrompt, userMessage: (question && question.trim()) || '请为我进行全面分析', engineData, context: ctx, displayMode: dm, mode };
+
+  // 问题分类
+  const category = classifyQuestion(question);
+  const categoryHint = CATEGORY_HINTS[category] || '';
+
+  // 敏感问题加disclaimer
+  const sensitiveDisclaimer = safety.level === 'sensitive' ? '\n\n【重要】你的回答要温和谨慎。不做绝对判断（"一定会""绝对不行"）。提醒用户命理仅供参考，重大决策请结合现实情况。' : '';
+
+  const systemPrompt = buildPrompt(mode, dm, question) + categoryHint + sensitiveDisclaimer + engineData;
+  return { systemPrompt, userMessage: (question && question.trim()) || '请为我进行全面分析', engineData, context: ctx, displayMode: dm, mode, category, safetyLevel: safety.level };
 }
 
 // ============ 测试 ============

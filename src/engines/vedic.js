@@ -89,7 +89,26 @@ function calculate(input) {
   }
 
   const now = new Date().getFullYear();
+  const nowFrac = new Date().getFullYear() + (new Date().getMonth()) / 12; // fractional year
   const curDasha = dashas.find(dd => now >= dd.start && now < dd.end) || dashas[0];
+
+  // Antardasha (sub-periods within current Mahadasha)
+  let antardashas = [];
+  if (curDasha) {
+    const mdPlanet = curDasha.planet;
+    const mdIdx = DASHA_ORD.indexOf(mdPlanet);
+    const mdYrs = curDasha.end - curDasha.start;
+    const totalDashaYears = 120; // Vimshottari total
+    let adStart = curDasha.start;
+    for (let i = 0; i < 9; i++) {
+      const adPlanet = DASHA_ORD[(mdIdx + i) % 9];
+      const adYrs = (DASHA_YRS[mdPlanet] * DASHA_YRS[adPlanet]) / totalDashaYears;
+      const adEnd = adStart + adYrs;
+      antardashas.push({ planet: adPlanet, zh: D_ZH[adPlanet], start: Math.round(adStart * 10) / 10, end: Math.round(adEnd * 10) / 10, yrs: Math.round(adYrs * 10) / 10 });
+      adStart = adEnd;
+    }
+  }
+  const currentAntardasha = antardashas.find(ad => nowFrac >= ad.start && nowFrac < ad.end) || antardashas[0];
 
   // Sidereal planet positions (birth chart grahas)
   const tropPlanets = ac.getPlanetPositions(y, m, d, h);
@@ -107,7 +126,7 @@ function calculate(input) {
 
   return {
     sunSign: sunRashi, sunDeg, moonSign: moonRashi, moonDeg, moonNak: nak, lagna,
-    dashas, currentDasha: curDasha, ayanamsa: ayan.toFixed(2), grahas,
+    dashas, currentDasha: curDasha, antardashas, currentAntardasha, ayanamsa: ayan.toFixed(2), grahas,
     _source: 'astronomia',
   };
 }
@@ -123,8 +142,15 @@ function formatForAI(result, mode = 'simple') {
     o += `\n上升（Lagna）：${r.lagna.n}（${r.lagna.zh}座）  守护：${r.lagna.ruler}`;
     o += `\n\n【Vimshottari Dasha 大运】`;
     o += `\n当前：${r.currentDasha.zh}大运（${r.currentDasha.start}-${r.currentDasha.end}，${r.currentDasha.yrs}年）`;
-    o += `\n\n完整大运序列：`;
+    if (r.currentAntardasha) {
+      o += `\n当前子运：${r.currentDasha.zh}/${r.currentAntardasha.zh}（${r.currentAntardasha.start}-${r.currentAntardasha.end}）`;
+    }
+    o += `\n\n大运序列：`;
     r.dashas.forEach(d => { o += `\n${d.zh}（${d.start}-${d.end}，${d.yrs}年）${d === r.currentDasha ? ' ← 当前' : ''}`; });
+    if (r.antardashas && r.antardashas.length) {
+      o += `\n\n当前大运${r.currentDasha.zh}的子运期：`;
+      r.antardashas.forEach(ad => { o += `\n  ${ad.zh}（${ad.start}-${ad.end}）${ad === r.currentAntardasha ? ' ← 当前' : ''}`; });
+    }
     if (r.grahas && Object.keys(r.grahas).length > 0) {
       const GZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星', Rahu:'罗睺(北交点)', Ketu:'计都(南交点)' };
       o += `\n\n【行星位置（恒星黄道）】`;

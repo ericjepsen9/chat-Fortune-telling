@@ -60,21 +60,54 @@ function calculate(input) {
     rising = { ...rising, degree: risingInfo.degree.toFixed(1) };
   }
 
-  // Current planet transits (for fortune reading)
+  // Current planet transits
   const now = new Date();
   const ny = now.getFullYear(), nm = now.getMonth() + 1, nd = now.getDate(), nh = now.getHours();
   const transits = ac.getPlanetPositions(ny, nm, nd, nh);
   const transitSummary = {};
   for (const [planet, info] of Object.entries(transits)) {
-    transitSummary[planet] = { sign: info.zh, degree: (info.degree || 0).toFixed(1) };
+    transitSummary[planet] = { sign: info.zh, degree: (info.degree || 0).toFixed(1), longitude: info.longitude };
+  }
+
+  // Aspect detection helper
+  function findAspects(lng1, name1, lng2, name2) {
+    const diff = Math.abs(lng1 - lng2);
+    const angle = diff > 180 ? 360 - diff : diff;
+    const orb = 8; // degree tolerance
+    const aspects = [];
+    if (angle <= orb) aspects.push({ type: '合相(0°)', names: `${name1}合${name2}`, effect: '能量融合增强' });
+    else if (Math.abs(angle - 60) <= orb) aspects.push({ type: '六合(60°)', names: `${name1}六合${name2}`, effect: '和谐互助' });
+    else if (Math.abs(angle - 90) <= orb) aspects.push({ type: '刑相(90°)', names: `${name1}刑${name2}`, effect: '紧张挑战' });
+    else if (Math.abs(angle - 120) <= orb) aspects.push({ type: '三合(120°)', names: `${name1}三合${name2}`, effect: '顺畅有利' });
+    else if (Math.abs(angle - 180) <= orb) aspects.push({ type: '对冲(180°)', names: `${name1}冲${name2}`, effect: '对立拉扯' });
+    return aspects;
+  }
+
+  // Natal aspects (Sun-Moon, Sun-Rising)
+  const natalAspects = [];
+  natalAspects.push(...findAspects(sunLng, '太阳', moonLng, '月亮'));
+  if (rising) {
+    const riLng = ac.getRisingSign(y, m, d, h);
+    const riAbsLng = riLng.index * 30 + riLng.degree;
+    natalAspects.push(...findAspects(sunLng, '太阳', riAbsLng, '上升'));
+    natalAspects.push(...findAspects(moonLng, '月亮', riAbsLng, '上升'));
+  }
+
+  // Transit aspects (current planets → natal Sun/Moon)
+  const PZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
+  const transitAspects = [];
+  for (const [planet, info] of Object.entries(transits)) {
+    transitAspects.push(...findAspects(info.longitude, '流年'+PZH[planet], sunLng, '本命太阳'));
+    transitAspects.push(...findAspects(info.longitude, '流年'+PZH[planet], moonLng, '本命月亮'));
   }
 
   return {
-    sunSign: sun, sunDegree: sunInfo.degree.toFixed(1),
-    moonSign: moon, moonDegree: moonInfo.degree.toFixed(1),
+    sunSign: sun, sunDegree: sunInfo.degree.toFixed(1), sunLongitude: sunLng,
+    moonSign: moon, moonDegree: moonInfo.degree.toFixed(1), moonLongitude: moonLng,
     risingSign: rising,
     element: EL_ZH[sun.el],
     transits: transitSummary,
+    natalAspects, transitAspects,
     _source: 'astronomia',
   };
 }
@@ -97,12 +130,18 @@ function formatForAI(result, mode = 'simple') {
     o += `\n\n【元素平衡】太阳${EL_ZH[s.el]}+月亮${EL_ZH[m.el]}${ri ? '+上升' + EL_ZH[ri.el] : ''}`;
     const sc = getCompat(s, m);
     o += `\n太阳-月亮内在协调度：${sc}%`;
+    if (r.natalAspects && r.natalAspects.length) {
+      o += `\n\n【本命相位】`;
+      r.natalAspects.forEach(a => { o += `\n${a.names}（${a.type}）：${a.effect}`; });
+    }
     if (r.transits) {
       const PZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
       o += `\n\n【当前行星过境（Transit）】`;
-      for (const [p, info] of Object.entries(r.transits)) {
-        o += `\n${PZH[p]||p}：${info.sign}座 ${info.degree}°`;
-      }
+      for (const [p, info] of Object.entries(r.transits)) { o += `\n${PZH[p]||p}：${info.sign}座 ${info.degree}°`; }
+    }
+    if (r.transitAspects && r.transitAspects.length) {
+      o += `\n\n【流年相位（影响当前运势）】`;
+      r.transitAspects.forEach(a => { o += `\n${a.names}（${a.type}）：${a.effect}`; });
     }
     return o;
   }

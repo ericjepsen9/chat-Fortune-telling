@@ -5,6 +5,31 @@ const MINOR_KW={1:{up:['潜力','新机会','种子'],dn:['错失','延迟','空
 const COURT_KW={page:{up:['学习者','好奇','新消息'],dn:['幼稚','缺乏经验','犹豫']},knight:{up:['行动','追求','热情'],dn:['冲动','不稳定','过度激进']},queen:{up:['成熟','滋养','掌控'],dn:['情绪化','控制欲','自我封闭']},king:{up:['权威','成就','掌控全局'],dn:['专横','僵化','压力过大']}};
 function buildDeck(){const d=MAJOR.map(c=>({...c,type:'major'}));let id=22;SUITS.forEach(s=>{for(let n=1;n<=10;n++)d.push({id:id++,zh:`${s.zh}${n===1?'王牌':n}`,en:`${n===1?'Ace':n} of ${s.en}`,type:'minor',suit:s.id,num:n,up:MINOR_KW[n].up,dn:MINOR_KW[n].dn});COURT.forEach(c=>d.push({id:id++,zh:`${s.zh}${c.zh}`,en:`${c.en} of ${s.en}`,type:'court',suit:s.id,rank:c.r,up:COURT_KW[c.r].up,dn:COURT_KW[c.r].dn}));});return d;}
 const DECK=buildDeck();
+// 大阿尔卡那详细牌义
+const MAJOR_DETAIL = {
+  0:'愚者代表新旅程的开始，充满可能性但尚未明确方向。正位鼓励勇敢踏出第一步，逆位警示盲目冒险。',
+  1:'魔术师拥有将想法变为现实的力量。正位表示你已具备所需资源，逆位暗示才能未被善用。',
+  2:'女祭司守护内在智慧和直觉。正位提示倾听内心声音，逆位表示忽略了潜意识的信号。',
+  3:'女皇象征丰盛与创造力。正位代表滋养和成长的时期，逆位可能意味着过度付出或创造力受阻。',
+  4:'皇帝代表秩序和权威。正位鼓励建立结构和纪律，逆位警示过度控制或权力滥用。',
+  5:'教皇连接传统智慧和精神指引。正位建议寻求导师或遵循传统，逆位暗示需要打破陈规。',
+  6:'恋人面对重要选择和关系。正位代表和谐的结合，逆位暗示价值观冲突需要面对。',
+  7:'战车以坚定意志克服障碍。正位预示通过自律获得胜利，逆位警示方向不明或失控。',
+  8:'力量来自内心的勇气和耐心。正位代表以柔克刚的智慧，逆位暗示自我怀疑。',
+  9:'隐者踏上内在探索之旅。正位鼓励独处和反思，逆位提示不要过度封闭自己。',
+  10:'命运之轮提醒变化是唯一不变的。正位预示好运转机，逆位暗示逆境但终将过去。',
+  11:'正义要求面对真相和后果。正位代表公平的结果，逆位暗示偏见或逃避责任。',
+  12:'倒吊人在静止中获得新视角。正位建议暂停和放手，逆位暗示无谓的牺牲。',
+  13:'死神是终结与重生的使者。正位代表必要的转变和放下，逆位暗示抗拒改变。',
+  14:'节制寻求平衡与调和。正位鼓励耐心融合各方面，逆位警示失衡或过度。',
+  15:'恶魔揭示束缚和执念。正位帮助觉察阴影面，逆位可能是沉溺或突破的信号。',
+  16:'塔在瞬间打碎旧有结构。正位虽然剧烈但带来解放，逆位暗示逃避必要的改变。',
+  17:'星星在黑暗后带来希望。正位代表宁静和灵感，逆位暗示暂时失去信念。',
+  18:'月亮照亮潜意识的世界。正位提示关注梦境和直觉，逆位警示幻觉或恐惧。',
+  19:'太阳带来最纯粹的快乐和成功。正位是最积极的信号，逆位暗示快乐被遮蔽但仍在。',
+  20:'审判号召深刻的自我反省和觉醒。正位代表重生的召唤，逆位暗示逃避清算。',
+  21:'世界是圆满完成的象征。正位代表一个重要周期的结束，逆位暗示差最后一步。',
+};
 const SPREADS={single:{zh:'单张指引',pos:[{zh:'指引',en:'Guidance'}]},threeCard:{zh:'三张牌阵',pos:[{zh:'过去',en:'Past'},{zh:'现在',en:'Present'},{zh:'未来',en:'Future'}]},relationship:{zh:'关系牌阵',pos:[{zh:'你',en:'You'},{zh:'对方',en:'Other'},{zh:'关系',en:'Relationship'},{zh:'建议',en:'Advice'}]},celticCross:{zh:'凯尔特十字',pos:[{zh:'现状',en:'Present'},{zh:'阻碍',en:'Challenge'},{zh:'潜意识',en:'Subconscious'},{zh:'过去',en:'Past'},{zh:'可能性',en:'Above'},{zh:'近未来',en:'Near Future'},{zh:'自我态度',en:'Self'},{zh:'外在环境',en:'Environment'},{zh:'希望与恐惧',en:'Hopes & Fears'},{zh:'最终结果',en:'Outcome'}]}};
 
 // 确定性伪随机：同seed永远相同结果
@@ -35,8 +60,14 @@ function formatForAI(result, mode='simple') {
       o+=`\n${c.position.zh}位 — ${c.zh}（${c.en}）${rev?'【逆位】':'【正位】'}`;
       o+=`\n  ${rev?'逆位含义：'+(c.dn||[]).join('、'):'正位含义：'+(c.up||[]).join('、')}`;
       o+=`\n  牌型：${c.type==='major'?'大阿尔卡那':suitInfo?suitInfo.zh+'（'+suitInfo.theme+'）':''}`;
+      if(c.type==='major'&&MAJOR_DETAIL[c.id]) o+=`\n  深层牌义：${MAJOR_DETAIL[c.id]}`;
     });
     o+=`\n\n【整体能量】大阿尔卡那${r.cards.filter(c=>c.type==='major').length}张，逆位${r.cards.filter(c=>c.reversed).length}张`;
+    // Element balance
+    const elCount = { fire:0, water:0, air:0, earth:0 };
+    r.cards.forEach(c => { if(c.suit) { const s=SUITS.find(x=>x.id===c.suit); if(s) { const elMap={wands:'fire',cups:'water',swords:'air',pentacles:'earth'}; elCount[elMap[s.id]]++; } } });
+    const domEl = Object.entries(elCount).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+    if(domEl.length) o+=`\n元素分布：${domEl.map(([k,v])=>({fire:'火',water:'水',air:'风',earth:'土'}[k]||k)+v+'张').join(' ')}`;
     if(r.seed) o+=`\n【牌阵ID】${r.seed}`;
     return o;
   }
@@ -45,6 +76,7 @@ function formatForAI(result, mode='simple') {
     const rev=c.reversed;
     o+=`\n${c.position.zh}：${c.zh} ${rev?'（逆位·需要注意）':'（正位·积极信号）'}`;
     if(c.up) o+=`\n  关键词：${(rev?(c.dn||[]):(c.up||[])).slice(0,2).join('、')}`;
+    if(c.type==='major'&&MAJOR_DETAIL[c.id]) o+=`\n  ${MAJOR_DETAIL[c.id].split('。')[0]}。`;
   });
   return o;
 }
