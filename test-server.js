@@ -89,7 +89,7 @@ async function callLLM(systemPrompt, userMessage) {
     });
 
     req.on('error', (e) => reject(new Error(`连接 LLM 失败: ${e.message}\n请检查 Cherry Studio 是否已启动，API 地址: ${apiUrl}`)));
-    req.setTimeout(60000, () => { req.destroy(); reject(new Error('LLM 请求超时(60s)')); });
+    req.setTimeout(180000, () => { req.destroy(); reject(new Error('LLM 请求超时(180s)')); });
     req.write(body);
     req.end();
   });
