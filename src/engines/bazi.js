@@ -160,6 +160,18 @@ function calculate(input) {
     jishen = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
   }
 
+  // 调候用神（季节对日主的影响）
+  const monthNum = parseInt(month);
+  const season = monthNum >= 3 && monthNum <= 5 ? '春' : monthNum >= 6 && monthNum <= 8 ? '夏' : monthNum >= 9 && monthNum <= 11 ? '秋' : '冬';
+  const TIAOHOU = {
+    木: { 冬:'需火暖局调候，丙火为先', 夏:'需水润木，癸水为先', 春:'', 秋:'需水生木，壬癸为先' },
+    火: { 冬:'需木生火调候，甲木为先', 秋:'需木助火，甲乙为先', 春:'', 夏:'需水制火，壬水为先' },
+    土: { 冬:'需火暖土调候，丙火为先', 夏:'需水润土，癸水为先', 春:'需木疏土，甲木为先', 秋:'' },
+    金: { 夏:'需水洗金调候，壬水为先', 冬:'需火暖金，丙丁为先', 春:'', 秋:'' },
+    水: { 夏:'需金生水调候，庚辛为先', 春:'需土止水，戊己为先', 秋:'', 冬:'' },
+  };
+  const tiaohou = TIAOHOU[dmWx]?.[season] || '';
+
   // 天干五合检测（含合化判断）
   const HE_MAP = {甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
   const HE_WX = {甲:'土',己:'土',乙:'金',庚:'金',丙:'水',辛:'水',丁:'木',壬:'木',戊:'火',癸:'火'};
@@ -197,6 +209,30 @@ function calculate(input) {
 
   const yima = { 寅:'申',申:'寅',巳:'亥',亥:'巳',子:'寅',午:'申',卯:'巳',酉:'亥',辰:'寅',戌:'申',丑:'亥',未:'巳' };
   if (dzArr4.some((z,i) => i!==2 && z===yima[dGZ[1]])) shensha.push({ name: '驿马', pos: '命中', desc: '利于远行、奔波变动' });
+
+  // 将星（日支三合局中间字）
+  const jiangxingMap = { 子:'子',丑:'丑',寅:'寅',卯:'卯',辰:'辰',巳:'巳',午:'午',未:'未',申:'申',酉:'酉',戌:'戌',亥:'亥',
+    /* 三合中字 */ };
+  const jxMap = {寅:'午',午:'寅',戌:'午', 亥:'卯',卯:'亥',未:'卯', 申:'子',子:'申',辰:'子', 巳:'酉',酉:'巳',丑:'酉'};
+  // 将星 = 年支三合局的中字
+  const sanheMiddle = {子:'申',丑:'巳',寅:'午',卯:'亥',辰:'子',巳:'酉',午:'寅',未:'卯',申:'子',酉:'巳',戌:'午',亥:'卯'};
+  // 简化：看年支三合局帝旺位是否在命中
+  const jxTarget = sanheMiddle[yGZ[1]];
+  if (jxTarget && dzArr4.includes(jxTarget)) shensha.push({ name: '将星', pos: '命中', desc: '有领导力、组织能力强' });
+
+  // 红鸾天喜（以年支推）
+  const hongluanMap = {子:'卯',丑:'寅',寅:'丑',卯:'子',辰:'亥',巳:'戌',午:'酉',未:'申',申:'未',酉:'午',戌:'巳',亥:'辰'};
+  const tianxiMap = {子:'酉',丑:'申',寅:'未',卯:'午',辰:'巳',巳:'辰',午:'卯',未:'寅',申:'丑',酉:'子',戌:'亥',亥:'戌'};
+  if (dzArr4.includes(hongluanMap[yGZ[1]])) shensha.push({ name: '红鸾', pos: '命中', desc: '利于婚恋、感情有喜' });
+  if (dzArr4.includes(tianxiMap[yGZ[1]])) shensha.push({ name: '天喜', pos: '命中', desc: '喜庆之事、人缘佳' });
+
+  // 太极贵人
+  const taijiMap = {甲:['子','午'],乙:['子','午'],丙:['卯','酉'],丁:['卯','酉'],戊:['辰','戌','丑','未'],己:['辰','戌','丑','未'],庚:['寅','亥'],辛:['寅','亥'],壬:['巳','申'],癸:['巳','申']};
+  if (taijiMap[dm]) dzArr4.forEach((z,i) => { if (i!==2 && taijiMap[dm].includes(z)) shensha.push({ name: '太极贵人', pos: ['年支','月支','日支','时支'][i], desc: '善于思考、有悟性' }); });
+
+  // 金舆（日干推）
+  const jinyuMap = {甲:'辰',乙:'巳',丙:'未',丁:'申',戊:'未',己:'申',庚:'戌',辛:'亥',壬:'丑',癸:'寅'};
+  if (dzArr4.includes(jinyuMap[dm])) shensha.push({ name: '金舆', pos: '命中', desc: '出行有助、配偶条件好' });
 
   // 地支关系（冲/合/刑/害/三合/三会）
   const dzLabeled = [{z:yGZ[1],l:'年'},{z:mGZ[1],l:'月'},{z:dGZ[1],l:'日'},{z:tGZ[1],l:'时'}];
@@ -290,7 +326,7 @@ function calculate(input) {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, kongwang: kongwangInfo, isSpecialGeju,
-    taiyuan, mingGong,
+    taiyuan, mingGong, tiaohou,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
@@ -315,6 +351,7 @@ function formatForAI(result, mode='simple') {
     o+=`\n时柱：${fp.hour}（${r.nayin.hour}） ${r.shishen.hourTg}  ${r.stages.hour}`;
     o+=`\n\n【日主】${r.dayMaster}${r.dayMasterElement}（${r.yinyang}${r.dayMasterElement}）·${r.dayStrength}`;
     o+=`\n格局：${r.geju}\n喜用：${r.xiyong}  忌：${r.jishen}`;
+    if (r.tiaohou) o+=`\n调候：${r.tiaohou}`;
     o+=`\n\n【五行】${Object.entries(r.wuxing).map(([k,v])=>`${k}${v}`).join(' ')}`;
     if (r.wuxingLack.length) o+=`  缺${r.wuxingLack.join('、')}`;
     if (r.shensha.length) { o+=`\n\n【神煞】`; r.shensha.forEach(s=>{o+=`\n${s.pos}·${s.name}：${s.desc}`;}); }

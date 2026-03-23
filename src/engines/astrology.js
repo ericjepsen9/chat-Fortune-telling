@@ -64,10 +64,12 @@ function calculate(input) {
   const now = new Date();
   const ny = now.getFullYear(), nm = now.getMonth() + 1, nd = now.getDate(), nh = now.getHours();
   const transits = ac.getPlanetPositions(ny, nm, nd, nh);
+  const retrogrades = ac.getRetrogrades(ny, nm, nd, nh);
   const transitSummary = {};
   for (const [planet, info] of Object.entries(transits)) {
-    transitSummary[planet] = { sign: info.zh, degree: (info.degree || 0).toFixed(1), longitude: info.longitude };
+    transitSummary[planet] = { sign: info.zh, degree: (info.degree || 0).toFixed(1), longitude: info.longitude, retrograde: !!retrogrades[planet] };
   }
+  const moonTransit = ac.getCurrentMoonTransit();
 
   // Aspect detection helper
   function findAspects(lng1, name1, lng2, name2) {
@@ -106,7 +108,7 @@ function calculate(input) {
     moonSign: moon, moonDegree: moonInfo.degree.toFixed(1), moonLongitude: moonLng,
     risingSign: rising,
     element: EL_ZH[sun.el],
-    transits: transitSummary,
+    transits: transitSummary, moonTransit,
     natalAspects, transitAspects,
     _source: 'astronomia',
   };
@@ -137,7 +139,15 @@ function formatForAI(result, mode = 'simple') {
     if (r.transits) {
       const PZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
       o += `\n\n【当前行星过境（Transit）】`;
-      for (const [p, info] of Object.entries(r.transits)) { o += `\n${PZH[p]||p}：${info.sign}座 ${info.degree}°`; }
+      for (const [p, info] of Object.entries(r.transits)) {
+        o += `\n${PZH[p]||p}：${info.sign}座 ${info.degree}°${info.retrograde ? ' ⟲逆行中' : ''}`;
+      }
+      const retroList = Object.entries(r.transits).filter(([,v]) => v.retrograde).map(([k]) => PZH[k]||k);
+      if (retroList.length) o += `\n当前逆行行星：${retroList.join('、')}（逆行期间该行星领域需要回顾和反思）`;
+    }
+    if (r.moonTransit) {
+      o += `\n\n【当前月相】${r.moonTransit.phaseName}`;
+      o += `\n月亮过境：${r.moonTransit.sign}座 ${r.moonTransit.degree}°`;
     }
     if (r.transitAspects && r.transitAspects.length) {
       o += `\n\n【流年相位（影响当前运势）】`;
@@ -154,6 +164,7 @@ function formatForAI(result, mode = 'simple') {
   if (ri) o += `\n上升${ri.zh}决定别人对你的第一印象：${ri.traits.slice(0, 2).join('、')}`;
   const sc = getCompat(s, m);
   o += `\n\n你的太阳与月亮${sc >= 80 ? '高度和谐' : sc >= 60 ? '互相配合' : sc >= 50 ? '需要磨合' : '存在张力'}（协调度${sc}%）`;
+  if (r.moonTransit) o += `\n\n今日月相：${r.moonTransit.phaseName}，月亮在${r.moonTransit.sign}座`;
   return o;
 }
 

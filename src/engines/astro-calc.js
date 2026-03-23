@@ -144,4 +144,43 @@ function getPlanetPositions(year, month, day, hour = 12, tzOffset = 8) {
   return results;
 }
 
-module.exports = { getMoonLongitude, getSunLongitude, getAyanamsa, longitudeToSign, getRisingSign, getPlanetPositions, getRahuKetu, SIGNS_ZH, SIGNS_EN };
+/**
+ * 检测行星逆行（当前位置 vs 前一天位置，如果前一天经度更大则逆行）
+ */
+function getRetrogrades(year, month, day, hour = 12, tzOffset = 8) {
+  const today = getPlanetPositions(year, month, day, hour, tzOffset);
+  const yesterday = getPlanetPositions(year, month, day - 1, hour, tzOffset);
+  const retro = {};
+  for (const name of Object.keys(today)) {
+    const diff = today[name].longitude - yesterday[name].longitude;
+    // Handle 360→0 wrap: if diff > 180, planet went backwards across 0°
+    const adjusted = diff > 180 ? diff - 360 : diff < -180 ? diff + 360 : diff;
+    retro[name] = adjusted < 0; // negative = retrograde
+  }
+  return retro;
+}
+
+/**
+ * 获取当前时刻的月亮Transit信息
+ */
+function getCurrentMoonTransit(tzOffset = 8) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate(), h = now.getHours();
+  const lng = getMoonLongitude(y, m, d, h, tzOffset);
+  const sign = longitudeToSign(lng);
+  // 月亮相位（与太阳的角度差）
+  const sunLng = getSunLongitude(y, m, d, h, tzOffset);
+  let phase = ((lng - sunLng) % 360 + 360) % 360;
+  let phaseName;
+  if (phase < 22.5 || phase >= 337.5) phaseName = '新月（种子期）';
+  else if (phase < 67.5) phaseName = '蛾眉月（成长期）';
+  else if (phase < 112.5) phaseName = '上弦月（行动期）';
+  else if (phase < 157.5) phaseName = '盈凸月（完善期）';
+  else if (phase < 202.5) phaseName = '满月（丰收期）';
+  else if (phase < 247.5) phaseName = '亏凸月（分享期）';
+  else if (phase < 292.5) phaseName = '下弦月（释放期）';
+  else phaseName = '残月（休整期）';
+  return { sign: sign.zh, degree: sign.degree.toFixed(1), longitude: lng, phaseName, phaseAngle: Math.round(phase) };
+}
+
+module.exports = { getMoonLongitude, getSunLongitude, getAyanamsa, longitudeToSign, getRisingSign, getPlanetPositions, getRahuKetu, getRetrogrades, getCurrentMoonTransit, SIGNS_ZH, SIGNS_EN };
