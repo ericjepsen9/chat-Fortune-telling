@@ -364,7 +364,17 @@ function calculate(input) {
   // 大运
   const gNum = (gender==='female'||gender==='f') ? 0 : 1;
   const yun = ec.getYun(gNum);
-  const dayuns = yun.getDaYun().filter(d => d.getGanZhi()).map(d => ({ gz:d.getGanZhi(), startAge:d.getStartAge(), startYear:d.getStartYear(), endYear:d.getStartYear()+10 }));
+  const STAGE_LABEL = (age) => age < 12 ? '少年运' : age < 22 ? '青年运' : age < 32 ? '起步运' : age < 42 ? '上升运' : age < 52 ? '稳定运' : age < 62 ? '享福运' : age < 72 ? '安康运' : '长寿运';
+  const dayuns = yun.getDaYun().filter(d => d.getGanZhi()).map(d => {
+    const gz = d.getGanZhi(), sa = d.getStartAge(), sy = d.getStartYear();
+    const tg = gz[0], dz = gz[1];
+    const ss = SS_TABLE[dm][tg];
+    const tgWx = WX_MAP[tg], dzWx = DZ_WX[dz];
+    const isXi = xiyong.includes(tgWx);
+    const isJi = jishen.includes(tgWx);
+    const luck = isXi ? '吉' : isJi ? '凶' : '平';
+    return { gz, startAge: sa, startYear: sy, endYear: sy + 10, label: STAGE_LABEL(sa), ss, tgWx, dzWx, luck };
+  });
   const currentDayun = dayuns.find(d => nowYear>=d.startYear && nowYear<d.endYear) || dayuns[0];
 
   // 大运流年交互分析
@@ -431,11 +441,40 @@ function calculate(input) {
     } catch(e) { /* skip */ }
   }
 
+  // 五行健康映射
+  const WX_HEALTH = {
+    木: { organ:'肝胆', risk:'肝胆、眼睛、筋骨、头部', advice:'忌熬夜、忌酗酒、宜舒缓运动' },
+    火: { organ:'心脏', risk:'心脑血管、血压、视力、小肠', advice:'忌急躁、忌过劳、宜静心养神' },
+    土: { organ:'脾胃', risk:'脾胃消化、肌肉、皮肤', advice:'忌暴饮暴食、宜规律饮食' },
+    金: { organ:'肺部', risk:'呼吸系统、肺、大肠、皮肤过敏', advice:'忌吸烟、防风寒、宜呼吸锻炼' },
+    水: { organ:'肾脏', risk:'肾、泌尿系统、腰肩、关节、睡眠', advice:'忌受寒、防湿气、宜温补' },
+  };
+  // 旺的五行→该脏腑过亢；缺的五行→该脏腑虚弱
+  const healthWarn = [];
+  const sortedWx = Object.entries(wuxing).sort((a,b) => b[1]-a[1]);
+  if (sortedWx[0][1] >= 3) healthWarn.push({ type:'旺', wx:sortedWx[0][0], ...WX_HEALTH[sortedWx[0][0]], desc:`${sortedWx[0][0]}旺（${sortedWx[0][1]}）→ ${WX_HEALTH[sortedWx[0][0]].organ}功能过亢` });
+  wuxingLack.forEach(wx => { if (WX_HEALTH[wx]) healthWarn.push({ type:'缺', wx, ...WX_HEALTH[wx], desc:`缺${wx} → ${WX_HEALTH[wx].organ}偏弱` }); });
+  // 凶月（忌神月份）
+  const badMonths = liuyueList.filter(m => m.rating.startsWith('凶')).map(m => m.month);
+  const goodMonths = liuyueList.filter(m => m.rating.startsWith('吉')).map(m => m.month);
+
+  // 日主+时支深层性格
+  const DZ_TRAIT = {
+    子:'深沉内敛、思维活跃、夜间精力旺', 丑:'踏实稳重、善于积累、大器晚成',
+    寅:'有冲劲、敢闯敢拼、早起型', 卯:'温和有礼、审美好、细腻敏感',
+    辰:'志向远大、不甘平凡、贵人运好', 巳:'聪明灵活、口才好、善交际',
+    午:'热情奔放、行动力强、急性子', 未:'温厚包容、人缘好、心思细密',
+    申:'精明能干、适应力强、多才多艺', 酉:'注重品质、有品味、桃花旺',
+    戌:'忠诚守信、有正义感、重情义', 亥:'聪明重情、心软善良、想象力丰富',
+  };
+  const hourTrait = DZ_TRAIT[tGZ[1]] || '';
+
   return {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, tianganChong, kongwang: kongwangInfo, isSpecialGeju,
     taiyuan, mingGong, tiaohou, trueSolarTimeAdj, taohuaInfo, monthCommander,
+    healthWarn, badMonths, goodMonths, hourTrait,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
@@ -489,7 +528,7 @@ function formatForAI(result, mode='simple') {
     });
     if (r.dayun&&r.dayun.current) {
       o+=`\n\n【大运】${r.dayun.startInfo}`;
-      r.dayun.list.forEach(d=>{o+=`\n${d.startAge}岁 ${d.gz}（${d.startYear}-${d.endYear}）${d===r.dayun.current?' ← 当前':''}`;});
+      r.dayun.list.forEach(d=>{o+=`\n${d.startAge}岁 ${d.gz}（${d.startYear}-${d.endYear}）${d.label}·${d.ss}·${d.luck}${d===r.dayun.current?' ← 当前':''}`;});
     }
     o+=`\n\n【${r.liunian.year}年流年：${r.liunian.ganzhi}（${r.liunian.nayin}）】`;
     o+=`\n流年天干${r.liunian.ganzhi[0]}${r.liunian.tianganWx}，对日主为${r.liunian.tianganSS}`;
@@ -504,6 +543,13 @@ function formatForAI(result, mode='simple') {
       o+=`\n\n【${r.liunian.year}年逐月运程】`;
       r.liuyueList.forEach(lm => { o+=`\n${lm.month}月 ${lm.gz}（${lm.ss}）${lm.rating}${lm.isCurrent ? ' ← 本月' : ''}`; });
     }
+    if (r.healthWarn && r.healthWarn.length) {
+      o+=`\n\n【健康提示】`;
+      r.healthWarn.forEach(h => { o+=`\n${h.desc}  注意${h.risk}  ${h.advice}`; });
+      if (r.badMonths.length) o+=`\n凶月（注意健康）：农历${r.badMonths.join('、')}月`;
+      if (r.goodMonths.length) o+=`\n吉月（宜调理）：农历${r.goodMonths.join('、')}月`;
+    }
+    if (r.hourTrait) o+=`\n\n【时支性格】${r.fourPillars.hour[1]}时生人：${r.hourTrait}`;
     if (r.taiyuan) o+=`\n\n【胎元】${r.taiyuan}  【命宫】${r.mingGong}`;
     return o;
   }
