@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "astronomia": "^4.2.0",
     "lunar-javascript": "^1.7.7"
   }
 }

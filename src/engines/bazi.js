@@ -55,14 +55,53 @@ function calculate(input) {
   const mapCG = arr => arr.map(g => ({ gan: g, ss: SS_TABLE[dm][g], wx: WX_MAP[g] }));
   const cangganShishen = { year: mapCG(ec.getYearHideGan()), month: mapCG(ec.getMonthHideGan()), day: mapCG(ec.getDayHideGan()), hour: mapCG(ec.getTimeHideGan()) };
 
-  const allWx = [yGZ[0], mGZ[0], dGZ[0], tGZ[0]].map(c => WX_MAP[c]).concat([yGZ[1], mGZ[1], dGZ[1], tGZ[1]].map(c => DZ_WX[c]));
+  // 五行统计（天干+地支加权藏干）
   const wuxing = { 金:0, 木:0, 水:0, 火:0, 土:0 };
-  allWx.forEach(e => { if (e) wuxing[e]++; });
+  // 天干各1.0
+  [yGZ[0], mGZ[0], dGZ[0], tGZ[0]].forEach(g => { if (WX_MAP[g]) wuxing[WX_MAP[g]] += 1.0; });
+  // 地支藏干加权：本气1.0，中气0.5，余气0.3
+  const weights = [1.0, 0.5, 0.3];
+  [ec.getYearHideGan(), ec.getMonthHideGan(), ec.getDayHideGan(), ec.getTimeHideGan()].forEach(cg => {
+    cg.forEach((g, i) => { if (WX_MAP[g]) wuxing[WX_MAP[g]] += (weights[i] || 0.3); });
+  });
+  // Round for display
+  Object.keys(wuxing).forEach(k => { wuxing[k] = Math.round(wuxing[k] * 10) / 10; });
   const wuxingLack = Object.entries(wuxing).filter(([,v]) => v === 0).map(([k]) => k);
 
-  const helpCount = allWx.filter(e => e === dmWx).length;
-  const dayStrength = helpCount >= 3 ? '身强' : helpCount <= 1 ? '身弱' : '中和';
-  const geju = shishen.monthTg + '格';
+  // 身强身弱（月令+得助+得生）
+  const monthDzWx = DZ_WX[mGZ[1]];
+  const SHENG_MAP = { 金:'土', 水:'金', 木:'水', 火:'木', 土:'火' }; // 生日主的五行
+  const monthHelp = (monthDzWx === dmWx) ? 2 : (SHENG_MAP[dmWx] === monthDzWx) ? 1.5 : 0; // 月令得令
+  const sameCount = wuxing[dmWx] || 0; // 比劫力量
+  const yinCount = wuxing[SHENG_MAP[dmWx]] || 0; // 印星力量
+  const totalHelp = sameCount + yinCount * 0.7 + monthHelp;
+  const totalAll = Object.values(wuxing).reduce((a,b) => a+b, 0);
+  const helpRatio = totalHelp / totalAll;
+  const dayStrength = helpRatio >= 0.45 ? '身强' : helpRatio <= 0.3 ? '身弱' : '中和';
+
+  // 格局判定（正统：看月支藏干透出天干的十神）
+  const monthCG = ec.getMonthHideGan();
+  const otherTg = [yGZ[0], tGZ[0]]; // 年干和时干（排除日主）
+  let geju = '';
+  // 优先看月支藏干哪个透出到年干或时干
+  for (const g of monthCG) {
+    if (g === dm) continue; // 跳过与日主相同的
+    if (otherTg.includes(g)) {
+      const ss = SS_TABLE[dm][g];
+      // 比肩劫财不成格
+      if (ss !== '比肩' && ss !== '劫财') { geju = ss + '格'; break; }
+    }
+  }
+  // 没有透出，取月支本气十神（第一个藏干）
+  if (!geju && monthCG.length > 0) {
+    const ss = SS_TABLE[dm][monthCG[0]];
+    if (ss !== '比肩' && ss !== '劫财') geju = ss + '格';
+    else if (monthCG.length > 1) {
+      const ss2 = SS_TABLE[dm][monthCG[1]];
+      if (ss2 !== '比肩' && ss2 !== '劫财') geju = ss2 + '格';
+    }
+  }
+  if (!geju) geju = '建禄格'; // 月令为比肩时
 
   const SHENG = { 金:'水', 水:'木', 木:'火', 火:'土', 土:'金' };
   const KE_SHENG = { 金:'土', 水:'金', 木:'水', 火:'木', 土:'火' };

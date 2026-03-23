@@ -5,7 +5,12 @@ const WX_KE={金:'木',木:'土',土:'水',水:'火',火:'金'};
 
 function generateHexagram(date){
   const d=date instanceof Date?date:new Date(date);
-  const y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate(),h=d.getHours();
+  let y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate(),h=d.getHours();
+  // 子时跨日：23点属次日子时
+  if (h >= 23) {
+    const next = new Date(d); next.setDate(next.getDate() + 1);
+    y = next.getFullYear(); m = next.getMonth() + 1; day = next.getDate();
+  }
   const sc=Math.floor(((h+1)%24)/2)+1;
   const un=((y+m+day)%8)||8, ln=((y+m+day+sc)%8)||8, cl=((y+m+day+sc)%6)||6;
   return _buildHexagram(un, ln, cl, 'time', `年${y}+月${m}+日${day}+时辰${sc}`);
@@ -53,7 +58,13 @@ function _buildHexagram(un, ln, cl, method, methodDesc) {
   else rel={type:'用克体',zh:'有压力阻碍',en:'Challenging'};
   const cun=cl>3?((un+cl-3)%8)||8:un, cln=cl<=3?((ln+cl)%8)||8:ln;
   const chn=HEX_NAMES[cun-1][cln-1];
-  return{hexagram:{name:hn,upper:ut,lower:lt},changed:{name:chn,upper:TRI[cun-1],lower:TRI[cln-1]},changingLine:cl,ti,yong,relation:rel,method,methodDesc,timestamp:new Date().toISOString()};
+  // 互卦：取爻2,3,4为下卦，爻3,4,5为上卦
+  const triLines={1:[1,1,1],2:[0,1,1],3:[1,0,1],4:[0,0,1],5:[1,1,0],6:[0,1,0],7:[1,0,0],8:[0,0,0]};
+  const aL=[...(triLines[ln]||[0,0,0]),...(triLines[un]||[0,0,0])];// 爻1-6
+  const l2t=(ls)=>{const k=Object.entries(triLines).find(([,v])=>v[0]===ls[0]&&v[1]===ls[1]&&v[2]===ls[2]);return k?parseInt(k[0]):8;};
+  const huLn=l2t([aL[1],aL[2],aL[3]]),huUn=l2t([aL[2],aL[3],aL[4]]);
+  const huGua={name:HEX_NAMES[huUn-1][huLn-1],upper:TRI[huUn-1],lower:TRI[huLn-1]};
+  return{hexagram:{name:hn,upper:ut,lower:lt},changed:{name:chn,upper:TRI[cun-1],lower:TRI[cln-1]},huGua,changingLine:cl,ti,yong,relation:rel,method,methodDesc,timestamp:new Date().toISOString()};
 }
 
 function formatForAI(result,mode='simple'){
@@ -69,6 +80,7 @@ ${methodLine}
 下卦：${r.hexagram.lower.n}（${r.hexagram.lower.s} ${r.hexagram.lower.na}·${r.hexagram.lower.el}）${r.hexagram.lower.tr}
 动爻：第${r.changingLine}爻（动爻在${r.changingLine>3?'上':'下'}卦）
 变卦：${r.changed.name}
+互卦：${r.huGua?r.huGua.name:'未计算'}（${r.huGua?r.huGua.upper.n+'/'+r.huGua.lower.n:''}）— 事情发展过程
 
 【体用分析】
 体卦：${r.ti.n}（${r.ti.el}）— 代表问事者自身
