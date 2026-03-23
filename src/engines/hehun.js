@@ -141,6 +141,23 @@ function calculate(person1, person2) {
   // 综合评分（权重：日干30% + 地支25% + 五行20% + 纳音10% + 大运15%）
   const totalScore = Math.round(dm.score * 0.3 + dz.score * 0.25 + wx.score * 0.2 + ny.score * 0.1 + dy.score * 0.15);
 
+  // 流年交叉（两人同月吉凶）
+  const liuyueCross = [];
+  if (r1.liuyueList && r2.liuyueList) {
+    for (let i = 0; i < r1.liuyueList.length; i++) {
+      const m1 = r1.liuyueList[i], m2 = r2.liuyueList[i];
+      if (!m1 || !m2) continue;
+      const r1g = m1.rating.startsWith('吉'), r2g = m2.rating.startsWith('吉');
+      const r1b = m1.rating.startsWith('凶'), r2b = m2.rating.startsWith('凶');
+      let status = '';
+      if (r1g && r2g) status = '双吉';
+      else if (r1b && r2b) status = '双凶';
+      else if (r1g && r2b) status = '你吉对方凶';
+      else if (r1b && r2g) status = '你凶对方吉';
+      if (status) liuyueCross.push({ month: m1.month, status });
+    }
+  }
+
   let grade, gradeDesc;
   if (totalScore >= 90) { grade = '上上婚'; gradeDesc = '天作之合，感情甜蜜，互相成就'; }
   else if (totalScore >= 80) { grade = '上等婚'; gradeDesc = '非常般配，互补性强，适合长期发展'; }
@@ -153,7 +170,7 @@ function calculate(person1, person2) {
     person1: { fourPillars: r1.fourPillars, dayMaster: r1.dayMaster, dayMasterElement: r1.dayMasterElement, dayStrength: r1.dayStrength, geju: r1.geju, wuxing: r1.wuxing, wuxingLack: r1.wuxingLack, nayin: r1.nayin, lunarDate: r1.lunarDate, dayun: r1.dayun, personality: r1.personality },
     person2: { fourPillars: r2.fourPillars, dayMaster: r2.dayMaster, dayMasterElement: r2.dayMasterElement, dayStrength: r2.dayStrength, geju: r2.geju, wuxing: r2.wuxing, wuxingLack: r2.wuxingLack, nayin: r2.nayin, lunarDate: r2.lunarDate, dayun: r2.dayun, personality: r2.personality },
     scores: { dayMaster: dm, wuxing: wx, dizhi: dz, nayin: ny, dayun: dy, total: totalScore },
-    shishenCross,
+    shishenCross, liuyueCross,
     grade, gradeDesc,
   };
 }
@@ -187,6 +204,13 @@ function formatForAI(result, mode = 'simple') {
     o += `\n\n【性格互动】`;
     o += `\n甲方：${p1.personality.type} — ${p1.personality.simple}`;
     o += `\n乙方：${p2.personality.type} — ${p2.personality.simple}`;
+    if (r.liuyueCross && r.liuyueCross.length) {
+      o += `\n\n【今年月份交叉】`;
+      const dj = r.liuyueCross.filter(m => m.status === '双吉');
+      const dx = r.liuyueCross.filter(m => m.status === '双凶');
+      if (dj.length) o += `\n双方同吉月份：${dj.map(m => m.month+'月').join('、')}（宜约会/做重要决定）`;
+      if (dx.length) o += `\n双方同凶月份：${dx.map(m => m.month+'月').join('、')}（易摩擦，需互相体谅）`;
+    }
     return o;
   }
   // simple

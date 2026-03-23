@@ -75,13 +75,18 @@ function calculate(input) {
   function findAspects(lng1, name1, lng2, name2) {
     const diff = Math.abs(lng1 - lng2);
     const angle = diff > 180 ? 360 - diff : diff;
-    const orb = 8; // degree tolerance
+    const orb = 8;
     const aspects = [];
-    if (angle <= orb) aspects.push({ type: '合相(0°)', names: `${name1}合${name2}`, effect: '能量融合增强' });
-    else if (Math.abs(angle - 60) <= orb) aspects.push({ type: '六合(60°)', names: `${name1}六合${name2}`, effect: '和谐互助' });
-    else if (Math.abs(angle - 90) <= orb) aspects.push({ type: '刑相(90°)', names: `${name1}刑${name2}`, effect: '紧张挑战' });
-    else if (Math.abs(angle - 120) <= orb) aspects.push({ type: '三合(120°)', names: `${name1}三合${name2}`, effect: '顺畅有利' });
-    else if (Math.abs(angle - 180) <= orb) aspects.push({ type: '对冲(180°)', names: `${name1}冲${name2}`, effect: '对立拉扯' });
+    const makeAspect = (exactAngle, type, effect) => {
+      const orbDeg = Math.abs(angle - exactAngle);
+      const strength = orbDeg <= 2 ? '精确' : orbDeg <= 5 ? '紧密' : '松散';
+      aspects.push({ type, names: `${name1}${type.split('(')[0]}${name2}`, effect, orbDeg: Math.round(orbDeg*10)/10, strength, angle: Math.round(angle*10)/10 });
+    };
+    if (angle <= orb) makeAspect(0, '合相(0°)', '能量融合增强');
+    else if (Math.abs(angle - 60) <= orb) makeAspect(60, '六合(60°)', '和谐互助');
+    else if (Math.abs(angle - 90) <= orb) makeAspect(90, '刑相(90°)', '紧张挑战');
+    else if (Math.abs(angle - 120) <= orb) makeAspect(120, '三合(120°)', '顺畅有利');
+    else if (Math.abs(angle - 180) <= orb) makeAspect(180, '对冲(180°)', '对立拉扯');
     return aspects;
   }
 
@@ -134,7 +139,7 @@ function formatForAI(result, mode = 'simple') {
     o += `\n太阳-月亮内在协调度：${sc}%`;
     if (r.natalAspects && r.natalAspects.length) {
       o += `\n\n【本命相位】`;
-      r.natalAspects.forEach(a => { o += `\n${a.names}（${a.type}）：${a.effect}`; });
+      r.natalAspects.forEach(a => { o += `\n${a.names}（${a.type} orb${a.orbDeg}° ${a.strength}）：${a.effect}`; });
     }
     if (r.transits) {
       const PZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
@@ -151,7 +156,7 @@ function formatForAI(result, mode = 'simple') {
     }
     if (r.transitAspects && r.transitAspects.length) {
       o += `\n\n【流年相位（影响当前运势）】`;
-      r.transitAspects.forEach(a => { o += `\n${a.names}（${a.type}）：${a.effect}`; });
+      r.transitAspects.forEach(a => { o += `\n${a.names}（${a.type} orb${a.orbDeg}° ${a.strength}）：${a.effect}`; });
     }
     return o;
   }

@@ -17,11 +17,16 @@ function findAspect(lng1, lng2) {
   const diff = Math.abs(lng1 - lng2);
   const angle = diff > 180 ? 360 - diff : diff;
   const orb = 10;
-  if (angle <= orb) return { type: '合相(0°)', harmony: 90, effect: '灵魂共振，深度连接' };
-  if (Math.abs(angle - 60) <= orb) return { type: '六合(60°)', harmony: 80, effect: '轻松和谐，自然互助' };
-  if (Math.abs(angle - 90) <= orb) return { type: '刑相(90°)', harmony: 35, effect: '摩擦紧张，但有成长动力' };
-  if (Math.abs(angle - 120) <= orb) return { type: '三合(120°)', harmony: 85, effect: '默契天成，相处舒适' };
-  if (Math.abs(angle - 180) <= orb) return { type: '对冲(180°)', harmony: 50, effect: '强烈吸引但也强烈冲突' };
+  const mk = (exact, type, harmony, effect) => {
+    const orbDeg = Math.round(Math.abs(angle - exact) * 10) / 10;
+    const strength = orbDeg <= 2 ? '精确' : orbDeg <= 5 ? '紧密' : '松散';
+    return { type, harmony, effect, orbDeg, strength, angle: Math.round(angle*10)/10 };
+  };
+  if (angle <= orb) return mk(0, '合相(0°)', 90, '灵魂共振，深度连接');
+  if (Math.abs(angle - 60) <= orb) return mk(60, '六合(60°)', 80, '轻松和谐，自然互助');
+  if (Math.abs(angle - 90) <= orb) return mk(90, '刑相(90°)', 35, '摩擦紧张，但有成长动力');
+  if (Math.abs(angle - 120) <= orb) return mk(120, '三合(120°)', 85, '默契天成，相处舒适');
+  if (Math.abs(angle - 180) <= orb) return mk(180, '对冲(180°)', 50, '强烈吸引但也强烈冲突');
   return null;
 }
 
@@ -105,7 +110,7 @@ function formatForAI(result, mode = 'simple') {
     if (r.moonInteraction) o += `\n月亮互动：${r.moonInteraction}`;
     if (r.crossAspects.length) {
       o += `\n\n【交叉相位（核心配对数据）】`;
-      r.crossAspects.forEach(a => { o += `\n${a.pair} ${a.type}（${a.harmony}分）：${a.effect}`; });
+      r.crossAspects.forEach(a => { o += `\n${a.pair} ${a.type}（orb${a.orbDeg}° ${a.strength} ${a.harmony}分）：${a.effect}`; });
     } else {
       o += `\n\n【交叉相位】无显著相位（双方行星角度差处于中间地带）`;
     }
