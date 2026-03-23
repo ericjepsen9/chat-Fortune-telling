@@ -76,51 +76,99 @@ function calculate(input) {
   Object.keys(wuxing).forEach(k => { wuxing[k] = Math.round(wuxing[k] * 10) / 10; });
   const wuxingLack = Object.entries(wuxing).filter(([,v]) => v === 0).map(([k]) => k);
 
-  // 身强身弱（月令+得助+得生）
+  // 身强身弱 + 从格检测
   const monthDzWx = DZ_WX[mGZ[1]];
-  const SHENG_MAP = { 金:'土', 水:'金', 木:'水', 火:'木', 土:'火' }; // 生日主的五行
-  const monthHelp = (monthDzWx === dmWx) ? 2 : (SHENG_MAP[dmWx] === monthDzWx) ? 1.5 : 0; // 月令得令
-  const sameCount = wuxing[dmWx] || 0; // 比劫力量
-  const yinCount = wuxing[SHENG_MAP[dmWx]] || 0; // 印星力量
+  const SHENG_MAP = { 金:'土', 水:'金', 木:'水', 火:'木', 土:'火' };
+  const monthHelp = (monthDzWx === dmWx) ? 2 : (SHENG_MAP[dmWx] === monthDzWx) ? 1.5 : 0;
+  const sameCount = wuxing[dmWx] || 0;
+  const yinCount = wuxing[SHENG_MAP[dmWx]] || 0;
   const totalHelp = sameCount + yinCount * 0.7 + monthHelp;
   const totalAll = Object.values(wuxing).reduce((a,b) => a+b, 0);
   const helpRatio = totalHelp / totalAll;
-  const dayStrength = helpRatio >= 0.45 ? '身强' : helpRatio <= 0.3 ? '身弱' : '中和';
 
-  // 格局判定（正统：看月支藏干透出天干的十神）
+  let dayStrength, isSpecialGeju = false;
+  // 从强格：日主五行+印星占比 >= 70%，且月令助身
+  if (helpRatio >= 0.65 && monthHelp >= 1.5) {
+    dayStrength = '从强'; isSpecialGeju = true;
+  }
+  // 从弱格：日主五行+印星占比 <= 15%，月令不助身
+  else if (helpRatio <= 0.18 && monthHelp === 0) {
+    dayStrength = '从弱'; isSpecialGeju = true;
+  }
+  // 专旺格（日主五行占比极高）
+  else if ((sameCount / totalAll) >= 0.55 && monthDzWx === dmWx) {
+    dayStrength = '专旺'; isSpecialGeju = true;
+  }
+  else {
+    dayStrength = helpRatio >= 0.45 ? '身强' : helpRatio <= 0.3 ? '身弱' : '中和';
+  }
+
+  // 格局判定
   const monthCG = ec.getMonthHideGan();
-  const otherTg = [yGZ[0], tGZ[0]]; // 年干和时干（排除日主）
+  const otherTg = [yGZ[0], tGZ[0]];
   let geju = '';
-  // 优先看月支藏干哪个透出到年干或时干
-  for (const g of monthCG) {
-    if (g === dm) continue; // 跳过与日主相同的
-    if (otherTg.includes(g)) {
-      const ss = SS_TABLE[dm][g];
-      // 比肩劫财不成格
-      if (ss !== '比肩' && ss !== '劫财') { geju = ss + '格'; break; }
+
+  // 特殊格局优先
+  if (isSpecialGeju) {
+    if (dayStrength === '从强') geju = '从强格';
+    else if (dayStrength === '从弱') geju = '从弱格';
+    else if (dayStrength === '专旺') {
+      const zwMap = { 木:'曲直格', 火:'炎上格', 土:'稼穑格', 金:'从革格', 水:'润下格' };
+      geju = zwMap[dmWx] || '专旺格';
     }
-  }
-  // 没有透出，取月支本气十神（第一个藏干）
-  if (!geju && monthCG.length > 0) {
-    const ss = SS_TABLE[dm][monthCG[0]];
-    if (ss !== '比肩' && ss !== '劫财') geju = ss + '格';
-    else if (monthCG.length > 1) {
-      const ss2 = SS_TABLE[dm][monthCG[1]];
-      if (ss2 !== '比肩' && ss2 !== '劫财') geju = ss2 + '格';
+  } else {
+    // 正统格局：看月支藏干透出天干的十神
+    for (const g of monthCG) {
+      if (g === dm) continue;
+      if (otherTg.includes(g)) {
+        const ss = SS_TABLE[dm][g];
+        if (ss !== '比肩' && ss !== '劫财') { geju = ss + '格'; break; }
+      }
     }
-  }
-  if (!geju) {
-    // 月令为比劫时，看建禄还是羊刃
-    const yangrenMap = { 甲:'卯', 丙:'午', 戊:'午', 庚:'酉', 壬:'子', 乙:'寅', 丁:'巳', 己:'巳', 辛:'申', 癸:'亥' };
-    if (mGZ[1] === yangrenMap[dm]) geju = '羊刃格';
-    else geju = '建禄格';
+    if (!geju && monthCG.length > 0) {
+      const ss = SS_TABLE[dm][monthCG[0]];
+      if (ss !== '比肩' && ss !== '劫财') geju = ss + '格';
+      else if (monthCG.length > 1) {
+        const ss2 = SS_TABLE[dm][monthCG[1]];
+        if (ss2 !== '比肩' && ss2 !== '劫财') geju = ss2 + '格';
+      }
+    }
+    if (!geju) {
+      const yangrenMap = { 甲:'卯',丙:'午',戊:'午',庚:'酉',壬:'子',乙:'寅',丁:'巳',己:'巳',辛:'申',癸:'亥' };
+      geju = (mGZ[1] === yangrenMap[dm]) ? '羊刃格' : '建禄格';
+    }
   }
 
+  // 喜用忌（从格反转）
   const SHENG = { 金:'水', 水:'木', 木:'火', 火:'土', 土:'金' };
   const KE_SHENG = { 金:'土', 水:'金', 木:'水', 火:'木', 土:'火' };
   let xiyong, jishen;
-  if (dayStrength === '身强') { xiyong = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`; jishen = `${dmWx}、${KE_SHENG[dmWx]}`; }
-  else { xiyong = `${dmWx}、${KE_SHENG[dmWx]}`; jishen = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`; }
+  if (dayStrength === '从强' || dayStrength === '专旺') {
+    // 从强/专旺：顺其旺势，喜印比，忌食伤财官
+    xiyong = `${dmWx}、${KE_SHENG[dmWx]}`;
+    jishen = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
+  } else if (dayStrength === '从弱') {
+    // 从弱：弃命从势，喜食伤财官（最旺的五行），忌印比
+    xiyong = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
+    jishen = `${dmWx}、${KE_SHENG[dmWx]}`;
+  } else if (dayStrength === '身强') {
+    xiyong = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
+    jishen = `${dmWx}、${KE_SHENG[dmWx]}`;
+  } else {
+    xiyong = `${dmWx}、${KE_SHENG[dmWx]}`;
+    jishen = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
+  }
+
+  // 天干五合检测
+  const HE_MAP = {甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
+  const HE_WX = {甲:'土',己:'土',乙:'金',庚:'金',丙:'水',辛:'水',丁:'木',壬:'木',戊:'火',癸:'火'};
+  const tgArr = [{g:yGZ[0],l:'年'},{g:mGZ[0],l:'月'},{g:dGZ[0],l:'日'},{g:tGZ[0],l:'时'}];
+  const tianganHe = [];
+  for (let i=0;i<4;i++) for (let j=i+1;j<4;j++) {
+    if (HE_MAP[tgArr[i].g] === tgArr[j].g) {
+      tianganHe.push({ pair:`${tgArr[i].l}干${tgArr[i].g}${tgArr[j].l}干${tgArr[j].g}`, huaWx: HE_WX[tgArr[i].g], desc:`合化${HE_WX[tgArr[i].g]}` });
+    }
+  }
 
   // 神煞
   const shensha = [];
@@ -138,17 +186,58 @@ function calculate(input) {
   const yima = { 寅:'申',申:'寅',巳:'亥',亥:'巳',子:'寅',午:'申',卯:'巳',酉:'亥',辰:'寅',戌:'申',丑:'亥',未:'巳' };
   if (dzArr4.some((z,i) => i!==2 && z===yima[dGZ[1]])) shensha.push({ name: '驿马', pos: '命中', desc: '利于远行、奔波变动' });
 
-  // 地支关系
+  // 地支关系（冲/合/刑/害/三合/三会）
   const dzLabeled = [{z:yGZ[1],l:'年'},{z:mGZ[1],l:'月'},{z:dGZ[1],l:'日'},{z:tGZ[1],l:'时'}];
   const dizhiRelations = [];
+  // 六冲/六合
   for (let i=0;i<4;i++) for (let j=i+1;j<4;j++) {
     if (CHONG[dzLabeled[i].z]===dzLabeled[j].z) dizhiRelations.push({ type:'六冲', pair:`${dzLabeled[i].l}${dzLabeled[i].z}${dzLabeled[j].l}${dzLabeled[j].z}`, desc:'冲动变化' });
     if (LIUHE[dzLabeled[i].z]===dzLabeled[j].z) dizhiRelations.push({ type:'六合', pair:`${dzLabeled[i].l}${dzLabeled[i].z}${dzLabeled[j].l}${dzLabeled[j].z}`, desc:'和合顺利' });
   }
+  // 三合局
   for (const [trio, el] of Object.entries(SANHE)) {
     const found = trio.split('').filter(c => dzArr4.includes(c));
     if (found.length >= 2) dizhiRelations.push({ type: found.length===3?'三合局':'半合', pair:found.join(''), desc:`合化${el}局` });
   }
+  // 三会局
+  const SANHUI = {'寅卯辰':'木','巳午未':'火','申酉戌':'金','亥子丑':'水'};
+  for (const [trio, el] of Object.entries(SANHUI)) {
+    const found = trio.split('').filter(c => dzArr4.includes(c));
+    if (found.length >= 2) dizhiRelations.push({ type: found.length===3?'三会局':'半会', pair:found.join(''), desc:`会${el}局` });
+  }
+  // 地支刑
+  const XING_PAIRS = [
+    ['寅','巳','无恩之刑'], ['巳','申','无恩之刑'], ['申','寅','无恩之刑'],
+    ['子','卯','无礼之刑'], ['卯','子','无礼之刑'],
+    ['丑','未','恃势之刑'], ['未','戌','恃势之刑'], ['戌','丑','恃势之刑'],
+    ['辰','辰','自刑'], ['午','午','自刑'], ['酉','酉','自刑'], ['亥','亥','自刑'],
+  ];
+  for (let i=0;i<4;i++) for (let j=i+1;j<4;j++) {
+    const xp = XING_PAIRS.find(([a,b]) => dzLabeled[i].z===a && dzLabeled[j].z===b);
+    if (xp) dizhiRelations.push({ type:'相刑', pair:`${dzLabeled[i].l}${dzLabeled[i].z}${dzLabeled[j].l}${dzLabeled[j].z}`, desc:xp[2] });
+  }
+  // 自刑检测（同一地支出现2次以上）
+  const dzCount = {};
+  dzArr4.forEach(z => { dzCount[z] = (dzCount[z]||0)+1; });
+  for (const [z,c] of Object.entries(dzCount)) {
+    if (c >= 2 && ['辰','午','酉','亥'].includes(z)) dizhiRelations.push({ type:'自刑', pair:z.repeat(c), desc:'自刑：内在矛盾' });
+  }
+  // 地支害
+  const HAI = {子:'未',丑:'午',寅:'巳',卯:'辰',申:'亥',酉:'戌', 未:'子',午:'丑',巳:'寅',辰:'卯',亥:'申',戌:'酉'};
+  for (let i=0;i<4;i++) for (let j=i+1;j<4;j++) {
+    if (HAI[dzLabeled[i].z]===dzLabeled[j].z) dizhiRelations.push({ type:'相害', pair:`${dzLabeled[i].l}${dzLabeled[i].z}${dzLabeled[j].l}${dzLabeled[j].z}`, desc:'暗伤损耗' });
+  }
+
+  // 空亡（日柱旬中空亡）
+  const DZ_ALL = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const dayTgIdx = TG.indexOf(dGZ[0]);
+  const dayDzIdx = DZ_ALL.indexOf(dGZ[1]);
+  const xunStart = ((dayDzIdx - dayTgIdx) % 12 + 12) % 12; // 旬首地支index
+  const kong1 = DZ_ALL[(xunStart + 10) % 12];
+  const kong2 = DZ_ALL[(xunStart + 11) % 12];
+  const kongwang = [kong1, kong2];
+  const kongInChart = dzArr4.filter(z => kongwang.includes(z));
+  const kongwangInfo = { empty: kongwang, inChart: kongInChart, desc: `空亡：${kong1}${kong2}${kongInChart.length ? '（命中'+kongInChart.join('')+'落空亡）' : ''}` };
 
   // 流年
   const nowYear = new Date().getFullYear();
@@ -170,7 +259,7 @@ function calculate(input) {
   return {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
-    wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations,
+    wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, kongwang: kongwangInfo, isSpecialGeju,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性' },
@@ -198,6 +287,9 @@ function formatForAI(result, mode='simple') {
     if (r.wuxingLack.length) o+=`  缺${r.wuxingLack.join('、')}`;
     if (r.shensha.length) { o+=`\n\n【神煞】`; r.shensha.forEach(s=>{o+=`\n${s.pos}·${s.name}：${s.desc}`;}); }
     if (r.dizhiRelations.length) { o+=`\n\n【地支关系】`; r.dizhiRelations.forEach(d=>{o+=`\n${d.pair}（${d.type}）：${d.desc}`;}); }
+    if (r.tianganHe && r.tianganHe.length) { o+=`\n\n【天干合】`; r.tianganHe.forEach(h=>{o+=`\n${h.pair}：${h.desc}`;}); }
+    if (r.kongwang) o+=`\n\n【空亡】${r.kongwang.desc}`;
+    if (r.isSpecialGeju) o+=`\n\n【特殊格局】${r.geju} — ${r.dayStrength === '从强' ? '日主极旺，满盘印比，喜顺势不宜逆克' : r.dayStrength === '从弱' ? '日主极弱无根，弃命从势，忌扶抑' : '日主一气专旺，五行纯粹'}`;
     o+=`\n\n【藏干】`;
     ['year','month','day','hour'].forEach(p => {
       const label={year:'年支',month:'月支',day:'日支',hour:'时支'}[p];
@@ -220,7 +312,9 @@ function formatForAI(result, mode='simple') {
   o+=`\n\n性格关键词：${p.traits.join('、')}`;
   o+=`\n五行分布：${Object.entries(r.wuxing).map(([k,v])=>`${k}${v}`).join(' ')}`;
   if (r.wuxingLack.length) o+=`（缺${r.wuxingLack.join('、')}）`;
-  o+=`\n整体状态：${r.dayStrength}`;
+  o+=`\n整体状态：${r.dayStrength}${r.isSpecialGeju ? '（特殊格局：'+r.geju+'）' : ''}`;
+  if (r.kongwang && r.kongwang.inChart.length) o+=`\n空亡：命中${r.kongwang.inChart.join('')}落空亡`;
+  if (r.tianganHe && r.tianganHe.length) o+=`\n天干合：${r.tianganHe.map(h=>h.pair+'('+h.desc+')').join('、')}`;
   if (r.shensha.length) { o+=`\n\n命中带有：`; r.shensha.forEach(s=>{o+=`\n· ${s.name} — ${s.desc}`;}); }
   if (r.dayun&&r.dayun.current) o+=`\n\n当前大运：${r.dayun.current.gz}（${r.dayun.current.startYear}-${r.dayun.current.endYear}）`;
   o+=`\n\n今年（${r.liunian.year}）流年${r.liunian.ganzhi}：${r.liunian.summary}`;
