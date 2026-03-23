@@ -41,8 +41,9 @@ const DASHA_ORD = ['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn',
 const D_ZH = { Sun:'太阳', Moon:'月亮', Mars:'火星', Rahu:'罗睺', Jupiter:'木星', Saturn:'土星', Mercury:'水星', Ketu:'计都', Venus:'金星' };
 
 function calculate(input) {
-  const { year, month, day, hour } = input;
+  const { year, month, day, hour, latitude, longitude } = input;
   const y = parseInt(year), m = parseInt(month), d = parseInt(day), h = parseInt(hour) || 12;
+  const lat = parseFloat(latitude) || 39.9, lng = parseFloat(longitude) || 116.4;
 
   const ayan = ac.getAyanamsa(y, m, d);
 
@@ -64,7 +65,7 @@ function calculate(input) {
   const nakPortion = (moonSid % (360 / 27)) / (360 / 27); // 0-1 within nakshatra
 
   // Lagna (sidereal rising sign)
-  const risingInfo = ac.getRisingSign(y, m, d, h);
+  const risingInfo = ac.getRisingSign(y, m, d, h, 8, lat, lng);
   const lagnaTropical = risingInfo.index * 30 + risingInfo.degree;
   const lagnaSid = ((lagnaTropical - ayan) % 360 + 360) % 360;
   const lagna = RASHIS[Math.floor(lagnaSid / 30)];

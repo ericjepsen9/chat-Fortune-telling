@@ -39,8 +39,9 @@ function getSunSign(month, day) {
 function getCompat(s1, s2) { return COMPAT[s1.el][s2.el]; }
 
 function calculate(input) {
-  const { year, month, day, hour } = input;
+  const { year, month, day, hour, latitude, longitude } = input;
   const y = parseInt(year), m = parseInt(month), d = parseInt(day), h = parseInt(hour) || 12;
+  const lat = parseFloat(latitude) || 39.9, lng = parseFloat(longitude) || 116.4;
 
   // Real sun position
   const sunLng = ac.getSunLongitude(y, m, d, h);
@@ -52,10 +53,10 @@ function calculate(input) {
   const moonInfo = ac.longitudeToSign(moonLng);
   const moon = SIGNS[moonInfo.index];
 
-  // Rising sign (approximate using sidereal time)
+  // Rising sign (full spherical trigonometry)
   let rising = null;
   if (h !== undefined && h !== null) {
-    const risingInfo = ac.getRisingSign(y, m, d, h);
+    const risingInfo = ac.getRisingSign(y, m, d, h, 8, lat, lng);
     rising = SIGNS[risingInfo.index];
     rising = { ...rising, degree: risingInfo.degree.toFixed(1) };
   }
@@ -94,7 +95,7 @@ function calculate(input) {
   const natalAspects = [];
   natalAspects.push(...findAspects(sunLng, '太阳', moonLng, '月亮'));
   if (rising) {
-    const riLng = ac.getRisingSign(y, m, d, h);
+    const riLng = ac.getRisingSign(y, m, d, h, 8, lat, lng);
     const riAbsLng = riLng.index * 30 + riLng.degree;
     natalAspects.push(...findAspects(sunLng, '太阳', riAbsLng, '上升'));
     natalAspects.push(...findAspects(moonLng, '月亮', riAbsLng, '上升'));
