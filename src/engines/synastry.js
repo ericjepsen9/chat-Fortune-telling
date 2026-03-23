@@ -1,0 +1,110 @@
+/**
+ * 星座配对引擎（Synastry）— 双人星盘对比
+ * 太阳-月亮交叉相位 + 元素配合 + Venus-Mars + 综合评分
+ */
+const ac = require('./astro-calc');
+const astroEngine = require('./astrology');
+
+const EL_ZH = { fire:'火象', earth:'土象', air:'风象', water:'水象' };
+const COMPAT = {
+  fire:  { fire:80, earth:45, air:92, water:40 },
+  earth: { fire:45, earth:78, air:50, water:88 },
+  air:   { fire:92, earth:50, air:75, water:45 },
+  water: { fire:40, earth:88, air:45, water:82 },
+};
+
+function findAspect(lng1, lng2) {
+  const diff = Math.abs(lng1 - lng2);
+  const angle = diff > 180 ? 360 - diff : diff;
+  const orb = 10;
+  if (angle <= orb) return { type: '合相(0°)', harmony: 90, effect: '灵魂共振，深度连接' };
+  if (Math.abs(angle - 60) <= orb) return { type: '六合(60°)', harmony: 80, effect: '轻松和谐，自然互助' };
+  if (Math.abs(angle - 90) <= orb) return { type: '刑相(90°)', harmony: 35, effect: '摩擦紧张，但有成长动力' };
+  if (Math.abs(angle - 120) <= orb) return { type: '三合(120°)', harmony: 85, effect: '默契天成，相处舒适' };
+  if (Math.abs(angle - 180) <= orb) return { type: '对冲(180°)', harmony: 50, effect: '强烈吸引但也强烈冲突' };
+  return null;
+}
+
+function calculate(person1, person2) {
+  const r1 = astroEngine.calculate(person1);
+  const r2 = astroEngine.calculate(person2);
+
+  const s1 = r1.sunLongitude, m1 = r1.moonLongitude;
+  const s2 = r2.sunLongitude, m2 = r2.moonLongitude;
+
+  // 四重交叉相位（合婚核心）
+  const crossAspects = [];
+  const a_ss = findAspect(s1, s2); if (a_ss) crossAspects.push({ pair: '你的太阳↔对方太阳', ...a_ss });
+  const a_mm = findAspect(m1, m2); if (a_mm) crossAspects.push({ pair: '你的月亮↔对方月亮', ...a_mm });
+  const a_sm = findAspect(s1, m2); if (a_sm) crossAspects.push({ pair: '你的太阳↔对方月亮', ...a_sm });
+  const a_ms = findAspect(m1, s2); if (a_ms) crossAspects.push({ pair: '你的月亮↔对方太阳', ...a_ms });
+
+  // Venus-Mars 吸引力（用行星近似位置）
+  const p1 = ac.getPlanetPositions(parseInt(person1.year), parseInt(person1.month), parseInt(person1.day), parseInt(person1.hour)||12);
+  const p2 = ac.getPlanetPositions(parseInt(person2.year), parseInt(person2.month), parseInt(person2.day), parseInt(person2.hour)||12);
+  const vm1 = findAspect(p1.Venus?.longitude||0, p2.Mars?.longitude||0);
+  const vm2 = findAspect(p1.Mars?.longitude||0, p2.Venus?.longitude||0);
+  if (vm1) crossAspects.push({ pair: '你的金星↔对方火星', ...vm1 });
+  if (vm2) crossAspects.push({ pair: '你的火星↔对方金星', ...vm2 });
+
+  // 元素配合
+  const elCompat = COMPAT[r1.sunSign.el]?.[r2.sunSign.el] || 60;
+  const moonElCompat = COMPAT[r1.moonSign.el]?.[r2.moonSign.el] || 60;
+
+  // 综合评分
+  let aspectAvg = 60;
+  if (crossAspects.length) aspectAvg = Math.round(crossAspects.reduce((a, c) => a + c.harmony, 0) / crossAspects.length);
+  const totalScore = Math.round(elCompat * 0.25 + moonElCompat * 0.25 + aspectAvg * 0.5);
+
+  let grade, gradeDesc;
+  if (totalScore >= 85) { grade = '灵魂伴侣'; gradeDesc = '极高共振，仿佛命中注定'; }
+  else if (totalScore >= 75) { grade = '天生一对'; gradeDesc = '高度和谐，自然而然的默契'; }
+  else if (totalScore >= 65) { grade = '互相吸引'; gradeDesc = '有火花也有摩擦，适合成长型关系'; }
+  else if (totalScore >= 55) { grade = '需要磨合'; gradeDesc = '差异明显，但差异也是互补的机会'; }
+  else { grade = '挑战较大'; gradeDesc = '需要大量沟通和包容来维系'; }
+
+  return {
+    person1: { sunSign: r1.sunSign, moonSign: r1.moonSign, risingSign: r1.risingSign, sunDegree: r1.sunDegree, moonDegree: r1.moonDegree },
+    person2: { sunSign: r2.sunSign, moonSign: r2.moonSign, risingSign: r2.risingSign, sunDegree: r2.sunDegree, moonDegree: r2.moonDegree },
+    crossAspects,
+    scores: { sunElement: elCompat, moonElement: moonElCompat, aspects: aspectAvg, total: totalScore },
+    grade, gradeDesc,
+  };
+}
+
+function formatForAI(result, mode = 'simple') {
+  const r = result, p1 = r.person1, p2 = r.person2, s = r.scores;
+  if (mode === 'expert') {
+    let o = `【星座配对分析（Synastry）】`;
+    o += `\n\n甲方星盘：`;
+    o += `\n  太阳${p1.sunSign.zh}${p1.sunDegree}° 月亮${p1.moonSign.zh}${p1.moonDegree}°${p1.risingSign ? ' 上升'+p1.risingSign.zh : ''}`;
+    o += `\n乙方星盘：`;
+    o += `\n  太阳${p2.sunSign.zh}${p2.sunDegree}° 月亮${p2.moonSign.zh}${p2.moonDegree}°${p2.risingSign ? ' 上升'+p2.risingSign.zh : ''}`;
+    o += `\n\n═══ 综合评分：${s.total}分 · ${r.grade} ═══`;
+    o += `\n${r.gradeDesc}`;
+    o += `\n\n【元素配合】`;
+    o += `\n太阳元素：${EL_ZH[p1.sunSign.el]}×${EL_ZH[p2.sunSign.el]}（${s.sunElement}分）`;
+    o += `\n月亮元素：${EL_ZH[p1.moonSign.el]}×${EL_ZH[p2.moonSign.el]}（${s.moonElement}分）`;
+    if (r.crossAspects.length) {
+      o += `\n\n【交叉相位（核心配对数据）】`;
+      r.crossAspects.forEach(a => { o += `\n${a.pair} ${a.type}（${a.harmony}分）：${a.effect}`; });
+    } else {
+      o += `\n\n【交叉相位】无显著相位（双方行星角度差处于中间地带）`;
+    }
+    return o;
+  }
+  let o = `你们的星座配对：`;
+  o += `\n\n💫 综合评分：${s.total}分（${r.grade}）`;
+  o += `\n${r.gradeDesc}`;
+  o += `\n\n你：太阳${p1.sunSign.zh} + 月亮${p1.moonSign.zh}`;
+  o += `\n对方：太阳${p2.sunSign.zh} + 月亮${p2.moonSign.zh}`;
+  o += `\n\n太阳${p1.sunSign.zh}×${p2.sunSign.zh}：${s.sunElement >= 80 ? '很合拍' : s.sunElement >= 60 ? '尚可' : '需要磨合'}`;
+  o += `\n月亮${p1.moonSign.zh}×${p2.moonSign.zh}：${s.moonElement >= 80 ? '内心需求一致' : s.moonElement >= 60 ? '能互相理解' : '内在节奏不同'}`;
+  if (r.crossAspects.length) {
+    o += `\n\n关键连接：`;
+    r.crossAspects.slice(0, 3).forEach(a => { o += `\n· ${a.pair}：${a.effect}`; });
+  }
+  return o;
+}
+
+module.exports = { calculate, formatForAI };

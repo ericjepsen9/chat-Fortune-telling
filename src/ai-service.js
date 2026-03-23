@@ -6,6 +6,9 @@ const astrologyEngine = require('./engines/astrology');
 const tarotEngine = require('./engines/tarot');
 const meihuaEngine = require('./engines/meihua');
 const vedicEngine = require('./engines/vedic');
+const hehunEngine = require('./engines/hehun');
+const synastryEngine = require('./engines/synastry');
+const hepanEngine = require('./hepan');
 const { Solar } = require('lunar-javascript');
 
 // ============ 时空上下文（lunar-javascript精确） ============
@@ -145,6 +148,42 @@ function calculateAll(mode, profile, ctx, opts = {}) {
       if (ctx.city) o += `\n用户所在地：${ctx.city}`;
       return o;
     }
+    case 'hepan': {
+      const pB = opts.profileB || {};
+      const profileB = {
+        year: parseInt(pB.year || pB.birthYear), month: parseInt(pB.month || pB.birthMonth),
+        day: parseInt(pB.day || pB.birthDay), hour: parseInt(pB.hour || pB.birthHour),
+        gender: pB.gender || 'female', longitude: pB.longitude || opts.longitude,
+      };
+      const r = hepanEngine.fullCompat(p, profileB);
+      let o = hepanEngine.formatForAI(r, dm);
+      o += `\n\n【查询时间】${ctx.fullStr}`;
+      return o;
+    }
+    case 'hehun': {
+      const pB = opts.profileB || {};
+      const profileB = {
+        year: parseInt(pB.year || pB.birthYear), month: parseInt(pB.month || pB.birthMonth),
+        day: parseInt(pB.day || pB.birthDay), hour: parseInt(pB.hour || pB.birthHour),
+        gender: pB.gender || 'female', longitude: pB.longitude || opts.longitude,
+      };
+      const r = hehunEngine.calculate(p, profileB);
+      let o = hehunEngine.formatForAI(r, dm);
+      o += `\n\n【查询时间】${ctx.fullStr}`;
+      return o;
+    }
+    case 'synastry': {
+      const pB = opts.profileB || {};
+      const profileB = {
+        year: parseInt(pB.year || pB.birthYear), month: parseInt(pB.month || pB.birthMonth),
+        day: parseInt(pB.day || pB.birthDay), hour: parseInt(pB.hour || pB.birthHour),
+        gender: pB.gender || 'female',
+      };
+      const r = synastryEngine.calculate(p, profileB);
+      let o = synastryEngine.formatForAI(r, dm);
+      o += `\n\n【查询时间】${ctx.fullStr}`;
+      return o;
+    }
     default: throw new Error(`Unknown mode: ${mode}`);
   }
 }
@@ -172,6 +211,15 @@ function buildPrompt(mode, displayMode, question) {
     vedic: isExpert
       ? '你是Jyotish专家。用Dasha/Nakshatra等梵文术语（附中文）。分析行星能量和周期。'
       : '你是印度占星顾问。不用梵文术语。通俗解释当前人生阶段，给实用建议。',
+    hepan: isExpert
+      ? '你是资深合婚分析师。综合八字五行配合与星座能量共振，给出多维度的配对分析。引用具体干支和度数。'
+      : '你是缘分顾问。用温暖的语言分析两个人的契合度，重点讲优势和需要注意的地方。不用术语。',
+    hehun: isExpert
+      ? '你是资深命理合婚师。基于双方八字日主、婚姻宫、五行互补、纳音配合深度分析。引用具体干支。'
+      : '你是八字缘分顾问。通俗解释两个人的命理配合度，给出实际相处建议。',
+    synastry: isExpert
+      ? '你是专业合盘占星师。分析双方太阳-月亮交叉相位、金星-火星吸引力、元素配合。用相位术语。'
+      : '你是星座配对达人。用有趣的语言解释两个人的星座化学反应，给感情建议。',
   };
 
   const fullInstructions = {
@@ -212,6 +260,31 @@ function buildPrompt(mode, displayMode, question) {
 4.【人生方向】上升星座指引的发展方向（2句）
 5.【当前运势】基于大运进度分析当前状态（3句）
 6.【实用建议】适合的宝石/颜色/方位/活动（3句）
+总字数600左右。`,
+    hepan: `无特定问题，请综合分析这对配对：
+1.【缘分总评】综合评分含义、这段关系的核心特质（3句）
+2.【八字配合】日主关系、五行互补、婚姻宫分析（5句）
+3.【星座共振】太阳月亮元素配合、关键交叉相位解读（4句）
+4.【相处模式】日常相处中的默契点和摩擦点（4句）
+5.【感情发展】当前阶段特征、未来趋势（3句）
+6.【实用建议】如何扬长避短、促进感情（3句）
+总字数800左右。`,
+    hehun: `无特定问题，请深度分析八字合婚：
+1.【配对总评】评分含义、整体契合度（2句）
+2.【日主配合】双方日主五行关系、性格互动模式（4句）
+3.【婚姻宫】日支关系的感情影响（3句）
+4.【五行互补】双方五行盈缺如何互补（3句）
+5.【纳音配合】年命根基是否和谐（2句）
+6.【大运同步】当前人生节奏是否合拍（2句）
+7.【相处建议】需要注意什么、如何经营（3句）
+总字数700左右。`,
+    synastry: `无特定问题，请深度分析星座配对：
+1.【配对总评】评分含义、化学反应类型（2句）
+2.【太阳互动】双方核心性格的碰撞与融合（3句）
+3.【月亮共鸣】双方内心需求是否契合（3句）
+4.【关键相位】交叉相位的深层含义（每个相位2句）
+5.【吸引力】金星火星的化学反应（2句）
+6.【感情建议】如何利用星座能量促进关系（3句）
 总字数600左右。`,
   };
 
