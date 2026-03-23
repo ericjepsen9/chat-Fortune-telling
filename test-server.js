@@ -157,9 +157,7 @@ const server = http.createServer(async (req, res) => {
 
   // API：公历→农历转换
   if (parsedUrl.pathname === '/api/lunar') {
-    const qs = parsedUrl.query || '';
-    const params = {};
-    qs.split('&').forEach(p => { const [k, v] = p.split('='); if (k) params[k] = v; });
+    const params = parsedUrl.query || {};
     try {
       const { Solar } = require('lunar-javascript');
       const y = parseInt(params.year) || 2000, m = parseInt(params.month) || 1, d = parseInt(params.day) || 1, h = parseInt(params.hour) || 12;
