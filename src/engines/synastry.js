@@ -25,6 +25,19 @@ function findAspect(lng1, lng2) {
   return null;
 }
 
+const MOON_INTERACT = {
+  'fire-fire': '两人内心都热烈直接，一起时充满活力但也容易擦枪走火',
+  'fire-earth': '一个内心热烈一个务实沉稳，需要对方给予你不擅长的东西',
+  'fire-air': '内心的热情与好奇碰撞，交流畅快、创意十足',
+  'fire-water': '热情遇上敏感，相互吸引但内心节奏完全不同',
+  'earth-earth': '两人都需要安全感和稳定，关起门来很有默契',
+  'earth-air': '一个脚踏实地一个天马行空，互相费解但互补',
+  'earth-water': '务实遇上温柔，彼此给对方最需要的滋养',
+  'air-air': '两个人都活在思想世界里，聊天永远不会冷场',
+  'air-water': '理性遇上感性，需要学习对方的语言',
+  'water-water': '两颗敏感的心，深度共情但容易一起陷入情绪漩涡',
+};
+
 function calculate(person1, person2) {
   const r1 = astroEngine.calculate(person1);
   const r2 = astroEngine.calculate(person2);
@@ -63,10 +76,14 @@ function calculate(person1, person2) {
   else if (totalScore >= 55) { grade = '需要磨合'; gradeDesc = '差异明显，但差异也是互补的机会'; }
   else { grade = '挑战较大'; gradeDesc = '需要大量沟通和包容来维系'; }
 
+  // Moon sign interaction
+  const mels = [r1.moonSign.el, r2.moonSign.el].sort();
+  const moonInteraction = MOON_INTERACT[mels.join('-')] || '月亮星座互动需具体分析';
+
   return {
     person1: { sunSign: r1.sunSign, moonSign: r1.moonSign, risingSign: r1.risingSign, sunDegree: r1.sunDegree, moonDegree: r1.moonDegree },
     person2: { sunSign: r2.sunSign, moonSign: r2.moonSign, risingSign: r2.risingSign, sunDegree: r2.sunDegree, moonDegree: r2.moonDegree },
-    crossAspects,
+    crossAspects, moonInteraction,
     scores: { sunElement: elCompat, moonElement: moonElCompat, aspects: aspectAvg, total: totalScore },
     grade, gradeDesc,
   };
@@ -85,6 +102,7 @@ function formatForAI(result, mode = 'simple') {
     o += `\n\n【元素配合】`;
     o += `\n太阳元素：${EL_ZH[p1.sunSign.el]}×${EL_ZH[p2.sunSign.el]}（${s.sunElement}分）`;
     o += `\n月亮元素：${EL_ZH[p1.moonSign.el]}×${EL_ZH[p2.moonSign.el]}（${s.moonElement}分）`;
+    if (r.moonInteraction) o += `\n月亮互动：${r.moonInteraction}`;
     if (r.crossAspects.length) {
       o += `\n\n【交叉相位（核心配对数据）】`;
       r.crossAspects.forEach(a => { o += `\n${a.pair} ${a.type}（${a.harmony}分）：${a.effect}`; });
@@ -100,6 +118,7 @@ function formatForAI(result, mode = 'simple') {
   o += `\n对方：太阳${p2.sunSign.zh} + 月亮${p2.moonSign.zh}`;
   o += `\n\n太阳${p1.sunSign.zh}×${p2.sunSign.zh}：${s.sunElement >= 80 ? '很合拍' : s.sunElement >= 60 ? '尚可' : '需要磨合'}`;
   o += `\n月亮${p1.moonSign.zh}×${p2.moonSign.zh}：${s.moonElement >= 80 ? '内心需求一致' : s.moonElement >= 60 ? '能互相理解' : '内在节奏不同'}`;
+  if (r.moonInteraction) o += `\n${r.moonInteraction}`;
   if (r.crossAspects.length) {
     o += `\n\n关键连接：`;
     r.crossAspects.slice(0, 3).forEach(a => { o += `\n· ${a.pair}：${a.effect}`; });

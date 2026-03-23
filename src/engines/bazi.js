@@ -195,15 +195,16 @@ function calculate(input) {
   };
   const tiaohou = TIAOHOU[dmWx]?.[season] || '';
 
-  // 天干五合检测（含合化判断）
+  // 天干五合检测（只检查相邻天干 + 合化判断）
   const HE_MAP = {甲:'己',己:'甲',乙:'庚',庚:'乙',丙:'辛',辛:'丙',丁:'壬',壬:'丁',戊:'癸',癸:'戊'};
   const HE_WX = {甲:'土',己:'土',乙:'金',庚:'金',丙:'水',辛:'水',丁:'木',壬:'木',戊:'火',癸:'火'};
   const tgArr = [{g:yGZ[0],l:'年'},{g:mGZ[0],l:'月'},{g:dGZ[0],l:'日'},{g:tGZ[0],l:'时'}];
   const tianganHe = [];
-  for (let i=0;i<4;i++) for (let j=i+1;j<4;j++) {
+  // 只检查相邻柱：年-月、月-日、日-时
+  for (let i=0;i<3;i++) {
+    const j = i+1;
     if (HE_MAP[tgArr[i].g] === tgArr[j].g) {
       const huaWx = HE_WX[tgArr[i].g];
-      // 化成条件：月令五行为化神（或化神旺于月令）
       const isHua = monthDzWx === huaWx || SHENG_MAP[huaWx] === monthDzWx;
       tianganHe.push({ pair:`${tgArr[i].l}干${tgArr[i].g}${tgArr[j].l}干${tgArr[j].g}`, huaWx, isHua, desc: isHua ? `合化${huaWx}（化成）` : `合而不化${huaWx}（合绊）` });
     }
@@ -411,6 +412,17 @@ function formatForAI(result, mode='simple') {
     o+=`\n\n【日主】${r.dayMaster}${r.dayMasterElement}（${r.yinyang}${r.dayMasterElement}）·${r.dayStrength}`;
     o+=`\n格局：${r.geju}\n喜用：${r.xiyong}  忌：${r.jishen}`;
     if (r.tiaohou) o+=`\n调候：${r.tiaohou}`;
+    o+=`\n\n【纳音】年命${r.nayin.year}  日命${r.nayin.day}`;
+    // 纳音五行解读
+    const nyWxMap = (ny) => { if(ny.includes('金'))return'金'; if(ny.includes('木'))return'木'; if(ny.includes('水'))return'水'; if(ny.includes('火'))return'火'; if(ny.includes('土'))return'土'; return''; };
+    const nyYearWx = nyWxMap(r.nayin.year), nyDayWx = nyWxMap(r.nayin.day);
+    if (nyYearWx && nyDayWx) {
+      const SHENG_NY = {金:'水',水:'木',木:'火',火:'土',土:'金'};
+      if (nyYearWx === nyDayWx) o += `\n年命日命同属${nyYearWx}，一生根基稳固`;
+      else if (SHENG_NY[nyYearWx] === nyDayWx) o += `\n年命${nyYearWx}生日命${nyDayWx}，先天根基助力后天发展`;
+      else if (SHENG_NY[nyDayWx] === nyYearWx) o += `\n日命${nyDayWx}生年命${nyYearWx}，自身能量回馈根源`;
+      else o += `\n年命${nyYearWx}与日命${nyDayWx}相克，先天与后天有些矛盾，需要平衡`;
+    }
     o+=`\n\n【五行】${Object.entries(r.wuxing).map(([k,v])=>`${k}${v}`).join(' ')}`;
     if (r.wuxingLack.length) o+=`  缺${r.wuxingLack.join('、')}`;
     if (r.shensha.length) { o+=`\n\n【神煞】`; r.shensha.forEach(s=>{o+=`\n${s.pos}·${s.name}：${s.desc}`;}); }
@@ -456,6 +468,14 @@ function formatForAI(result, mode='simple') {
   if (r.shensha.length) { o+=`\n\n命中带有：`; r.shensha.forEach(s=>{o+=`\n· ${s.name} — ${s.desc}`;}); }
   if (r.dayun&&r.dayun.current) o+=`\n\n当前大运：${r.dayun.current.gz}（${r.dayun.current.startYear}-${r.dayun.current.endYear}）`;
   o+=`\n\n今年（${r.liunian.year}）流年${r.liunian.ganzhi}：${r.liunian.summary}`;
+  if (r.nayin) o+=`\n年命纳音：${r.nayin.year}`;
+  if (r.tiaohou) o+=`\n调候提示：${r.tiaohou}`;
+  if (r.liuyueList && r.liuyueList.length) {
+    const good = r.liuyueList.filter(m => m.rating.startsWith('吉')).map(m => m.month+'月');
+    const bad = r.liuyueList.filter(m => m.rating.startsWith('凶')).map(m => m.month+'月');
+    if (good.length) o+=`\n\n今年好月份：${good.join('、')}`;
+    if (bad.length) o+=`\n需注意月份：${bad.join('、')}`;
+  }
   return o;
 }
 

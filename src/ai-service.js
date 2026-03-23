@@ -334,6 +334,7 @@ function safetyCheck(question) {
 function classifyQuestion(question) {
   if (!question || question.trim().length < 2) return 'general';
   const q = question.toLowerCase();
+  if (/合婚|配对|合盘|般配|合适吗|缘分|八字合|星座配|我们俩|我和他|我和她|属相合/.test(q)) return 'compatibility';
   if (/感情|恋爱|婚姻|对象|伴侣|喜欢|暗恋|复合|桃花|姻缘|另一半|脱单|分手/.test(q)) return 'relationship';
   if (/工作|事业|跳槽|升职|加薪|创业|职业|考试|面试|转行|找工作/.test(q)) return 'career';
   if (/财运|投资|理财|买房|赚钱|亏损|破财|发财|股票|生意/.test(q)) return 'wealth';
@@ -345,6 +346,7 @@ function classifyQuestion(question) {
 
 // 分类补充提示
 const CATEGORY_HINTS = {
+  compatibility: '\n\n【分析重点】用户在问配对/合婚相关问题。如果当前模式是单人分析，请从该命主的角度分析其婚恋倾向、理想伴侣类型、婚姻宫特征。如果是双人模式，围绕配合度展开。',
   relationship: '\n\n【分析重点】围绕感情关系展开，包括：当前感情状态的能量、对方的特质匹配度、感情发展趋势、具体行动建议。',
   career: '\n\n【分析重点】围绕事业发展展开，包括：当前职业运势、适合的行动时机、机遇和风险、具体建议。',
   wealth: '\n\n【分析重点】围绕财运展开，包括：当前财运走势、投资适宜性、收入趋势、理财建议。',
