@@ -149,6 +149,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // API：公历→农历转换
+  if (parsedUrl.pathname === '/api/lunar') {
+    const qs = parsedUrl.query || '';
+    const params = {};
+    qs.split('&').forEach(p => { const [k, v] = p.split('='); if (k) params[k] = v; });
+    try {
+      const { Solar } = require('lunar-javascript');
+      const y = parseInt(params.year) || 2000, m = parseInt(params.month) || 1, d = parseInt(params.day) || 1, h = parseInt(params.hour) || 12;
+      const solar = Solar.fromYmdHms(y, m, d, h, 0, 0);
+      const lunar = solar.getLunar();
+      const ec = lunar.getEightChar();
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        solar: `${y}年${m}月${d}日`,
+        lunar: `${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
+        lunarFull: `农历${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()} ${lunar.getYearShengXiao()}年`,
+        ganzhi: `${ec.getYear()} ${ec.getMonth()} ${ec.getDay()} ${ec.getTime()}`,
+        shengxiao: lunar.getYearShengXiao(),
+        yearGanzhi: ec.getYear(),
+      }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   // API：仅计算引擎（不调 LLM）
   if (parsedUrl.pathname === '/api/calculate' && req.method === 'POST') {
     let body = '';

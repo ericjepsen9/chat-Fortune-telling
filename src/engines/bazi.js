@@ -46,6 +46,14 @@ function calculate(input) {
   const lunar = solar.getLunar();
   const ec = lunar.getEightChar();
 
+  // 农历信息（供用户校验）
+  const lunarDate = {
+    full: `农历${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
+    shengxiao: lunar.getYearShengXiao(),
+    yearGanzhi: ec.getYear(),
+    solarStr: `公历${year}年${month}月${day}日 ${h}时`,
+  };
+
   const yGZ = ec.getYear(), mGZ = ec.getMonth(), dGZ = ec.getDay(), tGZ = ec.getTime();
   const dm = dGZ[0], dmWx = WX_MAP[dm];
   const nayin = { year: ec.getYearNaYin(), month: ec.getMonthNaYin(), day: ec.getDayNaYin(), hour: ec.getTimeNaYin() };
@@ -168,6 +176,7 @@ function calculate(input) {
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性' },
     dayun: { list:dayuns, current:currentDayun, startInfo:`${yun.getStartYear()}年${yun.getStartMonth()}月起运` },
     personality: DM_PERSONA[dm]||DM_PERSONA['甲'],
+    lunarDate,
     gender: gender||'male',
     _source: 'lunar-javascript',
   };
@@ -175,8 +184,10 @@ function calculate(input) {
 
 function formatForAI(result, mode='simple') {
   const r=result, fp=r.fourPillars;
+  const ld = r.lunarDate;
+  const lunarHeader = ld ? `${ld.solarStr}\n${ld.full} ${ld.shengxiao}年\n` : '';
   if (mode==='expert') {
-    let o=`【四柱排盘】`;
+    let o=lunarHeader+`【四柱排盘】`;
     o+=`\n年柱：${fp.year}（${r.nayin.year}） ${r.shishen.yearTg}  ${r.stages.year}`;
     o+=`\n月柱：${fp.month}（${r.nayin.month}） ${r.shishen.monthTg}  ${r.stages.month}`;
     o+=`\n日柱：${fp.day}（${r.nayin.day}） 日主  ${r.stages.day}`;
@@ -203,7 +214,7 @@ function formatForAI(result, mode='simple') {
     return o;
   }
   const p=r.personality;
-  let o=`你的八字：${fp.year} ${fp.month} ${fp.day} ${fp.hour}`;
+  let o=lunarHeader+`你的八字：${fp.year} ${fp.month} ${fp.day} ${fp.hour}`;
   o+=`\n日主：${r.dayMaster}${r.dayMasterElement} — ${p.type}`;
   o+=`\n${p.simple}`;
   o+=`\n\n性格关键词：${p.traits.join('、')}`;

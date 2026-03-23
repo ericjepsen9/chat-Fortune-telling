@@ -87,6 +87,19 @@ function getRisingSign(year, month, day, hour, tzOffset = 8, latitude = 39.9) {
 }
 
 /**
+ * Rahu/Ketu（月亮交点）— 真实天文计算
+ */
+function getRahuKetu(year, month, day, hour = 12, tzOffset = 8) {
+  const utcHour = hour - tzOffset;
+  const dayFrac = day + utcHour / 24;
+  const jd = julian.CalendarGregorianToJD(year, month, dayFrac);
+  const rahuRad = moonposition.trueNode(jd);
+  const rahuDeg = ((rahuRad * 180 / Math.PI) % 360 + 360) % 360;
+  const ketuDeg = (rahuDeg + 180) % 360;
+  return { rahu: rahuDeg, ketu: ketuDeg };
+}
+
+/**
  * 五大行星近似黄经（Keplerian orbital elements, J2000）
  * 精度：±2° 对占星足够（星座级别30°一格）
  */
@@ -131,4 +144,4 @@ function getPlanetPositions(year, month, day, hour = 12, tzOffset = 8) {
   return results;
 }
 
-module.exports = { getMoonLongitude, getSunLongitude, getAyanamsa, longitudeToSign, getRisingSign, getPlanetPositions, SIGNS_ZH, SIGNS_EN };
+module.exports = { getMoonLongitude, getSunLongitude, getAyanamsa, longitudeToSign, getRisingSign, getPlanetPositions, getRahuKetu, SIGNS_ZH, SIGNS_EN };

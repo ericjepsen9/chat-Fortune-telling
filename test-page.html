@@ -61,15 +61,18 @@
 
   <!-- 出生信息 -->
   <div class="card">
-    <h2>📅 出生信息</h2>
+    <h2>📅 出生信息（公历/阳历）</h2>
     <div class="input-row">
-      <label>年 <input type="number" id="year" value="1996" min="1940" max="2020"></label>
-      <label>月 <input type="number" id="month" value="8" min="1" max="12"></label>
-      <label>日 <input type="number" id="day" value="15" min="1" max="31"></label>
-      <label>时(24h) <input type="number" id="hour" value="14" min="0" max="23"></label>
+      <label>年 <input type="number" id="year" value="1996" min="1940" max="2020" onchange="updateLunar()"></label>
+      <label>月 <input type="number" id="month" value="8" min="1" max="12" onchange="updateLunar()"></label>
+      <label>日 <input type="number" id="day" value="15" min="1" max="31" onchange="updateLunar()"></label>
+      <label>时(24h) <input type="number" id="hour" value="14" min="0" max="23" onchange="updateLunar()"></label>
       <label>性别
         <select id="gender"><option value="female">女</option><option value="male">男</option></select>
       </label>
+    </div>
+    <div id="lunarInfo" style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#f0f0ec;font-size:13px;color:#6B7280">
+      农历：加载中...
     </div>
     <div class="input-row" style="margin-top:4px">
       <label>当前城市 <input type="text" id="city" value="北京" style="width:140px" placeholder="如：上海"></label>
@@ -173,6 +176,22 @@
 <script>
 let currentMode = 'bazi';
 let displayMode = 'simple';
+
+// 实时农历显示
+async function updateLunar() {
+  const y = document.getElementById('year').value;
+  const m = document.getElementById('month').value;
+  const d = document.getElementById('day').value;
+  const h = document.getElementById('hour').value;
+  const el = document.getElementById('lunarInfo');
+  try {
+    const resp = await fetch(`/api/lunar?year=${y}&month=${m}&day=${d}&hour=${h}`);
+    const data = await resp.json();
+    if (data.error) { el.textContent = '农历：计算失败'; return; }
+    el.innerHTML = `<span style="color:#FF6B6B;font-weight:600">农历：</span>${data.lunarFull}<br><span style="color:#7C5CFC;font-weight:600">四柱：</span>${data.ganzhi}`;
+  } catch(e) { el.textContent = '农历：服务未启动'; }
+}
+setTimeout(updateLunar, 300);
 
 function setDisplayMode(m) {
   displayMode = m;

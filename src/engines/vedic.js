@@ -98,6 +98,12 @@ function calculate(input) {
     const sidLng = ((info.longitude - ayan) % 360 + 360) % 360;
     grahas[name] = { rashi: RASHIS[Math.floor(sidLng / 30)], degree: (sidLng % 30).toFixed(1), longitude: sidLng.toFixed(1) };
   }
+  // Rahu/Ketu (lunar nodes)
+  const nodes = ac.getRahuKetu(y, m, d, h);
+  const rahuSid = ((nodes.rahu - ayan) % 360 + 360) % 360;
+  const ketuSid = ((nodes.ketu - ayan) % 360 + 360) % 360;
+  grahas.Rahu = { rashi: RASHIS[Math.floor(rahuSid / 30)], degree: (rahuSid % 30).toFixed(1), longitude: rahuSid.toFixed(1) };
+  grahas.Ketu = { rashi: RASHIS[Math.floor(ketuSid / 30)], degree: (ketuSid % 30).toFixed(1), longitude: ketuSid.toFixed(1) };
 
   return {
     sunSign: sunRashi, sunDeg, moonSign: moonRashi, moonDeg, moonNak: nak, lagna,
@@ -120,7 +126,7 @@ function formatForAI(result, mode = 'simple') {
     o += `\n\n完整大运序列：`;
     r.dashas.forEach(d => { o += `\n${d.zh}（${d.start}-${d.end}，${d.yrs}年）${d === r.currentDasha ? ' ← 当前' : ''}`; });
     if (r.grahas && Object.keys(r.grahas).length > 0) {
-      const GZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
+      const GZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星', Rahu:'罗睺(北交点)', Ketu:'计都(南交点)' };
       o += `\n\n【行星位置（恒星黄道）】`;
       for (const [p, info] of Object.entries(r.grahas)) {
         o += `\n${GZH[p]||p}：${info.rashi.zh}座 ${info.degree}°  守护${info.rashi.ruler}`;
