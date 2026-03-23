@@ -5,7 +5,7 @@ const MINOR_KW={1:{up:['潜力','新机会','种子'],dn:['错失','延迟','空
 const COURT_KW={page:{up:['学习者','好奇','新消息'],dn:['幼稚','缺乏经验','犹豫']},knight:{up:['行动','追求','热情'],dn:['冲动','不稳定','过度激进']},queen:{up:['成熟','滋养','掌控'],dn:['情绪化','控制欲','自我封闭']},king:{up:['权威','成就','掌控全局'],dn:['专横','僵化','压力过大']}};
 function buildDeck(){const d=MAJOR.map(c=>({...c,type:'major'}));let id=22;SUITS.forEach(s=>{for(let n=1;n<=10;n++)d.push({id:id++,zh:`${s.zh}${n===1?'王牌':n}`,en:`${n===1?'Ace':n} of ${s.en}`,type:'minor',suit:s.id,num:n,up:MINOR_KW[n].up,dn:MINOR_KW[n].dn});COURT.forEach(c=>d.push({id:id++,zh:`${s.zh}${c.zh}`,en:`${c.en} of ${s.en}`,type:'court',suit:s.id,rank:c.r,up:COURT_KW[c.r].up,dn:COURT_KW[c.r].dn}));});return d;}
 const DECK=buildDeck();
-const SPREADS={single:{zh:'单张指引',pos:[{zh:'指引',en:'Guidance'}]},threeCard:{zh:'三张牌阵',pos:[{zh:'过去',en:'Past'},{zh:'现在',en:'Present'},{zh:'未来',en:'Future'}]},relationship:{zh:'关系牌阵',pos:[{zh:'你',en:'You'},{zh:'对方',en:'Other'},{zh:'关系',en:'Relationship'},{zh:'建议',en:'Advice'}]}};
+const SPREADS={single:{zh:'单张指引',pos:[{zh:'指引',en:'Guidance'}]},threeCard:{zh:'三张牌阵',pos:[{zh:'过去',en:'Past'},{zh:'现在',en:'Present'},{zh:'未来',en:'Future'}]},relationship:{zh:'关系牌阵',pos:[{zh:'你',en:'You'},{zh:'对方',en:'Other'},{zh:'关系',en:'Relationship'},{zh:'建议',en:'Advice'}]},celticCross:{zh:'凯尔特十字',pos:[{zh:'现状',en:'Present'},{zh:'阻碍',en:'Challenge'},{zh:'潜意识',en:'Subconscious'},{zh:'过去',en:'Past'},{zh:'可能性',en:'Above'},{zh:'近未来',en:'Near Future'},{zh:'自我态度',en:'Self'},{zh:'外在环境',en:'Environment'},{zh:'希望与恐惧',en:'Hopes & Fears'},{zh:'最终结果',en:'Outcome'}]}};
 
 // 确定性伪随机：同seed永远相同结果
 function seededRng(seed){let s=typeof seed==='string'?hash(seed):seed;return()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};}

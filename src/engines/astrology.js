@@ -60,11 +60,21 @@ function calculate(input) {
     rising = { ...rising, degree: risingInfo.degree.toFixed(1) };
   }
 
+  // Current planet transits (for fortune reading)
+  const now = new Date();
+  const ny = now.getFullYear(), nm = now.getMonth() + 1, nd = now.getDate(), nh = now.getHours();
+  const transits = ac.getPlanetPositions(ny, nm, nd, nh);
+  const transitSummary = {};
+  for (const [planet, info] of Object.entries(transits)) {
+    transitSummary[planet] = { sign: info.zh, degree: (info.degree || 0).toFixed(1) };
+  }
+
   return {
     sunSign: sun, sunDegree: sunInfo.degree.toFixed(1),
     moonSign: moon, moonDegree: moonInfo.degree.toFixed(1),
     risingSign: rising,
     element: EL_ZH[sun.el],
+    transits: transitSummary,
     _source: 'astronomia',
   };
 }
@@ -87,6 +97,13 @@ function formatForAI(result, mode = 'simple') {
     o += `\n\n【元素平衡】太阳${EL_ZH[s.el]}+月亮${EL_ZH[m.el]}${ri ? '+上升' + EL_ZH[ri.el] : ''}`;
     const sc = getCompat(s, m);
     o += `\n太阳-月亮内在协调度：${sc}%`;
+    if (r.transits) {
+      const PZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
+      o += `\n\n【当前行星过境（Transit）】`;
+      for (const [p, info] of Object.entries(r.transits)) {
+        o += `\n${PZH[p]||p}：${info.sign}座 ${info.degree}°`;
+      }
+    }
     return o;
   }
   let o = `你的星座组合：`;

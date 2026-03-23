@@ -89,7 +89,14 @@ ${methodLine}
 判断：${r.relation.zh}
 
 【变卦】${r.changed.name}（${r.changed.upper.n}上${r.changed.lower.n}下）
-变卦为事情的最终走向`;
+变卦上卦${r.changed.upper.n}（${r.changed.upper.el}）${r.changed.upper.tr}
+变卦下卦${r.changed.lower.n}（${r.changed.lower.el}）${r.changed.lower.tr}
+变卦为事情的最终走向${r.huGua ? `
+
+【互卦分析】${r.huGua.name}（${r.huGua.upper.n}上${r.huGua.lower.n}下）
+互卦上卦${r.huGua.upper.n}（${r.huGua.upper.el}）${r.huGua.upper.tr}
+互卦下卦${r.huGua.lower.n}（${r.huGua.lower.el}）${r.huGua.lower.tr}
+互卦代表事情发展的中间过程和内在变化` : ''}`;
   }
   // simple
   let verdict='';
@@ -105,7 +112,7 @@ ${methodLine ? methodLine + '\n' : ''}
 · 两者关系：${r.relation.zh}
 
 结论：${verdict}
-
+${r.huGua ? `\n过程线索：中间会经历「${r.huGua.name}」的变化（${r.huGua.upper.na}与${r.huGua.lower.na}的互动）` : ''}
 变化趋势：事情最终走向「${r.changed.name}」的状态`;
 }
 

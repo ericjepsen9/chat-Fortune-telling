@@ -91,9 +91,17 @@ function calculate(input) {
   const now = new Date().getFullYear();
   const curDasha = dashas.find(dd => now >= dd.start && now < dd.end) || dashas[0];
 
+  // Sidereal planet positions (birth chart grahas)
+  const tropPlanets = ac.getPlanetPositions(y, m, d, h);
+  const grahas = {};
+  for (const [name, info] of Object.entries(tropPlanets)) {
+    const sidLng = ((info.longitude - ayan) % 360 + 360) % 360;
+    grahas[name] = { rashi: RASHIS[Math.floor(sidLng / 30)], degree: (sidLng % 30).toFixed(1), longitude: sidLng.toFixed(1) };
+  }
+
   return {
     sunSign: sunRashi, sunDeg, moonSign: moonRashi, moonDeg, moonNak: nak, lagna,
-    dashas, currentDasha: curDasha, ayanamsa: ayan.toFixed(2),
+    dashas, currentDasha: curDasha, ayanamsa: ayan.toFixed(2), grahas,
     _source: 'astronomia',
   };
 }
@@ -111,6 +119,13 @@ function formatForAI(result, mode = 'simple') {
     o += `\n当前：${r.currentDasha.zh}大运（${r.currentDasha.start}-${r.currentDasha.end}，${r.currentDasha.yrs}年）`;
     o += `\n\n完整大运序列：`;
     r.dashas.forEach(d => { o += `\n${d.zh}（${d.start}-${d.end}，${d.yrs}年）${d === r.currentDasha ? ' ← 当前' : ''}`; });
+    if (r.grahas && Object.keys(r.grahas).length > 0) {
+      const GZH = { Mercury:'水星', Venus:'金星', Mars:'火星', Jupiter:'木星', Saturn:'土星' };
+      o += `\n\n【行星位置（恒星黄道）】`;
+      for (const [p, info] of Object.entries(r.grahas)) {
+        o += `\n${GZH[p]||p}：${info.rashi.zh}座 ${info.degree}°  守护${info.rashi.ruler}`;
+      }
+    }
     return o;
   }
   const effects = { Sun:'关注自我表达和权威', Moon:'情感和内在需求是重心', Mars:'充满行动力，注意冲突', Rahu:'充满变革和非传统的机遇', Jupiter:'扩展、学习和好运的周期', Saturn:'考验耐心，收获成熟', Mercury:'沟通、学习和商业活跃', Ketu:'灵性成长，放下执着', Venus:'感情、艺术和享受的丰收期' };

@@ -6,38 +6,33 @@ const astrologyEngine = require('./engines/astrology');
 const tarotEngine = require('./engines/tarot');
 const meihuaEngine = require('./engines/meihua');
 const vedicEngine = require('./engines/vedic');
+const { Solar } = require('lunar-javascript');
 
-// ============ 时空上下文 ============
+// ============ 时空上下文（lunar-javascript精确） ============
 function createContext(options = {}) {
   const now = options.timestamp ? new Date(options.timestamp) : new Date();
   const lat = parseFloat(options.latitude) || 39.9;
   const lng = parseFloat(options.longitude) || 116.4;
   const city = options.city || '北京';
-  const m = now.getMonth() + 1, d = now.getDate(), h = now.getHours(), yr = now.getFullYear();
+  const yr = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate(), h = now.getHours();
   const shichenArr = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
   const si = h === 23 ? 0 : Math.floor(((h + 1) % 24) / 2);
   const seasons = {1:'冬',2:'春',3:'春',4:'春',5:'夏',6:'夏',7:'夏',8:'秋',9:'秋',10:'秋',11:'冬',12:'冬'};
-  const TG = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-  const DZ = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-  // 流年
-  const lnTg = TG[(yr-4)%10], lnDz = DZ[(yr-4)%12];
-  // 流月（以年干推月干）
-  const mStart = {0:2,1:2,2:4,3:4,4:6,5:6,6:8,7:8,8:0,9:0};
-  const lmTg = TG[(mStart[(yr-4)%10] + m - 1) % 10], lmDz = DZ[(m+1)%12];
-  // 流日
-  const baseDate = new Date(2000, 0, 7);
-  const diffDays = Math.round((now - baseDate) / 864e5);
-  const ldIdx = ((diffDays % 60) + 60) % 60;
-  const ldTg = TG[ldIdx % 10], ldDz = DZ[ldIdx % 12];
+
+  // 用 lunar-javascript 精确计算流年/流月/流日/流时
+  const solar = Solar.fromYmdHms(yr, m, d, h, 0, 0);
+  const ec = solar.getLunar().getEightChar();
+  const liunian = ec.getYear();
+  const liuyue = ec.getMonth();
+  const liuri = ec.getDay();
+  const liushi = ec.getTime();
 
   return {
     now, year: yr, month: m, day: d, hour: h,
     shichen: shichenArr[si], shichenIdx: si,
     season: seasons[m],
     latitude: lat, longitude: lng, city,
-    liunian: lnTg + lnDz,
-    liuyue: lmTg + lmDz,
-    liuri: ldTg + ldDz,
+    liunian, liuyue, liuri, liushi,
     currentSunSign: astrologyEngine.getSunSign(m, d),
     dateStr: `${yr}年${m}月${d}日`,
     timeStr: `${h}时（${shichenArr[si]}时）`,
@@ -62,7 +57,7 @@ function calculateAll(mode, profile, ctx, opts = {}) {
       let o = baziEngine.formatForAI(r, dm);
       o += `\n\n【当前时空·系统计算】`;
       o += `\n查询时间：${ctx.fullStr}`;
-      o += `\n流年：${ctx.liunian}  流月：${ctx.liuyue}  流日：${ctx.liuri}`;
+      o += `\n流年：${ctx.liunian}  流月：${ctx.liuyue}  流日：${ctx.liuri}  流时：${ctx.liushi || ''}`;
       o += `\n当前季节：${ctx.season}季`;
       if (ctx.city !== '北京') o += `\n用户所在地：${ctx.city}（纬度${ctx.latitude}°）`;
       return o;

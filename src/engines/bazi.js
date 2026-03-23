@@ -101,7 +101,12 @@ function calculate(input) {
       if (ss2 !== '比肩' && ss2 !== '劫财') geju = ss2 + '格';
     }
   }
-  if (!geju) geju = '建禄格'; // 月令为比肩时
+  if (!geju) {
+    // 月令为比劫时，看建禄还是羊刃
+    const yangrenMap = { 甲:'卯', 丙:'午', 戊:'午', 庚:'酉', 壬:'子', 乙:'寅', 丁:'巳', 己:'巳', 辛:'申', 癸:'亥' };
+    if (mGZ[1] === yangrenMap[dm]) geju = '羊刃格';
+    else geju = '建禄格';
+  }
 
   const SHENG = { 金:'水', 水:'木', 木:'火', 火:'土', 土:'金' };
   const KE_SHENG = { 金:'土', 水:'金', 木:'水', 火:'木', 土:'火' };
