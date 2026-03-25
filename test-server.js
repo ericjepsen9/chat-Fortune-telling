@@ -136,6 +136,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 缘合App（测试版）
+  if (parsedUrl.pathname === '/app') {
+    const html = fs.readFileSync(path.join(__dirname, 'app.html'), 'utf-8');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(html);
+    return;
+  }
+
   // API：健康检查
   if (parsedUrl.pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -232,6 +240,7 @@ server.listen(PORT, () => {
 ╠══════════════════════════════════════════╣
 ║                                          ║
 ║  🌐 测试页面: http://localhost:${PORT}       ║
+║  📱 缘合App:  http://localhost:${PORT}/app   ║
 ║                                          ║
 ║  🤖 LLM 地址: ${LLM_BASE_URL.padEnd(25)}║
 ║  📦 模型:     ${LLM_MODEL.padEnd(25)}║
