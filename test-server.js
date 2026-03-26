@@ -73,6 +73,10 @@ async function callLLM(systemPrompt, userMessage) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
+        // 调试：打印LLM响应状态
+        if (res.statusCode !== 200) {
+          console.error(`[LLM] 状态码 ${res.statusCode}，响应: ${data.substring(0, 300)}`);
+        }
         try {
           const json = JSON.parse(data);
           if (json.choices && json.choices[0]) {
@@ -83,7 +87,7 @@ async function callLLM(systemPrompt, userMessage) {
             resolve(data);
           }
         } catch (e) {
-          reject(new Error(`解析响应失败: ${data.substring(0, 200)}`));
+          reject(new Error(`LLM返回非JSON(状态码${res.statusCode}): ${data.substring(0, 200)}`));
         }
       });
     });
