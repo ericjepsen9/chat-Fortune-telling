@@ -368,21 +368,26 @@ function AIScreen({ profile, initialMode }) {
         {/* Result */}
         {result && (
           <div ref={resultRef} className="anim-slide" style={{ marginTop:16 }}>
-            {/* Engine data */}
-            <div style={{ background:T.card, borderRadius:16, padding:16, boxShadow:T.shadow, marginBottom:12 }}>
-              <div style={{ fontSize:13, fontWeight:600, color:T.accent2, marginBottom:10 }}>📦 引擎数据</div>
-              <pre style={{ fontSize:11.5, lineHeight:1.65, color:T.textSec, whiteSpace:'pre-wrap', wordBreak:'break-all', fontFamily:'inherit', maxHeight:300, overflow:'auto' }}>
-                {result.engineData}
-              </pre>
-            </div>
-
-            {/* AI response */}
+            {/* AI response first (primary) */}
             {result.response && (
-              <div style={{ background:T.card, borderRadius:16, padding:16, boxShadow:T.shadow }}>
+              <div style={{ background:T.card, borderRadius:16, padding:16, boxShadow:T.shadow, marginBottom:12 }}>
                 <div style={{ fontSize:13, fontWeight:600, color:T.primary, marginBottom:10 }}>🤖 AI 解读</div>
                 <div className="markdown" style={{ fontSize:14, lineHeight:1.75, color:T.text }} dangerouslySetInnerHTML={renderMarkdown(result.response)} />
               </div>
             )}
+
+            {/* Engine data (collapsible) */}
+            <details style={{ background:T.card, borderRadius:16, boxShadow:T.shadow }}>
+              <summary style={{ padding:'14px 16px', fontSize:13, fontWeight:600, color:T.accent2, cursor:'pointer', listStyle:'none', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span>📦 引擎原始数据</span>
+                <span style={{ fontSize:11, color:T.textThi }}>点击展开 ▾</span>
+              </summary>
+              <div style={{ padding:'0 16px 16px' }}>
+                <pre style={{ fontSize:11.5, lineHeight:1.65, color:T.textSec, whiteSpace:'pre-wrap', wordBreak:'break-all', fontFamily:'inherit' }}>
+                  {result.engineData}
+                </pre>
+              </div>
+            </details>
           </div>
         )}
       </div>
