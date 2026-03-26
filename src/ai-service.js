@@ -291,7 +291,7 @@ function buildPrompt(mode, displayMode, question) {
 ### 八、一句话总命运
 用3-4句话高度概括一生命运走势，定性为先苦后甜/大器晚成/一路上升/波折起伏等。
 
-总字数2500-3500字。`,
+总字数1500-2000字。每段简洁有力，避免冗长。`,
     astrology: `无特定问题，请全面分析：
 1.【核心人格】太阳表层+月亮内在+上升外在，三者如何互动（5句）
 2.【感情画像】你会被什么样的人吸引、恋爱模式、理想伴侣（4句）
@@ -362,7 +362,7 @@ function buildPrompt(mode, displayMode, question) {
 3. 有利因素 vs 不利因素（各2-3条，引用具体干支）
 4. 时间参考（基于流年/流月数据，指出关键月份和最佳行动时机）
 5. 具体建议（3-4条可执行的行动方案）
-总字数800-1200。`;
+总字数600-800。`;
 
   const instruction = hasQ ? focusedInstruction : fullInstructions[mode];
 
