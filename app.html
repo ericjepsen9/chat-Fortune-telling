@@ -52,11 +52,15 @@ const API = '';  // same origin
 // ========== API HELPERS ==========
 async function apiPost(path, body) {
   const r = await fetch(API + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-  return r.json();
+  const text = await r.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('服务器返回非JSON: ' + text.substring(0, 100)); }
 }
 async function apiGet(path) {
   const r = await fetch(API + path);
-  return r.json();
+  const text = await r.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('服务器返回非JSON: ' + text.substring(0, 100)); }
 }
 
 // ========== SPLASH ==========
