@@ -165,30 +165,245 @@ function HomeScreen({profile,goTo}){
 }
 
 // ===== AI =====
-const MODES=[{id:'bazi',label:'八字命理',icon:'☰',c:'#FF6B6B'},{id:'astrology',label:'星座运势',icon:'★',c:'#7C5CFC'},{id:'tarot',label:'塔罗牌',icon:'✦',c:'#4ECDC4'},{id:'meihua',label:'梅花易数',icon:'❀',c:'#FFB347'},{id:'vedic',label:'印度占星',icon:'◎',c:'#45B7D1'},{id:'hehun',label:'八字合婚',icon:'💑',c:'#E91E63'},{id:'synastry',label:'星座配对',icon:'💫',c:'#9C27B0'},{id:'hepan',label:'综合合盘',icon:'❤',c:'#F44336'}];
+const MODES=[
+  {id:'bazi',label:'八字命理',icon:'☰',c:'#FF6B6B',desc:'四柱排盘·大运流年',cat:'single'},
+  {id:'astrology',label:'星座运势',icon:'★',c:'#7C5CFC',desc:'太阳月亮上升',cat:'single'},
+  {id:'tarot',label:'塔罗牌',icon:'✦',c:'#4ECDC4',desc:'抽牌指引方向',cat:'single'},
+  {id:'meihua',label:'梅花易数',icon:'❀',c:'#FFB347',desc:'时间起卦预测',cat:'single'},
+  {id:'vedic',label:'印度占星',icon:'◎',c:'#45B7D1',desc:'Dasha大运周期',cat:'single'},
+  {id:'hehun',label:'八字合婚',icon:'💑',c:'#E91E63',desc:'两人八字匹配',cat:'pair'},
+  {id:'synastry',label:'星座配对',icon:'💫',c:'#9C27B0',desc:'星盘交叉相位',cat:'pair'},
+  {id:'hepan',label:'综合合盘',icon:'❤',c:'#F44336',desc:'八字+星座综合',cat:'pair'},
+];
+const QUICK_QS = {
+  bazi:['今年运势如何','事业方向','感情什么时候稳定','财运分析','健康注意事项'],
+  astrology:['本月运势','感情运','适合什么工作','水逆影响'],
+  tarot:['今天适合做什么','感情下一步','事业抉择','最近需要注意什么'],
+  meihua:['这件事能成吗','近期运势','选A还是选B'],
+  vedic:['当前大运影响','适合的宝石','事业发展方向'],
+  hehun:['我们适合在一起吗','婚姻宫分析','五行互补情况'],
+  synastry:['我们的化学反应','相处注意什么','感情发展趋势'],
+  hepan:['综合匹配度','长远相处建议'],
+};
+const LOADING_MSGS = ['正在排盘计算…','分析命局格局…','推演大运流年…','AI正在撰写解读…','即将完成…'];
+
 function AIScreen({profile,initialMode}){
-  const [mode,setMode]=useState(initialMode||'bazi');const [q,setQ]=useState('');const [dm,setDm]=useState('expert');
-  const [result,setResult]=useState(null);const [loading,setLoading]=useState(false);const [error,setError]=useState(null);const ref=useRef(null);
-  const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:'female'});
+  const [mode,setMode]=useState(initialMode||'bazi');
+  const [q,setQ]=useState('');
+  const [dm,setDm]=useState('expert');
+  const [result,setResult]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [loadingMsg,setLoadingMsg]=useState('');
+  const [elapsed,setElapsed]=useState(0);
+  const [error,setError]=useState(null);
+  const [tab,setTab]=useState('single'); // single | pair
+  const ref=useRef(null);
+  const timerRef=useRef(null);
+  const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:profile.gender==='male'?'female':'male'});
   const isPair=['hehun','synastry','hepan'].includes(mode);
-  const divine=async(engineOnly)=>{setLoading(true);setError(null);setResult(null);try{const body={mode,...profile,question:engineOnly?'':q,displayMode:dm};if(isPair)body.profileB=p2;const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);if(r.blocked)setError(r.reason);else if(r.error)setError(r.error);else setResult(engineOnly?{engineData:r.engineData,response:null}:r)}catch(e){setError(e.message)}setLoading(false);setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),200)};
+
+  // Loading animation
+  useEffect(()=>{
+    if(loading){
+      let i=0;setElapsed(0);
+      setLoadingMsg(LOADING_MSGS[0]);
+      timerRef.current=setInterval(()=>{
+        setElapsed(e=>e+1);
+        i++;
+        if(i<LOADING_MSGS.length*15) setLoadingMsg(LOADING_MSGS[Math.min(Math.floor(i/15),LOADING_MSGS.length-1)]);
+      },1000);
+    } else {
+      if(timerRef.current)clearInterval(timerRef.current);
+    }
+    return()=>{if(timerRef.current)clearInterval(timerRef.current)};
+  },[loading]);
+
+  // Switch tab when mode changes
+  useEffect(()=>{
+    const m=MODES.find(x=>x.id===mode);
+    if(m)setTab(m.cat);
+  },[mode]);
+
+  const divine=async(engineOnly)=>{
+    setLoading(true);setError(null);setResult(null);
+    try{
+      const body={mode,...profile,question:engineOnly?'':q,displayMode:dm};
+      if(isPair)body.profileB=p2;
+      const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);
+      if(r.blocked)setError(r.reason);
+      else if(r.error)setError(r.error);
+      else{
+        setResult(engineOnly?{engineData:r.engineData,response:null}:r);
+        // Save to history
+        try{
+          const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');
+          hist.unshift({mode,question:q||'全面分析',time:new Date().toLocaleString(),hasAI:!engineOnly});
+          localStorage.setItem('yuanhe_history',JSON.stringify(hist.slice(0,20)));
+        }catch(e){}
+      }
+    }catch(e){setError(e.message)}
+    setLoading(false);
+    setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
+  };
+
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
+  const modeInfo=MODES.find(m=>m.id===mode)||MODES[0];
+  const filteredModes=MODES.filter(m=>m.cat===tab);
+
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
-    <div style={{background:'linear-gradient(135deg,#7C5CFC,#4ECDC4)',padding:'48px 20px 20px',borderRadius:'0 0 24px 24px'}}><div className="serif" style={{color:'#fff',fontSize:20,fontWeight:700}}>✦ AI 占卜</div><div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:4}}>8种占术 · 精确引擎 · 智能解读</div></div>
-    <div style={{padding:16}}>
-      <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>{MODES.map(m=><button key={m.id} onClick={()=>setMode(m.id)} style={{padding:'8px 14px',borderRadius:20,fontSize:13,fontWeight:500,cursor:'pointer',border:mode===m.id?'none':`1px solid ${T.borderDark}`,background:mode===m.id?m.c:'#fff',color:mode===m.id?'#fff':T.textSec,transition:'all .2s'}}>{m.icon} {m.label}</button>)}</div>
-      {isPair&&<div className="anim-in" style={{background:'#E91E6308',border:'1px solid #E91E6330',borderRadius:14,padding:14,marginBottom:14}}>
-        <div style={{fontSize:13,fontWeight:600,color:'#E91E63',marginBottom:10}}>💑 对方信息</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>{[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k}><div style={{fontSize:11,color:T.textThi}}>{l}</div><input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:6,border:`1px solid ${T.borderDark}`,borderRadius:8,fontSize:13,textAlign:'center'}}/></div>)}</div>
+    {/* Header */}
+    <div style={{background:`linear-gradient(135deg,${modeInfo.c}dd,${modeInfo.c}88)`,padding:'48px 20px 20px',borderRadius:'0 0 24px 24px',transition:'background 0.4s ease'}}>
+      <div className="serif" style={{color:'#fff',fontSize:22,fontWeight:700}}>✦ AI 占卜</div>
+      <div style={{color:'rgba(255,255,255,.8)',fontSize:12,marginTop:4}}>8种占术 · 精确天文引擎 · AI智能解读</div>
+      {/* Category toggle */}
+      <div style={{display:'flex',gap:8,marginTop:16}}>
+        {[{k:'single',l:'个人占卜',n:5},{k:'pair',l:'配对分析',n:3}].map(c=>(
+          <button key={c.k} onClick={()=>{setTab(c.k);setMode(MODES.find(m=>m.cat===c.k).id)}} style={{
+            padding:'8px 16px',borderRadius:20,fontSize:13,fontWeight:600,cursor:'pointer',
+            border:'none',background:tab===c.k?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',
+            color:tab===c.k?modeInfo.c:'rgba(255,255,255,0.8)',transition:'all .3s',
+          }}>{c.l}({c.n})</button>
+        ))}
+      </div>
+    </div>
+
+    <div style={{padding:'16px 16px 0'}}>
+      {/* Mode grid */}
+      <div style={{display:'grid',gridTemplateColumns:tab==='single'?'1fr 1fr 1fr':'1fr 1fr 1fr',gap:10,marginBottom:16}}>
+        {filteredModes.map(m=>(
+          <button key={m.id} onClick={()=>setMode(m.id)} style={{
+            padding:'14px 8px',borderRadius:14,cursor:'pointer',textAlign:'center',transition:'all .2s',
+            border:mode===m.id?`2px solid ${m.c}`:`1px solid ${T.border}`,
+            background:mode===m.id?`${m.c}08`:T.card,
+            boxShadow:mode===m.id?`0 2px 12px ${m.c}25`:T.shadow,
+          }}>
+            <div style={{fontSize:24}}>{m.icon}</div>
+            <div style={{fontSize:12,fontWeight:600,color:mode===m.id?m.c:T.text,marginTop:4}}>{m.label}</div>
+            <div style={{fontSize:10,color:T.textThi,marginTop:2}}>{m.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Partner panel for pair modes */}
+      {isPair&&<div className="anim-in" style={{background:'linear-gradient(135deg,#E91E6306,#9C27B006)',border:'1px solid #E91E6320',borderRadius:16,padding:16,marginBottom:16}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div style={{fontSize:14,fontWeight:600,color:'#E91E63'}}>💑 对方出生信息</div>
+          <div style={{display:'flex',gap:6}}>
+            {[{v:'female',l:'♀女'},{v:'male',l:'♂男'}].map(g=>(
+              <button key={g.v} onClick={()=>setP2({...p2,gender:g.v})} style={{padding:'4px 12px',borderRadius:10,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:p2.gender===g.v?'#E91E63':'#f0f0f0',color:p2.gender===g.v?'#fff':'#999'}}>{g.l}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>
+          {[['年','year'],['月','month'],['日','day'],['时(24h)','hour']].map(([l,k])=>(
+            <div key={k}>
+              <div style={{fontSize:11,color:T.textThi,marginBottom:4}}>{l}</div>
+              <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})}
+                style={{width:'100%',padding:'8px',border:`1.5px solid ${T.borderDark}`,borderRadius:10,fontSize:14,textAlign:'center',outline:'none',background:'#fff'}}/>
+            </div>
+          ))}
+        </div>
       </div>}
-      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="留空=全面分析 | 输入问题=深度聚焦" style={{width:'100%',padding:'14px 16px',border:`1.5px solid ${T.borderDark}`,borderRadius:14,fontSize:14,background:'#fff',outline:'none',marginBottom:12}}/>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>{[{v:'simple',l:'🌟 大众',d:'通俗易懂'},{v:'expert',l:'📋 专家',d:'完整排盘'}].map(d=><button key={d.v} onClick={()=>setDm(d.v)} style={{flex:1,padding:'10px',borderRadius:12,cursor:'pointer',textAlign:'center',border:dm===d.v?'none':`1.5px solid ${T.borderDark}`,background:dm===d.v?T.accent2:'#fff',color:dm===d.v?'#fff':T.textSec}}><div style={{fontSize:13,fontWeight:600}}>{d.l}</div><div style={{fontSize:11,opacity:.7,marginTop:2}}>{d.d}</div></button>)}</div>
-      <button onClick={()=>divine(false)} disabled={loading} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',cursor:loading?'wait':'pointer',background:loading?T.textThi:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',boxShadow:loading?'none':'0 4px 20px rgba(255,107,107,0.3)'}}>{loading?'🔮 AI解读中…请耐心等待':'🔮 引擎 + AI 解读'}</button>
-      <button onClick={()=>divine(true)} disabled={loading} style={{width:'100%',padding:'12px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,fontSize:13,fontWeight:500,color:T.textSec,background:'#fff',cursor:'pointer',marginTop:8}}>仅计算引擎（秒出）</button>
-      {error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginTop:16}}><div style={{fontSize:14,fontWeight:600,color:'#EF4444'}}>⚠️ {error}</div></div>}
+
+      {/* Question input + quick suggestions */}
+      <div style={{marginBottom:16}}>
+        <div style={{position:'relative'}}>
+          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="留空=全面分析 | 输入具体问题=深度聚焦"
+            style={{width:'100%',padding:'14px 16px',border:`1.5px solid ${T.borderDark}`,borderRadius:14,fontSize:14,background:'#fff',outline:'none',paddingRight:q?40:16}}/>
+          {q&&<button onClick={()=>setQ('')} style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:T.textThi,fontSize:16,cursor:'pointer'}}>✕</button>}
+        </div>
+        {/* Quick question chips */}
+        <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
+          {(QUICK_QS[mode]||[]).map(qq=>(
+            <button key={qq} onClick={()=>setQ(qq)} style={{padding:'5px 12px',borderRadius:12,border:`1px solid ${q===qq?modeInfo.c:T.border}`,background:q===qq?`${modeInfo.c}10`:'#fff',color:q===qq?modeInfo.c:T.textSec,fontSize:11,cursor:'pointer',transition:'all .2s'}}>{qq}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Display mode */}
+      <div style={{display:'flex',gap:8,marginBottom:16}}>
+        {[{v:'expert',l:'📋 专家模式',d:'完整排盘·神煞详解'},{v:'simple',l:'🌟 大众模式',d:'通俗易懂·像朋友聊天'}].map(d=>(
+          <button key={d.v} onClick={()=>setDm(d.v)} style={{
+            flex:1,padding:'12px 8px',borderRadius:14,cursor:'pointer',textAlign:'center',transition:'all .2s',
+            border:dm===d.v?`2px solid ${T.accent2}`:`1.5px solid ${T.borderDark}`,
+            background:dm===d.v?`${T.accent2}08`:T.card,
+          }}>
+            <div style={{fontSize:13,fontWeight:600,color:dm===d.v?T.accent2:T.text}}>{d.l}</div>
+            <div style={{fontSize:10,color:T.textThi,marginTop:3}}>{d.d}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Action buttons */}
+      <button onClick={()=>divine(false)} disabled={loading} style={{
+        width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',
+        background:loading?`linear-gradient(135deg,${T.textThi},${T.textSec})`:`linear-gradient(135deg,${modeInfo.c},${modeInfo.c}bb)`,
+        boxShadow:loading?'none':`0 4px 20px ${modeInfo.c}40`,transition:'all .3s',
+      }}>
+        {loading ? '🔮 ' + loadingMsg : `🔮 ${modeInfo.icon} 引擎 + AI 解读`}
+      </button>
+      
+      {loading && (
+        <div style={{marginTop:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:T.textThi,marginBottom:4}}>
+            <span>已等待 {elapsed} 秒</span>
+            <span>预计60-120秒</span>
+          </div>
+          <div style={{height:3,background:T.border,borderRadius:2,overflow:'hidden'}}>
+            <div style={{height:'100%',background:`linear-gradient(90deg,${modeInfo.c},${T.accent1})`,borderRadius:2,width:Math.min(elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
+          </div>
+        </div>
+      )}
+
+      <button onClick={()=>divine(true)} disabled={loading} style={{
+        width:'100%',padding:'12px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,fontSize:13,fontWeight:500,
+        color:T.textSec,background:'#fff',cursor:'pointer',marginTop:8,
+      }}>⚡ 仅计算引擎（秒出结果，不调用AI）</button>
+
+      {/* Error */}
+      {error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginTop:16}}>
+        <div style={{fontSize:14,fontWeight:600,color:'#EF4444',marginBottom:8}}>⚠️ {error}</div>
+        <button onClick={()=>divine(false)} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>🔄 重试</button>
+      </div>}
+
+      {/* Result */}
       {result&&<div ref={ref} className="anim-slide" style={{marginTop:16}}>
-        {result.response&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow,marginBottom:12}}><div style={{fontSize:13,fontWeight:600,color:T.primary,marginBottom:10}}>🤖 AI 解读</div><div className="markdown" style={{fontSize:14,lineHeight:1.75}} dangerouslySetInnerHTML={md(result.response)}/></div>}
-        <details style={{background:T.card,borderRadius:16,boxShadow:T.shadow}}><summary style={{padding:'14px 16px',fontSize:13,fontWeight:600,color:T.accent2,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>📦 引擎数据</span><span style={{fontSize:11,color:T.textThi}}>展开 ▾</span></summary><div style={{padding:'0 16px 16px'}}><pre style={{fontSize:11.5,lineHeight:1.65,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre></div></details>
+        {/* AI response */}
+        {result.response&&<div style={{background:T.card,borderRadius:18,overflow:'hidden',boxShadow:T.shadowLg,marginBottom:14}}>
+          {/* Result header */}
+          <div style={{background:`linear-gradient(135deg,${modeInfo.c}15,${modeInfo.c}05)`,padding:'14px 16px',borderBottom:`1px solid ${T.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:600,color:modeInfo.c}}>{modeInfo.icon} {modeInfo.label} · AI解读</div>
+              <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{dm==='expert'?'专家模式':'大众模式'} · {q||'全面分析'} · {elapsed}秒生成</div>
+            </div>
+            <button onClick={()=>{navigator.clipboard?.writeText(result.response);alert('已复制到剪贴板')}} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+          </div>
+          {/* AI content */}
+          <div style={{padding:'16px'}}>
+            <div className="markdown" style={{fontSize:14,lineHeight:1.8,color:T.text}} dangerouslySetInnerHTML={md(result.response)}/>
+          </div>
+        </div>}
+
+        {/* Engine data collapsible */}
+        <details style={{background:T.card,borderRadius:16,boxShadow:T.shadow}}>
+          <summary style={{padding:'14px 16px',fontSize:13,fontWeight:600,color:T.accent2,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span>📦 引擎原始数据（{result.engineData?.length||0}字）</span>
+            <span style={{fontSize:11,color:T.textThi}}>点击展开 ▾</span>
+          </summary>
+          <div style={{padding:'0 16px 16px'}}>
+            <pre style={{fontSize:11.5,lineHeight:1.65,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre>
+          </div>
+        </details>
+
+        {/* Follow-up suggestions */}
+        {result.response&&<div style={{marginTop:14,padding:'14px 16px',background:`${modeInfo.c}06`,borderRadius:14,border:`1px solid ${modeInfo.c}15`}}>
+          <div style={{fontSize:12,fontWeight:600,color:modeInfo.c,marginBottom:8}}>💡 可以继续追问</div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            {(QUICK_QS[mode]||[]).filter(x=>x!==q).slice(0,3).map(qq=>(
+              <button key={qq} onClick={()=>{setQ(qq);window.scrollTo({top:0,behavior:'smooth'})}} style={{padding:'6px 12px',borderRadius:10,border:`1px solid ${modeInfo.c}30`,background:'#fff',color:modeInfo.c,fontSize:11,cursor:'pointer'}}>{qq}</button>
+            ))}
+          </div>
+        </div>}
       </div>}
     </div>
   </div>);
