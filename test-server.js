@@ -38,11 +38,13 @@ const PORT = parseInt(process.env.SERVER_PORT) || 3000;
 
 // 引入新的 AI 服务
 const aiService = require('./src/ai-service');
+const logger = require('./src/logger');
 
 // ============ LLM 调用 ============
 
-async function callLLM(systemPrompt, userMessage) {
+async function callLLM(systemPrompt, userMessage, mode = '') {
   const apiUrl = `${LLM_BASE_URL}/chat/completions`;
+  const llmCtx = logger.logLLMStart(mode, systemPrompt.length, userMessage.length);
 
   const body = JSON.stringify({
     model: LLM_MODEL,
@@ -58,59 +60,65 @@ async function callLLM(systemPrompt, userMessage) {
   return new Promise((resolve, reject) => {
     const parsed = new URL(apiUrl);
     const options = {
-      hostname: parsed.hostname,
-      port: parsed.port,
-      path: parsed.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${LLM_API_KEY}`,
-        'Content-Length': Buffer.byteLength(body),
-      },
+      hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LLM_API_KEY}`, 'Content-Length': Buffer.byteLength(body) },
     };
 
     const req = (parsed.protocol === 'https:' ? require('https') : http).request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        // 调试：打印LLM响应状态
         if (res.statusCode !== 200) {
-          console.error(`[LLM] 状态码 ${res.statusCode}，响应: ${data.substring(0, 300)}`);
+          logger.error('LLM', `状态码 ${res.statusCode}`, data.substring(0, 300));
         }
         try {
           const json = JSON.parse(data);
           if (json.choices && json.choices[0]) {
             let content = json.choices[0].message.content;
             const finishReason = json.choices[0].finish_reason;
-            // 检测截断
+            const result = logger.logLLMSuccess(llmCtx, content.length, finishReason, res.statusCode);
             if (finishReason === 'length') {
               content += '\n\n---\n⚠️ *AI输出因长度限制被截断，以上为部分内容。可输入具体问题获取更聚焦的分析。*';
-              console.log('[LLM] 输出被截断(finish_reason=length)，已添加提示');
             }
             resolve(content);
           } else if (json.error) {
-            reject(new Error(json.error.message || JSON.stringify(json.error)));
+            const err = new Error(json.error.message || JSON.stringify(json.error));
+            logger.logLLMError(llmCtx, err);
+            reject(err);
           } else {
             resolve(data);
           }
         } catch (e) {
-          reject(new Error(`LLM返回非JSON(状态码${res.statusCode}): ${data.substring(0, 200)}`));
+          const err = new Error(`LLM返回非JSON(状态码${res.statusCode}): ${data.substring(0, 200)}`);
+          logger.logLLMError(llmCtx, err);
+          reject(err);
         }
       });
     });
 
-    req.on('error', (e) => reject(new Error(`连接 LLM 失败: ${e.message}\n请检查 Cherry Studio 是否已启动，API 地址: ${apiUrl}`)));
-    req.setTimeout(180000, () => { req.destroy(); reject(new Error('LLM 请求超时(180s)')); });
-    req.write(body);
-    req.end();
+    req.on('error', (e) => {
+      const err = new Error(`连接 LLM 失败: ${e.message}`);
+      logger.logLLMError(llmCtx, err);
+      reject(err);
+    });
+    req.setTimeout(180000, () => { req.destroy(); const err = new Error('LLM 请求超时(180s)'); logger.logLLMError(llmCtx, err); reject(err); });
+    req.write(body); req.end();
   });
 }
 
 // ============ 引擎计算 + AI 解读（使用 ai-service v3） ============
 
 function calculateEngine(mode, profile, displayMode, ctxOptions) {
-  const ctx = aiService.createContext(ctxOptions || {});
-  return aiService.calculateAll(mode, profile, ctx, { displayMode: displayMode || 'simple', ...(ctxOptions || {}) });
+  const start = Date.now();
+  try {
+    const ctx = aiService.createContext(ctxOptions || {});
+    const result = aiService.calculateAll(mode, profile, ctx, { displayMode: displayMode || 'simple', ...(ctxOptions || {}) });
+    logger.logEngine(mode, profile, Date.now() - start, (result.engineData || '').length);
+    return result;
+  } catch(e) {
+    logger.logEngineError(mode, e);
+    throw e;
+  }
 }
 
 async function handleDivination(mode, profile, question, displayMode, ctxOptions) {
@@ -121,14 +129,65 @@ async function handleDivination(mode, profile, question, displayMode, ctxOptions
 
   // 安全过滤：被拦截的问题不调用LLM
   if (req.blocked) {
+    logger.logSafety(question, 'blocked');
     return { mode, blocked: true, reason: req.reason, engineData: '', response: req.reason };
   }
+  if (req.safetyLevel === 'sensitive') logger.logSafety(question, 'sensitive');
+  logger.logEngine(mode, profile, 0, req.engineData.length);
 
-  const response = await callLLM(req.systemPrompt, req.userMessage);
+  const response = await callLLM(req.systemPrompt, req.userMessage, mode);
   return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response };
 }
 
 // ============ HTTP 服务器 ============
+
+logger.info('SYSTEM', '服务器启动', { model: LLM_MODEL, baseUrl: LLM_BASE_URL, port: PORT });
+
+// 监控面板HTML
+const MONITOR_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>缘合 · 系统监控</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;background:#0a0a0f;color:#e0e0e0;padding:20px}
+h1{color:#4ECDC4;margin-bottom:20px;font-size:20px}h2{color:#FFB347;margin:16px 0 8px;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.card{background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:14px}
+.card .label{font-size:11px;color:#888;text-transform:uppercase}.card .value{font-size:22px;font-weight:bold;color:#4ECDC4;margin-top:4px}
+.card.warn .value{color:#FFB347}.card.error .value{color:#FF6B6B}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #1a1a2e}
+th{color:#888;font-size:11px}tr:hover{background:#1a1a2e}
+.log{font-size:11px;line-height:1.6;max-height:400px;overflow-y:auto;background:#0f0f1a;border-radius:8px;padding:12px;margin-top:8px}
+.log .INFO{color:#4ECDC4}.log .WARN{color:#FFB347}.log .ERROR{color:#FF6B6B}.log .DEBUG{color:#666}
+.refresh{background:#4ECDC4;color:#0a0a0f;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:16px}
+.refresh:hover{background:#3dbdb5}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold}
+.badge.ok{background:#34D39930;color:#34D399}.badge.err{background:#FF6B6B30;color:#FF6B6B}
+</style></head><body>
+<h1>⚡ 缘合 · 系统监控</h1>
+<button class="refresh" onclick="load()">🔄 刷新</button>
+<span id="time" style="color:#666;font-size:12px;margin-left:12px"></span>
+<div class="grid" id="cards"></div>
+<h2>📡 API 端点统计</h2><table id="apiTable"><tr><th>端点</th><th>请求数</th><th>成功</th><th>失败</th><th>平均耗时</th></tr></table>
+<h2>📝 最近日志</h2><div class="log" id="logs"></div>
+<h2>⚠️ 最近错误</h2><div class="log" id="errors" style="border:1px solid #FF6B6B30"></div>
+<script>
+async function load(){
+  const r=await fetch('/api/stats');const d=await r.json();
+  document.getElementById('time').textContent='更新: '+new Date().toLocaleTimeString();
+  document.getElementById('cards').innerHTML=
+    card('运行时间',d.uptime)+card('总请求',d.requests.total)+card('成功率',d.requests.successRate,d.requests.error>0?'warn':'')+
+    card('LLM调用',d.llm.calls)+card('LLM成功',d.llm.success)+card('LLM失败',d.llm.error,d.llm.error>0?'error':'')+
+    card('LLM超时',d.llm.timeout,d.llm.timeout>0?'error':'')+card('输出截断',d.llm.truncated,d.llm.truncated>0?'warn':'')+
+    card('LLM平均耗时',d.llm.avgTimeSeconds)+card('引擎调用',d.engine.calls)+card('引擎错误',d.engine.errors,d.engine.errors>0?'error':'')+
+    card('内存',d.memory.heap+'/'+d.memory.rss);
+  let apiHtml='<tr><th>端点</th><th>请求数</th><th>成功</th><th>失败</th><th>平均耗时</th></tr>';
+  Object.entries(d.api).forEach(([ep,s])=>{const avg=s.count?Math.round(s.totalTime/s.count):0;
+    apiHtml+='<tr><td>'+ep+'</td><td>'+s.count+'</td><td><span class="badge ok">'+s.success+'</span></td><td>'+(s.error?'<span class="badge err">'+s.error+'</span>':'-')+'</td><td>'+avg+'ms</td></tr>';});
+  document.getElementById('apiTable').innerHTML=apiHtml;
+  document.getElementById('logs').innerHTML=d.recentLogs.map(l=>'<div class="'+l.level+'"><b>['+l.time.substring(11)+']</b> ['+l.level+'] ['+l.category+'] '+l.message+(l.data?' <span style="color:#555">'+l.data+'</span>':'')+'</div>').join('');
+  document.getElementById('errors').innerHTML=d.recentErrors.length?d.recentErrors.map(l=>'<div class="ERROR"><b>['+l.time+']</b> ['+l.category+'] '+l.message+(l.data?' | '+l.data:'')+'</div>').join(''):'<div style="color:#555">暂无错误 ✅</div>';
+}
+function card(label,value,cls){return '<div class="card '+(cls||'')+'"><div class="label">'+label+'</div><div class="value">'+value+'</div></div>';}
+load();setInterval(load,10000);
+</script></body></html>`;
+
 
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -138,6 +197,25 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
+
+  // 请求日志
+  const reqCtx = logger.logRequest(req, parsedUrl);
+  const origEnd = res.end.bind(res);
+  res.end = function(...args) { logger.logResponse(reqCtx, res.statusCode); return origEnd(...args); };
+
+  // 系统监控API
+  if (parsedUrl.pathname === '/api/stats') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(logger.getStats(), null, 2));
+    return;
+  }
+
+  // 监控面板
+  if (parsedUrl.pathname === '/monitor') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(MONITOR_HTML);
+    return;
+  }
 
   // 静态文件：测试页面
   if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
@@ -252,6 +330,7 @@ server.listen(PORT, () => {
 ║                                          ║
 ║  🌐 测试页面: http://localhost:${PORT}       ║
 ║  📱 缘合App:  http://localhost:${PORT}/app   ║
+║  📊 系统监控: http://localhost:${PORT}/monitor║
 ║                                          ║
 ║  🤖 LLM 地址: ${LLM_BASE_URL.padEnd(25)}║
 ║  📦 模型:     ${LLM_MODEL.padEnd(25)}║
