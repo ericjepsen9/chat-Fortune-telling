@@ -2,9 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scale=no">
-<title>缘合 YuanHe · 测试版</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>缘合 YuanHe</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -13,10 +12,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-web
 ::-webkit-scrollbar{display:none}
 .serif{font-family:'Noto Serif SC',serif}
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeOut{from{opacity:1}to{opacity:0}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes matchPop{0%{transform:scale(0);opacity:0}50%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 .anim-in{animation:fadeIn .4s ease both}
 .anim-slide{animation:slideUp .5s ease both}
 .markdown h1,.markdown h2,.markdown h3{margin:16px 0 8px;font-weight:600}
@@ -35,527 +32,217 @@ body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-web
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const {useState,useEffect,useRef,useCallback}=React;
 
-// ========== DESIGN SYSTEM ==========
-const T = {
-  bg:"#FAFAF7", card:"#FFFFFF", primary:"#FF6B6B", primaryDark:"#E85555",
-  secondary:"#FFB347", accent1:"#4ECDC4", accent2:"#7C5CFC", accent3:"#FF8A9B",
-  accent4:"#45B7D1", gold:"#F4C542", text:"#1A1A2E", textSec:"#6B7280",
-  textThi:"#9CA3AF", border:"#F0F0EC", borderDark:"#E5E5E0",
-  success:"#34D399", shadow:"0 2px 16px rgba(0,0,0,0.06)",
-  shadowLg:"0 8px 32px rgba(0,0,0,0.10)",
-};
-const S = { SPLASH:0, BIRTH:4, HOME:10, DISCOVER:11, AI:12, MSGS:13, ME:14 };
-const API = '';  // same origin
-
-// ========== API HELPERS ==========
-async function apiPost(path, body) {
-  const r = await fetch(API + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-  const text = await r.text();
-  try { return JSON.parse(text); }
-  catch(e) { throw new Error('服务器返回非JSON: ' + text.substring(0, 100)); }
-}
-async function apiGet(path) {
-  const r = await fetch(API + path);
-  const text = await r.text();
-  try { return JSON.parse(text); }
-  catch(e) { throw new Error('服务器返回非JSON: ' + text.substring(0, 100)); }
-}
-
-// ========== SPLASH ==========
-function Splash({ onDone }) {
-  useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t); }, []);
-  return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'linear-gradient(135deg,#FF6B6B 0%,#7C5CFC 50%,#4ECDC4 100%)' }}>
-      <div className="anim-in" style={{ color:'#fff', textAlign:'center' }}>
-        <div className="serif" style={{ fontSize:48, fontWeight:700, letterSpacing:8 }}>缘合</div>
-        <div style={{ fontSize:14, opacity:.8, marginTop:8, letterSpacing:4 }}>YUANHE</div>
-        <div style={{ fontSize:12, opacity:.6, marginTop:16 }}>以命理连接缘分</div>
-      </div>
-    </div>
-  );
-}
-
-// ========== BIRTH INFO ==========
-function BirthScreen({ onSubmit }) {
-  const [year,setYear]=useState('1996'); const [month,setMonth]=useState('8');
-  const [day,setDay]=useState('15'); const [hour,setHour]=useState('14');
-  const [gender,setGender]=useState('female'); const [name,setName]=useState('');
-  const [lunar,setLunar]=useState(null);
-
-  const fetchLunar = useCallback(async () => {
-    try {
-      const r = await apiGet(`/api/lunar?year=${year}&month=${month}&day=${day}&hour=${hour}`);
-      setLunar(r);
-    } catch(e) { setLunar(null); }
-  }, [year,month,day,hour]);
-
-  useEffect(() => { fetchLunar(); }, [fetchLunar]);
-
-  const handleSubmit = () => {
-    const profile = { year:+year, month:+month, day:+day, hour:+hour, gender, name:name||'缘友' };
-    localStorage.setItem('yuanhe_profile', JSON.stringify(profile));
-    onSubmit(profile);
-  };
-
-  const inputStyle = { width:'100%', padding:'12px 14px', border:`1.5px solid ${T.borderDark}`, borderRadius:12, fontSize:15, background:'#fff', outline:'none', transition:'border .2s' };
-
-  return (
-    <div style={{ height:'100%', overflow:'auto', background:T.bg }}>
-      <div style={{ padding:'60px 24px 100px' }}>
-        {/* Header */}
-        <div className="anim-in serif" style={{ textAlign:'center', marginBottom:32 }}>
-          <div style={{ fontSize:28, fontWeight:700, color:T.text }}>你的生辰</div>
-          <div style={{ fontSize:13, color:T.textSec, marginTop:8 }}>请输入公历（阳历）出生信息</div>
-        </div>
-
-        {/* 农历显示 */}
-        {lunar && (
-          <div className="anim-in" style={{ background:'linear-gradient(135deg,#FF6B6B10,#7C5CFC10)', padding:'14px 16px', borderRadius:14, marginBottom:24, textAlign:'center' }}>
-            <div style={{ fontSize:13, color:T.primary, fontWeight:500 }}>{lunar.lunarFull}</div>
-            <div style={{ fontSize:12, color:T.textSec, marginTop:4 }}>{lunar.ganzhi}</div>
-          </div>
-        )}
-
-        {/* Name */}
-        <div style={{ marginBottom:16 }}>
-          <label style={{ fontSize:13, color:T.textSec, marginBottom:6, display:'block' }}>昵称</label>
-          <input value={name} onChange={e=>setName(e.target.value)} placeholder="输入昵称（可选）" style={inputStyle} />
-        </div>
-
-        {/* Date row */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:10, marginBottom:16 }}>
-          {[{l:'年',v:year,s:setYear,min:1940,max:2020},{l:'月',v:month,s:setMonth,min:1,max:12},{l:'日',v:day,s:setDay,min:1,max:31},{l:'时(24h)',v:hour,s:setHour,min:0,max:23}].map(f => (
-            <div key={f.l}>
-              <label style={{ fontSize:12, color:T.textSec, marginBottom:4, display:'block' }}>{f.l}</label>
-              <input type="number" value={f.v} onChange={e=>f.s(e.target.value)} min={f.min} max={f.max} style={{...inputStyle, padding:'10px 8px', textAlign:'center'}} />
-            </div>
-          ))}
-        </div>
-
-        {/* Gender */}
-        <div style={{ marginBottom:24 }}>
-          <label style={{ fontSize:13, color:T.textSec, marginBottom:8, display:'block' }}>性别</label>
-          <div style={{ display:'flex', gap:12 }}>
-            {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g => (
-              <button key={g.v} onClick={()=>setGender(g.v)} style={{
-                flex:1, padding:'12px 0', borderRadius:12, fontSize:15, fontWeight:600, cursor:'pointer',
-                border: gender===g.v ? 'none' : `1.5px solid ${T.borderDark}`,
-                background: gender===g.v ? g.c : '#fff',
-                color: gender===g.v ? '#fff' : T.textSec,
-              }}>{g.l}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* Submit */}
-        <button onClick={handleSubmit} style={{
-          width:'100%', padding:'16px', borderRadius:14, border:'none', fontSize:16, fontWeight:700, color:'#fff', cursor:'pointer',
-          background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)', boxShadow:'0 4px 20px rgba(255,107,107,0.35)',
-        }}>
-          开启我的命运之旅 ✦
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ========== HOME ==========
-function HomeScreen({ profile, goTo }) {
-  const [fortune,setFortune] = useState(null);
-  const [loading,setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await apiPost('/api/calculate', { mode:'bazi', ...profile, displayMode:'simple' });
-        setFortune(r.engineData);
-      } catch(e) { setFortune('暂无数据'); }
-      setLoading(false);
-    })();
-  }, []);
-
-  return (
-    <div style={{ height:'100%', overflow:'auto', paddingBottom:80 }}>
-      {/* Header */}
-      <div style={{ background:'linear-gradient(135deg,#FF6B6B,#7C5CFC)', padding:'48px 24px 28px', borderRadius:'0 0 28px 28px' }}>
-        <div style={{ color:'rgba(255,255,255,.7)', fontSize:13 }}>你好，{profile.name || '缘友'}</div>
-        <div className="serif" style={{ color:'#fff', fontSize:22, fontWeight:700, marginTop:4 }}>今日运势</div>
-      </div>
-
-      <div style={{ padding:'20px 16px' }}>
-        {/* Quick actions */}
-        <div className="anim-in" style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:12, marginBottom:20 }}>
-          {[
-            {icon:'☰',label:'八字',mode:'bazi',c:T.primary},
-            {icon:'★',label:'星座',mode:'astrology',c:T.accent2},
-            {icon:'✦',label:'塔罗',mode:'tarot',c:T.accent1},
-            {icon:'❀',label:'梅花',mode:'meihua',c:T.secondary},
-          ].map(a => (
-            <button key={a.mode} onClick={()=>goTo(S.AI, a.mode)} style={{
-              background:T.card, border:`1px solid ${T.border}`, borderRadius:14, padding:'14px 0', cursor:'pointer',
-              display:'flex', flexDirection:'column', alignItems:'center', gap:6, boxShadow:T.shadow,
-            }}>
-              <span style={{ fontSize:22 }}>{a.icon}</span>
-              <span style={{ fontSize:12, color:T.textSec, fontWeight:500 }}>{a.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Fortune card */}
-        <div className="anim-slide" style={{ background:T.card, borderRadius:18, padding:'20px', boxShadow:T.shadow, marginBottom:16 }}>
-          <div style={{ fontSize:14, fontWeight:600, color:T.text, marginBottom:12 }}>📋 八字速览</div>
-          {loading ? (
-            <div style={{ textAlign:'center', padding:20, color:T.textThi }}>计算中...</div>
-          ) : (
-            <pre style={{ fontSize:12.5, lineHeight:1.7, color:T.textSec, whiteSpace:'pre-wrap', wordBreak:'break-all', fontFamily:'inherit' }}>{fortune}</pre>
-          )}
-        </div>
-
-        {/* AI entry */}
-        <button onClick={()=>goTo(S.AI)} style={{
-          width:'100%', background:'linear-gradient(135deg,#7C5CFC,#4ECDC4)', border:'none', borderRadius:16, padding:'18px 20px',
-          color:'#fff', fontSize:15, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'space-between',
-          boxShadow:'0 4px 20px rgba(124,92,252,0.3)',
-        }}>
-          <span>✦ AI 深度解读你的命运</span>
-          <span style={{ fontSize:20 }}>→</span>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ========== AI CHAT ==========
-const MODE_LIST = [
-  {id:'bazi',label:'八字命理',icon:'☰',c:'#FF6B6B'},
-  {id:'astrology',label:'星座运势',icon:'★',c:'#7C5CFC'},
-  {id:'tarot',label:'塔罗牌',icon:'✦',c:'#4ECDC4'},
-  {id:'meihua',label:'梅花易数',icon:'❀',c:'#FFB347'},
-  {id:'vedic',label:'印度占星',icon:'◎',c:'#45B7D1'},
-  {id:'hehun',label:'八字合婚',icon:'💑',c:'#E91E63'},
-  {id:'synastry',label:'星座配对',icon:'💫',c:'#9C27B0'},
-  {id:'hepan',label:'综合合盘',icon:'❤',c:'#F44336'},
+const T={bg:"#FAFAF7",card:"#FFFFFF",primary:"#FF6B6B",primaryDark:"#E85555",secondary:"#FFB347",accent1:"#4ECDC4",accent2:"#7C5CFC",accent3:"#FF8A9B",accent4:"#45B7D1",gold:"#F4C542",text:"#1A1A2E",textSec:"#6B7280",textThi:"#9CA3AF",border:"#F0F0EC",borderDark:"#E5E5E0",success:"#34D399",shadow:"0 2px 16px rgba(0,0,0,0.06)",shadowLg:"0 8px 32px rgba(0,0,0,0.10)"};
+const S={SPLASH:0,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
+const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
+const GRADS=['linear-gradient(135deg,#FF6B6B,#FF8A9B)','linear-gradient(135deg,#4ECDC4,#45B7D1)','linear-gradient(135deg,#7C5CFC,#9B7BFF)','linear-gradient(135deg,#FFB347,#FF6B6B)','linear-gradient(135deg,#34D399,#4ECDC4)','linear-gradient(135deg,#FF8A9B,#FFB347)','linear-gradient(135deg,#45B7D1,#7C5CFC)','linear-gradient(135deg,#F4C542,#FFB347)','linear-gradient(135deg,#9B7BFF,#FF6B6B)','linear-gradient(135deg,#4ECDC4,#34D399)','linear-gradient(135deg,#FF6B6B,#7C5CFC)','linear-gradient(135deg,#FFB347,#4ECDC4)'];
+const USERS=[
+  {id:1,name:'林雨薇',age:31,bio:'喜欢旅行和音乐 ✈️',year:1994,month:3,day:15,hour:8,gender:'female',score:92,dist:'1km',sign:'双鱼座',tags:['旅行','音乐','瑜伽']},
+  {id:2,name:'张子轩',age:30,bio:'代码写诗的程序员 💻',year:1995,month:7,day:22,hour:14,gender:'male',score:87,dist:'11km',sign:'巨蟹座',tags:['编程','读书','咖啡']},
+  {id:3,name:'王思琪',age:29,bio:'瑜伽爱好者 🧘‍♀️',year:1996,month:11,day:8,hour:22,gender:'female',score:78,dist:'5km',sign:'天蝎座',tags:['瑜伽','冥想','素食']},
+  {id:4,name:'李浩然',age:28,bio:'美食探店达人 🍜',year:1997,month:2,day:14,hour:6,gender:'male',score:95,dist:'3km',sign:'水瓶座',tags:['美食','摄影','旅行']},
+  {id:5,name:'陈雨桐',age:27,bio:'摄影师·记录生活 📸',year:1998,month:8,day:3,hour:10,gender:'female',score:71,dist:'7km',sign:'狮子座',tags:['摄影','徒步','猫']},
+  {id:6,name:'杨梓涵',age:26,bio:'书虫·猫奴·咖啡控 ☕',year:1999,month:5,day:28,hour:16,gender:'male',score:83,dist:'2km',sign:'双子座',tags:['阅读','猫','咖啡']},
+  {id:7,name:'赵思源',age:30,bio:'设计师·追求美 🎨',year:1995,month:10,day:17,hour:0,gender:'female',score:88,dist:'1km',sign:'天秤座',tags:['设计','绘画','展览']},
+  {id:8,name:'孙若曦',age:29,bio:'金融从业·爱跑步 🏃',year:1996,month:1,day:9,hour:12,gender:'male',score:76,dist:'8km',sign:'摩羯座',tags:['跑步','投资','健身']},
+  {id:9,name:'周宇航',age:28,bio:'自由撰稿人 ✍️',year:1997,month:6,day:20,hour:18,gender:'female',score:90,dist:'2km',sign:'双子座',tags:['写作','旅行','电影']},
+  {id:10,name:'吴诗涵',age:27,bio:'教师·热爱自然 🌿',year:1998,month:9,day:11,hour:4,gender:'male',score:85,dist:'4km',sign:'处女座',tags:['自然','徒步','阅读']},
+  {id:11,name:'刘星辰',age:31,bio:'创业者·永不停歇 🚀',year:1994,month:4,day:25,hour:20,gender:'female',score:93,dist:'3km',sign:'金牛座',tags:['创业','健身','旅行']},
+  {id:12,name:'郑梦瑶',age:28,bio:'心理学研究生 🔮',year:1997,month:12,day:6,hour:2,gender:'male',score:69,dist:'6km',sign:'射手座',tags:['心理学','冥想','写作']},
 ];
 
-function AIScreen({ profile, initialMode }) {
-  const [mode,setMode] = useState(initialMode || 'bazi');
-  const [question,setQuestion] = useState('');
-  const [displayMode,setDisplayMode] = useState('expert');
-  const [result,setResult] = useState(null);
-  const [loading,setLoading] = useState(false);
-  const [error,setError] = useState(null);
-  const resultRef = useRef(null);
+async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('服务器返回非JSON: '+t.substring(0,100))}}
+async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('服务器返回非JSON: '+t.substring(0,100))}}
 
-  // Partner info for pairing modes
-  const [showPartner,setShowPartner] = useState(false);
-  const [p2,setP2] = useState({year:'1992',month:'3',day:'22',hour:'8',gender:'female'});
-  const isPairMode = ['hehun','synastry','hepan'].includes(mode);
-
-  useEffect(() => { setShowPartner(isPairMode); }, [mode]);
-
-  const handleDivine = async () => {
-    setLoading(true); setError(null); setResult(null);
-    try {
-      const body = { mode, ...profile, question, displayMode };
-      if (isPairMode) body.profileB = p2;
-      const r = await apiPost('/api/divine', body);
-      if (r.blocked) { setError(r.reason); }
-      else if (r.error) { setError(r.error); }
-      else { setResult(r); }
-    } catch(e) {
-      setError(e.message === 'Failed to fetch' ? '网络错误，请检查服务器' : e.message);
-    }
-    setLoading(false);
-    setTimeout(() => resultRef.current?.scrollIntoView({ behavior:'smooth' }), 200);
-  };
-
-  const renderMarkdown = (text) => {
-    if (!text) return null;
-    try { return { __html: marked.parse(text) }; }
-    catch(e) { return { __html: text.replace(/\n/g,'<br>') }; }
-  };
-
-  return (
-    <div style={{ height:'100%', overflow:'auto', paddingBottom:80 }}>
-      {/* Header */}
-      <div style={{ background:'linear-gradient(135deg,#7C5CFC,#4ECDC4)', padding:'48px 20px 20px', borderRadius:'0 0 24px 24px' }}>
-        <div className="serif" style={{ color:'#fff', fontSize:20, fontWeight:700 }}>✦ AI 占卜</div>
-        <div style={{ color:'rgba(255,255,255,.7)', fontSize:12, marginTop:4 }}>8种占术 · 精确引擎 · 智能解读</div>
-      </div>
-
-      <div style={{ padding:'16px' }}>
-        {/* Mode selector */}
-        <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:16 }}>
-          {MODE_LIST.map(m => (
-            <button key={m.id} onClick={()=>setMode(m.id)} style={{
-              padding:'8px 14px', borderRadius:20, fontSize:13, fontWeight:500, cursor:'pointer',
-              border: mode===m.id ? 'none' : `1px solid ${T.borderDark}`,
-              background: mode===m.id ? m.c : '#fff',
-              color: mode===m.id ? '#fff' : T.textSec,
-              transition:'all .2s',
-            }}>
-              {m.icon} {m.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Partner panel */}
-        {showPartner && (
-          <div className="anim-in" style={{ background:'#E91E6308', border:'1px solid #E91E6330', borderRadius:14, padding:14, marginBottom:14 }}>
-            <div style={{ fontSize:13, fontWeight:600, color:'#E91E63', marginBottom:10 }}>💑 对方出生信息</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:8 }}>
-              {[{l:'年',k:'year'},{l:'月',k:'month'},{l:'日',k:'day'},{l:'时',k:'hour'}].map(f => (
-                <div key={f.k}>
-                  <div style={{ fontSize:11, color:T.textThi }}>{f.l}</div>
-                  <input type="number" value={p2[f.k]} onChange={e=>setP2({...p2,[f.k]:e.target.value})}
-                    style={{ width:'100%', padding:'6px', border:`1px solid ${T.borderDark}`, borderRadius:8, fontSize:13, textAlign:'center' }} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Question */}
-        <input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="留空=全面分析 | 输入问题=深度聚焦"
-          style={{ width:'100%', padding:'14px 16px', border:`1.5px solid ${T.borderDark}`, borderRadius:14, fontSize:14, background:'#fff', outline:'none', marginBottom:12 }} />
-
-        {/* Display mode */}
-        <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-          {[{v:'simple',l:'🌟 大众模式',d:'通俗易懂'},{v:'expert',l:'📋 专家模式',d:'完整排盘'}].map(d => (
-            <button key={d.v} onClick={()=>setDisplayMode(d.v)} style={{
-              flex:1, padding:'10px', borderRadius:12, cursor:'pointer', textAlign:'center',
-              border: displayMode===d.v ? 'none' : `1.5px solid ${T.borderDark}`,
-              background: displayMode===d.v ? T.accent2 : '#fff',
-              color: displayMode===d.v ? '#fff' : T.textSec,
-            }}>
-              <div style={{ fontSize:13, fontWeight:600 }}>{d.l}</div>
-              <div style={{ fontSize:11, opacity:.7, marginTop:2 }}>{d.d}</div>
-            </button>
-          ))}
-        </div>
-
-        {/* Action */}
-        <button onClick={handleDivine} disabled={loading} style={{
-          width:'100%', padding:'16px', borderRadius:14, border:'none', fontSize:15, fontWeight:700, color:'#fff', cursor:loading?'wait':'pointer',
-          background: loading ? T.textThi : 'linear-gradient(135deg,#FF6B6B,#FF8A9B)',
-          boxShadow: loading ? 'none' : '0 4px 20px rgba(255,107,107,0.3)',
-        }}>
-          {loading ? '🔮 AI 解读中…请耐心等待（约60-120秒）' : '🔮 引擎 + AI 解读'}
-        </button>
-
-        {/* Engine only */}
-        <button onClick={async () => {
-          setLoading(true); setError(null);
-          try {
-            const body = { mode, ...profile, displayMode };
-            if (isPairMode) body.profileB = p2;
-            const r = await apiPost('/api/calculate', body);
-            setResult({ engineData: r.engineData, response: null });
-          } catch(e) { setError(e.message); }
-          setLoading(false);
-        }} disabled={loading} style={{
-          width:'100%', padding:'12px', borderRadius:12, border:`1.5px solid ${T.borderDark}`, fontSize:13, fontWeight:500,
-          color:T.textSec, background:'#fff', cursor:'pointer', marginTop:8,
-        }}>
-          仅计算引擎（秒出结果）
-        </button>
-
-        {/* Error */}
-        {error && (
-          <div className="anim-in" style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:14, padding:16, marginTop:16 }}>
-            <div style={{ fontSize:14, fontWeight:600, color:'#EF4444' }}>⚠️ {error}</div>
-          </div>
-        )}
-
-        {/* Result */}
-        {result && (
-          <div ref={resultRef} className="anim-slide" style={{ marginTop:16 }}>
-            {/* AI response first (primary) */}
-            {result.response && (
-              <div style={{ background:T.card, borderRadius:16, padding:16, boxShadow:T.shadow, marginBottom:12 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:T.primary, marginBottom:10 }}>🤖 AI 解读</div>
-                <div className="markdown" style={{ fontSize:14, lineHeight:1.75, color:T.text }} dangerouslySetInnerHTML={renderMarkdown(result.response)} />
-              </div>
-            )}
-
-            {/* Engine data (collapsible) */}
-            <details style={{ background:T.card, borderRadius:16, boxShadow:T.shadow }}>
-              <summary style={{ padding:'14px 16px', fontSize:13, fontWeight:600, color:T.accent2, cursor:'pointer', listStyle:'none', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <span>📦 引擎原始数据</span>
-                <span style={{ fontSize:11, color:T.textThi }}>点击展开 ▾</span>
-              </summary>
-              <div style={{ padding:'0 16px 16px' }}>
-                <pre style={{ fontSize:11.5, lineHeight:1.65, color:T.textSec, whiteSpace:'pre-wrap', wordBreak:'break-all', fontFamily:'inherit' }}>
-                  {result.engineData}
-                </pre>
-              </div>
-            </details>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+// ===== SCORE RING =====
+function ScoreRing({score,size=60,stroke=4}){
+  const r=(size-stroke)/2,c=2*Math.PI*r;
+  const color=score>=90?'#FF6B6B':score>=80?'#FFB347':score>=70?'#4ECDC4':'#9CA3AF';
+  const label=score>=90?'天作之合':score>=80?'良缘佳偶':score>=70?'有缘有份':'需要磨合';
+  return(<div style={{position:'relative',width:size,height:size,display:'inline-flex',alignItems:'center',justifyContent:'center'}}>
+    <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={stroke}/><circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={c} strokeDashoffset={c*(1-score/100)} strokeLinecap="round" style={{transition:'stroke-dashoffset 1s ease'}}/></svg>
+    <div style={{position:'absolute',textAlign:'center'}}><div style={{fontSize:size*0.28,fontWeight:700,color:'#fff'}}>{score}</div><div style={{fontSize:size*0.12,color:'rgba(255,255,255,0.7)'}}>{label}</div></div>
+  </div>);
 }
 
-// ========== DISCOVER ==========
-function DiscoverScreen() {
-  return (
-    <div style={{ height:'100%', overflow:'auto', paddingBottom:80 }}>
-      <div style={{ padding:'48px 20px 20px' }}>
-        <div className="serif" style={{ fontSize:20, fontWeight:700 }}>🌍 发现</div>
-        <div style={{ color:T.textSec, fontSize:13, marginTop:4 }}>探索更多命理内容</div>
-      </div>
-      <div style={{ padding:'20px 16px' }}>
-        {['每日运势','命理学堂','社区讨论','名人八字'].map((t,i) => (
-          <div key={t} className="anim-in" style={{ animationDelay:i*0.08+'s', background:T.card, borderRadius:14, padding:'18px 16px', boxShadow:T.shadow, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <div style={{ fontSize:14, fontWeight:500, color:T.text }}>{t}</div>
-            <div style={{ fontSize:12, color:T.textThi }}>即将上线 →</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+// ===== SPLASH =====
+function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return()=>clearTimeout(t)},[]);
+  return(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#FF6B6B 0%,#7C5CFC 50%,#4ECDC4 100%)'}}><div className="anim-in" style={{color:'#fff',textAlign:'center'}}><div className="serif" style={{fontSize:48,fontWeight:700,letterSpacing:8}}>缘合</div><div style={{fontSize:14,opacity:.8,marginTop:8,letterSpacing:4}}>YUANHE</div><div style={{fontSize:12,opacity:.6,marginTop:16}}>以命理连接缘分</div></div></div>);
 }
 
-// ========== MESSAGES ==========
-function MsgsScreen() {
-  return (
-    <div style={{ height:'100%', overflow:'auto', paddingBottom:80 }}>
-      <div style={{ padding:'48px 20px 20px' }}>
-        <div className="serif" style={{ fontSize:20, fontWeight:700 }}>💬 消息</div>
-      </div>
-      <div style={{ padding:'40px 20px', textAlign:'center', color:T.textThi }}>
-        <div style={{ fontSize:40, marginBottom:12 }}>💬</div>
-        <div style={{ fontSize:14 }}>暂无消息</div>
-        <div style={{ fontSize:12, marginTop:6 }}>匹配成功后可以在这里聊天</div>
-      </div>
+// ===== BIRTH =====
+function BirthScreen({onSubmit}){
+  const [f,sF]=useState({year:'1996',month:'8',day:'15',hour:'14',gender:'female',name:''});
+  const [lunar,sL]=useState(null);
+  useEffect(()=>{apiGet(`/api/lunar?year=${f.year}&month=${f.month}&day=${f.day}&hour=${f.hour}`).then(sL).catch(()=>sL(null))},[f.year,f.month,f.day,f.hour]);
+  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:15,background:'#fff',outline:'none'};
+  return(<div style={{height:'100%',overflow:'auto',background:T.bg}}><div style={{padding:'60px 24px 100px'}}>
+    <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>你的生辰</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>请输入公历出生信息</div></div>
+    {lunar&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FF6B6B10,#7C5CFC10)',padding:'14px 16px',borderRadius:14,marginBottom:24,textAlign:'center'}}><div style={{fontSize:13,color:T.primary,fontWeight:500}}>{lunar.lunarFull}</div><div style={{fontSize:12,color:T.textSec,marginTop:4}}>{lunar.ganzhi}</div></div>}
+    <div style={{marginBottom:16}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="输入昵称（可选）" style={is}/></div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:16}}>
+      {[['年','year'],['月','month'],['日','day'],['时(24h)','hour']].map(([l,k])=><div key={k}><label style={{fontSize:12,color:T.textSec,marginBottom:4,display:'block'}}>{l}</label><input type="number" value={f[k]} onChange={e=>sF({...f,[k]:e.target.value})} style={{...is,padding:'10px 8px',textAlign:'center'}}/></div>)}
     </div>
-  );
+    <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>性别</label><div style={{display:'flex',gap:12}}>
+      {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:'#fff',color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
+    </div></div>
+    <button onClick={()=>{const p={year:+f.year,month:+f.month,day:+f.day,hour:+f.hour,gender:f.gender,name:f.name||'缘友'};localStorage.setItem('yuanhe_profile',JSON.stringify(p));onSubmit(p)}} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:'pointer',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',boxShadow:'0 4px 20px rgba(255,107,107,0.35)'}}>开启我的命运之旅 ✦</button>
+  </div></div>);
 }
 
-// ========== ME ==========
-function MeScreen({ profile, onLogout }) {
-  return (
-    <div style={{ height:'100%', overflow:'auto', paddingBottom:80 }}>
-      {/* Profile header */}
-      <div style={{ background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)', padding:'48px 24px 28px', borderRadius:'0 0 28px 28px' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-          <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,.25)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, color:'#fff' }}>
-            {profile.gender === 'female' ? '👩' : '👨'}
+// ===== SWIPE CARD =====
+function SwipeCard({user,onSwipe,isTop}){
+  const [dx,setDx]=useState(0);const [dragging,setDragging]=useState(false);const startX=useRef(0);
+  const onS=x=>{startX.current=x;setDragging(true)};
+  const onM=x=>{if(dragging)setDx(x-startX.current)};
+  const onE=()=>{if(Math.abs(dx)>80)onSwipe(dx>0?'right':'left');setDx(0);setDragging(false)};
+  const rot=dx*0.08,opa=Math.min(Math.abs(dx)/80,1);
+  return(
+    <div onMouseDown={e=>onS(e.clientX)} onMouseMove={e=>onM(e.clientX)} onMouseUp={onE} onMouseLeave={()=>dragging&&onE()}
+      onTouchStart={e=>onS(e.touches[0].clientX)} onTouchMove={e=>onM(e.touches[0].clientX)} onTouchEnd={onE}
+      style={{position:'absolute',inset:0,borderRadius:24,overflow:'hidden',cursor:'grab',userSelect:'none',transform:`translateX(${dx}px) rotate(${rot}deg) scale(${isTop?1:0.95})`,transition:dragging?'none':'all 0.4s ease',opacity:isTop?1:0.5,pointerEvents:isTop?'auto':'none',boxShadow:T.shadowLg}}>
+      <div style={{position:'absolute',inset:0,background:GRADS[user.id%GRADS.length]}}/>
+      <div style={{position:'absolute',top:'12%',left:'50%',transform:'translateX(-50%)',width:110,height:110,borderRadius:'50%',background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:52,backdropFilter:'blur(8px)'}}>{AVATARS[user.id%AVATARS.length]}</div>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'80px 20px 20px',background:'linear-gradient(transparent,rgba(0,0,0,0.6))'}}>
+        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
+          <div><div style={{color:'#fff',fontSize:24,fontWeight:700}}>{user.name} <span style={{fontSize:16,fontWeight:400,opacity:.8}}>{user.age}</span></div>
+            <div style={{color:'rgba(255,255,255,0.8)',fontSize:13,marginTop:4}}>{user.sign} · {user.dist}</div>
+            <div style={{color:'rgba(255,255,255,0.7)',fontSize:12,marginTop:6}}>{user.bio}</div>
+            <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{user.tags.map(t=><span key={t} style={{padding:'3px 10px',borderRadius:12,background:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.9)',fontSize:11}}>{t}</span>)}</div>
           </div>
-          <div>
-            <div style={{ color:'#fff', fontSize:18, fontWeight:700 }}>{profile.name || '缘友'}</div>
-            <div style={{ color:'rgba(255,255,255,.7)', fontSize:12, marginTop:2 }}>
-              {profile.year}年{profile.month}月{profile.day}日 {profile.hour}时
-            </div>
-          </div>
+          <ScoreRing score={user.score} size={64} stroke={4}/>
         </div>
       </div>
+      {dx>30&&<div style={{position:'absolute',top:40,left:20,padding:'8px 16px',borderRadius:8,border:'3px solid #34D399',color:'#34D399',fontSize:20,fontWeight:700,transform:'rotate(-15deg)',opacity:opa}}>LIKE ♥</div>}
+      {dx<-30&&<div style={{position:'absolute',top:40,right:20,padding:'8px 16px',borderRadius:8,border:'3px solid #FF6B6B',color:'#FF6B6B',fontSize:20,fontWeight:700,transform:'rotate(15deg)',opacity:opa}}>PASS ✕</div>}
+    </div>
+  );
+}
 
-      <div style={{ padding:'16px' }}>
-        {[
-          {icon:'📊',label:'我的报告',desc:'查看历史分析'},
-          {icon:'💎',label:'会员中心',desc:'解锁高级功能'},
-          {icon:'⚙️',label:'设置',desc:'账号与隐私'},
-          {icon:'📖',label:'关于缘合',desc:'版本信息'},
-        ].map((item,i) => (
-          <div key={item.label} className="anim-in" style={{ animationDelay:i*0.06+'s', background:T.card, borderRadius:14, padding:'16px', boxShadow:T.shadow, marginBottom:10, display:'flex', alignItems:'center', gap:14, cursor:'pointer' }}>
-            <span style={{ fontSize:22 }}>{item.icon}</span>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:14, fontWeight:500, color:T.text }}>{item.label}</div>
-              <div style={{ fontSize:12, color:T.textThi, marginTop:2 }}>{item.desc}</div>
-            </div>
-            <span style={{ color:T.textThi }}>›</span>
-          </div>
-        ))}
-
-        {/* Logout */}
-        <button onClick={onLogout} style={{
-          width:'100%', padding:'14px', borderRadius:12, border:`1.5px solid ${T.borderDark}`, background:'#fff',
-          fontSize:14, color:T.textSec, cursor:'pointer', marginTop:16,
-        }}>
-          退出登录
-        </button>
+// ===== MATCH POPUP =====
+function MatchPopup({user,onChat,onClose}){
+  return(<div style={{position:'fixed',inset:0,zIndex:200,background:'rgba(0,0,0,0.7)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+    <div style={{background:'#fff',borderRadius:24,padding:'32px 24px',textAlign:'center',maxWidth:340,width:'100%',animation:'matchPop 0.5s ease'}}>
+      <div style={{fontSize:48,marginBottom:8}}>💕</div>
+      <div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘分已到！</div>
+      <div style={{fontSize:14,color:T.textSec,marginTop:8}}>你和 <b>{user.name}</b> 命理契合度</div>
+      <div style={{margin:'16px auto'}}><ScoreRing score={user.score} size={80} stroke={5}/></div>
+      <div style={{display:'flex',gap:10,marginTop:20}}>
+        <button onClick={onChat} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>💬 打个招呼</button>
+        <button onClick={onClose} style={{flex:1,padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',color:T.textSec,fontSize:15,cursor:'pointer'}}>继续看看</button>
       </div>
     </div>
-  );
+  </div>);
 }
 
-// ========== TAB BAR ==========
-function TabBar({ active, onTap }) {
-  const tabs = [
-    { id:S.HOME, icon:"🔥", label:"首页" },
-    { id:S.DISCOVER, icon:"🌍", label:"发现" },
-    { id:S.AI, icon:"✦", label:"AI占卜", center:true },
-    { id:S.MSGS, icon:"💬", label:"消息" },
-    { id:S.ME, icon:"👤", label:"我的" },
-  ];
-  return (
-    <div style={{ position:'fixed', bottom:0, left:0, right:0, maxWidth:480, margin:'0 auto', height:64, background:'#fff', borderTop:`1px solid ${T.border}`,
-      display:'flex', alignItems:'flex-end', justifyContent:'space-around', padding:'0 4px 6px', zIndex:100 }}>
-      {tabs.map(tab => {
-        const act = active === tab.id;
-        if (tab.center) return (
-          <button key={tab.id} onClick={()=>onTap(tab.id)} style={{
-            background:'linear-gradient(135deg,#FF6B6B,#7C5CFC)', border:'none', borderRadius:'50%',
-            width:48, height:48, display:'flex', alignItems:'center', justifyContent:'center',
-            color:'#fff', fontSize:20, cursor:'pointer', boxShadow:'0 4px 16px rgba(124,92,252,.35)',
-            marginBottom:4, fontFamily:'serif',
-          }}>{tab.icon}</button>
-        );
-        return (
-          <button key={tab.id} onClick={()=>onTap(tab.id)} style={{
-            background:'none', border:'none', cursor:'pointer', display:'flex', flexDirection:'column',
-            alignItems:'center', gap:2, padding:'4px 8px', opacity:act?1:.5,
-          }}>
-            <span style={{ fontSize:20 }}>{tab.icon}</span>
-            <span style={{ fontSize:10, color:act?T.primary:T.textThi, fontWeight:act?600:400 }}>{tab.label}</span>
-          </button>
-        );
-      })}
+// ===== HOME =====
+function HomeScreen({profile,goTo}){
+  const [cards,setCards]=useState(()=>{const tg=profile.gender==='male'?'female':'male';return USERS.filter(u=>u.gender===tg).sort(()=>Math.random()-0.5)});
+  const [matchUser,setMatchUser]=useState(null);
+  const [swiped,setSwiped]=useState(0);
+  const swipe=(dir)=>{const top=cards[cards.length-1];if(dir==='right'&&top.score>=80)setTimeout(()=>setMatchUser(top),300);setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
+  return(<div style={{height:'100%',overflow:'hidden',paddingBottom:64}}>
+    <div style={{padding:'48px 20px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
+      <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#7C5CFC,#4ECDC4)',border:'none',borderRadius:12,padding:'8px 14px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px rgba(124,92,252,0.3)'}}>✦ AI占卜</button>
     </div>
-  );
-}
-
-// ========== MAIN APP ==========
-function App() {
-  const [screen,setScreen] = useState(S.SPLASH);
-  const [profile,setProfile] = useState(() => {
-    try { const p = JSON.parse(localStorage.getItem('yuanhe_profile')); return p && p.year ? p : null; }
-    catch(e) { return null; }
-  });
-  const [aiInitialMode,setAiInitialMode] = useState(null);
-
-  const goTo = (s, mode) => { setScreen(s); if (mode) setAiInitialMode(mode); };
-
-  // Splash done
-  const onSplashDone = () => { setScreen(profile ? S.HOME : S.BIRTH); };
-
-  // Birth submitted
-  const onBirthSubmit = (p) => { setProfile(p); setScreen(S.HOME); };
-
-  // Logout
-  const onLogout = () => { localStorage.removeItem('yuanhe_profile'); setProfile(null); setScreen(S.BIRTH); };
-
-  const showTabs = [S.HOME,S.DISCOVER,S.AI,S.MSGS,S.ME].includes(screen);
-
-  return (
-    <div style={{ maxWidth:480, margin:'0 auto', height:'100vh', position:'relative', overflow:'hidden', background:T.bg, boxShadow:'0 0 40px rgba(0,0,0,0.08)' }}>
-      {screen === S.SPLASH && <Splash onDone={onSplashDone} />}
-      {screen === S.BIRTH && <BirthScreen onSubmit={onBirthSubmit} />}
-      {screen === S.HOME && profile && <HomeScreen profile={profile} goTo={goTo} />}
-      {screen === S.DISCOVER && <DiscoverScreen />}
-      {screen === S.AI && profile && <AIScreen profile={profile} initialMode={aiInitialMode} />}
-      {screen === S.MSGS && <MsgsScreen />}
-      {screen === S.ME && profile && <MeScreen profile={profile} onLogout={onLogout} />}
-      {showTabs && <TabBar active={screen} onTap={s=>goTo(s)} />}
+    <div style={{position:'relative',height:'calc(100% - 160px)',margin:'0 16px'}}>
+      {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
+        <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
+        <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>✦ 先去AI占卜</button>
+      </div>)
+      :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1}/>)}
     </div>
-  );
+    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:24,padding:'12px 0'}}>
+      <button onClick={()=>swipe('left')} style={{width:52,height:52,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}>✕</button>
+      <button onClick={()=>swipe('right')} style={{width:60,height:60,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',color:'#fff',fontSize:26,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(255,107,107,0.35)'}}>♥</button>
+      <button onClick={()=>goTo(S.AI)} style={{width:52,height:52,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}>✦</button>
+    </div>}
+    {matchUser&&<MatchPopup user={matchUser} onChat={()=>{setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
+  </div>);
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+// ===== AI =====
+const MODES=[{id:'bazi',label:'八字命理',icon:'☰',c:'#FF6B6B'},{id:'astrology',label:'星座运势',icon:'★',c:'#7C5CFC'},{id:'tarot',label:'塔罗牌',icon:'✦',c:'#4ECDC4'},{id:'meihua',label:'梅花易数',icon:'❀',c:'#FFB347'},{id:'vedic',label:'印度占星',icon:'◎',c:'#45B7D1'},{id:'hehun',label:'八字合婚',icon:'💑',c:'#E91E63'},{id:'synastry',label:'星座配对',icon:'💫',c:'#9C27B0'},{id:'hepan',label:'综合合盘',icon:'❤',c:'#F44336'}];
+function AIScreen({profile,initialMode}){
+  const [mode,setMode]=useState(initialMode||'bazi');const [q,setQ]=useState('');const [dm,setDm]=useState('expert');
+  const [result,setResult]=useState(null);const [loading,setLoading]=useState(false);const [error,setError]=useState(null);const ref=useRef(null);
+  const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:'female'});
+  const isPair=['hehun','synastry','hepan'].includes(mode);
+  const divine=async(engineOnly)=>{setLoading(true);setError(null);setResult(null);try{const body={mode,...profile,question:engineOnly?'':q,displayMode:dm};if(isPair)body.profileB=p2;const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);if(r.blocked)setError(r.reason);else if(r.error)setError(r.error);else setResult(engineOnly?{engineData:r.engineData,response:null}:r)}catch(e){setError(e.message)}setLoading(false);setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),200)};
+  const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
+    <div style={{background:'linear-gradient(135deg,#7C5CFC,#4ECDC4)',padding:'48px 20px 20px',borderRadius:'0 0 24px 24px'}}><div className="serif" style={{color:'#fff',fontSize:20,fontWeight:700}}>✦ AI 占卜</div><div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:4}}>8种占术 · 精确引擎 · 智能解读</div></div>
+    <div style={{padding:16}}>
+      <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>{MODES.map(m=><button key={m.id} onClick={()=>setMode(m.id)} style={{padding:'8px 14px',borderRadius:20,fontSize:13,fontWeight:500,cursor:'pointer',border:mode===m.id?'none':`1px solid ${T.borderDark}`,background:mode===m.id?m.c:'#fff',color:mode===m.id?'#fff':T.textSec,transition:'all .2s'}}>{m.icon} {m.label}</button>)}</div>
+      {isPair&&<div className="anim-in" style={{background:'#E91E6308',border:'1px solid #E91E6330',borderRadius:14,padding:14,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:600,color:'#E91E63',marginBottom:10}}>💑 对方信息</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>{[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k}><div style={{fontSize:11,color:T.textThi}}>{l}</div><input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:6,border:`1px solid ${T.borderDark}`,borderRadius:8,fontSize:13,textAlign:'center'}}/></div>)}</div>
+      </div>}
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder="留空=全面分析 | 输入问题=深度聚焦" style={{width:'100%',padding:'14px 16px',border:`1.5px solid ${T.borderDark}`,borderRadius:14,fontSize:14,background:'#fff',outline:'none',marginBottom:12}}/>
+      <div style={{display:'flex',gap:8,marginBottom:16}}>{[{v:'simple',l:'🌟 大众',d:'通俗易懂'},{v:'expert',l:'📋 专家',d:'完整排盘'}].map(d=><button key={d.v} onClick={()=>setDm(d.v)} style={{flex:1,padding:'10px',borderRadius:12,cursor:'pointer',textAlign:'center',border:dm===d.v?'none':`1.5px solid ${T.borderDark}`,background:dm===d.v?T.accent2:'#fff',color:dm===d.v?'#fff':T.textSec}}><div style={{fontSize:13,fontWeight:600}}>{d.l}</div><div style={{fontSize:11,opacity:.7,marginTop:2}}>{d.d}</div></button>)}</div>
+      <button onClick={()=>divine(false)} disabled={loading} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',cursor:loading?'wait':'pointer',background:loading?T.textThi:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',boxShadow:loading?'none':'0 4px 20px rgba(255,107,107,0.3)'}}>{loading?'🔮 AI解读中…请耐心等待':'🔮 引擎 + AI 解读'}</button>
+      <button onClick={()=>divine(true)} disabled={loading} style={{width:'100%',padding:'12px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,fontSize:13,fontWeight:500,color:T.textSec,background:'#fff',cursor:'pointer',marginTop:8}}>仅计算引擎（秒出）</button>
+      {error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginTop:16}}><div style={{fontSize:14,fontWeight:600,color:'#EF4444'}}>⚠️ {error}</div></div>}
+      {result&&<div ref={ref} className="anim-slide" style={{marginTop:16}}>
+        {result.response&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow,marginBottom:12}}><div style={{fontSize:13,fontWeight:600,color:T.primary,marginBottom:10}}>🤖 AI 解读</div><div className="markdown" style={{fontSize:14,lineHeight:1.75}} dangerouslySetInnerHTML={md(result.response)}/></div>}
+        <details style={{background:T.card,borderRadius:16,boxShadow:T.shadow}}><summary style={{padding:'14px 16px',fontSize:13,fontWeight:600,color:T.accent2,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>📦 引擎数据</span><span style={{fontSize:11,color:T.textThi}}>展开 ▾</span></summary><div style={{padding:'0 16px 16px'}}><pre style={{fontSize:11.5,lineHeight:1.65,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre></div></details>
+      </div>}
+    </div>
+  </div>);
+}
+
+// ===== DISCOVER =====
+function DiscoverScreen({goTo}){
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}><div style={{padding:'48px 20px 20px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>🌍 发现</div></div><div style={{padding:'12px 16px'}}>
+    {[{icon:'🔥',title:'今日运势',desc:'AI分析今日吉凶',a:()=>goTo(S.AI)},{icon:'💑',title:'八字合婚',desc:'测两人缘分深浅',a:()=>goTo(S.AI,'hehun')},{icon:'🎴',title:'塔罗占卜',desc:'抽一张指引牌',a:()=>goTo(S.AI,'tarot')},{icon:'📖',title:'命理学堂',desc:'即将上线'}].map((it,i)=>
+      <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.08+'s',background:T.card,borderRadius:14,padding:'18px 16px',boxShadow:T.shadow,marginBottom:10,display:'flex',alignItems:'center',gap:14,cursor:it.a?'pointer':'default'}}>
+        <span style={{fontSize:28}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:14,fontWeight:500}}>{it.title}</div><div style={{fontSize:12,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi}}>›</span>
+      </div>)}
+  </div></div>);
+}
+
+// ===== MESSAGES =====
+function MsgsScreen(){return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}><div style={{padding:'48px 20px 20px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div></div><div style={{padding:'60px 20px',textAlign:'center',color:T.textThi}}><div style={{fontSize:48,marginBottom:12}}>💬</div><div style={{fontSize:14}}>暂无匹配</div><div style={{fontSize:12,marginTop:6}}>右滑喜欢的人，匹配成功后可以聊天</div></div></div>);}
+
+// ===== ME =====
+function MeScreen({profile,onLogout,goTo}){return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
+  <div style={{background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',padding:'48px 24px 28px',borderRadius:'0 0 28px 28px'}}><div style={{display:'flex',alignItems:'center',gap:14}}><div style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,color:'#fff'}}>{profile.gender==='female'?'👩':'👨'}</div><div><div style={{color:'#fff',fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div><div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:2}}>{profile.year}年{profile.month}月{profile.day}日</div></div></div></div>
+  <div style={{padding:16}}>{[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗',a:()=>goTo(S.AI)},{icon:'📊',label:'我的报告',desc:'历史分析'},{icon:'💎',label:'会员中心',desc:'高级功能'},{icon:'⚙️',label:'设置',desc:'账号隐私'}].map((it,i)=>
+    <div key={it.label} className="anim-in" onClick={it.a} style={{animationDelay:i*0.06+'s',background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:10,display:'flex',alignItems:'center',gap:14,cursor:it.a?'pointer':'default'}}><span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:14,fontWeight:500}}>{it.label}</div><div style={{fontSize:12,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi}}>›</span></div>)}
+    <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,color:T.textSec,cursor:'pointer',marginTop:16}}>退出登录</button>
+  </div></div>);}
+
+// ===== TAB BAR =====
+function TabBar({active,onTap}){
+  const tabs=[{id:S.HOME,icon:"🔥",label:"首页"},{id:S.DISCOVER,icon:"🌍",label:"发现"},{id:S.AI,icon:"✦",label:"AI占卜",center:true},{id:S.MSGS,icon:"💬",label:"消息"},{id:S.ME,icon:"👤",label:"我的"}];
+  return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:64,background:'#fff',borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'flex-end',justifyContent:'space-around',padding:'0 4px 6px',zIndex:100}}>
+    {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#FF6B6B,#7C5CFC)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:20,cursor:'pointer',boxShadow:'0 4px 16px rgba(124,92,252,.35)',marginBottom:4,fontFamily:'serif'}}>{tab.icon}</button>;
+    return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5}}><span style={{fontSize:20}}>{tab.icon}</span><span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span></button>})}
+  </div>);
+}
+
+// ===== APP =====
+function App(){
+  const [scr,setScr]=useState(S.SPLASH);
+  const [profile,setProfile]=useState(()=>{try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));return p&&p.year?p:null}catch(e){return null}});
+  const [aiMode,setAiMode]=useState(null);
+  const goTo=(s,m)=>{setScr(s);if(m)setAiMode(m)};
+  const showTabs=[S.HOME,S.DISCOVER,S.AI,S.MSGS,S.ME].includes(scr);
+  return(<div style={{maxWidth:480,margin:'0 auto',height:'100vh',position:'relative',overflow:'hidden',background:T.bg,boxShadow:'0 0 40px rgba(0,0,0,0.08)'}}>
+    {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:S.BIRTH)}/>}
+    {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
+    {scr===S.HOME&&profile&&<HomeScreen profile={profile} goTo={goTo}/>}
+    {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo}/>}
+    {scr===S.AI&&profile&&<AIScreen profile={profile} initialMode={aiMode}/>}
+    {scr===S.MSGS&&<MsgsScreen/>}
+    {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');setProfile(null);setScr(S.BIRTH)}} goTo={goTo}/>}
+    {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>

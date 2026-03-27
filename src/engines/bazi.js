@@ -592,13 +592,32 @@ function calculate(input) {
 
   const careerData = { goodIndustries, badIndustries };
 
+  // 五行→方位/城市/颜色/数字
+  const WX_DIRECTION = {
+    水: { dir:'北方', cities:'哈尔滨、沈阳、长春、大连、天津', color:'黑色、深蓝色', num:'1、6' },
+    金: { dir:'西方', cities:'西安、成都、重庆、兰州、拉萨', color:'白色、银色、金色', num:'4、9' },
+    木: { dir:'东方', cities:'上海、杭州、南京、青岛、苏州', color:'绿色、青色', num:'3、8' },
+    火: { dir:'南方', cities:'深圳、广州、海口、厦门、昆明', color:'红色、紫色、橙色', num:'2、7' },
+    土: { dir:'中部', cities:'武汉、郑州、长沙、合肥、南昌', color:'黄色、棕色', num:'5、0' },
+  };
+  const goodDirs = xiWxList.map(w => WX_DIRECTION[w]).filter(Boolean);
+  const badDirs = jiWxList.map(w => WX_DIRECTION[w]).filter(Boolean);
+  const locationData = {
+    good: goodDirs.map(d => ({ ...d })),
+    bad: badDirs.map(d => ({ ...d })),
+    goodColors: goodDirs.map(d => d.color).join('、'),
+    badColors: badDirs.map(d => d.color).join('、'),
+    goodNums: goodDirs.map(d => d.num).join('、'),
+    note: '方位以出生地为基准，行业五行优先级高于地理方位',
+  };
+
   return {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, tianganChong, kongwang: kongwangInfo, isSpecialGeju,
     taiyuan, mingGong, tiaohou, trueSolarTimeAdj, taohuaInfo, monthCommander,
     healthWarn, badMonths, goodMonths, hourTrait,
-    sanqianfa, dzComboTraits, wxCombo, childAnalysis, careerData,
+    sanqianfa, dzComboTraits, wxCombo, childAnalysis, careerData, locationData,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
@@ -690,6 +709,17 @@ function formatForAI(result, mode='simple') {
       r.careerData.goodIndustries.forEach(g => { o+=`\n  ${g}`; });
       o+=`\n不适合行业（忌神五行）：`;
       r.careerData.badIndustries.forEach(b => { o+=`\n  ${b}`; });
+    }
+    if (r.locationData) {
+      o+=`\n\n【有利方位与开运参考】`;
+      o+=`\n有利方位（以出生地为基准）：`;
+      r.locationData.good.forEach(d => { o+=`\n  ${d.dir}：${d.cities}`; });
+      o+=`\n不利方位：`;
+      r.locationData.bad.forEach(d => { o+=`\n  ${d.dir}：${d.cities}`; });
+      o+=`\n幸运色：${r.locationData.goodColors}`;
+      o+=`\n忌讳色：${r.locationData.badColors}`;
+      o+=`\n幸运数字：${r.locationData.goodNums}`;
+      o+=`\n注意：${r.locationData.note}`;
     }
     if (r.taiyuan) o+=`\n\n【胎元】${r.taiyuan}  【命宫】${r.mingGong}`;
     return o;
