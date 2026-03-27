@@ -564,13 +564,41 @@ function calculate(input) {
     ['正印','偏印'].includes(timeSS) ? '子女缘好，有贵人相助' :
     ['正官','七杀'].includes(timeSS) ? '子女有管束力，家教严' : '子女缘一般';
 
+  // 五行→行业映射（用于事业分析）
+  const WX_INDUSTRY = {
+    水: '水产、物流、贸易、交通、旅游、航运、饮品、清洁',
+    金: '金融、银行、证券、保险、金属加工、机械、五金',
+    木: '教育、出版、文化、林业、家具、纺织、服装',
+    火: '餐饮、电力、煤炭、军警、冶炼、照明、传媒',
+    土: '房地产、建筑、农业、矿业、陶瓷、中介',
+  };
+  const ssIndustry = {
+    印星: '教育、学术、出版、文化机构、政府机关、培训',
+    食伤: '技术、创意、传媒、设计、IT互联网、自由职业、咨询',
+    财星: '商业、投资、理财、贸易、销售',
+    官杀: '管理、行政、公务员、法律',
+  };
+  // 喜用行业
+  const xiWxList = xiyong.split('、');
+  const jiWxList = jishen.split('、');
+  const goodIndustries = xiWxList.map(w => `${w}属性：${WX_INDUSTRY[w]||''}`).filter(s => s.includes('：'));
+  // 十神行业
+  const ssArr = Object.values(shishen);
+  const hasYinXing = ssArr.includes('正印') || ssArr.includes('偏印');
+  const hasShiShang = ssArr.includes('食神') || ssArr.includes('伤官');
+  if (hasYinXing) goodIndustries.push(`印星相关：${ssIndustry['印星']}`);
+  if (hasShiShang) goodIndustries.push(`食伤相关：${ssIndustry['食伤']}`);
+  const badIndustries = jiWxList.map(w => `${w}属性：${WX_INDUSTRY[w]||''}`).filter(s => s.includes('：'));
+
+  const careerData = { goodIndustries, badIndustries };
+
   return {
     fourPillars: { year:yGZ, month:mGZ, day:dGZ, hour:tGZ },
     dayMaster:dm, dayMasterElement:dmWx, yinyang:YY_MAP[dm], dayStrength, geju, nayin, stages,
     wuxing, wuxingLack, xiyong, jishen, shishen, cangganShishen, shensha, dizhiRelations, tianganHe, tianganChong, kongwang: kongwangInfo, isSpecialGeju,
     taiyuan, mingGong, tiaohou, trueSolarTimeAdj, taohuaInfo, monthCommander,
     healthWarn, badMonths, goodMonths, hourTrait,
-    sanqianfa, dzComboTraits, wxCombo, childAnalysis,
+    sanqianfa, dzComboTraits, wxCombo, childAnalysis, careerData,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
@@ -656,6 +684,13 @@ function formatForAI(result, mode='simple') {
       o+=`\n${r.sanqianfa.late.label}：${r.sanqianfa.late.pillars} → ${r.sanqianfa.late.analysis}`;
     }
     if (r.childAnalysis) o+=`\n\n【子女缘】时柱${r.fourPillars.hour}（${SS_TABLE[r.dayMaster]?.[r.fourPillars.hour[0]]||''}）：${r.childAnalysis}`;
+    if (r.careerData) {
+      o+=`\n\n【事业行业参考】`;
+      o+=`\n适合行业（喜用五行+十神）：`;
+      r.careerData.goodIndustries.forEach(g => { o+=`\n  ${g}`; });
+      o+=`\n不适合行业（忌神五行）：`;
+      r.careerData.badIndustries.forEach(b => { o+=`\n  ${b}`; });
+    }
     if (r.taiyuan) o+=`\n\n【胎元】${r.taiyuan}  【命宫】${r.mingGong}`;
     return o;
   }
