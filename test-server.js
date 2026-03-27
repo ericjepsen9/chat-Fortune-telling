@@ -50,7 +50,7 @@ async function callLLM(systemPrompt, userMessage) {
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    max_tokens: 4096,
+    max_tokens: 6144,
     temperature: 0.5,
     stream: false,
   });
@@ -80,7 +80,14 @@ async function callLLM(systemPrompt, userMessage) {
         try {
           const json = JSON.parse(data);
           if (json.choices && json.choices[0]) {
-            resolve(json.choices[0].message.content);
+            let content = json.choices[0].message.content;
+            const finishReason = json.choices[0].finish_reason;
+            // 检测截断
+            if (finishReason === 'length') {
+              content += '\n\n---\n⚠️ *AI输出因长度限制被截断，以上为部分内容。可输入具体问题获取更聚焦的分析。*';
+              console.log('[LLM] 输出被截断(finish_reason=length)，已添加提示');
+            }
+            resolve(content);
           } else if (json.error) {
             reject(new Error(json.error.message || JSON.stringify(json.error)));
           } else {
