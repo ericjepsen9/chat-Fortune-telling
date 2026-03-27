@@ -133,8 +133,24 @@ function calculate(input) {
   const helpRatio = totalHelp / totalAll;
 
   let dayStrength, isSpecialGeju = false;
-  // 从强格：日主五行+印星占比 >= 70%，且月令助身
-  if (helpRatio >= 0.65 && monthHelp >= 1.5) {
+  // 克泄耗力量（食伤+财+官杀）
+  const xieLv = ['食伤','财','官杀'];
+  const shengMap2 = { 木:'火', 火:'土', 土:'金', 金:'水', 水:'木' };
+  const keMap2 = { 木:'土', 火:'金', 土:'水', 金:'木', 水:'火' };
+  const foodWx = shengMap2[dmWx]; // 食伤五行 = 日主所生
+  const wealthWx = keMap2[dmWx]; // 财星五行 = 日主所克
+  const officerWx = SHENG_MAP[dmWx] ? keMap2[SHENG_MAP[dmWx]] : ''; // 官杀 = 克日主
+  const leakRatio = ((wuxing[foodWx]||0) + (wuxing[wealthWx]||0)) / totalAll;
+  // 天干杂气检查：食伤/财/官是否透干
+  const otherTgAll = [yGZ[0], mGZ[0], tGZ[0]].filter(g => g !== dm);
+  const hasTouGanLeak = otherTgAll.some(g => {
+    const gWx = WX_MAP[g];
+    return gWx === foodWx || gWx === wealthWx;
+  });
+  const foodCount = (wuxing[foodWx]||0);
+  
+  // 从强格：帮身比极高 + 月令助身 + 无明显杂气（食伤<15%且不透干）
+  if (helpRatio >= 0.65 && monthHelp >= 1.5 && foodCount / totalAll < 0.15 && !hasTouGanLeak) {
     dayStrength = '从强'; isSpecialGeju = true;
   }
   // 从弱格：日主五行+印星占比 <= 15%，月令不助身
@@ -146,7 +162,12 @@ function calculate(input) {
     dayStrength = '专旺'; isSpecialGeju = true;
   }
   else {
-    dayStrength = helpRatio >= 0.45 ? '身强' : helpRatio <= 0.3 ? '身弱' : '中和';
+    // 身极强（接近从强但有杂气）
+    if (helpRatio >= 0.65 && monthHelp >= 1.5) {
+      dayStrength = '身极强';
+    } else {
+      dayStrength = helpRatio >= 0.45 ? '身强' : helpRatio <= 0.3 ? '身弱' : '中和';
+    }
   }
 
   // 格局判定
@@ -197,6 +218,10 @@ function calculate(input) {
     // 从弱：弃命从势，喜食伤财官（最旺的五行），忌印比
     xiyong = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
     jishen = `${dmWx}、${KE_SHENG[dmWx]}`;
+  } else if (dayStrength === '身极强') {
+    // 身极强（带从强倾向）：以顺势为主，喜印比，但食伤泄秀亦可
+    xiyong = `${dmWx}、${KE_SHENG[dmWx]}`;
+    jishen = `${SHENG[SHENG[dmWx]]}、${SHENG[SHENG[SHENG[dmWx]]]}`;
   } else if (dayStrength === '身强') {
     xiyong = `${SHENG[dmWx]}、${SHENG[SHENG[dmWx]]}`;
     jishen = `${dmWx}、${KE_SHENG[dmWx]}`;
@@ -592,6 +617,7 @@ function formatForAI(result, mode='simple') {
     if (r.tianganChong && r.tianganChong.length) { o+=`\n\n【天干冲】`; r.tianganChong.forEach(h=>{o+=`\n${h.pair}：${h.desc}`;}); }
     if (r.kongwang) o+=`\n\n【空亡】${r.kongwang.desc}`;
     if (r.isSpecialGeju) o+=`\n\n【特殊格局】${r.geju} — ${r.dayStrength === '从强' ? '日主极旺，满盘印比，喜顺势不宜逆克' : r.dayStrength === '从弱' ? '日主极弱无根，弃命从势，忌扶抑' : '日主一气专旺，五行纯粹'}`;
+    if (r.dayStrength === '身极强') o+=`\n\n【身极强·带从强倾向】日主极旺、印比成势，但天干有食伤透出（杂气），非纯粹从强格。取用以顺势为主（喜印比），食伤泄秀亦可为辅用`;
     o+=`\n\n【藏干】`;
     ['year','month','day','hour'].forEach(p => {
       const label={year:'年支',month:'月支',day:'日支',hour:'时支'}[p];
