@@ -192,14 +192,14 @@ function ReportCard({title, icon, color, content, index, md, isLong}) {
 
 // ===== AI =====
 const MODES=[
-  {id:'bazi',label:'八字',icon:'☰',c:'#8B5CF6',cat:'single'},
-  {id:'astrology',label:'星座',icon:'★',c:'#8B5CF6',cat:'single'},
-  {id:'tarot',label:'塔罗',icon:'✦',c:'#8B5CF6',cat:'single'},
-  {id:'meihua',label:'梅花',icon:'❀',c:'#8B5CF6',cat:'single'},
-  {id:'vedic',label:'印占',icon:'◎',c:'#8B5CF6',cat:'single'},
-  {id:'hehun',label:'合婚',icon:'💑',c:'#D946EF',cat:'pair'},
-  {id:'synastry',label:'配对',icon:'💫',c:'#D946EF',cat:'pair'},
-  {id:'hepan',label:'合盘',icon:'❤',c:'#D946EF',cat:'pair'},
+  {id:'bazi',label:'八字命理',icon:'☰',c:'#8B5CF6',cat:'single'},
+  {id:'astrology',label:'星座运势',icon:'★',c:'#6366F1',cat:'single'},
+  {id:'tarot',label:'塔罗牌',icon:'✦',c:'#0D9488',cat:'single'},
+  {id:'meihua',label:'梅花易数',icon:'❀',c:'#D97706',cat:'single'},
+  {id:'vedic',label:'印度占星',icon:'◎',c:'#2563EB',cat:'single'},
+  {id:'hehun',label:'八字合婚',icon:'💑',c:'#DB2777',cat:'pair'},
+  {id:'synastry',label:'星座配对',icon:'💫',c:'#9333EA',cat:'pair'},
+  {id:'hepan',label:'综合合盘',icon:'❤',c:'#E11D48',cat:'pair'},
 ];
 const MODE_FULL={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星',hehun:'八字合婚',synastry:'星座配对',hepan:'综合合盘'};
 const QUICK_QS={bazi:['今年运势','事业方向','感情运','财运分析','健康注意'],astrology:['本月运势','感情运','适合什么工作'],tarot:['今天适合做什么','感情指引','事业抉择'],meihua:['这件事能成吗','近期运势'],vedic:['当前大运','事业方向'],hehun:['适合在一起吗','婚姻分析'],synastry:['化学反应','相处建议'],hepan:['综合匹配度','长远建议']};
@@ -215,29 +215,30 @@ function AIScreen({profile,initialMode}){
   const [elapsed,setElapsed]=useState(0);
   const [error,setError]=useState(null);
   const [viewMode,setViewMode]=useState('card');
-  const [showQuick,setShowQuick]=useState(false);
   const ref=useRef(null);
   const timerRef=useRef(null);
   const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:profile.gender==='male'?'female':'male'});
   const isPair=['hehun','synastry','hepan'].includes(mode);
-  // Tarot state
   const [tarotCards,setTarotCards]=useState([]);
   const [tarotSpread,setTarotSpread]=useState('threeCard');
-  const spreadSize={single:1,threeCard:3,relationship:4,celticCross:10};
+  const spreadSize={single:1,threeCard:3,relationship:4};
   const tarotPool=useState(()=>{const a=[];for(let i=0;i<78;i++)a.push(i);return a.sort(()=>Math.random()-0.5)})[0];
-  // Meihua state
   const [mhNum1,setMhNum1]=useState('');
   const [mhNum2,setMhNum2]=useState('');
+  const modeInfo=MODES.find(m=>m.id===mode)||MODES[0];
+  const mc=modeInfo.c;
 
   useEffect(()=>{
     if(loading){let i=0;setElapsed(0);setLoadMsg(LOAD_MSGS[0]);timerRef.current=setInterval(()=>{setElapsed(e=>e+1);i++;setLoadMsg(LOAD_MSGS[Math.min(Math.floor(i/15),LOAD_MSGS.length-1)])},1000)}
-    else{if(timerRef.current)clearInterval(timerRef.current)}
+    else if(timerRef.current)clearInterval(timerRef.current);
     return()=>{if(timerRef.current)clearInterval(timerRef.current)};
   },[loading]);
 
   const divine=async(engineOnly)=>{
     setLoading(true);setError(null);setResult(null);
-    try{const body={mode,...profile,question:engineOnly?'':q,displayMode:dm};if(isPair)body.profileB=p2;
+    try{
+      const body={mode,...profile,question:engineOnly?'':q,displayMode:dm};
+      if(isPair)body.profileB=p2;
       if(mode==='tarot'){if(tarotCards.length>0)body.selectedCards=tarotCards;body.spreadType=tarotSpread}
       if(mode==='meihua'&&mhNum1!==''){body.meihuaNum1=parseInt(mhNum1);if(mhNum2!=='')body.meihuaNum2=parseInt(mhNum2)}
       const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);
@@ -248,233 +249,214 @@ function AIScreen({profile,initialMode}){
     setLoading(false);setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
   };
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
+  const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
-  // Purple palette
-  const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',pairAccent:'#D946EF',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
-
-  return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:P.bg,position:'relative'}}>
-    {/* === HEADER === */}
-    <div style={{background:P.headerGrad,padding:'44px 16px 14px',flexShrink:0}}>
+  return(<div style={{height:'100%',overflow:'auto',background:P.bg,paddingBottom:80}}>
+    {/* HEADER */}
+    <div style={{background:P.headerGrad,padding:'44px 16px 16px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <div className="serif" style={{color:'#fff',fontSize:18,fontWeight:700}}>✦ AI 占卜</div>
         <div style={{display:'flex',gap:4}}>
           {[{v:'expert',l:'专家'},{v:'simple',l:'大众'}].map(d=>(
-            <button key={d.v} onClick={()=>setDm(d.v)} style={{padding:'4px 12px',borderRadius:14,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:dm===d.v?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:dm===d.v?P.accent:'rgba(255,255,255,0.8)'}}>{d.l}</button>
+            <button key={d.v} onClick={()=>setDm(d.v)} style={{padding:'4px 12px',borderRadius:14,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:dm===d.v?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:dm===d.v?P.accent:'rgba(255,255,255,0.8)',transition:'all .2s'}}>{d.l}</button>
           ))}
         </div>
       </div>
     </div>
 
-    {/* === SCROLLABLE CONTENT === */}
-    <div style={{flex:1,overflow:'auto',padding:'12px 16px 140px'}}>
-      {/* Mode grid (large cards) */}
-      <div style={{marginBottom:14}}>
-        <div style={{display:'flex',gap:6,marginBottom:8}}>
-          {[{k:'single',l:'个人占卜'},{k:'pair',l:'配对分析'}].map(c=>{
-            const active=MODES.find(m=>m.id===mode)?.cat===c.k;
-            return <button key={c.k} onClick={()=>setMode(MODES.find(m=>m.cat===c.k).id)} style={{padding:'5px 14px',borderRadius:14,fontSize:12,fontWeight:600,border:'none',cursor:'pointer',background:active?P.accent:'#fff',color:active?'#fff':T.textSec,boxShadow:active?`0 2px 8px ${P.accent}40`:T.shadow}}>{c.l}</button>;
+    <div style={{padding:'12px 16px'}}>
+
+    {/* STEP 1: MODE SELECTION */}
+    <div style={{marginBottom:14}}>
+      <div style={{display:'flex',gap:6,marginBottom:10}}>
+        {[{k:'single',l:'🔮 个人占卜'},{k:'pair',l:'💑 配对分析'}].map(c=>{
+          const active=modeInfo.cat===c.k;
+          return <button key={c.k} onClick={()=>setMode(MODES.find(m=>m.cat===c.k).id)} style={{padding:'7px 16px',borderRadius:16,fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background:active?mc:'#fff',color:active?'#fff':T.textSec,boxShadow:active?`0 2px 10px ${mc}40`:T.shadow,transition:'all .2s'}}>{c.l}</button>;
+        })}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6}}>
+        {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
+          <button key={m.id} onClick={()=>setMode(m.id)} style={{
+            padding:'10px 2px',borderRadius:12,cursor:'pointer',textAlign:'center',transition:'all .25s',
+            border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,
+            background:mode===m.id?`${m.c}0A`:'#fff',
+            boxShadow:mode===m.id?`0 2px 10px ${m.c}25`:T.shadow,
+            transform:mode===m.id?'translateY(-2px)':'none',
+          }}>
+            <div style={{fontSize:18}}>{m.icon}</div>
+            <div style={{fontSize:10,fontWeight:600,color:mode===m.id?m.c:T.text,marginTop:3}}>{m.label.substring(0,4)}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* STEP 2: MODE-SPECIFIC PANELS */}
+
+    {/* Tarot */}
+    {mode==='tarot'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:18,padding:16,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <span style={{fontSize:14,fontWeight:700,color:'#0D9488'}}>🎴 塔罗牌阵</span>
+        <div style={{padding:'3px 10px',borderRadius:10,background:'#0D948815',fontSize:11,fontWeight:600,color:'#0D9488'}}>{tarotCards.length}/{spreadSize[tarotSpread]}</div>
+      </div>
+      <div style={{display:'flex',gap:6,marginBottom:12}}>
+        {[{k:'single',l:'单张',icon:'🃏'},{k:'threeCard',l:'三张',icon:'🎴'},{k:'relationship',l:'关系',icon:'💕'}].map(s=>(
+          <button key={s.k} onClick={()=>{setTarotSpread(s.k);setTarotCards([])}} style={{flex:1,padding:'8px 4px',borderRadius:10,fontSize:11,fontWeight:600,border:tarotSpread===s.k?'2px solid #0D9488':'1.5px solid #d5ede9',cursor:'pointer',background:tarotSpread===s.k?'#0D9488':'#fff',color:tarotSpread===s.k?'#fff':'#0D9488',textAlign:'center'}}>
+            <div style={{fontSize:14}}>{s.icon}</div><div style={{marginTop:2}}>{s.l}</div>
+          </button>
+        ))}
+      </div>
+      <div style={{background:'rgba(255,255,255,0.6)',borderRadius:12,padding:10}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:5,justifyItems:'center'}}>
+          {tarotPool.slice(0,12).map((cid,i)=>{
+            const picked=tarotCards.includes(cid);const full=tarotCards.length>=spreadSize[tarotSpread];const order=picked?tarotCards.indexOf(cid)+1:null;
+            return <button key={i} onClick={()=>{if(picked)setTarotCards(c=>c.filter(x=>x!==cid));else if(!full)setTarotCards(c=>[...c,cid])}} style={{width:40,height:56,borderRadius:7,cursor:picked||!full?'pointer':'default',border:picked?'2px solid #0D9488':'1.5px solid #bbb',background:picked?'linear-gradient(135deg,#0D9488,#14B8A6)':'linear-gradient(160deg,#6366F1,#4338CA)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',transition:'all .25s',transform:picked?'translateY(-3px) scale(1.05)':'scale(1)',boxShadow:picked?'0 4px 12px #0D948850':'0 1px 3px rgba(0,0,0,0.12)',opacity:!picked&&full?0.35:1}}>
+              {picked?<><div style={{fontSize:9,opacity:.8}}>第{order}张</div><div style={{fontSize:14}}>✦</div></>:<div style={{fontSize:16,opacity:.5}}>✧</div>}
+            </button>;
           })}
         </div>
-        <div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6}}>
-          {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
-            <button key={m.id} onClick={()=>setMode(m.id)} style={{
-              padding:'10px 2px',borderRadius:12,cursor:'pointer',textAlign:'center',transition:'all .2s',
-              border:mode===m.id?`2px solid ${P.accent}`:`1.5px solid ${T.border}`,
-              background:mode===m.id?`${P.accent}08`:'#fff',
-              boxShadow:mode===m.id?`0 2px 10px ${P.accent}20`:T.shadow,
-            }}>
-              <div style={{fontSize:18}}>{m.icon}</div>
-              <div style={{fontSize:10,fontWeight:600,color:mode===m.id?P.accent:T.text,marginTop:3}}>{MODE_FULL[m.id]?.substring(0,4)||m.label}</div>
-            </button>
-          ))}
-        </div>
       </div>
+      <div style={{fontSize:10,color:'#0D9488',textAlign:'center',marginTop:6,opacity:.6}}>选牌或直接提交随机抽取</div>
+    </div>}
 
-      {/* Partner panel */}
-      {isPair&&<div className="anim-in" style={{background:'#FCE7F3',border:'1px solid #F9A8D420',borderRadius:14,padding:14,marginBottom:12}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-          <span style={{fontSize:13,fontWeight:600,color:'#D946EF'}}>💑 对方信息</span>
-          <div style={{display:'flex',gap:4}}>{[{v:'female',l:'♀'},{v:'male',l:'♂'}].map(g=><button key={g.v} onClick={()=>setP2({...p2,gender:g.v})} style={{width:28,height:28,borderRadius:14,border:'none',cursor:'pointer',fontSize:12,background:p2.gender===g.v?'#D946EF':'#f0e0f5',color:p2.gender===g.v?'#fff':'#999'}}>{g.l}</button>)}</div>
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6}}>
-          {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k} style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
-            <div style={{fontSize:10,color:'#D946EF',marginBottom:3}}>{l}</div>
-            <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1px solid #F0D0E8',borderRadius:8,fontSize:13,textAlign:'center',background:'#fff',outline:'none'}}/>
-          </div>)}
-        </div>
-      </div>}
-
-      {/* Tarot card selection */}
-      {mode==='tarot'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#E0F7F5)',border:'1px solid #4ECDC430',borderRadius:18,padding:16,marginBottom:12,boxShadow:'0 2px 12px rgba(78,205,196,0.08)'}}>
-        {/* Spread selection */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-          <span style={{fontSize:14,fontWeight:700,color:'#0D9488'}}>🎴 塔罗牌阵</span>
-          <div style={{padding:'3px 10px',borderRadius:10,background:'#4ECDC415',fontSize:11,fontWeight:600,color:'#4ECDC4'}}>{tarotCards.length}/{spreadSize[tarotSpread]} 张</div>
-        </div>
-        <div style={{display:'flex',gap:6,marginBottom:14}}>
-          {[{k:'single',l:'单张指引',n:1,icon:'🃏'},{k:'threeCard',l:'时间三张',n:3,icon:'🎴'},{k:'relationship',l:'关系四张',n:4,icon:'💕'}].map(s=>(
-            <button key={s.k} onClick={()=>{setTarotSpread(s.k);setTarotCards([])}} style={{flex:1,padding:'8px 4px',borderRadius:10,fontSize:11,fontWeight:600,border:tarotSpread===s.k?'2px solid #4ECDC4':'1.5px solid #d5ede9',cursor:'pointer',background:tarotSpread===s.k?'#4ECDC4':'#fff',color:tarotSpread===s.k?'#fff':'#0D9488',textAlign:'center',transition:'all .2s'}}>
-              <div style={{fontSize:16}}>{s.icon}</div>
-              <div style={{marginTop:2}}>{s.l}</div>
-            </button>
-          ))}
-        </div>
-        {/* Card pool */}
-        <div style={{background:'rgba(255,255,255,0.6)',borderRadius:14,padding:12}}>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:6,justifyItems:'center'}}>
-            {tarotPool.slice(0,12).map((cardId,i)=>{
-              const picked=tarotCards.includes(cardId);
-              const full=tarotCards.length>=spreadSize[tarotSpread];
-              const order=picked?tarotCards.indexOf(cardId)+1:null;
-              return <button key={i} onClick={()=>{if(picked)setTarotCards(c=>c.filter(x=>x!==cardId));else if(!full)setTarotCards(c=>[...c,cardId])}} style={{width:42,height:60,borderRadius:8,cursor:picked||!full?'pointer':'default',border:picked?'2px solid #4ECDC4':'1.5px solid #c8c8c8',background:picked?'linear-gradient(135deg,#4ECDC4,#0D9488)':'linear-gradient(160deg,#6366F1,#4F46E5,#3730A3)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',transition:'all .25s ease',transform:picked?'translateY(-4px) scale(1.06)':'scale(1)',boxShadow:picked?'0 4px 12px rgba(78,205,196,0.5)':'0 1px 4px rgba(0,0,0,0.15)',opacity:!picked&&full?0.4:1,position:'relative'}}>
-                {picked?<><div style={{fontSize:10,opacity:.7}}>第{order}张</div><div style={{fontSize:16}}>✦</div></>:<><div style={{fontSize:18,opacity:.6}}>✧</div><div style={{fontSize:8,opacity:.5,marginTop:2}}>选我</div></>}
-              </button>;
-            })}
-          </div>
-        </div>
-        {/* Tarot action */}
-        <button onClick={()=>divine(false)} disabled={loading} style={{width:'100%',marginTop:12,padding:'13px',borderRadius:12,border:'none',fontSize:14,fontWeight:700,cursor:loading?'default':'pointer',color:'#fff',background:loading?T.textThi:'linear-gradient(135deg,#4ECDC4,#0D9488)',boxShadow:loading?'none':'0 3px 14px rgba(78,205,196,0.4)',transition:'all .2s'}}>
-          {loading?'🔮 解读中…':tarotCards.length>0?`🎴 翻开${tarotCards.length}张牌 · AI解读`:'🎴 随机抽牌 · AI解读'}
+    {/* Meihua */}
+    {mode==='meihua'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:18,padding:16,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <span style={{fontSize:14,fontWeight:700,color:'#D97706'}}>❀ 梅花起卦</span>
+        <span style={{fontSize:11,color:'#D97706',opacity:.6}}>{mhNum1?'自定义':'时间自动'}</span>
+      </div>
+      <div style={{display:'flex',gap:10,alignItems:'stretch'}}>
+        <button onClick={()=>{setMhNum1(String(Math.floor(Math.random()*100)+1));setMhNum2(String(Math.floor(Math.random()*100)+1))}} style={{width:60,borderRadius:14,border:'2px dashed #D9770640',background:'rgba(255,255,255,0.7)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,flexShrink:0}}>
+          <div style={{fontSize:26}}>🎲</div><div style={{fontSize:9,color:'#D97706',fontWeight:600}}>掷骰子</div>
         </button>
-        <div style={{fontSize:10,color:'#0D9488',textAlign:'center',marginTop:6,opacity:.6}}>手动选牌 或 直接点按钮随机抽取</div>
-      </div>}
-
-      {/* Meihua number input */}
-      {mode==='meihua'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FFF3CD)',border:'1px solid #FFB34725',borderRadius:18,padding:16,marginBottom:12,boxShadow:'0 2px 12px rgba(255,179,71,0.08)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-          <span style={{fontSize:14,fontWeight:700,color:'#D97706'}}>❀ 梅花起卦</span>
-          <span style={{fontSize:11,color:'#D97706',opacity:.6}}>{mhNum1||mhNum2?'自定义数字':'时间自动起卦'}</span>
-        </div>
-        {/* Dice + inputs */}
-        <div style={{display:'flex',gap:10,alignItems:'stretch'}}>
-          {/* Dice button */}
-          <button onClick={()=>{setMhNum1(String(Math.floor(Math.random()*100)+1));setMhNum2(String(Math.floor(Math.random()*100)+1))}} style={{width:64,borderRadius:14,border:'2px dashed #FFB34760',background:'rgba(255,255,255,0.7)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,transition:'all .2s',flexShrink:0}}>
-            <div style={{fontSize:28,transition:'transform .3s'}}>🎲</div>
-            <div style={{fontSize:9,color:'#D97706',fontWeight:600}}>掷骰子</div>
-          </button>
-          {/* Number inputs */}
-          <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
-            <div style={{display:'flex',gap:8}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:10,color:'#D97706',marginBottom:3,fontWeight:600}}>上卦数</div>
-                <input type="number" value={mhNum1} onChange={e=>setMhNum1(e.target.value)} placeholder="自动" style={{width:'100%',padding:'10px 8px',border:'2px solid #FFD99B',borderRadius:12,fontSize:18,textAlign:'center',background:'#fff',outline:'none',fontWeight:700,color:'#D97706'}}/>
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+          <div style={{display:'flex',gap:8}}>
+            {[['上卦数',mhNum1,setMhNum1],['下卦数',mhNum2,setMhNum2]].map(([l,v,s])=>(
+              <div key={l} style={{flex:1}}>
+                <div style={{fontSize:10,color:'#D97706',marginBottom:2,fontWeight:600}}>{l}</div>
+                <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'8px 6px',border:'2px solid #FCD34D',borderRadius:10,fontSize:16,textAlign:'center',background:'#fff',outline:'none',fontWeight:700,color:'#D97706'}}/>
               </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:10,color:'#D97706',marginBottom:3,fontWeight:600}}>下卦数</div>
-                <input type="number" value={mhNum2} onChange={e=>setMhNum2(e.target.value)} placeholder="自动" style={{width:'100%',padding:'10px 8px',border:'2px solid #FFD99B',borderRadius:12,fontSize:18,textAlign:'center',background:'#fff',outline:'none',fontWeight:700,color:'#D97706'}}/>
-              </div>
-            </div>
-            {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{background:'none',border:'none',fontSize:10,color:'#D97706',cursor:'pointer',textAlign:'right',opacity:.6}}>✕ 清空数字（改回时间起卦）</button>}
-          </div>
-        </div>
-        {/* Meihua action */}
-        <button onClick={()=>divine(false)} disabled={loading} style={{width:'100%',marginTop:12,padding:'13px',borderRadius:12,border:'none',fontSize:14,fontWeight:700,cursor:loading?'default':'pointer',color:'#fff',background:loading?T.textThi:'linear-gradient(135deg,#FFB347,#D97706)',boxShadow:loading?'none':'0 3px 14px rgba(255,179,71,0.4)',transition:'all .2s'}}>
-          {loading?'🔮 起卦中…':mhNum1?`❀ 以数字 ${mhNum1}·${mhNum2||'?'} 起卦 · AI解读`:'❀ 时间起卦 · AI解读'}
-        </button>
-        <div style={{fontSize:10,color:'#D97706',textAlign:'center',marginTop:6,opacity:.6}}>🎲掷骰子随机数 · 手动输入自定义 · 留空按时间</div>
-      </div>}
-      {loading&&<div className="anim-in" style={{background:'#fff',borderRadius:16,padding:20,boxShadow:T.shadow,textAlign:'center',marginBottom:12}}>
-        <div style={{fontSize:28,marginBottom:8,animation:'pulse 1.5s infinite'}}>🔮</div>
-        <div style={{fontSize:14,fontWeight:600,color:P.accent}}>{loadMsg}</div>
-        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>已等待 {elapsed} 秒 · 预计60-120秒</div>
-        <div style={{height:4,background:P.accentLight,borderRadius:2,marginTop:10,overflow:'hidden'}}>
-          <div style={{height:'100%',background:`linear-gradient(90deg,${P.accent},${P.accentDark})`,borderRadius:2,width:Math.min(elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
-        </div>
-      </div>}
-
-      {/* Error */}
-      {error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:12}}>
-        <div style={{fontSize:14,fontWeight:600,color:'#EF4444',marginBottom:6}}>⚠️ {error}</div>
-        <button onClick={()=>divine(false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer'}}>🔄 重试</button>
-      </div>}
-
-      {/* Results */}
-      {result&&<div ref={ref}>
-        {/* View toggle */}
-        {result.response&&<div style={{display:'flex',gap:0,marginBottom:12,background:'#EDE9FE',borderRadius:10,padding:3}}>
-          {[{v:'card',l:'📊 报告卡片'},{v:'text',l:'📝 长文阅读'}].map(v=>(
-            <button key={v.v} onClick={()=>setViewMode(v.v)} style={{flex:1,padding:'7px 0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:viewMode===v.v?'#fff':'transparent',color:viewMode===v.v?P.accent:T.textThi,boxShadow:viewMode===v.v?T.shadow:'none',transition:'all .2s'}}>{v.l}</button>
-          ))}
-        </div>}
-
-        {/* CARD VIEW */}
-        {result.response&&viewMode==='card'&&(()=>{
-          const sections=[];const lines=result.response.split('\n');let cur=null;
-          const ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总命运':'⭐','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶'};
-          const COLORS=['#8B5CF6','#D946EF','#EC4899','#F59E0B','#10B981','#3B82F6','#6366F1','#14B8A6','#F43F5E','#8B5CF6'];
-          lines.forEach(line=>{const h=line.match(/^#{2,3}\s+(.+)/);if(h){const title=h[1].replace(/\*\*/g,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}else if(cur)cur.lines.push(line);else if(line.trim()){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}});
-          return(<div>
-            <div style={{background:P.headerGrad,borderRadius:16,padding:'18px',marginBottom:10,color:'#fff'}}>
-              <div style={{fontSize:11,opacity:.7}}>命理报告</div>
-              <div className="serif" style={{fontSize:18,fontWeight:700,marginTop:2}}>{MODE_FULL[mode]||mode}</div>
-              <div style={{fontSize:11,opacity:.8,marginTop:4}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'} · {elapsed}s</div>
-            </div>
-            {sections.filter(s=>s.lines.some(l=>l.trim())).map((sec,i)=>{
-              const content=sec.lines.join('\n').trim();if(!content)return null;
-              return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>;
-            })}
-            <div style={{display:'flex',gap:8,marginTop:10}}>
-              <button onClick={()=>{navigator.clipboard?.writeText(result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
-              <button onClick={()=>setViewMode('text')} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📝 长文</button>
-            </div>
-          </div>);
-        })()}
-
-        {/* TEXT VIEW */}
-        {result.response&&viewMode==='text'&&<div style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:T.shadow}}>
-          <div style={{background:P.accentLight,padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:13,fontWeight:600,color:P.accent}}>{MODE_FULL[mode]} · AI解读</div>
-            <button onClick={()=>{navigator.clipboard?.writeText(result.response);alert('已复制')}} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋</button>
-          </div>
-          <div style={{padding:16}}><div className="markdown" style={{fontSize:14,lineHeight:1.8}} dangerouslySetInnerHTML={md(result.response)}/></div>
-        </div>}
-
-        {/* Engine only */}
-        {!result.response&&result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
-          <div style={{fontSize:13,fontWeight:600,color:P.accent,marginBottom:8}}>📦 引擎结果</div>
-          <pre style={{fontSize:12,lineHeight:1.7,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre>
-        </div>}
-
-        {/* Engine data collapsible */}
-        {result.response&&<details style={{background:'#fff',borderRadius:14,boxShadow:T.shadow,marginTop:10}}>
-          <summary style={{padding:'12px 16px',fontSize:12,fontWeight:600,color:P.accent,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>📦 引擎数据（{result.engineData?.length||0}字）</span><span style={{color:T.textThi}}>▾</span></summary>
-          <div style={{padding:'0 16px 12px'}}><pre style={{fontSize:11,lineHeight:1.6,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre></div>
-        </details>}
-
-        {/* Follow-up */}
-        {result.response&&<div style={{marginTop:10,padding:'12px 14px',background:P.accentLight,borderRadius:12}}>
-          <div style={{fontSize:11,fontWeight:600,color:P.accent,marginBottom:6}}>💡 继续追问</div>
-          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-            {(QUICK_QS[mode]||[]).filter(x=>x!==q).slice(0,3).map(qq=>(
-              <button key={qq} onClick={()=>{setQ(qq);window.scrollTo({top:0,behavior:'smooth'})}} style={{padding:'5px 10px',borderRadius:8,border:`1px solid ${P.accent}30`,background:'#fff',color:P.accent,fontSize:11,cursor:'pointer'}}>{qq}</button>
             ))}
           </div>
-        </div>}
-      </div>}
+          {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{background:'none',border:'none',fontSize:10,color:'#D97706',cursor:'pointer',textAlign:'right',opacity:.5}}>✕ 清空</button>}
+        </div>
+      </div>
+    </div>}
 
-      {/* Empty state */}
-      {!result&&!loading&&!error&&<div style={{textAlign:'center',padding:'40px 20px',color:T.textThi}}>
-        <div style={{fontSize:48,marginBottom:12}}>🔮</div>
-        <div style={{fontSize:15,fontWeight:500,color:T.text}}>选择占术，开始解读</div>
-        <div style={{fontSize:12,marginTop:6}}>当前：{MODE_FULL[mode]} · {dm==='expert'?'专家模式':'大众模式'}</div>
+    {/* Pair */}
+    {isPair&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FDF2F8,#FCE7F3)',border:'1px solid #DB277730',borderRadius:18,padding:14,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <span style={{fontSize:14,fontWeight:700,color:'#DB2777'}}>💑 对方出生信息</span>
+        <div style={{display:'flex',gap:4}}>{[{v:'female',l:'♀'},{v:'male',l:'♂'}].map(g=><button key={g.v} onClick={()=>setP2({...p2,gender:g.v})} style={{width:28,height:28,borderRadius:14,border:'none',cursor:'pointer',fontSize:12,background:p2.gender===g.v?'#DB2777':'#f0e0f5',color:p2.gender===g.v?'#fff':'#999'}}>{g.l}</button>)}</div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6}}>
+        {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k} style={{textAlign:'center'}}>
+          <div style={{fontSize:10,color:'#DB2777',marginBottom:3,fontWeight:600}}>{l}</div>
+          <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1.5px solid #F9A8D4',borderRadius:8,fontSize:13,textAlign:'center',background:'#fff',outline:'none'}}/>
+        </div>)}
+      </div>
+    </div>}
+
+    {/* STEP 3: QUESTION + SUBMIT (unified) */}
+    <div style={{background:'#fff',borderRadius:16,padding:14,boxShadow:T.shadow,marginBottom:14}}>
+      <div style={{position:'relative',marginBottom:10}}>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="输入具体问题 · 留空则全面分析" style={{width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:13,background:'#FAFAFA',outline:'none',paddingRight:q?36:14}}/>
+        {q&&<button onClick={()=>setQ('')} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:T.textThi,fontSize:14,cursor:'pointer'}}>✕</button>}
+      </div>
+      <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:12}}>
+        {(QUICK_QS[mode]||[]).map(qq=>(
+          <button key={qq} onClick={()=>setQ(q===qq?'':qq)} style={{padding:'4px 10px',borderRadius:10,border:`1px solid ${q===qq?mc:T.border}`,background:q===qq?`${mc}0A`:'#fff',color:q===qq?mc:T.textSec,fontSize:11,cursor:'pointer',transition:'all .2s'}}>{qq}</button>
+        ))}
+      </div>
+      <button onClick={()=>divine(false)} disabled={loading} style={{
+        width:'100%',padding:'14px',borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',
+        background:loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
+        boxShadow:loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',
+      }}>
+        {loading?`🔮 ${loadMsg}`:`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
+      </button>
+      {loading&&<div style={{marginTop:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:T.textThi}}><span>已等待 {elapsed}s</span><span>约60-120秒</span></div>
+        <div style={{height:3,background:P.accentLight,borderRadius:2,marginTop:4,overflow:'hidden'}}>
+          <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
+        </div>
       </div>}
+      <div style={{textAlign:'center',marginTop:8}}>
+        <button onClick={()=>divine(true)} disabled={loading} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎（秒出）</button>
+      </div>
     </div>
 
-    {/* === BOTTOM INPUT BAR (above TabBar) === */}
-    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'#fff',borderTop:`1px solid ${T.border}`,padding:'8px 16px 10px',zIndex:50}}>
-      {showQuick&&<div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-        {(QUICK_QS[mode]||[]).map(qq=><button key={qq} onClick={()=>{setQ(qq);setShowQuick(false)}} style={{padding:'5px 10px',borderRadius:10,border:`1px solid ${q===qq?P.accent:T.border}`,background:q===qq?P.accentLight:'#fff',color:q===qq?P.accent:T.textSec,fontSize:11,cursor:'pointer'}}>{qq}</button>)}
+    {/* ERROR */}
+    {error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
+      <div style={{fontSize:14,fontWeight:600,color:'#EF4444',marginBottom:6}}>⚠️ {error}</div>
+      <button onClick={()=>divine(false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer'}}>🔄 重试</button>
+    </div>}
+
+    {/* RESULTS */}
+    {result&&<div ref={ref} className="anim-slide">
+      {result.response&&<div style={{display:'flex',gap:0,marginBottom:12,background:'#EDE9FE',borderRadius:10,padding:3}}>
+        {[{v:'card',l:'📊 报告卡片'},{v:'text',l:'📝 长文阅读'}].map(v=>(
+          <button key={v.v} onClick={()=>setViewMode(v.v)} style={{flex:1,padding:'7px 0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:viewMode===v.v?'#fff':'transparent',color:viewMode===v.v?mc:T.textThi,boxShadow:viewMode===v.v?T.shadow:'none',transition:'all .2s'}}>{v.l}</button>
+        ))}
       </div>}
-      <div style={{display:'flex',gap:8,alignItems:'center'}}>
-        <button onClick={()=>setShowQuick(!showQuick)} style={{width:36,height:36,borderRadius:18,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',color:showQuick?P.accent:T.textThi}}>💬</button>
-        <input value={q} onChange={e=>setQ(e.target.value)} placeholder={isPair?'问配对问题…':'留空=全面分析'} style={{flex:1,padding:'10px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:20,fontSize:13,background:'#F9FAFB',outline:'none'}}/>
-        <button onClick={()=>divine(false)} disabled={loading} style={{height:36,padding:'0 16px',borderRadius:18,border:'none',background:loading?T.textThi:`linear-gradient(135deg,${P.accent},${P.accentDark})`,color:'#fff',fontSize:13,fontWeight:700,cursor:loading?'default':'pointer',flexShrink:0,boxShadow:loading?'none':`0 2px 10px ${P.accent}40`}}>
-          {loading?'…':'🔮 解读'}
-        </button>
-      </div>
-      <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:4}}>
-        <button onClick={()=>divine(true)} disabled={loading} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎</button>
-      </div>
+
+      {result.response&&viewMode==='card'&&(()=>{
+        const sections=[];const lines=result.response.split('\n');let cur=null;
+        const ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
+        const COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
+        lines.forEach(line=>{const h=line.match(/^#{1,3}\s+(.+)/);if(h){const title=h[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}else if(cur)cur.lines.push(line);else if(line.trim()){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}});
+        return(<div>
+          <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontSize:10,opacity:.6}}>命理报告</div>
+                <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div>
+                <div style={{fontSize:11,opacity:.75,marginTop:4}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'}</div>
+              </div>
+              <div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}>
+                <div style={{fontSize:18,fontWeight:700}}>{sections.length}</div>
+                <div style={{fontSize:9,opacity:.7}}>维度</div>
+              </div>
+            </div>
+          </div>
+          {sections.filter(s=>s.lines.some(l=>l.trim())).map((sec,i)=>{
+            const content=sec.lines.join('\n').trim();if(!content)return null;
+            return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>;
+          })}
+          <div style={{display:'flex',gap:8,marginTop:10}}>
+            <button onClick={()=>{navigator.clipboard?.writeText(result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
+            <button onClick={()=>setViewMode('text')} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📝 长文模式</button>
+          </div>
+        </div>);
+      })()}
+
+      {result.response&&viewMode==='text'&&<div style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:T.shadow}}>
+        <div style={{background:P.accentLight,padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{fontSize:13,fontWeight:600,color:mc}}>{MODE_FULL[mode]} · AI解读</div>
+          <button onClick={()=>{navigator.clipboard?.writeText(result.response);alert('已复制')}} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋</button>
+        </div>
+        <div style={{padding:16}}><div className="markdown" style={{fontSize:14,lineHeight:1.8}} dangerouslySetInnerHTML={md(result.response)}/></div>
+      </div>}
+
+      {!result.response&&result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
+        <div style={{fontSize:13,fontWeight:600,color:mc,marginBottom:8}}>📦 引擎计算结果</div>
+        <pre style={{fontSize:12,lineHeight:1.7,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre>
+      </div>}
+
+      {result.response&&<details style={{background:'#fff',borderRadius:14,boxShadow:T.shadow,marginTop:10}}>
+        <summary style={{padding:'12px 16px',fontSize:12,fontWeight:600,color:mc,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>📦 引擎数据（{result.engineData?.length||0}字）</span><span style={{color:T.textThi}}>▾</span></summary>
+        <div style={{padding:'0 16px 12px'}}><pre style={{fontSize:11,lineHeight:1.6,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre></div>
+      </details>}
+
+      {result.response&&<div style={{marginTop:10,padding:'12px 14px',background:P.accentLight,borderRadius:12}}>
+        <div style={{fontSize:11,fontWeight:600,color:mc,marginBottom:6}}>💡 继续追问</div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {(QUICK_QS[mode]||[]).filter(x=>x!==q).slice(0,3).map(qq=>(
+            <button key={qq} onClick={()=>{setQ(qq);window.scrollTo({top:0,behavior:'smooth'})}} style={{padding:'5px 10px',borderRadius:8,border:`1px solid ${mc}30`,background:'#fff',color:mc,fontSize:11,cursor:'pointer'}}>{qq}</button>
+          ))}
+        </div>
+      </div>}
+    </div>}
+
     </div>
   </div>);
 }
