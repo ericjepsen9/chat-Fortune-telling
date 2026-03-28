@@ -817,26 +817,117 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 }
 
 // ===== DISCOVER =====
-function DiscoverScreen({goTo}){
-  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}><div style={{padding:'48px 20px 20px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>🌍 发现</div></div><div style={{padding:'12px 16px'}}>
-    {[{icon:'🔥',title:'今日运势',desc:'AI分析今日吉凶',a:()=>goTo(S.AI)},{icon:'💑',title:'八字合婚',desc:'测两人缘分深浅',a:()=>goTo(S.AI,'hehun')},{icon:'🎴',title:'塔罗占卜',desc:'抽一张指引牌',a:()=>goTo(S.AI,'tarot')},{icon:'📖',title:'命理学堂',desc:'即将上线'}].map((it,i)=>
-      <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.08+'s',background:T.card,borderRadius:14,padding:'18px 16px',boxShadow:T.shadow,marginBottom:10,display:'flex',alignItems:'center',gap:14,cursor:it.a?'pointer':'default'}}>
-        <span style={{fontSize:28}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:14,fontWeight:500}}>{it.title}</div><div style={{fontSize:12,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi}}>›</span>
-      </div>)}
-  </div></div>);
+function DiscoverScreen({goTo,profile}){
+  const today=new Date();const dayN=today.getDate();
+  const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
+  const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
+    <div style={{background:'linear-gradient(135deg,#8B5CF6,#A78BFA)',padding:'48px 20px 20px',borderRadius:'0 0 28px 28px'}}>
+      <div className="serif" style={{fontSize:20,fontWeight:700,color:'#fff'}}>🌍 发现</div>
+      <div style={{fontSize:12,color:'rgba(255,255,255,.7)',marginTop:4}}>探索命理世界</div>
+    </div>
+    <div style={{padding:'16px 16px'}}>
+      {/* Today's luck card */}
+      <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:'1px solid #EDE9FE'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontSize:13,color:T.textThi}}>📅 今日 {today.getMonth()+1}月{today.getDate()}日</div>
+            <div style={{fontSize:22,fontWeight:700,color:luckColor,marginTop:4}}>{todayLuck}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:4}}>宜：学习、冥想 · 忌：冲动决策</div>
+          </div>
+          <button onClick={()=>goTo(S.AI)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
+        </div>
+      </div>
+
+      {/* Quick entry cards */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+        {[{icon:'☰',title:'八字排盘',desc:'深度命运分析',c:'#8B5CF6',m:'bazi'},{icon:'✦',title:'塔罗指引',desc:'今日一牌',c:'#0D9488',m:'tarot'},{icon:'❀',title:'梅花速断',desc:'快速问事吉凶',c:'#D97706',m:'meihua'},{icon:'💑',title:'合婚测试',desc:'看两人缘分',c:'#DB2777',m:'hehun'}].map((it,i)=>
+          <button key={it.m} className="anim-in" onClick={()=>goTo(S.AI,it.m)} style={{animationDelay:i*0.06+'s',background:`linear-gradient(135deg,${it.c}08,${it.c}03)`,borderRadius:16,padding:'18px 14px',border:`1px solid ${it.c}20`,cursor:'pointer',textAlign:'left'}}>
+            <div style={{fontSize:24,marginBottom:8}}>{it.icon}</div>
+            <div style={{fontSize:14,fontWeight:600,color:it.c}}>{it.title}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:3}}>{it.desc}</div>
+          </button>
+        )}
+      </div>
+
+      {/* Feature list */}
+      <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:10}}>更多功能</div>
+      {[{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'🔮',title:'AI测时辰',desc:'不知道出生时辰？AI帮你推算',a:()=>goTo(S.AI)},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},{icon:'📖',title:'命理学堂',desc:'即将上线',a:null}].map((it,i)=>
+        <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'14px 16px',boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default',opacity:it.a?1:.5}}>
+          <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
+        </div>)}
+    </div>
+  </div>);
 }
 
 // ===== MESSAGES =====
-function MsgsScreen(){return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}><div style={{padding:'48px 20px 20px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div></div><div style={{padding:'60px 20px',textAlign:'center',color:T.textThi}}><div style={{fontSize:48,marginBottom:12}}>💬</div><div style={{fontSize:14}}>暂无匹配</div><div style={{fontSize:12,marginTop:6}}>右滑喜欢的人，匹配成功后可以聊天</div></div></div>);}
+function MsgsScreen(){
+  const [matched]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_matched')||'[]')}catch(e){return[]}});
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
+    <div style={{padding:'48px 20px 16px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div><div style={{fontSize:12,color:T.textThi,marginTop:4}}>匹配成功后在这里聊天</div></div>
+    {matched.length===0?
+      <div style={{padding:'50px 20px',textAlign:'center',color:T.textThi}}>
+        <div style={{width:80,height:80,borderRadius:40,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}><Icons.msgCircle s={36} c="#D1D5DB"/></div>
+        <div style={{fontSize:15,fontWeight:500,color:T.text}}>暂无匹配消息</div>
+        <div style={{fontSize:12,marginTop:8,lineHeight:1.6}}>在首页右滑喜欢的人<br/>匹配成功后可以开始聊天</div>
+      </div>
+      :
+      <div style={{padding:'0 16px'}}>{matched.map((u,i)=>
+        <div key={i} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:44,height:44,borderRadius:22,background:'#EDE9FE',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{u.gender==='female'?'👩':'👨'}</div>
+          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500}}>{u.name}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>匹配成功！打个招呼吧</div></div>
+          <div style={{fontSize:11,color:T.textThi}}>刚刚</div>
+        </div>
+      )}</div>
+    }
+  </div>);
+}
 
 // ===== ME =====
-function MeScreen({profile,onLogout,goTo,onEdit}){return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
-  <div style={{background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',padding:'48px 24px 28px',borderRadius:'0 0 28px 28px'}}><div style={{display:'flex',alignItems:'center',gap:14}}><div style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,color:'#fff'}}>{profile.gender==='female'?'👩':'👨'}</div><div><div style={{color:'#fff',fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div><div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:2}}>{profile.year}年{profile.month}月{profile.day}日{profile.hour>=0?' '+profile.hour+'时':' 时辰未知'}</div></div></div></div>
+function MeScreen({profile,onLogout,goTo,onEdit}){
+  const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
+  const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
+  <div style={{background:'linear-gradient(135deg,#8B5CF6,#A78BFA)',padding:'48px 24px 28px',borderRadius:'0 0 28px 28px'}}>
+    <div style={{display:'flex',alignItems:'center',gap:14}}>
+      <div style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,color:'#fff'}}>{profile.gender==='female'?'👩':'👨'}</div>
+      <div>
+        <div style={{color:'#fff',fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div>
+        <div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:2}}>{profile.year}年{profile.month}月{profile.day}日{profile.hour>=0?' '+profile.hour+'时':''}</div>
+        {profile.hour===-1&&<div style={{color:'#FCD34D',fontSize:11,marginTop:2}}>⚠️ 时辰未知</div>}
+      </div>
+    </div>
+    {/* Stats */}
+    <div style={{display:'flex',gap:16,marginTop:16}}>
+      {[{n:resultCount,l:'报告'},{n:history.length,l:'记录'},{n:0,l:'收藏'}].map(s=>
+        <div key={s.l} style={{textAlign:'center',flex:1}}>
+          <div style={{fontSize:20,fontWeight:700,color:'#fff'}}>{s.n}</div>
+          <div style={{fontSize:10,color:'rgba(255,255,255,.6)',marginTop:2}}>{s.l}</div>
+        </div>
+      )}
+    </div>
+  </div>
+
   {profile.hour===-1&&<div style={{margin:'12px 16px 0',padding:'10px 14px',background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,fontSize:12,color:'#D97706'}}>⚠️ 未填写出生时辰，八字排盘精度会降低。<button onClick={onEdit} style={{background:'none',border:'none',color:'#D97706',fontWeight:700,cursor:'pointer',textDecoration:'underline',fontSize:12}}>补充时辰</button></div>}
-  <div style={{padding:16}}>{[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗',a:()=>goTo(S.AI)},{icon:'✏️',label:'修改生辰',desc:'修改出生日期信息',a:onEdit},{icon:'📊',label:'我的报告',desc:'历史分析'},{icon:'💎',label:'会员中心',desc:'高级功能'},{icon:'⚙️',label:'设置',desc:'账号隐私'}].map((it,i)=>
-    <div key={it.label} className="anim-in" onClick={it.a} style={{animationDelay:i*0.06+'s',background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:10,display:'flex',alignItems:'center',gap:14,cursor:it.a?'pointer':'default'}}><span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:14,fontWeight:500}}>{it.label}</div><div style={{fontSize:12,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi}}>›</span></div>)}
-    <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,color:T.textSec,cursor:'pointer',marginTop:16}}>退出登录</button>
-  </div></div>);}
+
+  <div style={{padding:16}}>
+    {[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗·梅花',a:()=>goTo(S.AI)},{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',a:onEdit},{icon:'🔮',label:'AI测时辰',desc:'回答5个问题推算时辰',a:()=>goTo(S.AI)},{icon:'🗑️',label:'清除占卜记录',desc:resultCount+'条报告',a:()=>{if(confirm('确定清除所有占卜记录？')){localStorage.removeItem('yuanhe_mode_results');localStorage.removeItem('yuanhe_history');location.reload()}}},{icon:'⚙️',label:'设置',desc:'账号与隐私'}].map((it,i)=>
+      <div key={it.label} className="anim-in" onClick={it.a} style={{animationDelay:i*0.06+'s',background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default'}}><span style={{fontSize:20}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.label}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span></div>)}
+
+    {/* Recent history */}
+    {history.length>0&&<>
+      <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:16,marginBottom:8}}>最近记录</div>
+      {history.slice(0,5).map((h,i)=>
+        <div key={i} style={{background:'#F9FAFB',borderRadius:10,padding:'10px 12px',marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div><div style={{fontSize:12,fontWeight:500}}>{MODE_FULL[h.mode]||h.mode} · {h.question}</div></div>
+          <div style={{fontSize:10,color:T.textThi,flexShrink:0}}>{h.time}</div>
+        </div>
+      )}
+    </>}
+
+    <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,color:T.textSec,cursor:'pointer',marginTop:20}}>退出登录</button>
+  </div>
+</div>);}
 
 // ===== TAB BAR =====
 function TabBar({active,onTap}){
@@ -858,7 +949,7 @@ function App(){
     {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:S.BIRTH)}/>}
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<HomeScreen profile={profile} goTo={goTo}/>}
-    {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo}/>}
+    {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo} profile={profile}/>}
     {scr===S.AI&&profile&&<AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/>}
     {scr===S.MSGS&&<MsgsScreen/>}
     {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)}/>}
