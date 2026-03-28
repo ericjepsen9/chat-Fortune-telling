@@ -287,7 +287,10 @@ function AIScreen({profile,initialMode}){
           <div style={{display:'flex',gap:4}}>{[{v:'female',l:'♀'},{v:'male',l:'♂'}].map(g=><button key={g.v} onClick={()=>setP2({...p2,gender:g.v})} style={{width:28,height:28,borderRadius:14,border:'none',cursor:'pointer',fontSize:12,background:p2.gender===g.v?'#D946EF':'#f0e0f5',color:p2.gender===g.v?'#fff':'#999'}}>{g.l}</button>)}</div>
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6}}>
-          {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><input key={k} type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} placeholder={l} style={{padding:'8px',border:'1px solid #F0D0E8',borderRadius:10,fontSize:13,textAlign:'center',background:'#fff',outline:'none'}}/>)}
+          {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k} style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
+            <div style={{fontSize:10,color:'#D946EF',marginBottom:3}}>{l}</div>
+            <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1px solid #F0D0E8',borderRadius:8,fontSize:13,textAlign:'center',background:'#fff',outline:'none'}}/>
+          </div>)}
         </div>
       </div>}
 
