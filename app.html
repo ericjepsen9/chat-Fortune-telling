@@ -282,80 +282,113 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
 
 function AIScreen({profile,initialMode}){
   const [mode,setMode]=useState(initialMode||'bazi');
-  const [q,setQ]=useState('');
   const [dm,setDm]=useState('expert');
-  const [result,setResult]=useState(null);
-  const [loading,setLoading]=useState(false);
-  const [loadMsg,setLoadMsg]=useState('');
-  const [elapsed,setElapsed]=useState(0);
-  const [error,setError]=useState(null);
   const [viewMode,setViewMode]=useState('card');
+  const [showTarotModal,setShowTarotModal]=useState(false);
   const ref=useRef(null);
-  const timerRef=useRef(null);
-  const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:profile.gender==='male'?'female':'male'});
+
+  // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
+  const [modeStates,setModeStates]=useState(()=>{
+    // Load saved results from localStorage
+    const saved={};
+    try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');
+      Object.keys(s).forEach(k=>{saved[k]={q:'',result:s[k],loading:false,elapsed:0,error:null,loadMsg:''}});
+    }catch(e){}
+    return saved;
+  });
+  const getMS=(m)=>modeStates[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:''};
+  const setMS=(m,patch)=>setModeStates(prev=>{const cur=prev[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:''};return{...prev,[m]:{...cur,...patch}}});
+
+  // Active loading mode (for toast)
+  const loadingMode=Object.keys(modeStates).find(k=>modeStates[k]?.loading);
+  const loadingModeInfo=loadingMode?MODES.find(m=>m.id===loadingMode):null;
+
+  // Current mode state
+  const ms=getMS(mode);
   const isPair=['hehun','synastry','hepan'].includes(mode);
+  const modeInfo=MODES.find(m=>m.id===mode)||MODES[0];
+  const mc=modeInfo.c;
+
+  // Pair input
+  const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:profile.gender==='male'?'female':'male'});
+  // Tarot
   const [tarotCards,setTarotCards]=useState([]);
   const [tarotSpread,setTarotSpread]=useState('threeCard');
   const tarotPool=useState(()=>{const a=[];for(let i=0;i<78;i++)a.push(i);return a.sort(()=>Math.random()-0.5)})[0];
+  // Meihua
   const [mhNum1,setMhNum1]=useState('');
   const [mhNum2,setMhNum2]=useState('');
-  const [showTarotModal,setShowTarotModal]=useState(false);
-  const modeInfo=MODES.find(m=>m.id===mode)||MODES[0];
-  const mc=modeInfo.c;
-  const setModeAndClear=(m)=>{setMode(m);setResult(null);setError(null)};
 
-  useEffect(()=>{
-    if(loading){let i=0;setElapsed(0);setLoadMsg(LOAD_MSGS[0]);timerRef.current=setInterval(()=>{setElapsed(e=>e+1);i++;setLoadMsg(LOAD_MSGS[Math.min(Math.floor(i/15),LOAD_MSGS.length-1)])},1000)}
-    else if(timerRef.current)clearInterval(timerRef.current);
-    return()=>{if(timerRef.current)clearInterval(timerRef.current)};
-  },[loading]);
-
-  const divine=async(engineOnly)=>{
-    setLoading(true);setError(null);setResult(null);
-    try{
-      const body={mode,...profile,question:engineOnly?'':q,displayMode:dm};
-      if(isPair)body.profileB=p2;
-      if(mode==='tarot'){if(tarotCards.length>0)body.selectedCards=tarotCards;body.spreadType=tarotSpread}
-      if(mode==='meihua'&&mhNum1!==''){body.meihuaNum1=parseInt(mhNum1);if(mhNum2!=='')body.meihuaNum2=parseInt(mhNum2)}
-      const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);
-      if(r.blocked)setError(r.reason);else if(r.error)setError(r.error);
-      else{setResult(engineOnly?{engineData:r.engineData,response:null}:r);
-        try{const h=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');h.unshift({mode,question:q||'全面分析',time:new Date().toLocaleString()});localStorage.setItem('yuanhe_history',JSON.stringify(h.slice(0,20)))}catch(e){}}
-    }catch(e){setError(e.message)}
-    setLoading(false);setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
+  // Timer for loading
+  const timers=useRef({});
+  const startTimer=(m)=>{
+    let i=0;
+    setMS(m,{elapsed:0,loadMsg:LOAD_MSGS[0]});
+    timers.current[m]=setInterval(()=>{
+      i++;
+      setMS(m,{elapsed:i,loadMsg:LOAD_MSGS[Math.min(Math.floor(i/15),LOAD_MSGS.length-1)]});
+    },1000);
   };
+  const stopTimer=(m)=>{if(timers.current[m]){clearInterval(timers.current[m]);delete timers.current[m]}};
+  useEffect(()=>()=>{Object.values(timers.current).forEach(clearInterval)},[]);
+
+  // Save results to localStorage whenever they change
+  useEffect(()=>{
+    const toSave={};
+    Object.entries(modeStates).forEach(([k,v])=>{if(v.result)toSave[k]=v.result});
+    try{localStorage.setItem('yuanhe_mode_results',JSON.stringify(toSave))}catch(e){}
+  },[modeStates]);
+
+  const divine=async(divineMode,engineOnly)=>{
+    const m=divineMode||mode;
+    setMS(m,{loading:true,error:null,result:null});
+    startTimer(m);
+    try{
+      const body={mode:m,...profile,question:engineOnly?'':getMS(m).q,displayMode:dm};
+      if(['hehun','synastry','hepan'].includes(m))body.profileB=p2;
+      if(m==='tarot'){if(tarotCards.length>0)body.selectedCards=tarotCards;body.spreadType=tarotSpread}
+      if(m==='meihua'&&mhNum1!==''){body.meihuaNum1=parseInt(mhNum1);if(mhNum2!=='')body.meihuaNum2=parseInt(mhNum2)}
+      const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);
+      if(r.blocked)setMS(m,{error:r.reason,loading:false});
+      else if(r.error)setMS(m,{error:r.error,loading:false});
+      else setMS(m,{result:engineOnly?{engineData:r.engineData,response:null}:r,loading:false});
+    }catch(e){setMS(m,{error:e.message,loading:false})}
+    stopTimer(m);
+    if(m===mode)setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
+  };
+
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
   const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
   return(<div style={{height:'100%',overflow:'auto',background:P.bg}}>
-    {/* === HEADER with category tabs === */}
+    {/* === HEADER === */}
     <div style={{background:P.headerGrad,padding:'44px 16px 12px',position:'sticky',top:0,zIndex:60}}>
       <div style={{marginBottom:8}}>
         <div className="serif" style={{color:'#fff',fontSize:18,fontWeight:700}}>✦ AI 占卜</div>
       </div>
-      {/* Category tabs + expert/popular in header */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-      <div style={{display:'flex',gap:6}}>
-        {[{k:'single',l:'🔮 个人占卜'},{k:'pair',l:'💑 配对分析'}].map(c=>{
-          const active=modeInfo.cat===c.k;
-          return <button key={c.k} onClick={()=>setModeAndClear(MODES.find(m=>m.cat===c.k).id)} style={{padding:'6px 18px',borderRadius:20,fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background:active?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:active?P.accent:'rgba(255,255,255,0.85)',transition:'all .2s'}}>{c.l}</button>;
-        })}
-      </div>
-      <div style={{display:'flex',gap:4}}>
+        <div style={{display:'flex',gap:6}}>
+          {[{k:'single',l:'🔮 个人占卜'},{k:'pair',l:'💑 配对分析'}].map(c=>{
+            const active=modeInfo.cat===c.k;
+            return <button key={c.k} onClick={()=>setMode(MODES.find(m=>m.cat===c.k).id)} style={{padding:'6px 16px',borderRadius:20,fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background:active?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:active?P.accent:'rgba(255,255,255,0.85)',transition:'all .2s'}}>{c.l}</button>;
+          })}
+        </div>
+        <div style={{display:'flex',gap:4}}>
           {[{v:'expert',l:'专家'},{v:'simple',l:'大众'}].map(d=>(
             <button key={d.v} onClick={()=>setDm(d.v)} style={{padding:'4px 12px',borderRadius:14,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:dm===d.v?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:dm===d.v?P.accent:'rgba(255,255,255,0.8)',transition:'all .2s'}}>{d.l}</button>
           ))}
-      </div>
+        </div>
       </div>
     </div>
 
-    {/* === SCROLLABLE CONTENT === */}
     <div style={{padding:'12px 16px 180px'}}>
-      {/* Mode grid */}
+      {/* MODE GRID */}
       <div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6,marginBottom:14}}>
-        {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
-          <button key={m.id} onClick={()=>setModeAndClear(m.id)} style={{
-            padding:'10px 2px',borderRadius:12,cursor:'pointer',textAlign:'center',transition:'all .25s',
+        {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
+          const hasResult=!!getMS(m.id).result;
+          const isLoading=!!getMS(m.id).loading;
+          return(<button key={m.id} onClick={()=>setMode(m.id)} style={{
+            padding:'10px 2px',borderRadius:12,cursor:'pointer',textAlign:'center',transition:'all .25s',position:'relative',
             border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,
             background:mode===m.id?`${m.c}0A`:'#fff',
             boxShadow:mode===m.id?`0 2px 10px ${m.c}25`:T.shadow,
@@ -363,93 +396,89 @@ function AIScreen({profile,initialMode}){
           }}>
             <div style={{fontSize:18}}>{m.icon}</div>
             <div style={{fontSize:10,fontWeight:600,color:mode===m.id?m.c:T.text,marginTop:3}}>{m.label.substring(0,4)}</div>
-          </button>
-        ))}
+            {/* Status dot */}
+            {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:8,height:8,borderRadius:4,background:isLoading?'#F59E0B':T.success}}/>}
+          </button>);
+        })}
       </div>
 
-      {/* === MODE-SPECIFIC CONFIG === */}
+      {/* CONFIG PANELS (hide when loading/result for current mode) */}
+      {!ms.loading&&!ms.result&&<>
+        {/* Tarot */}
+        {mode==='tarot'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:14,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:'#0D9488'}}>🎴 塔罗选牌</div>
+            <div style={{fontSize:11,color:'#0D9488',opacity:.7,marginTop:2}}>{tarotCards.length>0?`已选${tarotCards.length}张`:'点击选牌或直接提交随机'}</div>
+          </div>
+          <button onClick={()=>setShowTarotModal(true)} style={{padding:'10px 16px',borderRadius:12,border:'none',background:'#0D9488',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',flexShrink:0}}>{tarotCards.length>0?'重选':'选牌'}</button>
+        </div>}
 
-      {/* Tarot: just a trigger button */}
-      {mode==='tarot'&&!loading&&!result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:14,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <div>
-          <div style={{fontSize:14,fontWeight:700,color:'#0D9488'}}>🎴 塔罗选牌</div>
-          <div style={{fontSize:11,color:'#0D9488',opacity:.7,marginTop:2}}>{tarotCards.length>0?`已选${tarotCards.length}张 · ${tarotSpread==='single'?'单张':'三张'}牌阵`:'点击右侧按钮选牌 · 或直接提交随机'}</div>
-        </div>
-        <button onClick={()=>setShowTarotModal(true)} style={{padding:'10px 16px',borderRadius:12,border:'none',background:'#0D9488',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',flexShrink:0,boxShadow:'0 2px 8px #0D948840'}}>{tarotCards.length>0?'重选':'选牌'}</button>
-      </div>}
+        {/* Meihua */}
+        {mode==='meihua'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:14,marginBottom:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <span style={{fontSize:14,fontWeight:700,color:'#D97706'}}>❀ 梅花起卦</span>
+            <span style={{fontSize:11,color:'#D97706',opacity:.6}}>{mhNum1?'自定义':'时间自动'}</span>
+          </div>
+          <div style={{display:'flex',gap:10,alignItems:'stretch'}}>
+            <button onClick={()=>{setMhNum1(String(Math.floor(Math.random()*100)+1));setMhNum2(String(Math.floor(Math.random()*100)+1))}} style={{width:56,borderRadius:12,border:'2px dashed #D9770640',background:'rgba(255,255,255,0.7)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,flexShrink:0}}>
+              <div style={{fontSize:24}}>🎲</div><div style={{fontSize:9,color:'#D97706',fontWeight:600}}>掷骰</div>
+            </button>
+            <div style={{flex:1,display:'flex',gap:8}}>
+              {[['上卦',mhNum1,setMhNum1],['下卦',mhNum2,setMhNum2]].map(([l,v,s])=>(
+                <div key={l} style={{flex:1}}>
+                  <div style={{fontSize:10,color:'#D97706',marginBottom:2,fontWeight:600}}>{l}</div>
+                  <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'8px 4px',border:'2px solid #FCD34D',borderRadius:10,fontSize:16,textAlign:'center',background:'#fff',outline:'none',fontWeight:700,color:'#D97706'}}/>
+                </div>
+              ))}
+            </div>
+            {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{alignSelf:'center',background:'none',border:'none',fontSize:18,color:'#D97706',cursor:'pointer',opacity:.4}}>✕</button>}
+          </div>
+        </div>}
 
-      {/* Meihua */}
-      {mode==='meihua'&&!loading&&!result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:14,marginBottom:14}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-          <span style={{fontSize:14,fontWeight:700,color:'#D97706'}}>❀ 梅花起卦</span>
-          <span style={{fontSize:11,color:'#D97706',opacity:.6}}>{mhNum1?'自定义':'时间自动'}</span>
-        </div>
-        <div style={{display:'flex',gap:10,alignItems:'stretch'}}>
-          <button onClick={()=>{setMhNum1(String(Math.floor(Math.random()*100)+1));setMhNum2(String(Math.floor(Math.random()*100)+1))}} style={{width:56,borderRadius:12,border:'2px dashed #D9770640',background:'rgba(255,255,255,0.7)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,flexShrink:0}}>
-            <div style={{fontSize:24}}>🎲</div><div style={{fontSize:9,color:'#D97706',fontWeight:600}}>掷骰</div>
-          </button>
-          <div style={{flex:1,display:'flex',gap:8}}>
-            {[['上卦',mhNum1,setMhNum1],['下卦',mhNum2,setMhNum2]].map(([l,v,s])=>(
-              <div key={l} style={{flex:1}}>
-                <div style={{fontSize:10,color:'#D97706',marginBottom:2,fontWeight:600}}>{l}</div>
-                <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'8px 4px',border:'2px solid #FCD34D',borderRadius:10,fontSize:16,textAlign:'center',background:'#fff',outline:'none',fontWeight:700,color:'#D97706'}}/>
-              </div>
+        {/* Pair */}
+        {isPair&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FDF2F8,#FCE7F3)',border:'1px solid #DB277730',borderRadius:16,padding:14,marginBottom:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <span style={{fontSize:14,fontWeight:700,color:'#DB2777'}}>💑 对方出生信息</span>
+            <div style={{display:'flex',gap:4}}>{[{v:'female',l:'♀'},{v:'male',l:'♂'}].map(g=><button key={g.v} onClick={()=>setP2({...p2,gender:g.v})} style={{width:28,height:28,borderRadius:14,border:'none',cursor:'pointer',fontSize:12,background:p2.gender===g.v?'#DB2777':'#f0e0f5',color:p2.gender===g.v?'#fff':'#999'}}>{g.l}</button>)}</div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6}}>
+            {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k} style={{textAlign:'center'}}>
+              <div style={{fontSize:10,color:'#DB2777',marginBottom:3,fontWeight:600}}>{l}</div>
+              <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1.5px solid #F9A8D4',borderRadius:8,fontSize:13,textAlign:'center',background:'#fff',outline:'none'}}/>
+            </div>)}
+          </div>
+        </div>}
+
+        {/* Question */}
+        <div style={{background:'#fff',borderRadius:14,padding:12,boxShadow:T.shadow,marginBottom:14}}>
+          <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="输入具体问题 · 留空则全面分析" style={{width:'100%',padding:'11px 12px',border:`1.5px solid ${T.borderDark}`,borderRadius:10,fontSize:13,background:'#FAFAFA',outline:'none'}}/>
+          <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:8}}>
+            {(QUICK_QS[mode]||[]).map(qq=>(
+              <button key={qq} onClick={()=>setMS(mode,{q:ms.q===qq?'':qq})} style={{padding:'4px 10px',borderRadius:10,border:`1px solid ${ms.q===qq?mc:T.border}`,background:ms.q===qq?`${mc}0A`:'#fff',color:ms.q===qq?mc:T.textSec,fontSize:11,cursor:'pointer',transition:'all .2s'}}>{qq}</button>
             ))}
           </div>
-          {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{alignSelf:'center',background:'none',border:'none',fontSize:18,color:'#D97706',cursor:'pointer',opacity:.4}}>✕</button>}
         </div>
-      </div>}
+      </>}
 
-      {/* Pair info */}
-      {isPair&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FDF2F8,#FCE7F3)',border:'1px solid #DB277730',borderRadius:16,padding:14,marginBottom:14}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-          <span style={{fontSize:14,fontWeight:700,color:'#DB2777'}}>💑 对方出生信息</span>
-          <div style={{display:'flex',gap:4}}>{[{v:'female',l:'♀'},{v:'male',l:'♂'}].map(g=><button key={g.v} onClick={()=>setP2({...p2,gender:g.v})} style={{width:28,height:28,borderRadius:14,border:'none',cursor:'pointer',fontSize:12,background:p2.gender===g.v?'#DB2777':'#f0e0f5',color:p2.gender===g.v?'#fff':'#999'}}>{g.l}</button>)}</div>
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6}}>
-          {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k} style={{textAlign:'center'}}>
-            <div style={{fontSize:10,color:'#DB2777',marginBottom:3,fontWeight:600}}>{l}</div>
-            <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1.5px solid #F9A8D4',borderRadius:8,fontSize:13,textAlign:'center',background:'#fff',outline:'none'}}/>
-          </div>)}
-        </div>
-      </div>}
-
-      {/* Question input */}
-      {!loading&&<div style={{background:'#fff',borderRadius:14,padding:12,boxShadow:T.shadow,marginBottom:14}}>
-        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="输入具体问题 · 留空则全面分析" style={{width:'100%',padding:'11px 12px',border:`1.5px solid ${T.borderDark}`,borderRadius:10,fontSize:13,background:'#FAFAFA',outline:'none'}}/>
-        <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:8}}>
-          {(QUICK_QS[mode]||[]).map(qq=>(
-            <button key={qq} onClick={()=>setQ(q===qq?'':qq)} style={{padding:'4px 10px',borderRadius:10,border:`1px solid ${q===qq?mc:T.border}`,background:q===qq?`${mc}0A`:'#fff',color:q===qq?mc:T.textSec,fontSize:11,cursor:'pointer',transition:'all .2s'}}>{qq}</button>
-          ))}
-        </div>
-      </div>}
-
-      {/* Loading */}
-      {loading&&<div className="anim-in" style={{background:'#fff',borderRadius:16,padding:20,boxShadow:T.shadow,textAlign:'center',marginBottom:14}}>
-        <div style={{fontSize:28,marginBottom:8,animation:'pulse 1.5s infinite'}}>🔮</div>
-        <div style={{fontSize:14,fontWeight:600,color:mc}}>{loadMsg}</div>
-        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>已等待 {elapsed}s · 约60-120秒</div>
-        <div style={{height:3,background:P.accentLight,borderRadius:2,marginTop:10,overflow:'hidden'}}>
-          <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
-        </div>
-      </div>}
+      {/* "New query" button when result exists */}
+      {ms.result&&!ms.loading&&<button onClick={()=>setMS(mode,{result:null,error:null})} style={{width:'100%',padding:'10px',borderRadius:12,border:`1.5px solid ${P.accentLight}`,background:'#fff',fontSize:13,fontWeight:500,color:P.accent,cursor:'pointer',marginBottom:14,textAlign:'center'}}>🔄 重新提问（{MODE_FULL[mode]}）</button>}
 
       {/* Error */}
-      {error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
-        <div style={{fontSize:14,fontWeight:600,color:'#EF4444',marginBottom:6}}>⚠️ {error}</div>
-        <button onClick={()=>divine(false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer'}}>🔄 重试</button>
+      {ms.error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:600,color:'#EF4444',marginBottom:6}}>⚠️ {ms.error}</div>
+        <button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer'}}>🔄 重试</button>
       </div>}
 
-      {/* Results */}
-      {result&&<div ref={ref} className="anim-slide">
-        {result.response&&<div style={{display:'flex',gap:0,marginBottom:12,background:'#EDE9FE',borderRadius:10,padding:3}}>
+      {/* Results for CURRENT mode */}
+      {ms.result&&<div ref={ref} className="anim-slide">
+        {ms.result.response&&<div style={{display:'flex',gap:0,marginBottom:12,background:'#EDE9FE',borderRadius:10,padding:3}}>
           {[{v:'card',l:'📊 报告卡片'},{v:'text',l:'📝 长文阅读'}].map(v=>(
             <button key={v.v} onClick={()=>setViewMode(v.v)} style={{flex:1,padding:'7px 0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:viewMode===v.v?'#fff':'transparent',color:viewMode===v.v?mc:T.textThi,boxShadow:viewMode===v.v?T.shadow:'none',transition:'all .2s'}}>{v.l}</button>
           ))}
         </div>}
 
-        {result.response&&viewMode==='card'&&(()=>{
-          const sections=[];const lines=result.response.split('\n');let cur=null;
+        {ms.result.response&&viewMode==='card'&&(()=>{
+          const sections=[];const lines=ms.result.response.split('\n');let cur=null;
           const ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
           const COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
           lines.forEach(line=>{const h=line.match(/^#{1,3}\s+(.+)/);if(h){const title=h[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}else if(cur)cur.lines.push(line);else if(line.trim()){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}});
@@ -462,35 +491,35 @@ function AIScreen({profile,initialMode}){
             </div>
             {sections.filter(s=>s.lines.some(l=>l.trim())).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
             <div style={{display:'flex',gap:8,marginTop:10}}>
-              <button onClick={()=>{navigator.clipboard?.writeText(result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
+              <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
               <button onClick={()=>setViewMode('text')} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📝 长文模式</button>
             </div>
           </div>);
         })()}
 
-        {result.response&&viewMode==='text'&&<div style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:T.shadow}}>
+        {ms.result.response&&viewMode==='text'&&<div style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:T.shadow}}>
           <div style={{background:P.accentLight,padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div style={{fontSize:13,fontWeight:600,color:mc}}>{MODE_FULL[mode]} · AI解读</div>
-            <button onClick={()=>{navigator.clipboard?.writeText(result.response);alert('已复制')}} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋</button>
+            <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋</button>
           </div>
-          <div style={{padding:16}}><div className="markdown" style={{fontSize:14,lineHeight:1.8}} dangerouslySetInnerHTML={md(result.response)}/></div>
+          <div style={{padding:16}}><div className="markdown" style={{fontSize:14,lineHeight:1.8}} dangerouslySetInnerHTML={md(ms.result.response)}/></div>
         </div>}
 
-        {!result.response&&result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
+        {!ms.result.response&&ms.result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
           <div style={{fontSize:13,fontWeight:600,color:mc,marginBottom:8}}>📦 引擎结果</div>
-          <pre style={{fontSize:12,lineHeight:1.7,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre>
+          <pre style={{fontSize:12,lineHeight:1.7,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{ms.result.engineData}</pre>
         </div>}
 
-        {result.response&&<details style={{background:'#fff',borderRadius:14,boxShadow:T.shadow,marginTop:10}}>
-          <summary style={{padding:'12px 16px',fontSize:12,fontWeight:600,color:mc,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>📦 引擎数据（{result.engineData?.length||0}字）</span><span style={{color:T.textThi}}>▾</span></summary>
-          <div style={{padding:'0 16px 12px'}}><pre style={{fontSize:11,lineHeight:1.6,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{result.engineData}</pre></div>
+        {ms.result.response&&<details style={{background:'#fff',borderRadius:14,boxShadow:T.shadow,marginTop:10}}>
+          <summary style={{padding:'12px 16px',fontSize:12,fontWeight:600,color:mc,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>📦 引擎数据（{ms.result.engineData?.length||0}字）</span><span style={{color:T.textThi}}>▾</span></summary>
+          <div style={{padding:'0 16px 12px'}}><pre style={{fontSize:11,lineHeight:1.6,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{ms.result.engineData}</pre></div>
         </details>}
 
-        {result.response&&<div style={{marginTop:10,padding:'12px 14px',background:P.accentLight,borderRadius:12}}>
+        {ms.result.response&&<div style={{marginTop:10,padding:'12px 14px',background:P.accentLight,borderRadius:12}}>
           <div style={{fontSize:11,fontWeight:600,color:mc,marginBottom:6}}>💡 继续追问</div>
           <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-            {(QUICK_QS[mode]||[]).filter(x=>x!==q).slice(0,3).map(qq=>(
-              <button key={qq} onClick={()=>{setQ(qq);window.scrollTo({top:0,behavior:'smooth'})}} style={{padding:'5px 10px',borderRadius:8,border:`1px solid ${mc}30`,background:'#fff',color:mc,fontSize:11,cursor:'pointer'}}>{qq}</button>
+            {(QUICK_QS[mode]||[]).filter(x=>x!==ms.q).slice(0,3).map(qq=>(
+              <button key={qq} onClick={()=>{setMS(mode,{q:qq,result:null});window.scrollTo({top:0,behavior:'smooth'})}} style={{padding:'5px 10px',borderRadius:8,border:`1px solid ${mc}30`,background:'#fff',color:mc,fontSize:11,cursor:'pointer'}}>{qq}</button>
             ))}
           </div>
         </div>}
@@ -498,22 +527,32 @@ function AIScreen({profile,initialMode}){
     </div>
 
     {/* === FIXED BOTTOM CTA === */}
-    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'#fff',borderTop:`1px solid ${T.border}`,padding:'10px 16px',zIndex:50}}>
-      <button onClick={()=>divine(false)} disabled={loading} style={{
-        width:'100%',height:50,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',
-        cursor:loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',
-        background:loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
-        boxShadow:loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',whiteSpace:'nowrap',
+    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50}}>
+      <button onClick={()=>divine(mode,false)} disabled={ms.loading} style={{
+        width:'100%',height:48,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',
+        cursor:ms.loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+        background:ms.loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
+        boxShadow:ms.loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',whiteSpace:'nowrap',
       }}>
-        {loading?`🔮 ${loadMsg}`:`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
+        {ms.loading?`🔮 ${ms.loadMsg}`:`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
       </button>
-      <div style={{textAlign:'center',marginTop:4}}>
-        <button onClick={()=>divine(true)} disabled={loading} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎（秒出）</button>
+      {ms.loading&&<div style={{height:3,background:P.accentLight,borderRadius:2,marginTop:4,overflow:'hidden'}}>
+        <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
+      </div>}
+      <div style={{textAlign:'center',marginTop:3}}>
+        <button onClick={()=>divine(mode,true)} disabled={ms.loading} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎（秒出）</button>
       </div>
     </div>
 
+    {/* === LOADING TOAST (shows when bg mode is loading) === */}
+    {loadingMode&&loadingMode!==mode&&<div style={{position:'fixed',top:100,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.8)',color:'#fff',borderRadius:16,padding:'10px 20px',zIndex:200,display:'flex',alignItems:'center',gap:8,fontSize:13,boxShadow:'0 4px 20px rgba(0,0,0,0.3)',animation:'fadeIn .3s ease'}}>
+      <div style={{animation:'pulse 1.5s infinite'}}>🔮</div>
+      <span>{loadingModeInfo?.label||loadingMode} 解读中… {getMS(loadingMode).elapsed}s</span>
+      <button onClick={()=>setMode(loadingMode)} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:8,padding:'4px 10px',color:'#fff',fontSize:11,cursor:'pointer',marginLeft:4}}>查看</button>
+    </div>}
+
     {/* Tarot Modal */}
-    {showTarotModal&&<TarotModal spread={tarotSpread} setSpread={setTarotSpread} cards={tarotCards} setCards={setTarotCards} pool={tarotPool} onDone={(autoDivine)=>{setShowTarotModal(false);if(autoDivine)setTimeout(()=>divine(false),100)}} onClose={()=>setShowTarotModal(false)}/>}
+    {showTarotModal&&<TarotModal spread={tarotSpread} setSpread={setTarotSpread} cards={tarotCards} setCards={setTarotCards} pool={tarotPool} onDone={(autoDivine)=>{setShowTarotModal(false);if(autoDivine)setTimeout(()=>divine(mode,false),100)}} onClose={()=>setShowTarotModal(false)}/>}
   </div>);
 }
 
