@@ -14,6 +14,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-web
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
 @keyframes matchPop{0%{transform:scale(0);opacity:0}50%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .anim-in{animation:fadeIn .4s ease both}
 .anim-slide{animation:slideUp .5s ease both}
 .markdown h1,.markdown h2,.markdown h3{margin:16px 0 8px;font-weight:600}
@@ -228,6 +230,7 @@ const MODES=[
   {id:'hepan',label:'综合合盘',icon:'❤',c:'#E11D48',cat:'pair'},
 ];
 const MODE_FULL={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星',hehun:'八字合婚',synastry:'星座配对',hepan:'综合合盘'};
+const MODE_INTRO={bazi:'以出生年月日时推算天干地支，解读一生命运走向',astrology:'基于太阳、月亮、上升星座的西方占星分析',tarot:'通过塔罗牌阵获取直觉指引与方向建议',meihua:'以数字或时间快速起卦，判断事件吉凶',vedic:'印度吠陀占星系统，恒星黄道深度分析',hehun:'两人八字全面配合度分析',synastry:'双人星盘交叉相位化学反应',hepan:'中西命理综合配对评分'};
 const QUICK_QS={bazi:['今年运势','事业方向','感情运','财运分析','健康注意'],astrology:['本月运势','感情运','适合什么工作'],tarot:['今天适合做什么','感情指引','事业抉择'],meihua:['这件事能成吗','近期运势'],vedic:['当前大运','事业方向'],hehun:['适合在一起吗','婚姻分析'],synastry:['化学反应','相处建议'],hepan:['综合匹配度','长远建议']};
 const LOAD_MSGS=['排盘计算中…','分析命局格局…','推演大运流年…','AI撰写解读…','即将完成…'];
 
@@ -352,6 +355,8 @@ function AIScreen({profile,initialMode}){
       if(r.blocked)setMS(m,{error:r.reason,loading:false});
       else if(r.error)setMS(m,{error:r.error,loading:false});
       else{
+            r._genTime=new Date().toLocaleTimeString();
+            r._elapsed=getMS(m).elapsed;
             // Strip <think> tags from AI response
             if(r.response){r.response=r.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim()}
             setMS(m,{result:engineOnly?{engineData:r.engineData,response:null}:r,loading:false});
@@ -464,13 +469,33 @@ function AIScreen({profile,initialMode}){
         </div>
       </>}
 
-      {/* Loading indicator for current mode */}
-      {ms.loading&&<div className="anim-in" style={{background:'#fff',borderRadius:16,padding:24,boxShadow:T.shadow,textAlign:'center',marginBottom:14}}>
-        <div style={{fontSize:36,marginBottom:10,animation:'pulse 1.5s infinite'}}>{modeInfo.icon}</div>
-        <div style={{fontSize:15,fontWeight:600,color:mc}}>{ms.loadMsg}</div>
-        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>已等待 {ms.elapsed}s · 预计60-120秒</div>
-        <div style={{height:4,background:P.accentLight,borderRadius:2,marginTop:12,overflow:'hidden'}}>
-          <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
+      {/* Empty state with mode intro */}
+      {!ms.loading&&!ms.result&&!ms.error&&<div style={{textAlign:'center',padding:'20px 10px',marginBottom:6}}>
+        <div style={{width:56,height:56,borderRadius:28,background:`${mc}10`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px',fontSize:28}}>{modeInfo.icon}</div>
+        <div style={{fontSize:15,fontWeight:600,color:T.text}}>{MODE_FULL[mode]}</div>
+        <div style={{fontSize:12,color:T.textThi,marginTop:4,lineHeight:1.6}}>{MODE_INTRO[mode]||''}</div>
+        <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>选择问题或直接点击底部按钮开始</div>
+      </div>}
+
+      {/* Loading indicator with mode-specific animation */}
+      {ms.loading&&<div className="anim-in" style={{background:`linear-gradient(135deg,${mc}08,${mc}03)`,borderRadius:18,padding:'28px 20px',boxShadow:T.shadowLg||T.shadow,textAlign:'center',marginBottom:14,border:`1px solid ${mc}15`}}>
+        {/* Mode-specific animated icon */}
+        <div style={{position:'relative',width:80,height:80,margin:'0 auto 14px'}}>
+          <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid ${mc}20`}}/>
+          <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid transparent`,borderTopColor:mc,animation:'spin 1.2s linear infinite'}}/>
+          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:32}}>
+            {mode==='bazi'?'☰':mode==='tarot'?'🎴':mode==='meihua'?'❀':mode==='astrology'?'★':mode==='vedic'?'◎':isPair?'💑':'🔮'}
+          </div>
+        </div>
+        <div style={{fontSize:16,fontWeight:700,color:mc}}>{ms.loadMsg}</div>
+        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>
+          {ms.elapsed<15?'正在排盘计算…':ms.elapsed<40?'AI深度分析中…':ms.elapsed<70?'即将完成…':'请耐心等待…'}
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginTop:14}}>
+          <div style={{flex:1,height:4,background:`${mc}15`,borderRadius:2,overflow:'hidden'}}>
+            <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${mc}bb)`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
+          </div>
+          <span style={{fontSize:11,color:mc,fontWeight:600,flexShrink:0}}>{ms.elapsed}s</span>
         </div>
       </div>}
 
@@ -499,10 +524,23 @@ function AIScreen({profile,initialMode}){
           return(<div>
             <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                <div><div style={{fontSize:10,opacity:.6}}>命理报告</div><div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div><div style={{fontSize:11,opacity:.75,marginTop:4}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'}</div></div>
+                <div><div style={{fontSize:10,opacity:.6}}>命理报告</div><div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div><div style={{fontSize:11,opacity:.75,marginTop:4}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'}</div><div style={{display:'flex',gap:8,marginTop:6,opacity:.6,fontSize:10}}>{ms.result._genTime&&<span>⏰ {ms.result._genTime}</span>}{ms.result._elapsed&&<span>⚡ {ms.result._elapsed}s</span>}<span>📝 {ms.result.response?.length||0}字</span></div></div>
                 <div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:700}}>{sections.length}</div><div style={{fontSize:9,opacity:.7}}>维度</div></div>
               </div>
             </div>
+            {isPair&&<div style={{background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'12px 14px',marginBottom:10,display:'flex',justifyContent:'space-around',alignItems:'center',gap:8}}>
+              <div style={{textAlign:'center',flex:1}}>
+                <div style={{fontSize:10,opacity:.6}}>甲方</div>
+                <div style={{fontSize:14,fontWeight:700}}>{profile.name||'我'}</div>
+                <div style={{fontSize:10,opacity:.7}}>{profile.year}.{profile.month}.{profile.day} {profile.gender==='male'?'♂':'♀'}</div>
+              </div>
+              <div style={{fontSize:20,opacity:.6}}>💕</div>
+              <div style={{textAlign:'center',flex:1}}>
+                <div style={{fontSize:10,opacity:.6}}>乙方</div>
+                <div style={{fontSize:14,fontWeight:700}}>对方</div>
+                <div style={{fontSize:10,opacity:.7}}>{p2.year}.{p2.month}.{p2.day} {p2.gender==='male'?'♂':'♀'}</div>
+              </div>
+            </div>}
             {sections.filter(s=>s.lines.some(l=>l.trim())).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
             <div style={{display:'flex',gap:8,marginTop:10}}>
               <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
