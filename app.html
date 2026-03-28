@@ -220,6 +220,14 @@ function AIScreen({profile,initialMode}){
   const timerRef=useRef(null);
   const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:profile.gender==='male'?'female':'male'});
   const isPair=['hehun','synastry','hepan'].includes(mode);
+  // Tarot state
+  const [tarotCards,setTarotCards]=useState([]);
+  const [tarotSpread,setTarotSpread]=useState('threeCard');
+  const spreadSize={single:1,threeCard:3,relationship:4,celticCross:10};
+  const tarotPool=useState(()=>{const a=[];for(let i=0;i<78;i++)a.push(i);return a.sort(()=>Math.random()-0.5)})[0];
+  // Meihua state
+  const [mhNum1,setMhNum1]=useState('');
+  const [mhNum2,setMhNum2]=useState('');
 
   useEffect(()=>{
     if(loading){let i=0;setElapsed(0);setLoadMsg(LOAD_MSGS[0]);timerRef.current=setInterval(()=>{setElapsed(e=>e+1);i++;setLoadMsg(LOAD_MSGS[Math.min(Math.floor(i/15),LOAD_MSGS.length-1)])},1000)}
@@ -230,6 +238,8 @@ function AIScreen({profile,initialMode}){
   const divine=async(engineOnly)=>{
     setLoading(true);setError(null);setResult(null);
     try{const body={mode,...profile,question:engineOnly?'':q,displayMode:dm};if(isPair)body.profileB=p2;
+      if(mode==='tarot'){if(tarotCards.length>0)body.selectedCards=tarotCards;body.spreadType=tarotSpread}
+      if(mode==='meihua'&&mhNum1!==''){body.meihuaNum1=parseInt(mhNum1);if(mhNum2!=='')body.meihuaNum2=parseInt(mhNum2)}
       const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);
       if(r.blocked)setError(r.reason);else if(r.error)setError(r.error);
       else{setResult(engineOnly?{engineData:r.engineData,response:null}:r);
@@ -294,7 +304,45 @@ function AIScreen({profile,initialMode}){
         </div>
       </div>}
 
-      {/* Loading */}
+      {/* Tarot card selection */}
+      {mode==='tarot'&&<div className="anim-in" style={{background:'#F0FDF9',border:'1px solid #4ECDC420',borderRadius:14,padding:14,marginBottom:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <span style={{fontSize:13,fontWeight:600,color:'#4ECDC4'}}>🎴 选择牌阵</span>
+          <span style={{fontSize:11,color:T.textThi}}>已选 {tarotCards.length}/{spreadSize[tarotSpread]} 张</span>
+        </div>
+        <div style={{display:'flex',gap:6,marginBottom:10}}>
+          {[{k:'single',l:'单张',n:1},{k:'threeCard',l:'三张',n:3},{k:'relationship',l:'关系',n:4}].map(s=>(
+            <button key={s.k} onClick={()=>{setTarotSpread(s.k);setTarotCards([])}} style={{padding:'5px 12px',borderRadius:10,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:tarotSpread===s.k?'#4ECDC4':'#E0F7F5',color:tarotSpread===s.k?'#fff':'#4ECDC4'}}>{s.l}({s.n})</button>
+          ))}
+        </div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'center'}}>
+          {tarotPool.slice(0,12).map((cardId,i)=>{
+            const picked=tarotCards.includes(cardId);
+            const full=tarotCards.length>=spreadSize[tarotSpread];
+            return <button key={i} onClick={()=>{if(picked)setTarotCards(c=>c.filter(x=>x!==cardId));else if(!full)setTarotCards(c=>[...c,cardId])}} style={{width:44,height:62,borderRadius:8,cursor:picked||!full?'pointer':'not-allowed',border:picked?'2px solid #4ECDC4':'1.5px solid #d0d0d0',background:picked?'linear-gradient(135deg,#4ECDC4,#45B7D1)':'linear-gradient(135deg,#8B5CF6,#7C3AED)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:picked?16:20,color:'#fff',transition:'all .2s',transform:picked?'scale(1.05)':'scale(1)',boxShadow:picked?'0 2px 8px rgba(78,205,196,0.4)':'none'}}>
+              {picked?'✦':'?'}
+            </button>;
+          })}
+        </div>
+        <div style={{fontSize:10,color:T.textThi,textAlign:'center',marginTop:6}}>点选{spreadSize[tarotSpread]}张牌 · 或留空由系统随机抽取</div>
+      </div>}
+
+      {/* Meihua number input */}
+      {mode==='meihua'&&<div className="anim-in" style={{background:'#FFF8EB',border:'1px solid #FFB34720',borderRadius:14,padding:14,marginBottom:12}}>
+        <div style={{fontSize:13,fontWeight:600,color:'#FFB347',marginBottom:8}}>❀ 自定义起卦数字</div>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <div style={{flex:1,textAlign:'center'}}>
+            <div style={{fontSize:10,color:T.textThi,marginBottom:3}}>上卦数</div>
+            <input type="number" value={mhNum1} onChange={e=>setMhNum1(e.target.value)} placeholder="随机" style={{width:'100%',padding:'8px',border:'1px solid #FFD99B',borderRadius:10,fontSize:15,textAlign:'center',background:'#fff',outline:'none'}}/>
+          </div>
+          <div style={{fontSize:18,color:'#FFB347',marginTop:14}}>·</div>
+          <div style={{flex:1,textAlign:'center'}}>
+            <div style={{fontSize:10,color:T.textThi,marginBottom:3}}>下卦数</div>
+            <input type="number" value={mhNum2} onChange={e=>setMhNum2(e.target.value)} placeholder="随机" style={{width:'100%',padding:'8px',border:'1px solid #FFD99B',borderRadius:10,fontSize:15,textAlign:'center',background:'#fff',outline:'none'}}/>
+          </div>
+        </div>
+        <div style={{fontSize:10,color:T.textThi,textAlign:'center',marginTop:6}}>留空=按当前时间自动起卦 · 输入数字=自定义起卦</div>
+      </div>}
       {loading&&<div className="anim-in" style={{background:'#fff',borderRadius:16,padding:20,boxShadow:T.shadow,textAlign:'center',marginBottom:12}}>
         <div style={{fontSize:28,marginBottom:8,animation:'pulse 1.5s infinite'}}>🔮</div>
         <div style={{fontSize:14,fontWeight:600,color:P.accent}}>{loadMsg}</div>
