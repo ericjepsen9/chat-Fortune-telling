@@ -443,7 +443,15 @@ function buildRequest(mode, profile, question, options = {}) {
   // 敏感问题加disclaimer
   const sensitiveDisclaimer = safety.level === 'sensitive' ? '\n\n【重要】你的回答要温和谨慎。不做绝对判断（"一定会""绝对不行"）。提醒用户命理仅供参考，重大决策请结合现实情况。' : '';
 
-  const systemPrompt = buildPrompt(mode, dm, question) + categoryHint + sensitiveDisclaimer + engineData;
+  // 时辰缺失提示
+  let hourDisclaimer = '';
+  if (options.hourUnknown || profile.hour === -1 || profile.hour === undefined) {
+    hourDisclaimer = '\n\n【重要】用户不知道自己的出生时辰，无法确定时柱。请基于年柱、月柱、日柱进行分析，时柱相关内容（如子女宫、晚运）请明确标注"因缺少时辰信息，以下为参考推测"。不要编造时柱。';
+  } else if (options.hourApprox) {
+    hourDisclaimer = '\n\n【注意】用户提供的出生时辰为大致时段估计（非精确），时柱可能有偏差。分析时柱相关内容时请注明"基于大致时段推算"。';
+  }
+
+  const systemPrompt = buildPrompt(mode, dm, question) + categoryHint + sensitiveDisclaimer + hourDisclaimer + engineData;
   return { systemPrompt, userMessage: (question && question.trim()) || '请为我进行全面分析', engineData, context: ctx, displayMode: dm, mode, category, safetyLevel: safety.level };
 }
 

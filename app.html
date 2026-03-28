@@ -306,11 +306,126 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
   );
 }
 
-function AIScreen({profile,initialMode}){
+// Hour Correction Assistant Modal
+function HourAssistantModal({profile,onResult,onClose}){
+  const [step,setStep]=useState(0);
+  const [answers,setAnswers]=useState({});
+  const [loading,setLoading]=useState(false);
+  const [result,setResult]=useState(null);
+  const questions=[
+    {key:'rank',title:'① 你在兄弟姐妹中排行？',opts:[{v:'oldest',l:'👆 老大/长子长女'},{v:'middle',l:'✌️ 中间'},{v:'youngest',l:'👇 最小'},{v:'only',l:'🙋 独生'}]},
+    {key:'personality',title:'② 你的性格更偏向？',opts:[{v:'extrovert',l:'🔥 外向主动',d:'爱社交，表达欲强'},{v:'introvert',l:'🌊 内敛沉稳',d:'独处充电，深思熟虑'},{v:'ambivert',l:'⚖️ 看情况',d:'有时外向有时安静'}]},
+    {key:'turning',title:'③ 你第一次重大人生转折约在？',sub:'如：升学/工作/恋爱/搬家等重要变化',opts:[{v:'10-18',l:'10-18岁',d:'青少年时期'},{v:'19-25',l:'19-25岁',d:'大学/初入社会'},{v:'26-33',l:'26-33岁',d:'而立前后'},{v:'34+',l:'34岁以后',d:'中年以后'}]},
+    {key:'bodyType',title:'④ 你的体型总体偏向？',opts:[{v:'slim',l:'🦴 偏瘦',d:'不容易胖'},{v:'medium',l:'⚖️ 匀称',d:'正常体型'},{v:'strong',l:'💪 偏壮',d:'容易长肉/壮实'}]},
+    {key:'energy',title:'⑤ 你通常哪个时段最有精力？',opts:[{v:'earlyMorning',l:'🌅 清晨5-8点'},{v:'morning',l:'☀️ 上午9-12点'},{v:'afternoon',l:'🌇 下午14-18点'},{v:'lateNight',l:'🌙 深夜22点后'}]},
+  ];
+  const pick=(key,val)=>{
+    const a={...answers,[key]:val};setAnswers(a);
+    if(step<questions.length-1)setTimeout(()=>setStep(step+1),300);
+    else doCorrect(a);
+  };
+  const doCorrect=async(a)=>{
+    setLoading(true);
+    try{
+      const r=await apiPost('/api/hour-correct',{year:profile.year,month:profile.month,day:profile.day,gender:profile.gender,answers:a});
+      setResult(r);
+    }catch(e){setResult({error:e.message})}
+    setLoading(false);
+  };
+  const q=questions[step];
+  const progress=result?100:Math.round((step/questions.length)*100);
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'90vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+        {/* Header */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div style={{fontSize:18,fontWeight:700,color:'#D97706'}}>🔮 AI时辰校正助手</div>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+        </div>
+        {/* Progress */}
+        <div style={{height:4,background:'#FEF3C7',borderRadius:2,marginBottom:16,overflow:'hidden'}}>
+          <div style={{height:'100%',background:'linear-gradient(90deg,#D97706,#F59E0B)',borderRadius:2,width:progress+'%',transition:'width .4s ease'}}/>
+        </div>
+
+        {!result&&!loading&&<>
+          {/* Question */}
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:16,fontWeight:700,color:'#1F2937',marginBottom:4}}>{q.title}</div>
+            {q.sub&&<div style={{fontSize:12,color:'#6B7280'}}>{q.sub}</div>}
+          </div>
+          {/* Options */}
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {q.opts.map(o=>{
+              const selected=answers[q.key]===o.v;
+              return <button key={o.v} onClick={()=>pick(q.key,o.v)} style={{padding:'14px 16px',borderRadius:14,border:selected?'2px solid #D97706':'1.5px solid #E5E7EB',background:selected?'#FFF8EB':'#fff',cursor:'pointer',textAlign:'left',transition:'all .2s',transform:selected?'scale(1.02)':'none'}}>
+                <div style={{fontSize:14,fontWeight:600,color:selected?'#D97706':'#374151'}}>{o.l}</div>
+                {o.d&&<div style={{fontSize:11,color:'#6B7280',marginTop:2}}>{o.d}</div>}
+              </button>;
+            })}
+          </div>
+          {/* Back */}
+          {step>0&&<button onClick={()=>setStep(step-1)} style={{marginTop:12,background:'none',border:'none',fontSize:13,color:'#6B7280',cursor:'pointer'}}>← 上一题</button>}
+          {/* Steps indicator */}
+          <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:16}}>
+            {questions.map((_,i)=><div key={i} style={{width:i===step?20:8,height:8,borderRadius:4,background:i<step?'#D97706':i===step?'#F59E0B':'#E5E7EB',transition:'all .3s'}}/>)}
+          </div>
+        </>}
+
+        {/* Loading */}
+        {loading&&<div style={{textAlign:'center',padding:'40px 20px'}}>
+          <div style={{width:60,height:60,margin:'0 auto 16px',position:'relative'}}>
+            <div style={{position:'absolute',inset:0,borderRadius:'50%',border:'3px solid #FEF3C7'}}/>
+            <div style={{position:'absolute',inset:0,borderRadius:'50%',border:'3px solid transparent',borderTopColor:'#D97706',animation:'spin 1s linear infinite'}}/>
+            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>🔮</div>
+          </div>
+          <div style={{fontSize:15,fontWeight:600,color:'#D97706'}}>AI正在分析你的时辰…</div>
+          <div style={{fontSize:12,color:'#6B7280',marginTop:6}}>综合五维特征匹配12个候选时辰</div>
+        </div>}
+
+        {/* Result */}
+        {result&&!result.error&&<div>
+          <div style={{textAlign:'center',marginBottom:16}}>
+            <div style={{fontSize:48,marginBottom:8}}>{result.level==='high'?'🎯':result.level==='medium'?'🔮':'🤔'}</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#1F2937'}}>{result.message}</div>
+          </div>
+          {/* Top 3 results */}
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
+            {result.ranking.map((r,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:14,border:i===0?'2px solid #D97706':'1.5px solid #E5E7EB',background:i===0?'#FFF8EB':'#fff'}}>
+                <div style={{width:36,height:36,borderRadius:18,background:i===0?'#D97706':i===1?'#F59E0B':'#E5E7EB',display:'flex',alignItems:'center',justifyContent:'center',color:i<2?'#fff':'#666',fontSize:14,fontWeight:700,flexShrink:0}}>{i+1}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700,color:i===0?'#D97706':'#374151'}}>{r.label}（{r.range}点）</div>
+                  <div style={{fontSize:11,color:'#6B7280',marginTop:2}}>{r.reason}</div>
+                </div>
+                <div style={{fontSize:14,fontWeight:700,color:i===0?'#D97706':'#6B7280'}}>{r.score}分</div>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:11,color:'#6B7280',textAlign:'center',marginBottom:16}}>置信度 {result.confidence}% · 基于排行+性格+转折+体型+精力五维匹配</div>
+          {/* Actions */}
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>{onResult(result.bestHour);onClose()}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#D97706,#B45309)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>✓ 采用{result.bestLabel}</button>
+            <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'14px 20px',borderRadius:14,border:'1.5px solid #E5E7EB',background:'#fff',fontSize:14,color:'#6B7280',cursor:'pointer'}}>重测</button>
+          </div>
+        </div>}
+
+        {result&&result.error&&<div style={{textAlign:'center',padding:'30px 20px'}}>
+          <div style={{fontSize:14,color:'#EF4444',marginBottom:12}}>⚠️ {result.error}</div>
+          <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'10px 20px',borderRadius:10,border:'none',background:'#EF4444',color:'#fff',fontSize:13,cursor:'pointer'}}>重试</button>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function AIScreen({profile,initialMode,onUpdateProfile}){
   const [mode,setMode]=useState(initialMode||'bazi');
   const [dm,setDm]=useState('expert');
   const [viewMode,setViewMode]=useState('card');
   const [showTarotModal,setShowTarotModal]=useState(false);
+  const [showHourAssistant,setShowHourAssistant]=useState(false);
+  const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
+  const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
 
   // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
@@ -372,13 +487,15 @@ function AIScreen({profile,initialMode}){
     if(needsBirth&&(!profile.year||!profile.month||!profile.day)){
       setMS(m,{error:'请先完善出生年月日信息（在"我的"页面可修改）'});return;
     }
-    if(needsBirth&&profile.hour===-1){
-      // Allow but warn
+    if(needsBirth&&profile.hour===-1&&!hourSkipped){
+      setMS(m,{error:'请先补充出生时辰，或选择"不知道时辰"继续'});return;
     }
     setMS(m,{loading:true,error:null,result:null});
     startTimer(m);
     try{
       const body={mode:m,...profile,question:engineOnly?'':getMS(m).q,displayMode:dm};
+      if(profile.hour===-1)body.hourUnknown=true;
+      if(hourApprox)body.hourApprox=true;
       if(['hehun','synastry','hepan'].includes(m))body.profileB=p2;
       if(m==='tarot'){if(tarotCards.length>0)body.selectedCards=tarotCards;body.spreadType=tarotSpread}
       if(m==='meihua'&&mhNum1!==''){body.meihuaNum1=parseInt(mhNum1);if(mhNum2!=='')body.meihuaNum2=parseInt(mhNum2)}
@@ -441,6 +558,57 @@ function AIScreen({profile,initialMode}){
           </button>);
         })}
       </div>
+
+      {/* HOUR COMPLETION PROMPT (when hour=-1 and not skipped) */}
+      {profile.hour===-1&&!hourSkipped&&!ms.loading&&!ms.result&&(()=>{
+        const needsHour=['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode);
+        if(!needsHour)return null;
+        return(<div className="anim-in" style={{background:'linear-gradient(135deg,#FFF8EB,#FEF3C7)',border:'1.5px solid #FCD34D',borderRadius:18,padding:16,marginBottom:14}}>
+          <div style={{fontSize:15,fontWeight:700,color:'#D97706',marginBottom:4}}>⏰ 补充出生时辰</div>
+          <div style={{fontSize:12,color:'#92400E',lineHeight:1.6,marginBottom:12}}>{MODE_FULL[mode]}需要时辰信息来提高精度。你可以：</div>
+
+          {/* Direct input */}
+          <div style={{background:'#fff',borderRadius:12,padding:12,marginBottom:8}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#D97706',marginBottom:6}}>📋 知道具体时间</div>
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <input type="number" placeholder="0-23时" min="0" max="23" style={{flex:1,padding:'10px',border:'2px solid #FCD34D',borderRadius:10,fontSize:16,textAlign:'center',fontWeight:700,color:'#D97706',outline:'none',background:'#FFFDF5'}} onChange={e=>{const h=parseInt(e.target.value);if(h>=0&&h<=23)onUpdateProfile({...profile,hour:h})}}/>
+              <div style={{fontSize:11,color:T.textThi}}>24小时制</div>
+            </div>
+          </div>
+
+          {/* Approximate time period */}
+          <div style={{background:'#fff',borderRadius:12,padding:12,marginBottom:8}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#D97706',marginBottom:8}}>🌅 选择大致时段</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+              {[{l:'🌙 凌晨',h:2,t:'0-4时'},{l:'🌅 清晨',h:7,t:'5-8时'},{l:'☀️ 上午',h:10,t:'9-11时'},{l:'🌤 中午',h:12,t:'12-13时'},{l:'🌇 下午',h:15,t:'14-17时'},{l:'🌆 傍晚',h:19,t:'18-20时'}].map(p=>(
+                <button key={p.h} onClick={()=>{onUpdateProfile({...profile,hour:p.h});setHourApprox(true)}} style={{padding:'8px 4px',borderRadius:10,border:'1.5px solid #FCD34D',background:'#FFFDF5',cursor:'pointer',textAlign:'center'}}>
+                  <div style={{fontSize:12}}>{p.l}</div>
+                  <div style={{fontSize:9,color:'#92400E',marginTop:2}}>{p.t}</div>
+                </button>
+              ))}
+            </div>
+            <div style={{fontSize:10,color:'#92400E',textAlign:'center',marginTop:6,opacity:.6}}>选择后AI会基于该时段中间值分析</div>
+          </div>
+
+          {/* AI Hour Correction */}
+          <div style={{background:'#fff',borderRadius:12,padding:12,marginBottom:8}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#D97706',marginBottom:6}}>🔮 AI推算时辰</div>
+            <div style={{fontSize:11,color:'#92400E',marginBottom:8}}>回答5个简单问题，AI帮你推算最可能的出生时辰</div>
+            <button onClick={()=>setShowHourAssistant(true)} style={{width:'100%',padding:'10px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#D97706,#B45309)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',boxShadow:'0 2px 10px rgba(217,119,6,0.3)'}}>🔮 开始AI测时辰（30秒）</button>
+          </div>
+
+          {/* Skip */}
+          <button onClick={()=>setHourSkipped(true)} style={{width:'100%',padding:'10px',borderRadius:10,border:'none',background:'transparent',fontSize:12,color:'#D97706',cursor:'pointer',opacity:.6}}>❓ 不知道时辰，继续使用（精度会降低）</button>
+        </div>);
+      })()}
+
+      {/* Hour skipped warning banner */}
+      {profile.hour===-1&&hourSkipped&&!ms.loading&&!ms.result&&['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode)&&
+        <div style={{background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,padding:'8px 12px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,color:'#D97706'}}>
+          <span>⚠️ 未填时辰，结果可能不够精确</span>
+          <button onClick={()=>setHourSkipped(false)} style={{background:'#D97706',border:'none',borderRadius:8,padding:'4px 10px',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>补充</button>
+        </div>
+      }
 
       {/* CONFIG PANELS (hide when loading/result for current mode) */}
       {!ms.loading&&!ms.result&&<>
@@ -541,6 +709,12 @@ function AIScreen({profile,initialMode}){
 
       {/* Results for CURRENT mode */}
       {ms.result&&<div ref={ref} className="anim-slide" style={{scrollMarginTop:120}}>
+        {/* Hour accuracy warning */}
+        {(profile.hour===-1||hourApprox)&&['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode)&&
+          <div style={{background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,padding:'8px 12px',marginBottom:10,fontSize:11,color:'#92400E',lineHeight:1.5}}>
+            {profile.hour===-1?'⚠️ 未提供出生时辰，以下结果基于年月日三柱分析，时柱相关内容（子女、晚运等）仅供参考。':'⏰ 使用的是大致出生时段，时柱精度可能有偏差。'}
+          </div>
+        }
         {ms.result.response&&<div style={{display:'flex',gap:0,marginBottom:12,background:'#EDE9FE',borderRadius:10,padding:3}}>
           {[{v:'card',l:'📊 报告卡片'},{v:'text',l:'📝 长文阅读'}].map(v=>(
             <button key={v.v} onClick={()=>setViewMode(v.v)} style={{flex:1,padding:'7px 0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:viewMode===v.v?'#fff':'transparent',color:viewMode===v.v?mc:T.textThi,boxShadow:viewMode===v.v?T.shadow:'none',transition:'all .2s'}}>{v.l}</button>
@@ -636,6 +810,9 @@ function AIScreen({profile,initialMode}){
 
     {/* Tarot Modal */}
     {showTarotModal&&<TarotModal spread={tarotSpread} setSpread={setTarotSpread} cards={tarotCards} setCards={setTarotCards} pool={tarotPool} onDone={(autoDivine)=>{setShowTarotModal(false);if(autoDivine)setTimeout(()=>divine(mode,false),100)}} onClose={()=>setShowTarotModal(false)}/>}
+
+    {/* Hour Correction Assistant */}
+    {showHourAssistant&&<HourAssistantModal profile={profile} onResult={(h)=>{onUpdateProfile({...profile,hour:h})}} onClose={()=>setShowHourAssistant(false)}/>}
   </div>);
 }
 
@@ -682,7 +859,7 @@ function App(){
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<HomeScreen profile={profile} goTo={goTo}/>}
     {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo}/>}
-    {scr===S.AI&&profile&&<AIScreen profile={profile} initialMode={aiMode}/>}
+    {scr===S.AI&&profile&&<AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/>}
     {scr===S.MSGS&&<MsgsScreen/>}
     {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)}/>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}

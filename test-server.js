@@ -280,6 +280,25 @@ const server = http.createServer(async (req, res) => {
   }
 
   // API：仅计算引擎（不调 LLM）
+  // API：时辰校正
+  if (parsedUrl.pathname === '/api/hour-correct' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { year, month, day, gender, answers } = JSON.parse(body);
+        const hourCorrection = require('./src/engines/hour-correction');
+        const result = hourCorrection.correctHour(parseInt(year), parseInt(month), parseInt(day), gender, answers);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(result));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (parsedUrl.pathname === '/api/calculate' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);
@@ -304,9 +323,9 @@ const server = http.createServer(async (req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
-        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB } = JSON.parse(body);
+        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox } = JSON.parse(body);
         const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
-        const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB };
+        const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
         // 空问题或默认问题 → 全面分析；有具体问题 → 聚焦分析
         const result = await handleDivination(mode, profile, question || '', displayMode || 'simple', ctxOptions);
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
