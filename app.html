@@ -327,9 +327,9 @@ function AIScreen({profile,initialMode}){
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
   const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
-  return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:P.bg}}>
+  return(<div style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER with category tabs === */}
-    <div style={{background:P.headerGrad,padding:'44px 16px 12px',flexShrink:0}}>
+    <div style={{background:P.headerGrad,padding:'44px 16px 12px',position:'sticky',top:0,zIndex:60}}>
       <div style={{marginBottom:8}}>
         <div className="serif" style={{color:'#fff',fontSize:18,fontWeight:700}}>✦ AI 占卜</div>
       </div>
@@ -350,7 +350,7 @@ function AIScreen({profile,initialMode}){
     </div>
 
     {/* === SCROLLABLE CONTENT === */}
-    <div style={{flex:1,overflow:'auto',padding:'12px 16px 130px'}}>
+    <div style={{padding:'12px 16px 180px'}}>
       {/* Mode grid */}
       <div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6,marginBottom:14}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
