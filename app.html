@@ -34,6 +34,32 @@ body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-web
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 
+// ===== SVG ICONS (MIT License, commercially usable) =====
+const I=({d,size=20,color='currentColor',sw=2})=>React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color,strokeWidth:sw,strokeLinecap:'round',strokeLinejoin:'round'},Array.isArray(d)?d.map((p,i)=>React.createElement('path',{key:i,d:p})):React.createElement('path',{d}));
+const Icons={
+  // Navigation & Actions
+  x:({s=20,c='currentColor'})=><I d="M18 6L6 18M6 6l12 12" size={s} color={c}/>,
+  heart:({s=20,c='currentColor',fill})=><svg width={s} height={s} viewBox="0 0 24 24" fill={fill||'none'} stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  sparkles:({s=20,c='currentColor'})=><I d={["M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z","M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"]} size={s} color={c}/>,
+  // Tab bar
+  flame:({s=20,c='currentColor'})=><I d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14 0-5.5 3.5-7.5C14 3 14.5 5 15 6c.53 1.04 1 2 1 4a5 5 0 0 1-5 5c-1.38 0-2.5-1.12-2.5-2.5z" size={s} color={c}/>,
+  compass:({s=20,c='currentColor'})=><I d={["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z","M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"]} size={s} color={c}/>,
+  msgCircle:({s=20,c='currentColor'})=><I d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" size={s} color={c}/>,
+  user:({s=20,c='currentColor'})=><I d={["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2","M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"]} size={s} color={c}/>,
+  // Modes
+  grid:({s=20,c='currentColor'})=><I d={["M3 3h7v7H3z","M14 3h7v7h-7z","M14 14h7v7h-7z","M3 14h7v7H3z"]} size={s} color={c}/>,
+  star:({s=20,c='currentColor'})=><I d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" size={s} color={c}/>,
+  diamond:({s=20,c='currentColor'})=><I d="M12 2l10 10-10 10L2 12 12 2z" size={s} color={c}/>,
+  flower:({s=20,c='currentColor'})=><I d={["M12 7.5a4.5 4.5 0 1 1 4.5 4.5M12 7.5A4.5 4.5 0 1 0 7.5 12M12 7.5V3m0 9a4.5 4.5 0 1 0 4.5 4.5M12 16.5a4.5 4.5 0 1 1-4.5-4.5M12 16.5V21"]} size={s} color={c}/>,
+  target:({s=20,c='currentColor'})=><I d={["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z","M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12z","M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"]} size={s} color={c}/>,
+  heartHandshake:({s=20,c='currentColor'})=><I d={["M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7 7-7z","M12 5L9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"]} size={s} color={c}/>,
+  orbit:({s=20,c='currentColor'})=><I d={["M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0","M12 2a10 10 0 0 1 0 20","M2 12h4","M18 12h4"]} size={s} color={c}/>,
+  // Actions
+  copy:({s=20,c='currentColor'})=><I d={["M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2","M8 2h8v4H8z"]} size={s} color={c}/>,
+  zap:({s=20,c='currentColor'})=><I d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" size={s} color={c}/>,
+  dice:({s=20,c='currentColor'})=><I d={["M3 3h18v18H3z","M8.5 8.5h.01","M15.5 8.5h.01","M15.5 15.5h.01","M8.5 15.5h.01","M12 12h.01"]} size={s} color={c}/>,
+};
+
 const T={bg:"#FAFAF7",card:"#FFFFFF",primary:"#FF6B6B",primaryDark:"#E85555",secondary:"#FFB347",accent1:"#4ECDC4",accent2:"#7C5CFC",accent3:"#FF8A9B",accent4:"#45B7D1",gold:"#F4C542",text:"#1A1A2E",textSec:"#6B7280",textThi:"#9CA3AF",border:"#F0F0EC",borderDark:"#E5E5E0",success:"#34D399",shadow:"0 2px 16px rgba(0,0,0,0.06)",shadowLg:"0 8px 32px rgba(0,0,0,0.10)"};
 const S={SPLASH:0,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
@@ -146,19 +172,19 @@ function HomeScreen({profile,goTo}){
   return(<div style={{height:'100%',overflow:'hidden',paddingBottom:64}}>
     <div style={{padding:'48px 20px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
-      <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#7C5CFC,#4ECDC4)',border:'none',borderRadius:12,padding:'8px 14px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px rgba(124,92,252,0.3)'}}>✦ AI占卜</button>
+      <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:12,padding:'8px 14px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px rgba(139,92,246,0.3)',display:'flex',alignItems:'center',gap:4}}><Icons.sparkles s={14} c="#fff"/> AI占卜</button>
     </div>
-    <div style={{position:'relative',height:'calc(100% - 160px)',margin:'0 16px'}}>
+    <div style={{position:'relative',height:'calc(100% - 190px)',margin:'0 16px'}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
-        <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>✦ 先去AI占卜</button>
+        <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}><Icons.sparkles s={16} c="#fff"/> 先去AI占卜</button>
       </div>)
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1}/>)}
     </div>
-    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:24,padding:'12px 0'}}>
-      <button onClick={()=>swipe('left')} style={{width:52,height:52,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}>✕</button>
-      <button onClick={()=>swipe('right')} style={{width:60,height:60,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',color:'#fff',fontSize:26,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(255,107,107,0.35)'}}>♥</button>
-      <button onClick={()=>goTo(S.AI)} style={{width:52,height:52,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}>✦</button>
+    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:20,padding:'8px 0 4px',alignItems:'center'}}>
+      <button onClick={()=>swipe('left')} style={{width:48,height:48,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c="#999"/></button>
+      <button onClick={()=>swipe('right')} style={{width:56,height:56,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(255,107,107,0.35)'}}><Icons.heart s={26} c="#fff" fill="#fff"/></button>
+      <button onClick={()=>goTo(S.AI)} style={{width:48,height:48,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.sparkles s={18} c="#7C5CFC"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
   </div>);
@@ -484,10 +510,10 @@ function MeScreen({profile,onLogout,goTo}){return(<div style={{height:'100%',ove
 
 // ===== TAB BAR =====
 function TabBar({active,onTap}){
-  const tabs=[{id:S.HOME,icon:"🔥",label:"首页"},{id:S.DISCOVER,icon:"🌍",label:"发现"},{id:S.AI,icon:"✦",label:"AI占卜",center:true},{id:S.MSGS,icon:"💬",label:"消息"},{id:S.ME,icon:"👤",label:"我的"}];
+  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息"},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
   return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:64,background:'#fff',borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'flex-end',justifyContent:'space-around',padding:'0 4px 6px',zIndex:100}}>
-    {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#FF6B6B,#7C5CFC)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:20,cursor:'pointer',boxShadow:'0 4px 16px rgba(124,92,252,.35)',marginBottom:4,fontFamily:'serif'}}>{tab.icon}</button>;
-    return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5}}><span style={{fontSize:20}}>{tab.icon}</span><span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span></button>})}
+    {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 16px rgba(139,92,246,.35)',marginBottom:4}}><Icons.sparkles s={22} c="#fff"/></button>;
+    return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5}}>{tab.ic(act?T.primary:T.textThi)}<span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span></button>})}
   </div>);
 }
 
