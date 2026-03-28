@@ -174,7 +174,7 @@ function HomeScreen({profile,goTo}){
       <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
       <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:12,padding:'8px 14px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px rgba(139,92,246,0.3)',display:'flex',alignItems:'center',gap:4}}><Icons.sparkles s={14} c="#fff"/> AI占卜</button>
     </div>
-    <div style={{position:'relative',height:'calc(100vh - 240px)',margin:'0 16px'}}>
+    <div style={{position:'relative',height:'calc(100vh - 310px)',margin:'0 16px'}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}><Icons.sparkles s={16} c="#fff"/> 先去AI占卜</button>
