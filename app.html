@@ -272,8 +272,8 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
         </div>
         {/* Actions */}
         <div style={{display:'flex',gap:10,marginTop:16}}>
-          <button onClick={()=>{setCards([]);onDone()}} style={{flex:1,padding:'14px',borderRadius:14,border:'1.5px solid #e0e0e0',background:'#fff',fontSize:14,fontWeight:600,color:'#666',cursor:'pointer'}}>随机抽取</button>
-          <button onClick={onDone} disabled={cards.length===0} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:cards.length>0?'linear-gradient(135deg,#0D9488,#059669)':'#ccc',fontSize:14,fontWeight:700,color:'#fff',cursor:cards.length>0?'pointer':'default'}}>{cards.length>=need?`确认${need}张牌`:`继续选牌`}</button>
+          <button onClick={()=>{setCards([]);onDone(true)}} style={{flex:1,padding:'14px',borderRadius:14,border:'1.5px solid #e0e0e0',background:'#fff',fontSize:14,fontWeight:600,color:'#666',cursor:'pointer'}}>🎴 随机抽取</button>
+          <button onClick={()=>onDone(true)} disabled={cards.length===0} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:cards.length>0?'linear-gradient(135deg,#0D9488,#059669)':'#ccc',fontSize:14,fontWeight:700,color:'#fff',cursor:cards.length>0?'pointer':'default'}}>{cards.length>=need?`✦ 确认${need}张牌`:'继续选牌'}</button>
         </div>
       </div>
     </div>
@@ -513,7 +513,7 @@ function AIScreen({profile,initialMode}){
     </div>
 
     {/* Tarot Modal */}
-    {showTarotModal&&<TarotModal spread={tarotSpread} setSpread={setTarotSpread} cards={tarotCards} setCards={setTarotCards} pool={tarotPool} onDone={()=>setShowTarotModal(false)} onClose={()=>setShowTarotModal(false)}/>}
+    {showTarotModal&&<TarotModal spread={tarotSpread} setSpread={setTarotSpread} cards={tarotCards} setCards={setTarotCards} pool={tarotPool} onDone={(autoDivine)=>{setShowTarotModal(false);if(autoDivine)setTimeout(()=>divine(false),100)}} onClose={()=>setShowTarotModal(false)}/>}
   </div>);
 }
 
