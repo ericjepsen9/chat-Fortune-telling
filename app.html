@@ -256,7 +256,7 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
         </div>
         {/* Cards grid */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-          {pool.slice(0,16).map((cid,i)=>{
+          {pool.slice(0,12).map((cid,i)=>{
             const picked=cards.includes(cid);const full=cards.length>=need;const order=picked?cards.indexOf(cid)+1:null;
             return <button key={i} onClick={()=>{if(picked)setCards(c=>c.filter(x=>x!==cid));else if(!full)setCards(c=>[...c,cid])}} style={{
               aspectRatio:'2/3',borderRadius:12,cursor:picked||!full?'pointer':'default',
@@ -330,20 +330,22 @@ function AIScreen({profile,initialMode}){
   return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:P.bg}}>
     {/* === HEADER with category tabs === */}
     <div style={{background:P.headerGrad,padding:'44px 16px 12px',flexShrink:0}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+      <div style={{marginBottom:8}}>
         <div className="serif" style={{color:'#fff',fontSize:18,fontWeight:700}}>✦ AI 占卜</div>
-        <div style={{display:'flex',gap:4}}>
-          {[{v:'expert',l:'专家'},{v:'simple',l:'大众'}].map(d=>(
-            <button key={d.v} onClick={()=>setDm(d.v)} style={{padding:'4px 12px',borderRadius:14,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:dm===d.v?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:dm===d.v?P.accent:'rgba(255,255,255,0.8)',transition:'all .2s'}}>{d.l}</button>
-          ))}
-        </div>
       </div>
-      {/* Category tabs in header */}
+      {/* Category tabs + expert/popular in header */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div style={{display:'flex',gap:6}}>
         {[{k:'single',l:'🔮 个人占卜'},{k:'pair',l:'💑 配对分析'}].map(c=>{
           const active=modeInfo.cat===c.k;
           return <button key={c.k} onClick={()=>setModeAndClear(MODES.find(m=>m.cat===c.k).id)} style={{padding:'6px 18px',borderRadius:20,fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background:active?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:active?P.accent:'rgba(255,255,255,0.85)',transition:'all .2s'}}>{c.l}</button>;
         })}
+      </div>
+      <div style={{display:'flex',gap:4}}>
+          {[{v:'expert',l:'专家'},{v:'simple',l:'大众'}].map(d=>(
+            <button key={d.v} onClick={()=>setDm(d.v)} style={{padding:'4px 12px',borderRadius:14,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:dm===d.v?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.2)',color:dm===d.v?P.accent:'rgba(255,255,255,0.8)',transition:'all .2s'}}>{d.l}</button>
+          ))}
+      </div>
       </div>
     </div>
 
