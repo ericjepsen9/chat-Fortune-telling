@@ -169,12 +169,12 @@ function HomeScreen({profile,goTo}){
   const [matchUser,setMatchUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
   const swipe=(dir)=>{const top=cards[cards.length-1];if(dir==='right'&&top.score>=80)setTimeout(()=>setMatchUser(top),300);setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
-  return(<div style={{height:'100%',overflow:'hidden',paddingBottom:64}}>
+  return(<div style={{height:'100%',overflow:'hidden',paddingBottom:72}}>
     <div style={{padding:'48px 20px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
       <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:12,padding:'8px 14px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px rgba(139,92,246,0.3)',display:'flex',alignItems:'center',gap:4}}><Icons.sparkles s={14} c="#fff"/> AI占卜</button>
     </div>
-    <div style={{position:'relative',height:'calc(100% - 190px)',margin:'0 16px'}}>
+    <div style={{position:'relative',height:'calc(100% - 200px)',margin:'0 16px'}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}><Icons.sparkles s={16} c="#fff"/> 先去AI占卜</button>
@@ -278,7 +278,7 @@ function AIScreen({profile,initialMode}){
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
   const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
-  return(<div style={{height:'100%',overflow:'auto',background:P.bg,paddingBottom:80}}>
+  return(<div style={{height:'100%',overflow:'auto',background:P.bg,paddingBottom:100}}>
     {/* HEADER */}
     <div style={{background:P.headerGrad,padding:'44px 16px 16px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -336,7 +336,7 @@ function AIScreen({profile,initialMode}){
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,justifyItems:'center'}}>
           {tarotPool.slice(0,12).map((cid,i)=>{
             const picked=tarotCards.includes(cid);const full=tarotCards.length>=spreadSize[tarotSpread];const order=picked?tarotCards.indexOf(cid)+1:null;
-            return <button key={i} onClick={()=>{if(picked)setTarotCards(c=>c.filter(x=>x!==cid));else if(!full)setTarotCards(c=>[...c,cid])}} style={{width:'100%',height:80,borderRadius:10,cursor:picked||!full?'pointer':'default',border:picked?'2.5px solid #0D9488':'1.5px solid #bbb',background:picked?'linear-gradient(135deg,#0D9488,#14B8A6)':'linear-gradient(160deg,#6366F1,#4338CA)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',transition:'all .25s',transform:picked?'translateY(-4px) scale(1.03)':'scale(1)',boxShadow:picked?'0 6px 16px #0D948850':'0 2px 6px rgba(0,0,0,0.12)',opacity:!picked&&full?0.35:1}}>
+            return <button key={i} onClick={()=>{if(picked)setTarotCards(c=>c.filter(x=>x!==cid));else if(!full)setTarotCards(c=>[...c,cid])}} style={{width:'100%',height:68,borderRadius:10,cursor:picked||!full?'pointer':'default',border:picked?'2.5px solid #0D9488':'1.5px solid #bbb',background:picked?'linear-gradient(135deg,#0D9488,#14B8A6)':'linear-gradient(160deg,#6366F1,#4338CA)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',transition:'all .25s',transform:picked?'translateY(-4px) scale(1.03)':'scale(1)',boxShadow:picked?'0 6px 16px #0D948850':'0 2px 6px rgba(0,0,0,0.12)',opacity:!picked&&full?0.35:1}}>
               {picked?<><div style={{fontSize:11,opacity:.8}}>第{order}张</div><div style={{fontSize:20,marginTop:2}}>✦</div></>:<><div style={{fontSize:22,opacity:.5}}>✧</div><div style={{fontSize:9,opacity:.4,marginTop:2}}>选我</div></>}
             </button>;
           })}
@@ -395,7 +395,7 @@ function AIScreen({profile,initialMode}){
         ))}
       </div>
       <button onClick={()=>divine(false)} disabled={loading} style={{
-        width:'100%',height:50,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,
+        width:'100%',height:50,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,whiteSpace:'nowrap',overflow:'hidden',
         background:loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
         boxShadow:loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',
       }}>
