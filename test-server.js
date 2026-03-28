@@ -280,6 +280,63 @@ const server = http.createServer(async (req, res) => {
   }
 
   // API：仅计算引擎（不调 LLM）
+  // API：匹配评分
+  if (parsedUrl.pathname === '/api/match' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { profileA, profileB } = JSON.parse(body);
+        const matching = require('./src/engines/matching');
+        const result = matching.quickMatch(profileA, profileB);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(result));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // API：批量匹配（首页卡片）
+  if (parsedUrl.pathname === '/api/batch-match' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { profile, candidates } = JSON.parse(body);
+        const matching = require('./src/engines/matching');
+        const results = matching.batchMatch(profile, candidates);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(results));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // API：今日运势
+  if (parsedUrl.pathname === '/api/fortune' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const profile = JSON.parse(body);
+        const matching = require('./src/engines/matching');
+        const result = matching.todayFortune(profile);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(result));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   // API：时辰校正
   if (parsedUrl.pathname === '/api/hour-correct' && req.method === 'POST') {
     let body = '';

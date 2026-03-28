@@ -144,11 +144,11 @@ function BirthScreen({onSubmit}){
 }
 
 // ===== SWIPE CARD =====
-function SwipeCard({user,onSwipe,isTop}){
+function SwipeCard({user,onSwipe,isTop,onDetail}){
   const [dx,setDx]=useState(0);const [dragging,setDragging]=useState(false);const startX=useRef(0);
   const onS=x=>{startX.current=x;setDragging(true)};
   const onM=x=>{if(dragging)setDx(x-startX.current)};
-  const onE=()=>{if(Math.abs(dx)>80)onSwipe(dx>0?'right':'left');setDx(0);setDragging(false)};
+  const onE=()=>{if(Math.abs(dx)>80)onSwipe(dx>0?'right':'left');else if(Math.abs(dx)<5&&onDetail)onDetail();setDx(0);setDragging(false)};
   const rot=dx*0.08,opa=Math.min(Math.abs(dx)/80,1);
   return(
     <div onMouseDown={e=>onS(e.clientX)} onMouseMove={e=>onM(e.clientX)} onMouseUp={onE} onMouseLeave={()=>dragging&&onE()}
@@ -189,10 +189,132 @@ function MatchPopup({user,onChat,onClose}){
 }
 
 // ===== HOME =====
+// Card Detail Modal
+function CardDetailModal({user,profile,onClose,goTo}){
+  const [match,setMatch]=useState(null);
+  const [tab,setTab]=useState('info');
+  useEffect(()=>{
+    apiPost('/api/match',{profileA:profile,profileB:user}).then(setMatch).catch(()=>{});
+  },[]);
+  const WX_COLORS={木:'#22C55E',火:'#EF4444',土:'#F59E0B',金:'#A3A3A3',水:'#3B82F6'};
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease'}}>
+        {/* Header */}
+        <div style={{background:'linear-gradient(135deg,#8B5CF6,#A78BFA)',padding:'20px 16px 16px',borderRadius:'24px 24px 0 0'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+            <div>
+              <div style={{color:'#fff',fontSize:20,fontWeight:700}}>{user.name} <span style={{fontWeight:400,fontSize:14,opacity:.7}}>{user.age}岁</span></div>
+              <div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:4}}>{user.sign} · {user.dist} · {user.bio}</div>
+            </div>
+            <button onClick={onClose} style={{width:32,height:32,borderRadius:16,background:'rgba(255,255,255,0.2)',border:'none',color:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          </div>
+          {match&&<div style={{display:'flex',alignItems:'center',gap:10,marginTop:12}}>
+            <ScoreRing score={match.score} size={50} stroke={3}/>
+            <div>
+              <div style={{color:'#fff',fontSize:14,fontWeight:600}}>{match.grade}</div>
+              <div style={{color:'rgba(255,255,255,.7)',fontSize:11}}>{match.gradeDesc}</div>
+              {match.tags?.length>0&&<div style={{display:'flex',gap:4,marginTop:4}}>{match.tags.map(t=><span key={t} style={{padding:'2px 8px',borderRadius:8,background:'rgba(255,255,255,0.2)',fontSize:9,color:'#fff'}}>{t}</span>)}</div>}
+            </div>
+          </div>}
+        </div>
+        {/* Tabs */}
+        <div style={{display:'flex',borderBottom:`1px solid ${T.border}`}}>
+          {[{k:'info',l:'基本信息'},{k:'match',l:'匹配分析'},{k:'wuxing',l:'五行对比'}].map(t=>
+            <button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,padding:'12px',border:'none',background:'none',fontSize:13,fontWeight:tab===t.k?600:400,color:tab===t.k?'#8B5CF6':T.textThi,borderBottom:tab===t.k?'2px solid #8B5CF6':'none',cursor:'pointer'}}>{t.l}</button>
+          )}
+        </div>
+        {/* Tab Content */}
+        <div style={{padding:'16px'}}>
+          {tab==='info'&&<div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+              {[['生日',`${user.year}.${user.month}.${user.day}`],['时辰',user.hour+'时'],['星座',user.sign],['距离',user.dist]].map(([l,v])=>
+                <div key={l} style={{background:'#F9FAFB',borderRadius:10,padding:'10px 12px'}}><div style={{fontSize:10,color:T.textThi}}>{l}</div><div style={{fontSize:13,fontWeight:600,marginTop:3}}>{v}</div></div>
+              )}
+            </div>
+            <div style={{fontSize:13,fontWeight:600,marginBottom:6}}>兴趣标签</div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:10,background:'#F3F4F6',fontSize:12}}>{t}</span>)}</div>
+            {match?.personB&&<div style={{marginTop:14}}>
+              <div style={{fontSize:13,fontWeight:600,marginBottom:6}}>命理信息</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                {[['日主',match.personB.dayMaster+' · '+match.personB.element],['身强弱',match.personB.strength||'—'],['缺失',match.personB.wuxingLack?.join('、')||'无']].map(([l,v])=>
+                  <div key={l} style={{background:'#F9FAFB',borderRadius:10,padding:'10px 12px'}}><div style={{fontSize:10,color:T.textThi}}>{l}</div><div style={{fontSize:13,fontWeight:600,marginTop:3}}>{v}</div></div>
+                )}
+              </div>
+            </div>}
+          </div>}
+
+          {tab==='match'&&match&&<div>
+            {match.compatibility&&<div style={{background:`#8B5CF610`,borderRadius:14,padding:14,marginBottom:14,textAlign:'center'}}>
+              <div style={{fontSize:24}}>{match.compatibility.icon}</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#8B5CF6',marginTop:4}}>{match.compatibility.type}</div>
+              <div style={{fontSize:12,color:T.textSec,marginTop:4}}>{match.compatibility.desc}</div>
+            </div>}
+            {match.dimensions?.map((d,i)=>(
+              <div key={i} style={{marginBottom:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                  <span style={{fontSize:12,fontWeight:600}}>{d.icon} {d.name}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444'}}>{d.score}分</span>
+                </div>
+                <div style={{height:6,background:'#F3F4F6',borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:'100%',background:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444',borderRadius:3,width:d.score+'%',transition:'width .5s ease'}}/>
+                </div>
+                <div style={{fontSize:10,color:T.textThi,marginTop:3}}>{d.desc?.substring(0,40)}</div>
+              </div>
+            ))}
+            {match.shishenCross&&<div style={{background:'#F9FAFB',borderRadius:12,padding:12,marginTop:10}}>
+              <div style={{fontSize:12,fontWeight:600,marginBottom:6}}>十神互见</div>
+              <div style={{fontSize:12,color:T.textSec}}>你看TA → {match.shishenCross.youToThem?.ss}：{match.shishenCross.youToThem?.desc?.substring(0,25)}</div>
+              <div style={{fontSize:12,color:T.textSec,marginTop:3}}>TA看你 → {match.shishenCross.themToYou?.ss}：{match.shishenCross.themToYou?.desc?.substring(0,25)}</div>
+            </div>}
+          </div>}
+
+          {tab==='wuxing'&&match&&<div>
+            <div style={{display:'flex',gap:16,justifyContent:'center',marginBottom:16}}>
+              {['你',user.name].map((label,idx)=>{
+                const p=idx===0?match.personA:match.personB;
+                if(!p?.wuxing)return null;
+                return <div key={label} style={{flex:1,textAlign:'center'}}>
+                  <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>{label}</div>
+                  {Object.entries(p.wuxing).map(([wx,val])=>(
+                    <div key={wx} style={{marginBottom:6}}>
+                      <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:2}}>
+                        <span style={{color:WX_COLORS[wx]}}>{wx}</span><span>{val}</span>
+                      </div>
+                      <div style={{height:8,background:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
+                        <div style={{height:'100%',background:WX_COLORS[wx],borderRadius:4,width:Math.min(val*25,100)+'%'}}/>
+                      </div>
+                    </div>
+                  ))}
+                  {p.wuxingLack?.length>0&&<div style={{fontSize:10,color:'#EF4444',marginTop:4}}>缺: {p.wuxingLack.join('、')}</div>}
+                </div>;
+              })}
+            </div>
+          </div>}
+        </div>
+        {/* Bottom actions */}
+        <div style={{padding:'0 16px 20px',display:'flex',gap:10}}>
+          <button onClick={()=>{onClose();goTo(S.AI,'hehun')}} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>💑 AI深度合婚分析</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HomeScreen({profile,goTo}){
   const [cards,setCards]=useState(()=>{const tg=profile.gender==='male'?'female':'male';return USERS.filter(u=>u.gender===tg).sort(()=>Math.random()-0.5)});
   const [matchUser,setMatchUser]=useState(null);
+  const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
+  // Fetch real match scores on mount
+  useEffect(()=>{
+    const tg=profile.gender==='male'?'female':'male';
+    const cands=USERS.filter(u=>u.gender===tg);
+    apiPost('/api/batch-match',{profile,candidates:cands}).then(results=>{
+      const scored=results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5);
+      setCards(scored);
+    }).catch(()=>{});
+  },[]);
   const swipe=(dir)=>{const top=cards[cards.length-1];if(dir==='right'&&top.score>=80)setTimeout(()=>setMatchUser(top),300);setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
   return(<div style={{height:'100%',overflow:'hidden'}}>
     <div style={{padding:'48px 20px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -204,7 +326,7 @@ function HomeScreen({profile,goTo}){
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}><Icons.sparkles s={16} c="#fff"/> 先去AI占卜</button>
       </div>)
-      :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1}/>)}
+      :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
     </div>
     {cards.length>0&&<div style={{position:'fixed',bottom:68,left:0,right:0,maxWidth:480,margin:'0 auto',display:'flex',justifyContent:'center',gap:16,padding:'6px 0',alignItems:'center',background:'rgba(250,250,247,0.95)',zIndex:90}}>
       <button onClick={()=>swipe('left')} style={{width:44,height:44,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c="#999"/></button>
@@ -212,6 +334,7 @@ function HomeScreen({profile,goTo}){
       <button onClick={()=>goTo(S.AI)} style={{width:44,height:44,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.sparkles s={18} c="#7C5CFC"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
+    {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
   </div>);
 }
 
