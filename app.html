@@ -102,21 +102,44 @@ function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return(
 
 // ===== BIRTH =====
 function BirthScreen({onSubmit}){
-  const [f,sF]=useState({year:'1996',month:'8',day:'15',hour:'14',gender:'female',name:''});
+  const [f,sF]=useState(()=>{
+    try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));
+      if(p&&p.year)return{year:String(p.year),month:String(p.month),day:String(p.day),hour:p.hour>=0?String(p.hour):'',gender:p.gender||'female',name:p.name||''};
+    }catch(e){}
+    return{year:'',month:'',day:'',hour:'',gender:'female',name:''};
+  });
+  const [err,setErr]=useState('');
   const [lunar,sL]=useState(null);
-  useEffect(()=>{apiGet(`/api/lunar?year=${f.year}&month=${f.month}&day=${f.day}&hour=${f.hour}`).then(sL).catch(()=>sL(null))},[f.year,f.month,f.day,f.hour]);
+  useEffect(()=>{if(f.year&&f.month&&f.day&&f.hour)apiGet(`/api/lunar?year=${f.year}&month=${f.month}&day=${f.day}&hour=${f.hour}`).then(sL).catch(()=>sL(null));else sL(null)},[f.year,f.month,f.day,f.hour]);
+  const validate=()=>{
+    const y=+f.year,m=+f.month,d=+f.day,h=+f.hour;
+    if(!f.year||!f.month||!f.day)return'请填写完整的出生年月日';
+    if(y<1900||y>2030)return'年份请输入1900-2030';
+    if(m<1||m>12)return'月份请输入1-12';
+    if(d<1||d>31)return'日期请输入1-31';
+    if(f.hour!==''&&(h<0||h>23))return'时辰请输入0-23（24小时制）';
+    return'';
+  };
+  const submit=()=>{
+    const e=validate();if(e){setErr(e);return}
+    const p={year:+f.year,month:+f.month,day:+f.day,hour:f.hour!==''?+f.hour:-1,gender:f.gender,name:f.name||'缘友'};
+    localStorage.setItem('yuanhe_profile',JSON.stringify(p));onSubmit(p);
+  };
   const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:15,background:'#fff',outline:'none'};
+  const filled=f.year&&f.month&&f.day;
   return(<div style={{height:'100%',overflow:'auto',background:T.bg}}><div style={{padding:'60px 24px 100px'}}>
     <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>你的生辰</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>请输入公历出生信息</div></div>
     {lunar&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FF6B6B10,#7C5CFC10)',padding:'14px 16px',borderRadius:14,marginBottom:24,textAlign:'center'}}><div style={{fontSize:13,color:T.primary,fontWeight:500}}>{lunar.lunarFull}</div><div style={{fontSize:12,color:T.textSec,marginTop:4}}>{lunar.ganzhi}</div></div>}
     <div style={{marginBottom:16}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="输入昵称（可选）" style={is}/></div>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:16}}>
-      {[['年','year'],['月','month'],['日','day'],['时(24h)','hour']].map(([l,k])=><div key={k}><label style={{fontSize:12,color:T.textSec,marginBottom:4,display:'block'}}>{l}</label><input type="number" value={f[k]} onChange={e=>sF({...f,[k]:e.target.value})} style={{...is,padding:'10px 8px',textAlign:'center'}}/></div>)}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:8}}>
+      {[['年*','year','1996'],['月*','month','8'],['日*','day','15'],['时辰','hour','14']].map(([l,k,ph])=><div key={k}><label style={{fontSize:12,color:k==='hour'?T.textThi:T.textSec,marginBottom:4,display:'block'}}>{l}</label><input type="number" value={f[k]} onChange={e=>{sF({...f,[k]:e.target.value});setErr('')}} placeholder={ph} style={{...is,padding:'10px 8px',textAlign:'center',borderColor:err&&!f[k]&&k!=='hour'?'#EF4444':T.borderDark}}/></div>)}
     </div>
+    <div style={{fontSize:11,color:T.textThi,marginBottom:16}}>* 年月日为必填 · 时辰留空也可使用（部分功能精度降低）</div>
+    {err&&<div style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:13,color:'#EF4444',fontWeight:500}}>{err}</div>}
     <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>性别</label><div style={{display:'flex',gap:12}}>
       {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:'#fff',color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
     </div></div>
-    <button onClick={()=>{const p={year:+f.year,month:+f.month,day:+f.day,hour:+f.hour,gender:f.gender,name:f.name||'缘友'};localStorage.setItem('yuanhe_profile',JSON.stringify(p));onSubmit(p)}} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:'pointer',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',boxShadow:'0 4px 20px rgba(255,107,107,0.35)'}}>开启我的命运之旅 ✦</button>
+    <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#FF6B6B,#FF8A9B)':'#ccc',boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>开启我的命运之旅 ✦</button>
   </div></div>);
 }
 
@@ -344,6 +367,14 @@ function AIScreen({profile,initialMode}){
 
   const divine=async(divineMode,engineOnly)=>{
     const m=divineMode||mode;
+    // Validate: bazi/astrology/vedic/pair modes need complete birth data
+    const needsBirth=['bazi','astrology','vedic','hehun','synastry','hepan'].includes(m);
+    if(needsBirth&&(!profile.year||!profile.month||!profile.day)){
+      setMS(m,{error:'请先完善出生年月日信息（在"我的"页面可修改）'});return;
+    }
+    if(needsBirth&&profile.hour===-1){
+      // Allow but warn
+    }
     setMS(m,{loading:true,error:null,result:null});
     startTimer(m);
     try{
@@ -622,9 +653,10 @@ function DiscoverScreen({goTo}){
 function MsgsScreen(){return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}><div style={{padding:'48px 20px 20px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div></div><div style={{padding:'60px 20px',textAlign:'center',color:T.textThi}}><div style={{fontSize:48,marginBottom:12}}>💬</div><div style={{fontSize:14}}>暂无匹配</div><div style={{fontSize:12,marginTop:6}}>右滑喜欢的人，匹配成功后可以聊天</div></div></div>);}
 
 // ===== ME =====
-function MeScreen({profile,onLogout,goTo}){return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
-  <div style={{background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',padding:'48px 24px 28px',borderRadius:'0 0 28px 28px'}}><div style={{display:'flex',alignItems:'center',gap:14}}><div style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,color:'#fff'}}>{profile.gender==='female'?'👩':'👨'}</div><div><div style={{color:'#fff',fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div><div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:2}}>{profile.year}年{profile.month}月{profile.day}日</div></div></div></div>
-  <div style={{padding:16}}>{[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗',a:()=>goTo(S.AI)},{icon:'📊',label:'我的报告',desc:'历史分析'},{icon:'💎',label:'会员中心',desc:'高级功能'},{icon:'⚙️',label:'设置',desc:'账号隐私'}].map((it,i)=>
+function MeScreen({profile,onLogout,goTo,onEdit}){return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
+  <div style={{background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',padding:'48px 24px 28px',borderRadius:'0 0 28px 28px'}}><div style={{display:'flex',alignItems:'center',gap:14}}><div style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,color:'#fff'}}>{profile.gender==='female'?'👩':'👨'}</div><div><div style={{color:'#fff',fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div><div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:2}}>{profile.year}年{profile.month}月{profile.day}日{profile.hour>=0?' '+profile.hour+'时':' 时辰未知'}</div></div></div></div>
+  {profile.hour===-1&&<div style={{margin:'12px 16px 0',padding:'10px 14px',background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,fontSize:12,color:'#D97706'}}>⚠️ 未填写出生时辰，八字排盘精度会降低。<button onClick={onEdit} style={{background:'none',border:'none',color:'#D97706',fontWeight:700,cursor:'pointer',textDecoration:'underline',fontSize:12}}>补充时辰</button></div>}
+  <div style={{padding:16}}>{[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗',a:()=>goTo(S.AI)},{icon:'✏️',label:'修改生辰',desc:'修改出生日期信息',a:onEdit},{icon:'📊',label:'我的报告',desc:'历史分析'},{icon:'💎',label:'会员中心',desc:'高级功能'},{icon:'⚙️',label:'设置',desc:'账号隐私'}].map((it,i)=>
     <div key={it.label} className="anim-in" onClick={it.a} style={{animationDelay:i*0.06+'s',background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:10,display:'flex',alignItems:'center',gap:14,cursor:it.a?'pointer':'default'}}><span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:14,fontWeight:500}}>{it.label}</div><div style={{fontSize:12,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi}}>›</span></div>)}
     <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,color:T.textSec,cursor:'pointer',marginTop:16}}>退出登录</button>
   </div></div>);}
@@ -652,7 +684,7 @@ function App(){
     {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo}/>}
     {scr===S.AI&&profile&&<AIScreen profile={profile} initialMode={aiMode}/>}
     {scr===S.MSGS&&<MsgsScreen/>}
-    {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');setProfile(null);setScr(S.BIRTH)}} goTo={goTo}/>}
+    {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)}/>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
   </div>);
 }
