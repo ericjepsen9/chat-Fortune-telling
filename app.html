@@ -174,17 +174,17 @@ function HomeScreen({profile,goTo}){
       <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
       <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:12,padding:'8px 14px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px rgba(139,92,246,0.3)',display:'flex',alignItems:'center',gap:4}}><Icons.sparkles s={14} c="#fff"/> AI占卜</button>
     </div>
-    <div style={{position:'relative',height:'calc(100% - 200px)',margin:'0 16px'}}>
+    <div style={{position:'relative',height:'calc(100% - 220px)',margin:'0 16px'}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}><Icons.sparkles s={16} c="#fff"/> 先去AI占卜</button>
       </div>)
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1}/>)}
     </div>
-    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:20,padding:'8px 0 4px',alignItems:'center'}}>
-      <button onClick={()=>swipe('left')} style={{width:48,height:48,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c="#999"/></button>
-      <button onClick={()=>swipe('right')} style={{width:56,height:56,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(255,107,107,0.35)'}}><Icons.heart s={26} c="#fff" fill="#fff"/></button>
-      <button onClick={()=>goTo(S.AI)} style={{width:48,height:48,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.sparkles s={18} c="#7C5CFC"/></button>
+    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:16,padding:'4px 0 0',alignItems:'center'}}>
+      <button onClick={()=>swipe('left')} style={{width:44,height:44,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c="#999"/></button>
+      <button onClick={()=>swipe('right')} style={{width:52,height:52,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#FF6B6B,#FF8A9B)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(255,107,107,0.35)'}}><Icons.heart s={26} c="#fff" fill="#fff"/></button>
+      <button onClick={()=>goTo(S.AI)} style={{width:44,height:44,borderRadius:'50%',border:`2px solid ${T.borderDark}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.sparkles s={18} c="#7C5CFC"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
   </div>);
@@ -255,7 +255,7 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
           {cards.length>=need&&<span style={{marginLeft:8,fontSize:12,color:'#059669'}}>✓ 选好了</span>}
         </div>
         {/* Cards grid */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
           {pool.slice(0,12).map((cid,i)=>{
             const picked=cards.includes(cid);const full=cards.length>=need;const order=picked?cards.indexOf(cid)+1:null;
             return <button key={i} onClick={()=>{if(picked)setCards(c=>c.filter(x=>x!==cid));else if(!full)setCards(c=>[...c,cid])}} style={{
