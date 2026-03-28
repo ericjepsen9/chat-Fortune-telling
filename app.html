@@ -370,7 +370,7 @@ function AIScreen({profile,initialMode}){
       {/* === MODE-SPECIFIC CONFIG === */}
 
       {/* Tarot: just a trigger button */}
-      {mode==='tarot'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:14,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      {mode==='tarot'&&!loading&&!result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:14,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div>
           <div style={{fontSize:14,fontWeight:700,color:'#0D9488'}}>🎴 塔罗选牌</div>
           <div style={{fontSize:11,color:'#0D9488',opacity:.7,marginTop:2}}>{tarotCards.length>0?`已选${tarotCards.length}张 · ${tarotSpread==='single'?'单张':'三张'}牌阵`:'点击右侧按钮选牌 · 或直接提交随机'}</div>
@@ -379,7 +379,7 @@ function AIScreen({profile,initialMode}){
       </div>}
 
       {/* Meihua */}
-      {mode==='meihua'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:14,marginBottom:14}}>
+      {mode==='meihua'&&!loading&&!result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:14,marginBottom:14}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <span style={{fontSize:14,fontWeight:700,color:'#D97706'}}>❀ 梅花起卦</span>
           <span style={{fontSize:11,color:'#D97706',opacity:.6}}>{mhNum1?'自定义':'时间自动'}</span>
@@ -415,14 +415,14 @@ function AIScreen({profile,initialMode}){
       </div>}
 
       {/* Question input */}
-      <div style={{background:'#fff',borderRadius:14,padding:12,boxShadow:T.shadow,marginBottom:14}}>
+      {!loading&&<div style={{background:'#fff',borderRadius:14,padding:12,boxShadow:T.shadow,marginBottom:14}}>
         <input value={q} onChange={e=>setQ(e.target.value)} placeholder="输入具体问题 · 留空则全面分析" style={{width:'100%',padding:'11px 12px',border:`1.5px solid ${T.borderDark}`,borderRadius:10,fontSize:13,background:'#FAFAFA',outline:'none'}}/>
         <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:8}}>
           {(QUICK_QS[mode]||[]).map(qq=>(
             <button key={qq} onClick={()=>setQ(q===qq?'':qq)} style={{padding:'4px 10px',borderRadius:10,border:`1px solid ${q===qq?mc:T.border}`,background:q===qq?`${mc}0A`:'#fff',color:q===qq?mc:T.textSec,fontSize:11,cursor:'pointer',transition:'all .2s'}}>{qq}</button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Loading */}
       {loading&&<div className="anim-in" style={{background:'#fff',borderRadius:16,padding:20,boxShadow:T.shadow,textAlign:'center',marginBottom:14}}>
