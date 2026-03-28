@@ -251,6 +251,7 @@ function AIScreen({profile,initialMode}){
   const tarotPool=useState(()=>{const a=[];for(let i=0;i<78;i++)a.push(i);return a.sort(()=>Math.random()-0.5)})[0];
   const [mhNum1,setMhNum1]=useState('');
   const [mhNum2,setMhNum2]=useState('');
+  const setModeAndClear=(m)=>{setMode(m);setResult(null);setError(null)};
   const modeInfo=MODES.find(m=>m.id===mode)||MODES[0];
   const mc=modeInfo.c;
 
@@ -297,12 +298,12 @@ function AIScreen({profile,initialMode}){
       <div style={{display:'flex',gap:6,marginBottom:10}}>
         {[{k:'single',l:'🔮 个人占卜'},{k:'pair',l:'💑 配对分析'}].map(c=>{
           const active=modeInfo.cat===c.k;
-          return <button key={c.k} onClick={()=>setMode(MODES.find(m=>m.cat===c.k).id)} style={{padding:'7px 16px',borderRadius:16,fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background:active?mc:'#fff',color:active?'#fff':T.textSec,boxShadow:active?`0 2px 10px ${mc}40`:T.shadow,transition:'all .2s'}}>{c.l}</button>;
+          return <button key={c.k} onClick={()=>setModeAndClear(MODES.find(m=>m.cat===c.k).id)} style={{padding:'7px 16px',borderRadius:16,fontSize:12,fontWeight:700,border:'none',cursor:'pointer',background:active?mc:'#fff',color:active?'#fff':T.textSec,boxShadow:active?`0 2px 10px ${mc}40`:T.shadow,transition:'all .2s'}}>{c.l}</button>;
         })}
       </div>
       <div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
-          <button key={m.id} onClick={()=>setMode(m.id)} style={{
+          <button key={m.id} onClick={()=>setModeAndClear(m.id)} style={{
             padding:'10px 2px',borderRadius:12,cursor:'pointer',textAlign:'center',transition:'all .25s',
             border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,
             background:mode===m.id?`${m.c}0A`:'#fff',
@@ -394,7 +395,7 @@ function AIScreen({profile,initialMode}){
         ))}
       </div>
       <button onClick={()=>divine(false)} disabled={loading} style={{
-        width:'100%',height:50,padding:'0 14px',borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+        width:'100%',height:50,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,
         background:loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
         boxShadow:loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',
       }}>
