@@ -80,6 +80,8 @@ async function callLLM(systemPrompt, userMessage, mode = '') {
             if (finishReason === 'length') {
               content += '\n\n---\n⚠️ *AI输出因长度限制被截断，以上为部分内容。可输入具体问题获取更聚焦的分析。*';
             }
+            // Strip <think> reasoning tags from AI response
+            content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
             resolve(content);
           } else if (json.error) {
             const err = new Error(json.error.message || JSON.stringify(json.error));

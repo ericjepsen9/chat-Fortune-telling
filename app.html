@@ -335,7 +335,7 @@ function AIScreen({profile,initialMode}){
   // Save results to localStorage whenever they change
   useEffect(()=>{
     const toSave={};
-    Object.entries(modeStates).forEach(([k,v])=>{if(v.result)toSave[k]=v.result});
+    Object.entries(modeStates).forEach(([k,v])=>{if(v.result)toSave[k]=v.result;});
     try{localStorage.setItem('yuanhe_mode_results',JSON.stringify(toSave))}catch(e){}
   },[modeStates]);
 
@@ -351,7 +351,11 @@ function AIScreen({profile,initialMode}){
       const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);
       if(r.blocked)setMS(m,{error:r.reason,loading:false});
       else if(r.error)setMS(m,{error:r.error,loading:false});
-      else setMS(m,{result:engineOnly?{engineData:r.engineData,response:null}:r,loading:false});
+      else{
+            // Strip <think> tags from AI response
+            if(r.response){r.response=r.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim()}
+            setMS(m,{result:engineOnly?{engineData:r.engineData,response:null}:r,loading:false});
+          }
     }catch(e){setMS(m,{error:e.message,loading:false})}
     stopTimer(m);
     if(m===mode)setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
@@ -460,6 +464,16 @@ function AIScreen({profile,initialMode}){
         </div>
       </>}
 
+      {/* Loading indicator for current mode */}
+      {ms.loading&&<div className="anim-in" style={{background:'#fff',borderRadius:16,padding:24,boxShadow:T.shadow,textAlign:'center',marginBottom:14}}>
+        <div style={{fontSize:36,marginBottom:10,animation:'pulse 1.5s infinite'}}>{modeInfo.icon}</div>
+        <div style={{fontSize:15,fontWeight:600,color:mc}}>{ms.loadMsg}</div>
+        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>已等待 {ms.elapsed}s · 预计60-120秒</div>
+        <div style={{height:4,background:P.accentLight,borderRadius:2,marginTop:12,overflow:'hidden'}}>
+          <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
+        </div>
+      </div>}
+
       {/* "New query" button when result exists */}
       {ms.result&&!ms.loading&&<button onClick={()=>setMS(mode,{result:null,error:null})} style={{width:'100%',padding:'10px',borderRadius:12,border:`1.5px solid ${P.accentLight}`,background:'#fff',fontSize:13,fontWeight:500,color:P.accent,cursor:'pointer',marginBottom:14,textAlign:'center'}}>🔄 重新提问（{MODE_FULL[mode]}）</button>}
 
@@ -470,7 +484,7 @@ function AIScreen({profile,initialMode}){
       </div>}
 
       {/* Results for CURRENT mode */}
-      {ms.result&&<div ref={ref} className="anim-slide">
+      {ms.result&&<div ref={ref} className="anim-slide" style={{scrollMarginTop:120}}>
         {ms.result.response&&<div style={{display:'flex',gap:0,marginBottom:12,background:'#EDE9FE',borderRadius:10,padding:3}}>
           {[{v:'card',l:'📊 报告卡片'},{v:'text',l:'📝 长文阅读'}].map(v=>(
             <button key={v.v} onClick={()=>setViewMode(v.v)} style={{flex:1,padding:'7px 0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:viewMode===v.v?'#fff':'transparent',color:viewMode===v.v?mc:T.textThi,boxShadow:viewMode===v.v?T.shadow:'none',transition:'all .2s'}}>{v.l}</button>
@@ -478,10 +492,10 @@ function AIScreen({profile,initialMode}){
         </div>}
 
         {ms.result.response&&viewMode==='card'&&(()=>{
-          const sections=[];const lines=ms.result.response.split('\n');let cur=null;
+          const sections=[];const cleanResp=ms.result.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim();const lines=cleanResp.split('\n');let cur=null;
           const ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
           const COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
-          lines.forEach(line=>{const h=line.match(/^#{1,3}\s+(.+)/);if(h){const title=h[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}else if(cur)cur.lines.push(line);else if(line.trim()){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}});
+          lines.forEach(line=>{const h=line.match(/^#{1,3}\s+(.+)/);if(h){const title=h[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}else if(cur)cur.lines.push(line);else if(line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}});
           return(<div>
             <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
@@ -528,13 +542,13 @@ function AIScreen({profile,initialMode}){
 
     {/* === FIXED BOTTOM CTA === */}
     <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50}}>
-      <button onClick={()=>divine(mode,false)} disabled={ms.loading} style={{
+      <button onClick={()=>divine(mode,false)} disabled={ms.loading||!!loadingMode} style={{
         width:'100%',height:48,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',
         cursor:ms.loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',
         background:ms.loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
         boxShadow:ms.loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',whiteSpace:'nowrap',
       }}>
-        {ms.loading?`🔮 ${ms.loadMsg}`:`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
+        {ms.loading?`🔮 ${ms.loadMsg}`:ms.result?`🔄 ${MODE_FULL[mode]} · 重新解读`:`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
       </button>
       {ms.loading&&<div style={{height:3,background:P.accentLight,borderRadius:2,marginTop:4,overflow:'hidden'}}>
         <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
