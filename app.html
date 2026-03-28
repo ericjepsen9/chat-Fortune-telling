@@ -544,8 +544,7 @@ function HourAssistantModal({profile,onResult,onClose}){
 function AIScreen({profile,initialMode,onUpdateProfile}){
   const [mode,setMode]=useState(initialMode||'bazi');
   const [dm,setDm]=useState('expert');
-  const [viewMode,setViewMode]=useState('card');
-  const [showTarotModal,setShowTarotModal]=useState(false);
+    const [showTarotModal,setShowTarotModal]=useState(false);
   const [showHourAssistant,setShowHourAssistant]=useState(false);
   const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
@@ -799,8 +798,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>选择问题或直接点击底部按钮开始</div>
       </div>}
 
-      {/* Loading indicator with mode-specific animation */}
-      {ms.loading&&<div className="anim-in" style={{background:`linear-gradient(135deg,${mc}08,${mc}03)`,borderRadius:18,padding:'28px 20px',boxShadow:T.shadowLg||T.shadow,textAlign:'center',marginBottom:14,border:`1px solid ${mc}15`}}>
+      {/* Loading overlay */}
+      {ms.loading&&<div style={{position:'fixed',inset:0,zIndex:250,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.35)',animation:'fadeIn .3s ease'}}>
+      <div className="anim-in" style={{background:'#fff',borderRadius:22,padding:'32px 24px',boxShadow:'0 8px 40px rgba(0,0,0,0.2)',textAlign:'center',maxWidth:320,width:'85%',border:`2px solid ${mc}20`}}>
         {/* Mode-specific animated icon */}
         <div style={{position:'relative',width:80,height:80,margin:'0 auto 14px'}}>
           <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid ${mc}20`}}/>
@@ -819,7 +819,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           </div>
           <span style={{fontSize:11,color:mc,fontWeight:600,flexShrink:0}}>{ms.elapsed}s</span>
         </div>
-      </div>}
+      </div></div>}
 
       {/* "New query" button when result exists */}
       {ms.result&&!ms.loading&&<button onClick={()=>setMS(mode,{result:null,error:null})} style={{width:'100%',padding:'10px',borderRadius:12,border:`1.5px solid ${P.accentLight}`,background:'#fff',fontSize:13,fontWeight:500,color:P.accent,cursor:'pointer',marginBottom:14,textAlign:'center'}}>🔄 重新提问（{MODE_FULL[mode]}）</button>}
@@ -838,13 +838,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             {profile.hour===-1?'⚠️ 未提供出生时辰，以下结果基于年月日三柱分析，时柱相关内容（子女、晚运等）仅供参考。':'⏰ 使用的是大致出生时段，时柱精度可能有偏差。'}
           </div>
         }
-        {ms.result.response&&<div style={{display:'flex',gap:0,marginBottom:12,background:'#EDE9FE',borderRadius:10,padding:3}}>
-          {[{v:'card',l:'📊 报告卡片'},{v:'text',l:'📝 长文阅读'}].map(v=>(
-            <button key={v.v} onClick={()=>setViewMode(v.v)} style={{flex:1,padding:'7px 0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:viewMode===v.v?'#fff':'transparent',color:viewMode===v.v?mc:T.textThi,boxShadow:viewMode===v.v?T.shadow:'none',transition:'all .2s'}}>{v.l}</button>
-          ))}
-        </div>}
 
-        {ms.result.response&&viewMode==='card'&&(()=>{
+        {ms.result.response&&(()=>{
           const sections=[];const cleanResp=ms.result.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim();const lines=cleanResp.split('\n');let cur=null;
           const ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
           const COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
@@ -872,18 +867,11 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             {sections.filter(s=>s.lines.some(l=>l.trim())).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
             <div style={{display:'flex',gap:8,marginTop:10}}>
               <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
-              <button onClick={()=>setViewMode('text')} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📝 长文模式</button>
             </div>
           </div>);
         })()}
 
-        {ms.result.response&&viewMode==='text'&&<div style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:T.shadow}}>
-          <div style={{background:P.accentLight,padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:13,fontWeight:600,color:mc}}>{MODE_FULL[mode]} · AI解读</div>
-            <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋</button>
-          </div>
-          <div style={{padding:16}}><div className="markdown" style={{fontSize:14,lineHeight:1.8}} dangerouslySetInnerHTML={md(ms.result.response)}/></div>
-        </div>}
+        
 
         {!ms.result.response&&ms.result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
           <div style={{fontSize:13,fontWeight:600,color:mc,marginBottom:8}}>📦 引擎结果</div>
