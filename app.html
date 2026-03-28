@@ -306,11 +306,11 @@ function AIScreen({profile,initialMode}){
         ))}
       </div>
       <div style={{background:'rgba(255,255,255,0.6)',borderRadius:12,padding:10}}>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:5,justifyItems:'center'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,justifyItems:'center'}}>
           {tarotPool.slice(0,12).map((cid,i)=>{
             const picked=tarotCards.includes(cid);const full=tarotCards.length>=spreadSize[tarotSpread];const order=picked?tarotCards.indexOf(cid)+1:null;
-            return <button key={i} onClick={()=>{if(picked)setTarotCards(c=>c.filter(x=>x!==cid));else if(!full)setTarotCards(c=>[...c,cid])}} style={{width:40,height:56,borderRadius:7,cursor:picked||!full?'pointer':'default',border:picked?'2px solid #0D9488':'1.5px solid #bbb',background:picked?'linear-gradient(135deg,#0D9488,#14B8A6)':'linear-gradient(160deg,#6366F1,#4338CA)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',transition:'all .25s',transform:picked?'translateY(-3px) scale(1.05)':'scale(1)',boxShadow:picked?'0 4px 12px #0D948850':'0 1px 3px rgba(0,0,0,0.12)',opacity:!picked&&full?0.35:1}}>
-              {picked?<><div style={{fontSize:9,opacity:.8}}>第{order}张</div><div style={{fontSize:14}}>✦</div></>:<div style={{fontSize:16,opacity:.5}}>✧</div>}
+            return <button key={i} onClick={()=>{if(picked)setTarotCards(c=>c.filter(x=>x!==cid));else if(!full)setTarotCards(c=>[...c,cid])}} style={{width:'100%',height:80,borderRadius:10,cursor:picked||!full?'pointer':'default',border:picked?'2.5px solid #0D9488':'1.5px solid #bbb',background:picked?'linear-gradient(135deg,#0D9488,#14B8A6)':'linear-gradient(160deg,#6366F1,#4338CA)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',transition:'all .25s',transform:picked?'translateY(-4px) scale(1.03)':'scale(1)',boxShadow:picked?'0 6px 16px #0D948850':'0 2px 6px rgba(0,0,0,0.12)',opacity:!picked&&full?0.35:1}}>
+              {picked?<><div style={{fontSize:11,opacity:.8}}>第{order}张</div><div style={{fontSize:20,marginTop:2}}>✦</div></>:<><div style={{fontSize:22,opacity:.5}}>✧</div><div style={{fontSize:9,opacity:.4,marginTop:2}}>选我</div></>}
             </button>;
           })}
         </div>
@@ -368,7 +368,7 @@ function AIScreen({profile,initialMode}){
         ))}
       </div>
       <button onClick={()=>divine(false)} disabled={loading} style={{
-        width:'100%',padding:'14px',borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',
+        width:'100%',height:50,padding:'0 14px',borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',cursor:loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',
         background:loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
         boxShadow:loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',
       }}>
