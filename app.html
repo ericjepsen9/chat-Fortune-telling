@@ -850,7 +850,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           const sections=[];const cleanResp=ms.result.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim();const lines=cleanResp.split('\n');let cur=null;
           const ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
           const COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
-          lines.forEach(line=>{const h=line.match(/^#{1,3}\s+(.+)/);if(h){const title=h[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}else if(cur)cur.lines.push(line);else if(line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}});
+          lines.forEach(line=>{
+              const h1=line.match(/^#\s+(.+)/);
+              const h23=line.match(/^#{2,3}\s+(.+)/);
+              if(h1){/* skip h1 titles - they're report titles not sections */}
+              else if(h23){const title=h23[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}
+              else if(cur){if(line.trim())cur.lines.push(line)}
+              else if(line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}
+            });
           return(<div>
             <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
