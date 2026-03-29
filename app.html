@@ -265,7 +265,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
             {/* Basic info chips */}
             <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>📋 基本资料</div>
             <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>
-              {[['生日',`${user.year}.${user.month}.${user.day}`],['时辰',user.hour>=0?user.hour+'时':'未知'],['星座',user.sign],['距离',user.dist]].map(([l,v])=>
+              {[['年龄',user.age+'岁'],['星座',user.sign],['距离',user.dist],['五行',match?.personB?.element?match.personB.element+'象':'—']].map(([l,v])=>
                 <div key={l} style={{flex:'1 0 45%',padding:'10px 12px',borderRadius:12,background:`${ac}08`,border:`1px solid ${ac}10`}}>
                   <div style={{fontSize:11,color:T.textThi,marginBottom:2}}>{l}</div>
                   <div style={{fontSize:14,fontWeight:600,color:T.text}}>{v}</div>
@@ -457,6 +457,11 @@ function FourPillarsCard({structured,mc}){
         {structured.favorWx&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#22C55E10',color:'#22C55E'}}>喜 {structured.favorWx}</span>}
         {structured.wuxingLack?.length>0&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#EF444410',color:'#EF4444'}}>缺 {structured.wuxingLack.join('、')}</span>}
       </div>
+      {/* Personality */}
+      {structured.personality&&<div style={{marginTop:10,padding:'10px 12px',borderRadius:10,background:`${mc}06`,borderLeft:`3px solid ${mc}`}}>
+        <div style={{fontSize:12,fontWeight:600,color:mc}}>✦ {structured.personality.type}</div>
+        <div style={{fontSize:11,color:T.textSec,marginTop:3,lineHeight:1.5}}>{structured.personality.simple}</div>
+      </div>}
     </div>
   );
 }
@@ -773,7 +778,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     setMS(m,{loading:true,error:null,result:null});
     startTimer(m);
     try{
-      const body={mode:m,...profile,question:engineOnly?'':getMS(m).q,displayMode:dm};
+      const body={mode:m,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:engineOnly?'':getMS(m).q,displayMode:dm};
       if(profile.hour===-1)body.hourUnknown=true;
       if(hourApprox)body.hourApprox=true;
       if(['hehun','synastry','hepan'].includes(m))body.profileB=p2;
@@ -825,7 +830,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       const prevRounds=rounds[mode]||[];
       const allPrev=ms.result?.response?[...prevRounds,{result:ms.result}]:prevRounds;
       const contextSummary=allPrev.map((r,i)=>`[第${i+1}轮] ${r.result?.response?.substring(0,200)||''}`).join('\n');
-      const body={mode,...profile,question:q,displayMode:dm,context:contextSummary};
+      const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,displayMode:dm,context:contextSummary};
       if(profile.hour===-1)body.hourUnknown=true;
       if(['hehun','synastry','hepan'].includes(mode))body.profileB=p2;
       const r=await apiPost('/api/divine',body);
@@ -1057,6 +1062,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                     <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>日主 {ms.result.structured.dayMaster}{ms.result.structured.element}</span>
                     <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.strength}</span>
                     {ms.result.structured.geju&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.geju}</span>}
+                    {ms.result.structured.personality?.type&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.25)',fontSize:10}}>✦ {ms.result.structured.personality.type}</span>}
+                  </div>}
+                  {ms.result.structured?.personality?.traits&&<div style={{display:'flex',gap:3,marginTop:4,flexWrap:'wrap'}}>
+                    {ms.result.structured.personality.traits.map(t=><span key={t} style={{padding:'1px 6px',borderRadius:4,background:'rgba(255,255,255,0.12)',fontSize:9,opacity:.8}}>{t}</span>)}
                   </div>}
                   <div style={{fontSize:11,opacity:.75,marginTop:6}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'}</div>
                   <div style={{display:'flex',gap:8,marginTop:4,opacity:.6,fontSize:10}}>{ms.result._genTime&&<span>⏰ {ms.result._genTime}</span>}{ms.result._elapsed&&<span>⚡ {ms.result._elapsed}s</span>}<span>📝 {ms.result.response?.length||0}字</span></div>

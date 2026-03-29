@@ -500,7 +500,7 @@ function extractStructured(mode, profile) {
         strength: r.dayStrength, geju: r.geju,
         wuxing: r.wuxing, wuxingLack: r.wuxingLack,
         fourPillars: r.fourPillars, nayin: r.nayin,
-        personality: r.personality,
+        personality: r.personality, shishen: r.shishen,
         favorWx: r.xpiUshen?.favorWx, avoidWx: r.xpiUshen?.avoidWx,
         shengxiao: r.lunarDate?.shengxiao,
         lunarDate: r.lunarDate,
