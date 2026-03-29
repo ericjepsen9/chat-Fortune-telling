@@ -383,11 +383,16 @@ const server = http.createServer(async (req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
-        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox } = JSON.parse(body);
+        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, context } = JSON.parse(body);
         const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
         const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
+        // 追问上下文：把之前的分析摘要拼入问题
+        let fullQuestion = question || '';
+        if (context && context.trim()) {
+          fullQuestion = `[追问上下文] 之前的分析摘要：\n${context.substring(0, 800)}\n\n[当前追问] ${fullQuestion}`;
+        }
         // 空问题或默认问题 → 全面分析；有具体问题 → 聚焦分析
-        const result = await handleDivination(mode, profile, question || '', displayMode || 'simple', ctxOptions);
+        const result = await handleDivination(mode, profile, fullQuestion, displayMode || 'simple', ctxOptions);
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify(result));
       } catch (e) {
