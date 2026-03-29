@@ -692,6 +692,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
   const [revealCount,setRevealCount]=useState(999);
+  const [rounds,setRounds]=useState({});  // {mode: [{question,result,sections},...]}
+  const [followUpQ,setFollowUpQ]=useState('');
+  const [viewRound,setViewRound]=useState(null);  // {mode,roundIdx} → fullscreen modal
 
   // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
   const [modeStates,setModeStates]=useState(()=>{
@@ -792,6 +795,46 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
 
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
+  const SECTION_ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
+  const SECTION_COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
+  const parseSections=(resp)=>{
+    const sections=[];const clean=resp.replace(/<think>[\s\S]*?<\/think>/g,'').trim();const lines=clean.split('\n');let cur=null;
+    lines.forEach(line=>{
+      const h1=line.match(/^#\s+(.+)/);const h23=line.match(/^#{2,3}\s+(.+)/);
+      if(h1){}
+      else if(h23){const title=h23[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(SECTION_ICONS).find(k=>title.includes(k));cur={title,icon:ik?SECTION_ICONS[ik]:'📌',lines:[]};sections.push(cur)}
+      else if(cur){if(line.trim())cur.lines.push(line)}
+      else if(line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}
+    });
+    return sections.filter(s=>s.lines.some(l=>l.trim()));
+  };
+  const followUp=async(q)=>{
+    if(!q.trim()||ms.loading)return;
+    // Save current result as a round
+    if(ms.result?.response){
+      const secs=parseSections(ms.result.response);
+      const prev=rounds[mode]||[];
+      setRounds(r=>({...r,[mode]:[...prev,{question:ms.q||'全面分析',result:ms.result,sections:secs}]}));
+    }
+    // Start new divine with context
+    setMS(mode,{q:q,result:null,loading:true,error:null});
+    setFollowUpQ('');
+    startTimer(mode);
+    try{
+      // Build context from previous rounds
+      const prevRounds=rounds[mode]||[];
+      const allPrev=ms.result?.response?[...prevRounds,{result:ms.result}]:prevRounds;
+      const contextSummary=allPrev.map((r,i)=>`[第${i+1}轮] ${r.result?.response?.substring(0,200)||''}`).join('\n');
+      const body={mode,...profile,question:q,displayMode:dm,context:contextSummary};
+      if(profile.hour===-1)body.hourUnknown=true;
+      if(['hehun','synastry','hepan'].includes(mode))body.profileB=p2;
+      const r=await apiPost('/api/divine',body);
+      if(r.response)r.response=r.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
+      r._genTime=new Date().toLocaleTimeString();r._elapsed=getMS(mode).elapsed;
+      setMS(mode,{result:r,loading:false,q});
+    }catch(e){setMS(mode,{error:e.message,loading:false})}
+    stopTimer(mode);
+  };
   const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
   return(<div style={{height:'100%',overflow:'auto',background:P.bg}}>
@@ -971,6 +1014,18 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>
       </div>}
 
+      {/* Previous rounds (collapsed) */}
+      {(rounds[mode]||[]).map((rd,ri)=>(
+        <div key={ri} className="anim-in" onClick={()=>setViewRound({mode,roundIdx:ri})} style={{background:'#fff',borderRadius:14,padding:'12px 14px',marginBottom:8,boxShadow:'0 1px 4px rgba(0,0,0,0.05)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,border:`1px solid ${T.border}`}}>
+          <div style={{width:28,height:28,borderRadius:8,background:`${mc}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:mc,flexShrink:0}}>#{ri+1}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:600,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{rd.question||'全面分析'}</div>
+            <div style={{display:'flex',gap:3,marginTop:4,flexWrap:'wrap'}}>{rd.sections.slice(0,6).map((s,i)=><span key={i} style={{fontSize:10,opacity:.7}}>{s.icon}</span>)}{rd.sections.length>6&&<span style={{fontSize:10,opacity:.5}}>+{rd.sections.length-6}</span>}</div>
+          </div>
+          <div style={{fontSize:11,color:mc,fontWeight:600,flexShrink:0}}>查看报告 →</div>
+        </div>
+      ))}
+
       {/* "New query" button when result exists */}
       {ms.result&&!ms.loading&&<button onClick={()=>setMS(mode,{result:null,error:null})} style={{width:'100%',padding:'10px',borderRadius:12,border:`1.5px solid ${P.accentLight}`,background:'#fff',fontSize:13,fontWeight:500,color:P.accent,cursor:'pointer',marginBottom:14,textAlign:'center'}}>🔄 重新提问（{MODE_FULL[mode]}）</button>}
 
@@ -990,17 +1045,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         }
 
         {ms.result.response&&(()=>{
-          const sections=[];const cleanResp=ms.result.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim();const lines=cleanResp.split('\n');let cur=null;
-          const ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
-          const COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
-          lines.forEach(line=>{
-              const h1=line.match(/^#\s+(.+)/);
-              const h23=line.match(/^#{2,3}\s+(.+)/);
-              if(h1){/* skip h1 titles - they're report titles not sections */}
-              else if(h23){const title=h23[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(ICONS).find(k=>title.includes(k));cur={title,icon:ik?ICONS[ik]:'📌',lines:[]};sections.push(cur)}
-              else if(cur){if(line.trim())cur.lines.push(line)}
-              else if(line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}
-            });
+          const sections=parseSections(ms.result.response);
           return(<div>
             {/* Report Header with Radar */}
             <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
@@ -1043,8 +1088,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <div style={{fontSize:10,opacity:.7}}>{p2.year}.{p2.month}.{p2.day} {p2.gender==='male'?'♂':'♀'}</div>
               </div>
             </div>}
-            {sections.filter(s=>s.lines.some(l=>l.trim())).filter((_,i)=>i<revealCount).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
-            {(()=>{const total=sections.filter(s=>s.lines.some(l=>l.trim())).length;return revealCount<total?<div style={{textAlign:'center',padding:'16px',color:mc}}>
+            {sections.filter((_,i)=>i<revealCount).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+            {(()=>{const total=sections.length;return revealCount<total?<div style={{textAlign:'center',padding:'16px',color:mc}}>
               <div style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:13}}>
                 <div style={{width:16,height:16,borderRadius:8,border:`2px solid transparent`,borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
                 正在展开更多分析… ({Math.min(revealCount,total)}/{total})
@@ -1052,6 +1097,19 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             </div>:
             <div style={{display:'flex',gap:8,marginTop:10}}>
               <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
+            </div>
+            {/* Follow-up area */}
+            <div style={{marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
+              <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8}}>── 继续追问 ──</div>
+              <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:10}}>
+                {(QUICK_QS[mode]||[]).filter(qq=>qq!==(ms.q||'')).slice(0,4).map(qq=>(
+                  <button key={qq} onClick={()=>followUp(qq)} disabled={ms.loading} style={{padding:'5px 12px',borderRadius:10,border:`1px solid ${mc}30`,background:'#fff',color:mc,fontSize:11,fontWeight:500,cursor:'pointer'}}>{qq}</button>
+                ))}
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <input value={followUpQ} onChange={e=>setFollowUpQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&followUp(followUpQ)} placeholder="输入你想追问的问题…" style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#fff',fontSize:13,outline:'none'}}/>
+                <button onClick={()=>followUp(followUpQ)} disabled={!followUpQ.trim()||ms.loading} style={{width:40,height:40,borderRadius:20,border:'none',background:followUpQ.trim()?`linear-gradient(135deg,${mc},${mc}dd)`:T.border,color:'#fff',fontSize:16,cursor:followUpQ.trim()?'pointer':'default',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>↑</button>
+              </div>
             </div>})()}
           </div>);
         })()}
@@ -1109,6 +1167,41 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
     {/* Hour Correction Assistant */}
     {showHourAssistant&&<HourAssistantModal profile={profile} onResult={(h)=>{onUpdateProfile({...profile,hour:h})}} onClose={()=>setShowHourAssistant(false)}/>}
+
+    {/* Fullscreen Report Modal for viewing collapsed rounds */}
+    {viewRound&&(()=>{
+      const rd=(rounds[viewRound.mode]||[])[viewRound.roundIdx];
+      if(!rd)return null;
+      return <div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,display:'flex',flexDirection:'column'}}>
+        {/* Top bar */}
+        <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:'#fff',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+          <button onClick={()=>setViewRound(null)} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+          <div style={{flex:1}}>
+            <div style={{fontSize:15,fontWeight:700,color:T.text}}>第{viewRound.roundIdx+1}轮 · {rd.question||'全面分析'}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{rd.sections.length}个维度 · {rd.result.response?.length||0}字</div>
+          </div>
+          <button onClick={()=>{navigator.clipboard?.writeText(rd.result.response);alert('已复制')}} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+        </div>
+        {/* Scrollable content */}
+        <div style={{flex:1,overflow:'auto',padding:'12px 16px 30px'}}>
+          {/* Header card */}
+          <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:16,marginBottom:10,color:'#fff'}}>
+            <div style={{fontSize:10,opacity:.6}}>命理报告 · 第{viewRound.roundIdx+1}轮</div>
+            <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {rd.question||'全面分析'}</div>
+            <div style={{fontSize:11,opacity:.75,marginTop:4}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day}</div>
+            {rd.result._genTime&&<div style={{fontSize:10,opacity:.5,marginTop:4}}>⏰ {rd.result._genTime} ⚡ {rd.result._elapsed}s</div>}
+          </div>
+          {/* Structured data cards if available */}
+          {rd.result.structured?.fourPillars&&<FourPillarsCard structured={rd.result.structured} mc={mc}/>}
+          {rd.result.structured?.wuxing&&rd.result.structured?.fourPillars&&<div style={{background:'#fff',borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+            <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8}}>☯ 五行力量分布</div>
+            <WuxingBar data={rd.result.structured.wuxing} height={8}/>
+          </div>}
+          {/* All report cards */}
+          {rd.sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+        </div>
+      </div>;
+    })()}
   </div>);
 }
 
