@@ -1060,7 +1060,8 @@ function App(){
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<HomeScreen profile={profile} goTo={goTo}/>}
     {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo} profile={profile}/>}
-    {scr===S.AI&&profile&&<AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/>}
+    {/* AIScreen always mounted, hidden when not active — preserves loading state */}
+    {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {scr===S.MSGS&&<MsgsScreen/>}
     {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)}/>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
