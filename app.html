@@ -145,31 +145,52 @@ function BirthScreen({onSubmit}){
   </div></div>);
 }
 
-// ===== SWIPE CARD =====
+// ===== SWIPE CARD (prototype style: white card + photo/info split) =====
 function SwipeCard({user,onSwipe,isTop,onDetail}){
   const [dx,setDx]=useState(0);const [dragging,setDragging]=useState(false);const startX=useRef(0);
   const onS=x=>{startX.current=x;setDragging(true)};
   const onM=x=>{if(dragging)setDx(x-startX.current)};
   const onE=()=>{if(Math.abs(dx)>80)onSwipe(dx>0?'right':'left');else if(Math.abs(dx)<5&&onDetail)onDetail();setDx(0);setDragging(false)};
-  const rot=dx*0.08,opa=Math.min(Math.abs(dx)/80,1);
+  const rot=dx*0.05,opa=Math.min(Math.abs(dx)/100,1);
+  const grad=GRADS[user.id%GRADS.length];
   return(
     <div onMouseDown={e=>onS(e.clientX)} onMouseMove={e=>onM(e.clientX)} onMouseUp={onE} onMouseLeave={()=>dragging&&onE()}
       onTouchStart={e=>onS(e.touches[0].clientX)} onTouchMove={e=>onM(e.touches[0].clientX)} onTouchEnd={onE}
-      style={{position:'absolute',inset:0,borderRadius:24,overflow:'hidden',cursor:'grab',userSelect:'none',transform:`translateX(${dx}px) rotate(${rot}deg) scale(${isTop?1:0.95})`,transition:dragging?'none':'all 0.4s ease',opacity:isTop?1:0.5,pointerEvents:isTop?'auto':'none',boxShadow:T.shadowLg}}>
-      <div style={{position:'absolute',inset:0,background:GRADS[user.id%GRADS.length]}}/>
-      <div style={{position:'absolute',top:'12%',left:'50%',transform:'translateX(-50%)',width:110,height:110,borderRadius:'50%',background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:52,backdropFilter:'blur(8px)'}}>{AVATARS[user.id%AVATARS.length]}</div>
-      <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'80px 20px 20px',background:'linear-gradient(transparent,rgba(0,0,0,0.6))'}}>
-        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
-          <div><div style={{color:'#fff',fontSize:24,fontWeight:700}}>{user.name} <span style={{fontSize:16,fontWeight:400,opacity:.8}}>{user.age}</span></div>
-            <div style={{color:'rgba(255,255,255,0.8)',fontSize:13,marginTop:4}}>{user.sign} · {user.dist}</div>
-            <div style={{color:'rgba(255,255,255,0.7)',fontSize:12,marginTop:6}}>{user.bio}</div>
-            <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{user.tags.map(t=><span key={t} style={{padding:'3px 10px',borderRadius:12,background:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.9)',fontSize:11}}>{t}</span>)}</div>
-          </div>
-          <ScoreRing score={user.score} size={64} stroke={4}/>
+      style={{position:'absolute',inset:0,borderRadius:20,overflow:'hidden',cursor:'grab',userSelect:'none',
+        transform:`translateX(${dx}px) rotate(${rot}deg) scale(${isTop?1:0.96})`,
+        transition:dragging?'none':'transform 0.4s cubic-bezier(0.4,0,0.2,1)',
+        opacity:isTop?1:0.5,pointerEvents:isTop?'auto':'none',
+        background:'#fff',boxShadow:T.shadowLg,display:'flex',flexDirection:'column'}}>
+      {/* LIKE/NOPE labels */}
+      {dx>20&&<div style={{position:'absolute',top:16,left:16,padding:'8px 18px',borderRadius:12,background:'rgba(52,211,153,0.12)',border:'2px solid #34D399',color:'#34D399',fontSize:16,fontWeight:800,transform:'rotate(-12deg)',opacity:opa,zIndex:10}}>有缘 ♥</div>}
+      {dx<-20&&<div style={{position:'absolute',top:16,right:16,padding:'8px 18px',borderRadius:12,background:'rgba(255,107,107,0.12)',border:'2px solid #FF6B6B',color:'#FF6B6B',fontSize:16,fontWeight:800,transform:'rotate(12deg)',opacity:opa,zIndex:10}}>无缘</div>}
+
+      {/* Photo area */}
+      <div style={{flex:1,background:grad,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',minHeight:0}}>
+        <div style={{fontSize:88}}>{AVATARS[user.id%AVATARS.length]}</div>
+        {/* Score badge top-right */}
+        <div style={{position:'absolute',top:10,right:10,padding:'6px 12px',borderRadius:14,background:'rgba(255,255,255,0.95)',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',display:'flex',alignItems:'center',gap:6}}>
+          <div style={{color:T.primary,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
+          <div style={{fontSize:8,color:T.textThi}}>缘分值</div>
         </div>
       </div>
-      {dx>30&&<div style={{position:'absolute',top:40,left:20,padding:'8px 16px',borderRadius:8,border:'3px solid #34D399',color:'#34D399',fontSize:20,fontWeight:700,transform:'rotate(-15deg)',opacity:opa}}>LIKE ♥</div>}
-      {dx<-30&&<div style={{position:'absolute',top:40,right:20,padding:'8px 16px',borderRadius:8,border:'3px solid #FF6B6B',color:'#FF6B6B',fontSize:20,fontWeight:700,transform:'rotate(15deg)',opacity:opa}}>PASS ✕</div>}
+
+      {/* Info area */}
+      <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'12px 16px 14px',cursor:'pointer'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+          <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
+          <span style={{padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:600,background:'#8B5CF615',color:'#8B5CF6'}}>{user.sign}</span>
+        </div>
+        <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.5}}>{user.bio}</div>
+        {/* Match reason */}
+        {user.matchResult&&<div style={{padding:'8px 12px',borderRadius:10,background:'#8B5CF608',border:'1px solid #8B5CF612',marginBottom:6}}>
+          <div style={{fontSize:11,color:'#8B5CF6',fontWeight:700,marginBottom:2}}>☯ 缘分解读</div>
+          <div style={{fontSize:12,color:T.textSec,lineHeight:1.5}}>{user.matchResult.gradeDesc}</div>
+        </div>}
+        <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+          {user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:'#8B5CF610',color:'#8B5CF6'}}>{t}</span>)}
+        </div>
+      </div>
     </div>
   );
 }
@@ -191,7 +212,7 @@ function MatchPopup({user,onChat,onClose}){
 }
 
 // ===== HOME =====
-// Card Detail Modal
+// Card Detail Modal (prototype-style: hero card + colored tabs)
 function CardDetailModal({user,profile,onClose,goTo}){
   const [match,setMatch]=useState(null);
   const [tab,setTab]=useState('info');
@@ -199,104 +220,129 @@ function CardDetailModal({user,profile,onClose,goTo}){
     apiPost('/api/match',{profileA:profile,profileB:user}).then(setMatch).catch(()=>{});
   },[]);
   const WX_COLORS={木:'#22C55E',火:'#EF4444',土:'#F59E0B',金:'#A3A3A3',水:'#3B82F6'};
+  const ac='#8B5CF6'; // accent color
+  const grad=GRADS[user.id%GRADS.length];
   return(
-    <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease'}}>
-        {/* Header */}
-        <div style={{background:'linear-gradient(135deg,#8B5CF6,#A78BFA)',padding:'20px 16px 16px',borderRadius:'24px 24px 0 0'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-            <div>
-              <div style={{color:'#fff',fontSize:20,fontWeight:700}}>{user.name} <span style={{fontWeight:400,fontSize:14,opacity:.7}}>{user.age}岁</span></div>
-              <div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:4}}>{user.sign} · {user.dist} · {user.bio}</div>
-            </div>
-            <button onClick={onClose} style={{width:32,height:32,borderRadius:16,background:'rgba(255,255,255,0.2)',border:'none',color:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-          </div>
-          {match&&<div style={{display:'flex',alignItems:'center',gap:10,marginTop:12}}>
-            <ScoreRing score={match.score} size={50} stroke={3}/>
-            <div>
-              <div style={{color:'#fff',fontSize:14,fontWeight:600}}>{match.grade}</div>
-              <div style={{color:'rgba(255,255,255,.7)',fontSize:11}}>{match.gradeDesc}</div>
-              {match.tags?.length>0&&<div style={{display:'flex',gap:4,marginTop:4}}>{match.tags.map(t=><span key={t} style={{padding:'2px 8px',borderRadius:8,background:'rgba(255,255,255,0.2)',fontSize:9,color:'#fff'}}>{t}</span>)}</div>}
-            </div>
-          </div>}
+    <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:T.bg,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'92vh',overflow:'auto',animation:'slideUp .3s ease'}}>
+        {/* Top bar */}
+        <div style={{position:'sticky',top:0,zIndex:10,padding:'16px 16px 10px',background:T.bg,display:'flex',alignItems:'center',gap:12}}>
+          <button onClick={onClose} style={{width:36,height:36,borderRadius:'50%',border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+          <div style={{flex:1,fontSize:17,fontWeight:700,color:T.text}}>个人资料</div>
+          {match&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:ac,color:'#fff'}}>{match.score}% 匹配</span>}
         </div>
-        {/* Tabs */}
-        <div style={{display:'flex',borderBottom:`1px solid ${T.border}`}}>
+
+        {/* Hero card */}
+        <div style={{margin:'0 16px 16px',borderRadius:20,background:'#fff',boxShadow:T.shadowLg,overflow:'hidden'}}>
+          <div style={{height:200,background:grad,display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
+            <div style={{fontSize:100}}>{AVATARS[user.id%AVATARS.length]}</div>
+            <div style={{position:'absolute',bottom:16,right:16,padding:'4px 12px',borderRadius:12,background:'rgba(0,0,0,0.4)',color:'#fff',fontSize:12}}>📍 {user.dist}</div>
+          </div>
+          <div style={{padding:'16px 20px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <span style={{fontSize:24,fontWeight:800,color:T.text}}>{user.name}</span>
+              <span style={{fontSize:16,color:T.textSec}}>{user.age}岁</span>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+              <span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:`${ac}15`,color:ac}}>{user.sign}</span>
+              {match?.personB?.element&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:`${ac}15`,color:ac}}>{match.personB.element}象</span>}
+              {match?.personB?.strength&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:'#45B7D115',color:'#45B7D1'}}>{match.personB.strength}</span>}
+            </div>
+            <div style={{fontSize:14,color:T.textSec,lineHeight:1.7}}>{user.bio}</div>
+          </div>
+        </div>
+
+        {/* Tab switcher (prototype style: filled active tab) */}
+        <div style={{display:'flex',gap:4,margin:'0 16px 12px',background:'#fff',borderRadius:12,padding:4,boxShadow:T.shadow}}>
           {[{k:'info',l:'基本信息'},{k:'match',l:'匹配分析'},{k:'wuxing',l:'五行对比'}].map(t=>
-            <button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,padding:'12px',border:'none',background:'none',fontSize:13,fontWeight:tab===t.k?600:400,color:tab===t.k?'#8B5CF6':T.textThi,borderBottom:tab===t.k?'2px solid #8B5CF6':'none',cursor:'pointer'}}>{t.l}</button>
+            <button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:13,fontWeight:600,cursor:'pointer',background:tab===t.k?ac:'transparent',color:tab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
           )}
         </div>
-        {/* Tab Content */}
-        <div style={{padding:'16px'}}>
-          {tab==='info'&&<div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-              {[['生日',`${user.year}.${user.month}.${user.day}`],['时辰',user.hour+'时'],['星座',user.sign],['距离',user.dist]].map(([l,v])=>
-                <div key={l} style={{background:'#F9FAFB',borderRadius:10,padding:'10px 12px'}}><div style={{fontSize:10,color:T.textThi}}>{l}</div><div style={{fontSize:13,fontWeight:600,marginTop:3}}>{v}</div></div>
+
+        {/* Tab content */}
+        <div style={{padding:'0 16px 100px'}}>
+          {tab==='info'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+            {/* Basic info chips */}
+            <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>📋 基本资料</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>
+              {[['生日',`${user.year}.${user.month}.${user.day}`],['时辰',user.hour>=0?user.hour+'时':'未知'],['星座',user.sign],['距离',user.dist]].map(([l,v])=>
+                <div key={l} style={{flex:'1 0 45%',padding:'10px 12px',borderRadius:12,background:`${ac}08`,border:`1px solid ${ac}10`}}>
+                  <div style={{fontSize:11,color:T.textThi,marginBottom:2}}>{l}</div>
+                  <div style={{fontSize:14,fontWeight:600,color:T.text}}>{v}</div>
+                </div>
+              )}
+              {match?.personB&&[['日主',match.personB.dayMaster+' · '+match.personB.element],['身强弱',match.personB.strength||'—']].map(([l,v])=>
+                <div key={l} style={{flex:'1 0 45%',padding:'10px 12px',borderRadius:12,background:`${ac}08`,border:`1px solid ${ac}10`}}>
+                  <div style={{fontSize:11,color:T.textThi,marginBottom:2}}>{l}</div>
+                  <div style={{fontSize:14,fontWeight:600,color:T.text}}>{v}</div>
+                </div>
               )}
             </div>
-            <div style={{fontSize:13,fontWeight:600,marginBottom:6}}>兴趣标签</div>
-            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:10,background:'#F3F4F6',fontSize:12}}>{t}</span>)}</div>
-            {match?.personB&&<div style={{marginTop:14}}>
-              <div style={{fontSize:13,fontWeight:600,marginBottom:6}}>命理信息</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                {[['日主',match.personB.dayMaster+' · '+match.personB.element],['身强弱',match.personB.strength||'—'],['缺失',match.personB.wuxingLack?.join('、')||'无']].map(([l,v])=>
-                  <div key={l} style={{background:'#F9FAFB',borderRadius:10,padding:'10px 12px'}}><div style={{fontSize:10,color:T.textThi}}>{l}</div><div style={{fontSize:13,fontWeight:600,marginTop:3}}>{v}</div></div>
-                )}
-              </div>
-            </div>}
+            {/* Hobbies */}
+            <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>🎯 兴趣爱好</div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:16}}>
+              {user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:`${ac}10`,color:ac}}>{t}</span>)}
+            </div>
+            {/* Wuxing lack */}
+            {match?.personB?.wuxingLack?.length>0&&<>
+              <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>⚖️ 五行缺失</div>
+              <div style={{fontSize:14,color:T.text,lineHeight:1.7,padding:'10px 14px',borderRadius:12,background:`${ac}06`,borderLeft:`3px solid ${ac}`}}>缺 {match.personB.wuxingLack.join('、')}</div>
+            </>}
           </div>}
 
-          {tab==='match'&&match&&<div>
-            {match.compatibility&&<div style={{background:`#8B5CF610`,borderRadius:14,padding:14,marginBottom:14,textAlign:'center'}}>
-              <div style={{fontSize:24}}>{match.compatibility.icon}</div>
-              <div style={{fontSize:15,fontWeight:700,color:'#8B5CF6',marginTop:4}}>{match.compatibility.type}</div>
-              <div style={{fontSize:12,color:T.textSec,marginTop:4}}>{match.compatibility.desc}</div>
-            </div>}
-            {match.dimensions?.map((d,i)=>(
-              <div key={i} style={{marginBottom:10}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                  <span style={{fontSize:12,fontWeight:600}}>{d.icon} {d.name}</span>
-                  <span style={{fontSize:12,fontWeight:700,color:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444'}}>{d.score}分</span>
+          {tab==='match'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+            {match?<>
+              {match.compatibility&&<div style={{background:`${ac}08`,borderRadius:14,padding:16,marginBottom:16,textAlign:'center'}}>
+                <div style={{fontSize:28}}>{match.compatibility.icon}</div>
+                <div style={{fontSize:16,fontWeight:700,color:ac,marginTop:4}}>{match.compatibility.type}</div>
+                <div style={{fontSize:13,color:T.textSec,marginTop:4}}>{match.compatibility.desc}</div>
+              </div>}
+              {match.dimensions?.map((d,i)=>(
+                <div key={i} style={{marginBottom:12}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                    <span style={{fontSize:13,fontWeight:600}}>{d.icon} {d.name}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444'}}>{d.score}分</span>
+                  </div>
+                  <div style={{height:8,background:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
+                    <div style={{height:'100%',background:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444',borderRadius:4,width:d.score+'%',transition:'width .6s ease'}}/>
+                  </div>
+                  {d.desc&&<div style={{fontSize:11,color:T.textThi,marginTop:3}}>{d.desc.substring(0,50)}</div>}
                 </div>
-                <div style={{height:6,background:'#F3F4F6',borderRadius:3,overflow:'hidden'}}>
-                  <div style={{height:'100%',background:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444',borderRadius:3,width:d.score+'%',transition:'width .5s ease'}}/>
-                </div>
-                <div style={{fontSize:10,color:T.textThi,marginTop:3}}>{d.desc?.substring(0,40)}</div>
-              </div>
-            ))}
-            {match.shishenCross&&<div style={{background:'#F9FAFB',borderRadius:12,padding:12,marginTop:10}}>
-              <div style={{fontSize:12,fontWeight:600,marginBottom:6}}>十神互见</div>
-              <div style={{fontSize:12,color:T.textSec}}>你看TA → {match.shishenCross.youToThem?.ss}：{match.shishenCross.youToThem?.desc?.substring(0,25)}</div>
-              <div style={{fontSize:12,color:T.textSec,marginTop:3}}>TA看你 → {match.shishenCross.themToYou?.ss}：{match.shishenCross.themToYou?.desc?.substring(0,25)}</div>
-            </div>}
+              ))}
+              {match.shishenCross&&<div style={{background:`${ac}06`,borderRadius:12,padding:14,marginTop:12,borderLeft:`3px solid ${ac}`}}>
+                <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:6}}>十神互见</div>
+                <div style={{fontSize:13,color:T.textSec,lineHeight:1.7}}>你看TA → {match.shishenCross.youToThem?.ss}：{match.shishenCross.youToThem?.desc?.substring(0,30)}</div>
+                <div style={{fontSize:13,color:T.textSec,marginTop:4,lineHeight:1.7}}>TA看你 → {match.shishenCross.themToYou?.ss}：{match.shishenCross.themToYou?.desc?.substring(0,30)}</div>
+              </div>}
+            </>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
           </div>}
 
-          {tab==='wuxing'&&match&&<div>
-            <div style={{display:'flex',gap:16,justifyContent:'center',marginBottom:16}}>
-              {['你',user.name].map((label,idx)=>{
-                const p=idx===0?match.personA:match.personB;
+          {tab==='wuxing'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+            {match?<div style={{display:'flex',gap:20,justifyContent:'center'}}>
+              {[{label:'你',p:match.personA},{label:user.name,p:match.personB}].map(({label,p})=>{
                 if(!p?.wuxing)return null;
                 return <div key={label} style={{flex:1,textAlign:'center'}}>
-                  <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>{label}</div>
+                  <div style={{fontSize:14,fontWeight:700,marginBottom:12,color:T.text}}>{label}</div>
                   {Object.entries(p.wuxing).map(([wx,val])=>(
-                    <div key={wx} style={{marginBottom:6}}>
-                      <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:2}}>
-                        <span style={{color:WX_COLORS[wx]}}>{wx}</span><span>{val}</span>
+                    <div key={wx} style={{marginBottom:8}}>
+                      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:3}}>
+                        <span style={{color:WX_COLORS[wx],fontWeight:600}}>{wx}</span><span style={{fontWeight:600}}>{val}</span>
                       </div>
-                      <div style={{height:8,background:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
-                        <div style={{height:'100%',background:WX_COLORS[wx],borderRadius:4,width:Math.min(val*25,100)+'%'}}/>
+                      <div style={{height:10,background:'#F3F4F6',borderRadius:5,overflow:'hidden'}}>
+                        <div style={{height:'100%',background:WX_COLORS[wx],borderRadius:5,width:Math.min(val*25,100)+'%',transition:'width .5s ease'}}/>
                       </div>
                     </div>
                   ))}
-                  {p.wuxingLack?.length>0&&<div style={{fontSize:10,color:'#EF4444',marginTop:4}}>缺: {p.wuxingLack.join('、')}</div>}
+                  {p.wuxingLack?.length>0&&<div style={{fontSize:11,color:'#EF4444',marginTop:6,fontWeight:600}}>缺: {p.wuxingLack.join('、')}</div>}
                 </div>;
               })}
-            </div>
+            </div>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
           </div>}
         </div>
-        {/* Bottom actions */}
-        <div style={{padding:'0 16px 20px',display:'flex',gap:10}}>
-          <button onClick={()=>{onClose();goTo(S.AI,'hehun')}} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>💑 AI深度合婚分析</button>
+
+        {/* Bottom action */}
+        <div style={{position:'sticky',bottom:0,padding:'12px 16px 20px',background:T.bg}}>
+          <button onClick={()=>{onClose();goTo(S.AI,'hehun')}} style={{width:'100%',padding:'14px',borderRadius:28,border:'none',background:`linear-gradient(135deg,${ac},${ac}dd)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:`0 4px 14px ${ac}33`,letterSpacing:1}}>💑 AI深度合婚分析</button>
         </div>
       </div>
     </div>
