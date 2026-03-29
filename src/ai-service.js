@@ -494,6 +494,71 @@ function extractStructured(mode, profile) {
   try {
     if (mode === 'bazi') {
       const r = baziEngine.calculate(p);
+      // Generate 5 personality cards from engine data
+      const dm = r.dayMaster;
+      const el = r.dayMasterElement;
+      const str = r.dayStrength;
+      const ss = r.shishen || {};
+      const WX_RELATION = {木:{生:'火',克:'土',被克:'金',被生:'水'},火:{生:'土',克:'金',被克:'水',被生:'木'},土:{生:'金',克:'水',被克:'木',被生:'火'},金:{生:'水',克:'木',被克:'火',被生:'土'},水:{生:'木',克:'火',被克:'土',被生:'金'}};
+      const rel = WX_RELATION[el] || {};
+      const SS_RELATION = {
+        '比肩':'平等合作型，需要独立空间',
+        '劫财':'竞争激励型，在碰撞中成长',
+        '食神':'温和滋养型，给予不求回报',
+        '伤官':'表达创造型，追求精神共鸣',
+        '偏财':'灵活社交型，广结善缘但不深',
+        '正财':'稳定务实型，重视承诺和安全',
+        '七杀':'挑战激励型，需要强者相伴',
+        '正官':'互相尊重型，看重规则与边界',
+        '偏印':'独立思考型，需要理解而非控制',
+        '正印':'被关爱型，享受被照顾的感觉',
+      };
+      const hourSS = ss.hourTg || '比肩';
+      const cards = [
+        { id:'personality', title:'人格卡', icon:'✦', color:'#8B5CF6',
+          subtitle:'核心性格特质',
+          main: (r.personality?.type||dm+el) + '·' + dm + el,
+          traits: r.personality?.traits || [],
+          desc: r.personality?.simple || `日主${dm}${el}，${str}` },
+        { id:'relation', title:'关系模式卡', icon:'◈', color:'#0D9488',
+          subtitle:'关系中的角色',
+          main: hourSS + '格·' + (SS_RELATION[hourSS]||'').split('，')[0],
+          traits: [
+            `时柱${hourSS}：${(SS_RELATION[hourSS]||'').split('，')[0]}`,
+            str==='身强'?'倾向主导关系':'倾向被动接受',
+            `${el}生${rel.生||''}：善于给予${rel.生||''}型能量`,
+            r.wuxingLack?.length?`缺${r.wuxingLack.join('')}：需要伴侣补充`:'五行均衡：适应性强',
+          ],
+          desc: `在关系中你是${hourSS}型人格。${SS_RELATION[hourSS]||''}` },
+        { id:'strength', title:'优势卡', icon:'◆', color:'#22C55E',
+          subtitle:'你的核心优势',
+          main: r.personality?.traits?.[0] || '坚韧',
+          traits: [
+            ...(r.personality?.traits?.slice(0,2)||[]),
+            str==='身强'?'执行力强，说做就做':'观察力敏锐，思虑周全',
+            `${el}属性：${el==='金'?'决断力':el==='木'?'成长力':el==='水'?'智慧':el==='火'?'行动力':'包容力'}突出`,
+          ],
+          desc: `你最大的优势是${r.personality?.traits?.[0]||'坚韧'}。${str==='身强'?'身强之人行动力十足，适合开拓创新':'身弱之人善于借力，适合合作共赢'}。` },
+        { id:'risk', title:'风险提示卡', icon:'◇', color:'#F59E0B',
+          subtitle:'需要注意',
+          main: r.personality?.traits?.[3] || '过度消耗',
+          traits: [
+            ...(r.personality?.traits?.slice(2,4)||[]),
+            str==='身强'?'容易过于强势，忽略他人感受':'容易过度迁就，忽略自身需求',
+            `${el}过旺时：${el==='金'?'过于尖锐':el==='木'?'过于固执':el==='水'?'优柔寡断':el==='火'?'急躁冲动':'墨守成规'}`,
+          ],
+          desc: `你需要注意${r.personality?.traits?.[3]||'平衡'}的倾向。${r.wuxingLack?.length?`五行缺${r.wuxingLack.join('')}，对应方面需要额外关注。`:'五行较均衡，但仍需注意过旺元素的影响。'}` },
+        { id:'action', title:'行动建议卡', icon:'▸', color:'#3B82F6',
+          subtitle:'今天可以做的事',
+          main: `补${r.wuxingLack?.[0]||rel.被克||el}·调和五行`,
+          traits: [
+            `多接触${rel.被生||'水'}元素事物（颜色/方位/食物）`,
+            str==='身强'?'练习倾听，给他人更多表达空间':'坚定立场，适当说"不"',
+            `每日冥想5分钟，感受${el}的能量流动`,
+            `本周尝试一件${rel.克||'木'}属性的活动`,
+          ],
+          desc: `今天的建议：${str==='身强'?'收敛锋芒，以柔克刚':'坚定信念，积蓄力量'}。` },
+      ];
       return {
         mode: 'bazi',
         dayMaster: r.dayMaster, element: r.dayMasterElement,
@@ -504,6 +569,7 @@ function extractStructured(mode, profile) {
         favorWx: r.xpiUshen?.favorWx, avoidWx: r.xpiUshen?.avoidWx,
         shengxiao: r.lunarDate?.shengxiao,
         lunarDate: r.lunarDate,
+        personalityCards: cards,
       };
     }
     if (mode === 'astrology') {
