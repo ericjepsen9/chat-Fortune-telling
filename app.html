@@ -340,26 +340,25 @@ function HomeScreen({profile,goTo}){
 
 // ===== REPORT CARD =====
 function ReportCard({title, icon, color, content, index, md, isLong}) {
-  const [expanded, setExpanded] = useState(!isLong);
-  const displayContent = expanded ? content : content.substring(0, 280) + '…';
+  const [expanded, setExpanded] = useState(true);
+  const trimmed = content.replace(/^\s*\n+/, '').trim();
+  const displayContent = expanded ? trimmed : trimmed.substring(0, 280) + '…';
   return (
     <div className="anim-in" style={{animationDelay: index*0.06+'s', background:T.card, borderRadius:16, overflow:'hidden', boxShadow:T.shadow, marginBottom:10}}>
-      {/* Card header with colored accent */}
       <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',borderBottom:`1px solid ${T.border}`,position:'relative'}}>
         <div style={{position:'absolute',left:0,top:0,bottom:0,width:4,background:color,borderRadius:'0 4px 4px 0'}}/>
         <div style={{width:36,height:36,borderRadius:10,background:`${color}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{icon}</div>
         <div style={{flex:1}}>
           <div style={{fontSize:14,fontWeight:600,color:T.text}}>{title.replace(/^[一二三四五六七八九十]+、\s*/,'')}</div>
         </div>
-        <button onClick={()=>setExpanded(!expanded)} style={{background:'none',border:'none',fontSize:18,color:T.textThi,cursor:'pointer',transform:expanded?'rotate(180deg)':'none',transition:'transform .2s'}}>▾</button>
+        {isLong&&<button onClick={()=>setExpanded(!expanded)} style={{background:'none',border:'none',fontSize:18,color:T.textThi,cursor:'pointer',transform:expanded?'rotate(180deg)':'none',transition:'transform .2s'}}>▾</button>}
       </div>
-      {/* Card content */}
-      <div style={{padding:'12px 16px',fontSize:13.5,lineHeight:1.75,color:T.textSec,transition:'max-height .3s ease'}}>
+      {expanded&&<div style={{padding:'12px 16px',fontSize:13.5,lineHeight:1.75,color:T.textSec}}>
         <div className="markdown" dangerouslySetInnerHTML={md(displayContent)}/>
-        {isLong && !expanded && (
-          <button onClick={()=>setExpanded(true)} style={{marginTop:8,padding:'6px 14px',borderRadius:8,border:`1px solid ${color}30`,background:`${color}08`,color:color,fontSize:12,fontWeight:500,cursor:'pointer'}}>展开全部 ▾</button>
-        )}
-      </div>
+      </div>}
+      {isLong&&!expanded&&<div style={{padding:'10px 16px'}}>
+        <button onClick={()=>setExpanded(true)} style={{width:'100%',padding:'8px',borderRadius:8,border:`1px solid ${color}30`,background:`${color}08`,color:color,fontSize:12,fontWeight:500,cursor:'pointer'}}>展开查看 ▾</button>
+      </div>}
     </div>
   );
 }
