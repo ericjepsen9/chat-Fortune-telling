@@ -375,13 +375,13 @@ function HomeScreen({profile,goTo}){
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}><Icons.sparkles s={16} c="#fff"/> 先去AI占卜</button>
       </div>)
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
+      {/* Action buttons - overlaid at bottom of card area */}
+      {cards.length>0&&<div style={{position:'absolute',bottom:12,left:0,right:0,display:'flex',justifyContent:'center',gap:14,alignItems:'center',zIndex:5,pointerEvents:'none'}}>
+        <button onClick={()=>swipe('left')} style={{pointerEvents:'auto',width:52,height:52,borderRadius:'50%',border:`2px solid ${T.border}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.12)',color:'#FF6B6B'}}><Icons.x s={24} c="#FF6B6B"/></button>
+        <button onClick={()=>goTo(S.AI)} style={{pointerEvents:'auto',width:40,height:40,borderRadius:'50%',border:`2px solid ${T.border}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.12)'}}><Icons.sparkles s={16} c="#7C5CFC"/></button>
+        <button onClick={()=>swipe('right')} style={{pointerEvents:'auto',width:52,height:52,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(52,211,153,0.3)'}}><Icons.heart s={24} c="#fff" fill="#fff"/></button>
+      </div>}
     </div>
-    {/* Action buttons - inline below card */}
-    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:14,padding:'8px 0 2px',flexShrink:0,alignItems:'center'}}>
-      <button onClick={()=>swipe('left')} style={{width:52,height:52,borderRadius:'50%',border:`2px solid ${T.border}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow,color:'#FF6B6B'}}><Icons.x s={24} c="#FF6B6B"/></button>
-      <button onClick={()=>goTo(S.AI)} style={{width:40,height:40,borderRadius:'50%',border:`2px solid ${T.border}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow,alignSelf:'center'}}><Icons.sparkles s={16} c="#7C5CFC"/></button>
-      <button onClick={()=>swipe('right')} style={{width:52,height:52,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(52,211,153,0.3)'}}><Icons.heart s={24} c="#fff" fill="#fff"/></button>
-    </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
   </div>);
