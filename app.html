@@ -1030,15 +1030,15 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           </div>
         </div>}
 
-        {/* Question */}
-        <div style={{background:'#fff',borderRadius:14,padding:12,boxShadow:T.shadow,marginBottom:14}}>
+        {/* Question — only show when no result */}
+        {!ms.result&&!ms.loading&&<div style={{background:'#fff',borderRadius:14,padding:12,boxShadow:T.shadow,marginBottom:14}}>
           <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="输入具体问题 · 留空则全面分析" style={{width:'100%',padding:'11px 12px',border:`1.5px solid ${T.borderDark}`,borderRadius:10,fontSize:13,background:'#FAFAFA',outline:'none'}}/>
           <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:8}}>
             {(QUICK_QS[mode]||[]).map(qq=>(
               <button key={qq} onClick={()=>setMS(mode,{q:ms.q===qq?'':qq})} style={{padding:'4px 10px',borderRadius:10,border:`1px solid ${ms.q===qq?mc:T.border}`,background:ms.q===qq?`${mc}0A`:'#fff',color:ms.q===qq?mc:T.textSec,fontSize:11,cursor:'pointer',transition:'all .2s'}}>{qq}</button>
             ))}
           </div>
-        </div>
+        </div>}
       </>}
 
       {/* Empty state with mode intro */}
@@ -1078,9 +1078,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           <div style={{fontSize:11,color:mc,fontWeight:600,flexShrink:0}}>查看报告 →</div>
         </div>
       ))}
-
-      {/* "New query" button when result exists */}
-      {ms.result&&!ms.loading&&<button onClick={()=>setMS(mode,{result:null,error:null})} style={{width:'100%',padding:'10px',borderRadius:12,border:`1.5px solid ${P.accentLight}`,background:'#fff',fontSize:13,fontWeight:500,color:P.accent,cursor:'pointer',marginBottom:14,textAlign:'center'}}>🔄 重新提问（{MODE_FULL[mode]}）</button>}
 
       {/* Error */}
       {ms.error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
@@ -1169,6 +1166,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <input value={followUpQ} onChange={e=>setFollowUpQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&followUp(followUpQ)} placeholder="输入你想追问的问题…" style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#fff',fontSize:13,outline:'none'}}/>
                 <button onClick={()=>followUp(followUpQ)} disabled={!followUpQ.trim()||ms.loading} style={{width:40,height:40,borderRadius:20,border:'none',background:followUpQ.trim()?`linear-gradient(135deg,${mc},${mc}dd)`:T.border,color:'#fff',fontSize:16,cursor:followUpQ.trim()?'pointer':'default',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>↑</button>
               </div>
+              <div style={{textAlign:'center',marginTop:10}}>
+                <button onClick={()=>{setMS(mode,{result:null,error:null,q:''});setRounds(r=>({...r,[mode]:[]}))}} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer',textDecoration:'underline'}}>🔄 清空重新提问</button>
+              </div>
             </div>
             </>})()}
           </div>);
@@ -1188,15 +1188,15 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       </div>}
     </div>
 
-    {/* === FIXED BOTTOM CTA === */}
-    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50}}>
+    {/* === FIXED BOTTOM CTA — only when no result === */}
+    {!ms.result&&<div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50}}>
       <button onClick={()=>divine(mode,false)} disabled={ms.loading||!!loadingMode} style={{
         width:'100%',height:48,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',
         cursor:ms.loading?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',
         background:ms.loading?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
         boxShadow:ms.loading?'none':`0 4px 16px ${mc}40`,transition:'all .3s',whiteSpace:'nowrap',
       }}>
-        {ms.loading?`🔮 ${ms.loadMsg}`:ms.result?`🔄 ${MODE_FULL[mode]} · 重新解读`:`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
+        {ms.loading?`🔮 ${ms.loadMsg}`:`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
       </button>
       {ms.loading&&<div style={{height:3,background:P.accentLight,borderRadius:2,marginTop:4,overflow:'hidden'}}>
         <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
@@ -1204,7 +1204,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       <div style={{textAlign:'center',marginTop:3}}>
         <button onClick={()=>divine(mode,true)} disabled={ms.loading} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎（秒出）</button>
       </div>
-    </div>
+    </div>}
 
     {/* === LOADING TOAST (shows when bg mode is loading) === */}
     {loadingMode&&loadingMode!==mode&&<div style={{position:'fixed',top:100,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.8)',color:'#fff',borderRadius:16,padding:'10px 20px',zIndex:200,display:'flex',alignItems:'center',gap:8,fontSize:13,boxShadow:'0 4px 20px rgba(0,0,0,0.3)',animation:'fadeIn .3s ease'}}>
