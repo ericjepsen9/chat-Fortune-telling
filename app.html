@@ -548,6 +548,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
+  const [revealCount,setRevealCount]=useState(999);
 
   // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
   const [modeStates,setModeStates]=useState(()=>{
@@ -593,6 +594,18 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
   const stopTimer=(m)=>{if(timers.current[m]){clearInterval(timers.current[m]);delete timers.current[m]}};
   useEffect(()=>()=>{Object.values(timers.current).forEach(clearInterval)},[]);
+
+  // Progressive card reveal
+  useEffect(()=>{
+    // Find if current mode just got a new result
+    const msNow=getMS(mode);
+    if(msNow.result&&msNow.result.response){
+      setRevealCount(1);
+      let count=1;
+      const revealTimer=setInterval(()=>{count++;setRevealCount(count);if(count>=30)clearInterval(revealTimer)},400);
+      return()=>clearInterval(revealTimer);
+    } else { setRevealCount(999); }
+  },[ms.result]);
 
   // Save results to localStorage whenever they change
   useEffect(()=>{
@@ -797,28 +810,23 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>选择问题或直接点击底部按钮开始</div>
       </div>}
 
-      {/* Loading overlay - covers AI area only, TabBar still clickable */}
-      {ms.loading&&<div style={{position:'fixed',top:0,left:0,right:0,bottom:64,zIndex:55,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.3)',animation:'fadeIn .3s ease'}}>
-      <div className="anim-in" style={{background:'#fff',borderRadius:22,padding:'32px 24px',boxShadow:'0 8px 40px rgba(0,0,0,0.15)',textAlign:'center',maxWidth:320,width:'85%',border:`2px solid ${mc}20`}}>
-        {/* Mode-specific animated icon */}
-        <div style={{position:'relative',width:80,height:80,margin:'0 auto 14px'}}>
-          <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid ${mc}20`}}/>
-          <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid transparent`,borderTopColor:mc,animation:'spin 1.2s linear infinite'}}/>
-          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:32}}>
-            {mode==='bazi'?'☰':mode==='tarot'?'🎴':mode==='meihua'?'❀':mode==='astrology'?'★':mode==='vedic'?'◎':isPair?'💑':'🔮'}
+      {/* Loading banner - non-blocking */}
+      {ms.loading&&<div className="anim-in" style={{background:`linear-gradient(135deg,${mc}10,${mc}05)`,border:`1.5px solid ${mc}25`,borderRadius:16,padding:'16px',marginBottom:14,textAlign:'center'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:8}}>
+          <div style={{position:'relative',width:36,height:36,flexShrink:0}}>
+            <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`2.5px solid ${mc}20`}}/>
+            <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`2.5px solid transparent`,borderTopColor:mc,animation:'spin 1s linear infinite'}}/>
+            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{modeInfo.icon}</div>
+          </div>
+          <div style={{textAlign:'left'}}>
+            <div style={{fontSize:14,fontWeight:600,color:mc}}>{ms.loadMsg}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:1}}>{ms.elapsed<15?'排盘计算中':ms.elapsed<40?'AI深度分析中':ms.elapsed<70?'即将完成':'请耐心等待'} · {ms.elapsed}s</div>
           </div>
         </div>
-        <div style={{fontSize:16,fontWeight:700,color:mc}}>{ms.loadMsg}</div>
-        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>
-          {ms.elapsed<15?'正在排盘计算…':ms.elapsed<40?'AI深度分析中…':ms.elapsed<70?'即将完成…':'请耐心等待…'}
+        <div style={{height:3,background:`${mc}12`,borderRadius:2,overflow:'hidden'}}>
+          <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${mc}aa)`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:8,marginTop:14}}>
-          <div style={{flex:1,height:4,background:`${mc}15`,borderRadius:2,overflow:'hidden'}}>
-            <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${mc}bb)`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
-          </div>
-          <span style={{fontSize:11,color:mc,fontWeight:600,flexShrink:0}}>{ms.elapsed}s</span>
-        </div>
-      </div></div>}
+      </div>}
 
       {/* "New query" button when result exists */}
       {ms.result&&!ms.loading&&<button onClick={()=>setMS(mode,{result:null,error:null})} style={{width:'100%',padding:'10px',borderRadius:12,border:`1.5px solid ${P.accentLight}`,background:'#fff',fontSize:13,fontWeight:500,color:P.accent,cursor:'pointer',marginBottom:14,textAlign:'center'}}>🔄 重新提问（{MODE_FULL[mode]}）</button>}
@@ -863,10 +871,16 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <div style={{fontSize:10,opacity:.7}}>{p2.year}.{p2.month}.{p2.day} {p2.gender==='male'?'♂':'♀'}</div>
               </div>
             </div>}
-            {sections.filter(s=>s.lines.some(l=>l.trim())).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+            {sections.filter(s=>s.lines.some(l=>l.trim())).filter((_,i)=>i<revealCount).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={COLORS[i%COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+            {(()=>{const total=sections.filter(s=>s.lines.some(l=>l.trim())).length;return revealCount<total?<div style={{textAlign:'center',padding:'16px',color:mc}}>
+              <div style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:13}}>
+                <div style={{width:16,height:16,borderRadius:8,border:`2px solid transparent`,borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
+                正在展开更多分析… ({Math.min(revealCount,total)}/{total})
+              </div>
+            </div>:
             <div style={{display:'flex',gap:8,marginTop:10}}>
               <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
-            </div>
+            </div>})()}
           </div>);
         })()}
 
