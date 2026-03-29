@@ -481,5 +481,46 @@ function test() {
   console.log(r5.engineData);
 }
 
+/**
+ * Extract structured data for frontend visualization
+ * Called alongside calculateAll, returns JSON-safe object
+ */
+function extractStructured(mode, profile) {
+  const p = {
+    year: parseInt(profile.year), month: parseInt(profile.month),
+    day: parseInt(profile.day), hour: parseInt(profile.hour),
+    gender: profile.gender || 'male', longitude: profile.longitude,
+  };
+  try {
+    if (mode === 'bazi') {
+      const r = baziEngine.calculate(p);
+      return {
+        mode: 'bazi',
+        dayMaster: r.dayMaster, element: r.dayMasterElement,
+        strength: r.dayStrength, geju: r.geju,
+        wuxing: r.wuxing, wuxingLack: r.wuxingLack,
+        fourPillars: r.fourPillars, nayin: r.nayin,
+        personality: r.personality,
+        favorWx: r.xpiUshen?.favorWx, avoidWx: r.xpiUshen?.avoidWx,
+        shengxiao: r.lunarDate?.shengxiao,
+        lunarDate: r.lunarDate,
+      };
+    }
+    if (mode === 'astrology') {
+      const r = astrologyEngine.calculate(p);
+      return {
+        mode: 'astrology',
+        sunSign: r.sunSign, moonSign: r.moonSign, risingSign: r.risingSign,
+        planets: r.planets,
+      };
+    }
+    if (mode === 'hehun' || mode === 'synastry' || mode === 'hepan') {
+      // pair modes - need profileB
+      return { mode };
+    }
+    return { mode };
+  } catch(e) { return { mode, error: e.message }; }
+}
+
 if (require.main === module) test();
-module.exports = { buildRequest, calculateAll, createContext };
+module.exports = { buildRequest, calculateAll, createContext, extractStructured };

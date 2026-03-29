@@ -387,6 +387,100 @@ function HomeScreen({profile,goTo}){
   </div>);
 }
 
+// ===== WUXING RADAR (SVG五行雷达图) =====
+function WuxingRadar({data,size=140}){
+  if(!data)return null;
+  const cx=size/2,cy=size/2,r=size*0.38;
+  const labels=['木','火','土','金','水'];
+  const colors=['#22C55E','#EF4444','#D97706','#C4A35A','#3B82F6'];
+  const vals=labels.map(l=>data[l]||0);
+  const max=Math.max(...vals,1);
+  const pts=labels.map((_,i)=>{
+    const a=Math.PI*2*i/5-Math.PI/2;
+    const v=(vals[i]/max)*r;
+    return[cx+v*Math.cos(a),cy+v*Math.sin(a)];
+  });
+  const poly=pts.map(p=>p.join(',')).join(' ');
+  const gridLevels=[0.25,0.5,0.75,1];
+  return(
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Grid */}
+      {gridLevels.map(gl=>(
+        <polygon key={gl} points={labels.map((_,i)=>{const a=Math.PI*2*i/5-Math.PI/2;return`${cx+r*gl*Math.cos(a)},${cy+r*gl*Math.sin(a)}`}).join(' ')}
+          fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={0.5}/>
+      ))}
+      {/* Axes */}
+      {labels.map((_,i)=>{const a=Math.PI*2*i/5-Math.PI/2;return<line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(a)} y2={cy+r*Math.sin(a)} stroke="rgba(255,255,255,0.1)" strokeWidth={0.5}/>})}
+      {/* Data polygon */}
+      <polygon points={poly} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.8)" strokeWidth={1.5}/>
+      {/* Data points */}
+      {pts.map((p,i)=><circle key={i} cx={p[0]} cy={p[1]} r={3} fill={colors[i]} stroke="#fff" strokeWidth={1}/>)}
+      {/* Labels */}
+      {labels.map((l,i)=>{const a=Math.PI*2*i/5-Math.PI/2;const lx=cx+(r+16)*Math.cos(a);const ly=cy+(r+16)*Math.sin(a);return<text key={l} x={lx} y={ly} fill={colors[i]} fontSize={11} fontWeight={700} textAnchor="middle" dominantBaseline="central">{l}</text>})}
+      {/* Values */}
+      {labels.map((l,i)=>{const a=Math.PI*2*i/5-Math.PI/2;const vx=cx+(r+28)*Math.cos(a);const vy=cy+(r+28)*Math.sin(a);return<text key={'v'+i} x={vx} y={vy} fill="rgba(255,255,255,0.5)" fontSize={8} textAnchor="middle" dominantBaseline="central">{vals[i].toFixed(1)}</text>})}
+    </svg>
+  );
+}
+
+// ===== FOUR PILLARS CARD (四柱展示) =====
+function FourPillarsCard({structured,mc}){
+  if(!structured?.fourPillars)return null;
+  const fp=structured.fourPillars;
+  const ny=structured.nayin||{};
+  const WX_C={木:'#22C55E',火:'#EF4444',土:'#D97706',金:'#C4A35A',水:'#3B82F6'};
+  const WX_MAP={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+  const pillars=[
+    {name:'年柱',gz:fp.year,ny:ny.year},
+    {name:'月柱',gz:fp.month,ny:ny.month},
+    {name:'日柱',gz:fp.day,ny:ny.day},
+    {name:'时柱',gz:fp.hour,ny:ny.hour},
+  ];
+  return(
+    <div style={{background:'#fff',borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:10}}>
+        {pillars.map(p=>{
+          const tg=p.gz?.[0],dz=p.gz?.[1];
+          const tgWx=WX_MAP[tg]||'',dzWx=WX_MAP[dz]||'';
+          return <div key={p.name} style={{textAlign:'center',padding:'8px 4px',borderRadius:10,background:'#F9FAFB',border:`1px solid ${p.name==='日柱'?mc+'30':'#E5E7EB'}`}}>
+            <div style={{fontSize:10,color:'#9CA3AF',marginBottom:4}}>{p.name}</div>
+            <div style={{fontSize:20,fontWeight:700,color:WX_C[tgWx]||'#333',lineHeight:1.2}}>{tg||'—'}</div>
+            <div style={{fontSize:20,fontWeight:700,color:WX_C[dzWx]||'#333',lineHeight:1.2,marginTop:2}}>{dz||'—'}</div>
+            {p.ny&&<div style={{fontSize:9,color:'#9CA3AF',marginTop:4}}>{p.ny}</div>}
+          </div>})}
+      </div>
+      {/* Info row */}
+      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        {structured.dayMaster&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:`${mc}10`,color:mc}}>日主 {structured.dayMaster}{structured.element}</span>}
+        {structured.strength&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:structured.strength==='身强'?'#EF444410':'#3B82F610',color:structured.strength==='身强'?'#EF4444':'#3B82F6'}}>{structured.strength}</span>}
+        {structured.geju&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#D9770610',color:'#D97706'}}>{structured.geju}</span>}
+        {structured.favorWx&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#22C55E10',color:'#22C55E'}}>喜 {structured.favorWx}</span>}
+        {structured.wuxingLack?.length>0&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#EF444410',color:'#EF4444'}}>缺 {structured.wuxingLack.join('、')}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ===== WUXING BAR (五行条形图) =====
+function WuxingBar({data,height=6}){
+  if(!data)return null;
+  const WX_C={木:'#22C55E',火:'#EF4444',土:'#D97706',金:'#C4A35A',水:'#3B82F6'};
+  const max=Math.max(...Object.values(data),1);
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+      {Object.entries(data).map(([wx,val])=>(
+        <div key={wx} style={{display:'flex',alignItems:'center',gap:6}}>
+          <span style={{width:14,fontSize:11,fontWeight:600,color:WX_C[wx]}}>{wx}</span>
+          <div style={{flex:1,height,background:'#F3F4F6',borderRadius:height/2,overflow:'hidden'}}>
+            <div style={{height:'100%',background:WX_C[wx],borderRadius:height/2,width:Math.round(val/max*100)+'%',transition:'width .6s ease'}}/>
+          </div>
+          <span style={{width:24,fontSize:10,color:'#9CA3AF',textAlign:'right'}}>{val.toFixed?val.toFixed(1):val}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ===== REPORT CARD =====
 function ReportCard({title, icon, color, content, index, md, isLong}) {
   const [expanded, setExpanded] = useState(true);
@@ -908,12 +1002,34 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               else if(line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}
             });
           return(<div>
+            {/* Report Header with Radar */}
             <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                <div><div style={{fontSize:10,opacity:.6}}>命理报告</div><div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div><div style={{fontSize:11,opacity:.75,marginTop:4}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'}</div><div style={{display:'flex',gap:8,marginTop:6,opacity:.6,fontSize:10}}>{ms.result._genTime&&<span>⏰ {ms.result._genTime}</span>}{ms.result._elapsed&&<span>⚡ {ms.result._elapsed}s</span>}<span>📝 {ms.result.response?.length||0}字</span></div></div>
-                <div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:700}}>{sections.length}</div><div style={{fontSize:9,opacity:.7}}>维度</div></div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:10,opacity:.6}}>命理报告</div>
+                  <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div>
+                  {ms.result.structured?.dayMaster&&<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+                    <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>日主 {ms.result.structured.dayMaster}{ms.result.structured.element}</span>
+                    <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.strength}</span>
+                    {ms.result.structured.geju&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.geju}</span>}
+                  </div>}
+                  <div style={{fontSize:11,opacity:.75,marginTop:6}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'}</div>
+                  <div style={{display:'flex',gap:8,marginTop:4,opacity:.6,fontSize:10}}>{ms.result._genTime&&<span>⏰ {ms.result._genTime}</span>}{ms.result._elapsed&&<span>⚡ {ms.result._elapsed}s</span>}<span>📝 {ms.result.response?.length||0}字</span></div>
+                </div>
+                {/* Radar chart or dimension count */}
+                {ms.result.structured?.wuxing?
+                  <WuxingRadar data={ms.result.structured.wuxing} size={120}/>
+                  :<div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:700}}>{sections.length}</div><div style={{fontSize:9,opacity:.7}}>维度</div></div>
+                }
               </div>
             </div>
+            {/* Four Pillars card (bazi mode) */}
+            {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
+            {/* Wuxing bar (bazi mode, below fourpillars) */}
+            {ms.result.structured?.wuxing&&ms.result.structured?.fourPillars&&<div style={{background:'#fff',borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+              <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8}}>☯ 五行力量分布</div>
+              <WuxingBar data={ms.result.structured.wuxing} height={8}/>
+            </div>}
             {isPair&&<div style={{background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'12px 14px',marginBottom:10,display:'flex',justifyContent:'space-around',alignItems:'center',gap:8}}>
               <div style={{textAlign:'center',flex:1}}>
                 <div style={{fontSize:10,opacity:.6}}>甲方</div>

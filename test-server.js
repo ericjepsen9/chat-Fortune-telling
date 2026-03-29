@@ -138,7 +138,9 @@ async function handleDivination(mode, profile, question, displayMode, ctxOptions
   logger.logEngine(mode, profile, 0, req.engineData.length);
 
   const response = await callLLM(req.systemPrompt, req.userMessage, mode);
-  return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response };
+  // Extract structured data for frontend visualization
+  const structured = aiService.extractStructured(mode, profile);
+  return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response, structured };
 }
 
 // ============ HTTP 服务器 ============
@@ -364,8 +366,9 @@ const server = http.createServer(async (req, res) => {
         const { mode, year, month, day, hour, gender, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB } = JSON.parse(body);
         const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
         const data = calculateEngine(mode, profile, displayMode || 'simple', { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB });
+        const structured = require('./src/ai-service').extractStructured(mode, profile);
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ mode, displayMode: displayMode || 'simple', engineData: data }));
+        res.end(JSON.stringify({ mode, displayMode: displayMode || 'simple', engineData: data, structured }));
       } catch (e) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: e.message }));
