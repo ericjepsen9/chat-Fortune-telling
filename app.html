@@ -813,7 +813,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     try{localStorage.setItem('yuanhe_mode_results',JSON.stringify(toSave))}catch(e){}
   },[modeStates]);
 
-  const divine=async(divineMode,engineOnly)=>{
+  const divine=async(divineMode,engineOnly,questionOverride)=>{
     const m=divineMode||mode;
     // Validate: bazi/astrology/vedic/pair modes need complete birth data
     const needsBirth=['bazi','astrology','vedic','hehun','synastry','hepan'].includes(m);
@@ -823,10 +823,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     if(needsBirth&&profile.hour===-1&&!hourSkipped){
       setMS(m,{error:'请先补充出生时辰，或选择"不知道时辰"继续'});return;
     }
+    const q = questionOverride !== undefined ? questionOverride : (engineOnly?'':getMS(m).q);
+    if(questionOverride!==undefined)setMS(m,{q:questionOverride});
     setMS(m,{loading:true,error:null,result:null});
     startTimer(m);
     try{
-      const body={mode:m,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:engineOnly?'':getMS(m).q,displayMode:dm};
+      const body={mode:m,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,displayMode:dm};
       if(profile.hour===-1)body.hourUnknown=true;
       if(hourApprox)body.hourApprox=true;
       if(['hehun','synastry','hepan'].includes(m))body.profileB=p2;
@@ -1029,16 +1031,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             </div>)}
           </div>
         </div>}
-
-        {/* Question — only show when no result */}
-        {!ms.result&&!ms.loading&&<div style={{background:'#fff',borderRadius:14,padding:12,boxShadow:T.shadow,marginBottom:14}}>
-          <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="输入具体问题 · 留空则全面分析" style={{width:'100%',padding:'11px 12px',border:`1.5px solid ${T.borderDark}`,borderRadius:10,fontSize:13,background:'#FAFAFA',outline:'none'}}/>
-          <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:8}}>
-            {(QUICK_QS[mode]||[]).map(qq=>(
-              <button key={qq} onClick={()=>setMS(mode,{q:ms.q===qq?'':qq})} style={{padding:'4px 10px',borderRadius:10,border:`1px solid ${ms.q===qq?mc:T.border}`,background:ms.q===qq?`${mc}0A`:'#fff',color:ms.q===qq?mc:T.textSec,fontSize:11,cursor:'pointer',transition:'all .2s'}}>{qq}</button>
-            ))}
-          </div>
-        </div>}
       </>}
 
       {/* Empty state with mode intro */}
@@ -1046,7 +1038,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{width:56,height:56,borderRadius:28,background:`${mc}10`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px',fontSize:28}}>{modeInfo.icon}</div>
         <div style={{fontSize:15,fontWeight:600,color:T.text}}>{MODE_FULL[mode]}</div>
         <div style={{fontSize:12,color:T.textThi,marginTop:4,lineHeight:1.6}}>{MODE_INTRO[mode]||''}</div>
-        <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>选择问题或直接点击底部按钮开始</div>
+        <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>在底部输入问题或选择快捷标签开始</div>
       </div>}
 
       {/* Loading banner - non-blocking */}
@@ -1173,40 +1165,44 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       </div>}
     </div>
 
-    {/* === FIXED BOTTOM BAR === */}
+    {/* === FIXED BOTTOM BAR — input always at bottom === */}
     <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50}}>
-      {!ms.result&&!ms.loading?<>
-        {/* Initial: AI解读 button */}
-        <button onClick={()=>divine(mode,false)} disabled={!!loadingMode} style={{
-          width:'100%',height:48,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',
-          cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
-          background:`linear-gradient(135deg,${mc},${mc}cc)`,
-          boxShadow:`0 4px 16px ${mc}40`,transition:'all .3s',whiteSpace:'nowrap',
-        }}>
-          {`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI解读`}
-        </button>
-        <div style={{textAlign:'center',marginTop:3}}>
-          <button onClick={()=>divine(mode,true)} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎（秒出）</button>
-        </div>
-      </>:ms.loading?<>
+      {ms.loading?<>
         {/* Loading state */}
-        <button disabled style={{width:'100%',height:48,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',background:T.textThi,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          🔮 {ms.loadMsg}
+        <button disabled style={{width:'100%',height:44,borderRadius:14,border:'none',fontSize:13,fontWeight:700,color:'#fff',background:T.textThi,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          🔮 {ms.loadMsg} · {ms.elapsed}s
         </button>
         <div style={{height:3,background:P.accentLight,borderRadius:2,marginTop:4,overflow:'hidden'}}>
           <div style={{height:'100%',background:`linear-gradient(90deg,${mc},${P.accentDark})`,borderRadius:2,width:Math.min(ms.elapsed/90*100,95)+'%',transition:'width 1s linear'}}/>
         </div>
       </>:<>
-        {/* Has result: follow-up input */}
+        {/* Chips row */}
         <div style={{display:'flex',gap:4,marginBottom:6,overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
-          {(QUICK_QS[mode]||[]).filter(qq=>qq!==(ms.q||'')).slice(0,4).map(qq=>(
-            <button key={qq} onClick={()=>followUp(qq)} disabled={ms.loading} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${mc}25`,background:`${mc}06`,color:mc,fontSize:10,fontWeight:500,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>{qq}</button>
+          {(QUICK_QS[mode]||[]).filter(qq=>ms.result?qq!==(ms.q||''):true).slice(0,5).map(qq=>(
+            <button key={qq} onClick={()=>{if(ms.result){followUp(qq)}else{divine(mode,false,qq)}}} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${mc}25`,background:(!ms.result&&ms.q===qq)?`${mc}15`:`${mc}06`,color:mc,fontSize:10,fontWeight:500,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>{qq}</button>
           ))}
         </div>
+        {/* Input + send */}
         <div style={{display:'flex',gap:8}}>
-          <input value={followUpQ} onChange={e=>setFollowUpQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&followUp(followUpQ)} placeholder="输入你想追问的问题…" style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#FAFAFA',fontSize:13,outline:'none'}}/>
-          <button onClick={()=>followUp(followUpQ)} disabled={!followUpQ.trim()||ms.loading} style={{width:40,height:40,borderRadius:20,border:'none',background:followUpQ.trim()?`linear-gradient(135deg,${mc},${mc}dd)`:T.border,color:'#fff',fontSize:16,cursor:followUpQ.trim()?'pointer':'default',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>↑</button>
+          <input
+            value={ms.result?followUpQ:ms.q}
+            onChange={e=>{if(ms.result)setFollowUpQ(e.target.value);else setMS(mode,{q:e.target.value})}}
+            onKeyDown={e=>{if(e.key==='Enter'){if(ms.result)followUp(followUpQ);else divine(mode,false,ms.q)}}}
+            placeholder={ms.result?'输入追问…':'输入具体问题 · 留空则全面分析'}
+            style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#FAFAFA',fontSize:13,outline:'none'}}
+          />
+          <button onClick={()=>{if(ms.result)followUp(followUpQ);else divine(mode,false,ms.q)}}
+            disabled={ms.result&&!followUpQ.trim()}
+            style={{width:40,height:40,borderRadius:20,border:'none',
+              background:(ms.result&&!followUpQ.trim())?T.border:`linear-gradient(135deg,${mc},${mc}dd)`,
+              color:'#fff',fontSize:16,cursor:(ms.result&&!followUpQ.trim())?'default':'pointer',
+              flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
+              boxShadow:(ms.result&&!followUpQ.trim())?'none':`0 2px 8px ${mc}40`}}>↑</button>
         </div>
+        {/* Engine-only shortcut (initial only) */}
+        {!ms.result&&<div style={{textAlign:'center',marginTop:3}}>
+          <button onClick={()=>divine(mode,true)} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎（秒出）</button>
+        </div>}
       </>}
     </div>
 
