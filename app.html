@@ -1150,12 +1150,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <div style={{width:16,height:16,borderRadius:8,border:`2px solid transparent`,borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
                 正在展开更多分析… ({Math.min(revealCount,total)}/{total})
               </div>
-            </div>:<>
-            <div style={{display:'flex',gap:8,marginTop:10,marginBottom:20}}>
+            </div>:
+            <div style={{display:'flex',gap:8,marginTop:10,marginBottom:8}}>
               <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
               <button onClick={()=>{setMS(mode,{result:null,error:null,q:''});setRounds(r=>({...r,[mode]:[]}))}} style={{padding:'10px 16px',borderRadius:10,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.textThi,cursor:'pointer'}}>🔄 重新提问</button>
             </div>
-            </>})()}
+            })()}
           </div>);
         })()}
 
