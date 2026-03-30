@@ -1038,7 +1038,18 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{width:56,height:56,borderRadius:28,background:`${mc}10`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px',fontSize:28}}>{modeInfo.icon}</div>
         <div style={{fontSize:15,fontWeight:600,color:T.text}}>{MODE_FULL[mode]}</div>
         <div style={{fontSize:12,color:T.textThi,marginTop:4,lineHeight:1.6}}>{MODE_INTRO[mode]||''}</div>
-        <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>在底部输入问题或选择快捷标签开始</div>
+        <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>点击底部按钮开始AI预测</div>
+      </div>}
+
+      {/* Loading state in content area */}
+      {ms.loading&&<div style={{textAlign:'center',padding:'60px 20px'}}>
+        <div style={{position:'relative',width:80,height:80,margin:'0 auto 20px'}}>
+          <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid ${mc}15`}}/>
+          <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid transparent`,borderTopColor:mc,animation:'spin 1s linear infinite'}}/>
+          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:32}}>{modeInfo.icon}</div>
+        </div>
+        <div style={{fontSize:16,fontWeight:700,color:mc}}>{ms.loadMsg}</div>
+        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>{ms.elapsed<15?'排盘计算中':ms.elapsed<40?'AI深度分析中':ms.elapsed<70?'报告生成中':'即将完成'} · {ms.elapsed}s</div>
       </div>}
 
       {/* Error */}
