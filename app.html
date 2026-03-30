@@ -1111,7 +1111,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {/* Four Pillars */}
               {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
               {/* All report cards */}
-              {sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+              {sections.filter((_,i)=>i<revealCount).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+              {revealCount<sections.length&&<div style={{textAlign:'center',padding:'12px',color:mc}}>
+                <div style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:12}}>
+                  <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
+                  展开更多… {revealCount}/{sections.length}
+                </div>
+              </div>}
               {/* Actions */}
               <div style={{display:'flex',gap:8,marginTop:10,marginBottom:8}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
