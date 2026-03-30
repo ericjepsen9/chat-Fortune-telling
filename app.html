@@ -754,7 +754,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     // Load saved results from localStorage
     const saved={};
     try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');
-      Object.keys(s).forEach(k=>{saved[k]={q:'',result:s[k],loading:false,elapsed:0,error:null,loadMsg:''}});
+      Object.keys(s).forEach(k=>{
+        // Handle both old format (direct result) and new format ({result,chatHistory})
+        const val=s[k];
+        if(val&&val.result){saved[k]={q:'',result:val.result,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:val.chatHistory||[]};}
+        else if(val&&(val.response||val.engineData)){saved[k]={q:'',result:val,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:[]};}
+      });
     }catch(e){}
     return saved;
   });
@@ -809,7 +814,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   // Save results to localStorage whenever they change
   useEffect(()=>{
     const toSave={};
-    Object.entries(modeStates).forEach(([k,v])=>{if(v.result)toSave[k]=v.result;});
+    Object.entries(modeStates).forEach(([k,v])=>{if(v.result)toSave[k]={result:v.result,chatHistory:v.chatHistory||[]}});
     try{localStorage.setItem('yuanhe_mode_results',JSON.stringify(toSave))}catch(e){}
   },[modeStates]);
 
