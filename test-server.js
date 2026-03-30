@@ -232,7 +232,7 @@ const server = http.createServer(async (req, res) => {
   // 缘合App（测试版）
   if (parsedUrl.pathname === '/app') {
     const html = fs.readFileSync(path.join(__dirname, 'app.html'), 'utf-8');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
     res.end(html);
     return;
   }
@@ -475,6 +475,7 @@ server.listen(PORT, () => {
 ║  GET  /api/health    - 健康检查           ║
 ║  POST /api/calculate - 仅引擎计算         ║
 ║  POST /api/divine    - 引擎+AI解读        ║
+║  POST /api/chat-followup - 轻量追问       ║
 ║                                          ║
 ╚══════════════════════════════════════════╝
 `);
