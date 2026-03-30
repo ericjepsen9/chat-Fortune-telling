@@ -536,7 +536,7 @@ function PersonalityCards({cards,mc}){
 
 // ===== REPORT CARD =====
 function ReportCard({title, icon, color, content, index, md, isLong}) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(!isLong); // long cards start collapsed
   const trimmed = content.replace(/^\s*\n+/, '').trim();
   const displayContent = expanded ? trimmed : trimmed.substring(0, 280) + '…';
   return (
@@ -744,11 +744,18 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
+  const chatEndRef=useRef(null);
   const scrollRef=useRef(null);
   const [scrolledPastModes,setScrolledPastModes]=useState(false);
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
-  const [reportExpanded,setReportExpanded]=useState(true); // auto-collapse on followUp
+  const [reportExpanded,setReportExpanded]=useState(true);
+  // Reset states when switching modes
+  useEffect(()=>{
+    setReportExpanded((getMS(mode).chatHistory||[]).length===0); // expand if no chat, collapse if has chat
+    setFollowUpQ('');
+    if(getMS(mode).error)setMS(mode,{error:null}); // clear stale errors
+  },[mode]); // auto-collapse on followUp
 
   // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
   const [modeStates,setModeStates]=useState(()=>{
@@ -803,7 +810,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   // Save results to localStorage whenever they change
   useEffect(()=>{
     const toSave={};
-    Object.entries(modeStates).forEach(([k,v])=>{if(v.result)toSave[k]={result:v.result,chatHistory:v.chatHistory||[]}});
+    Object.entries(modeStates).forEach(([k,v])=>{if(v.result){
+      const r={...v.result};delete r._streaming; // never persist streaming flag
+      toSave[k]={result:r,chatHistory:v.chatHistory||[]};
+    }});
     try{localStorage.setItem('yuanhe_mode_results',JSON.stringify(toSave))}catch(e){}
   },[modeStates]);
 
@@ -842,7 +852,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         let fullText='';let structured=null;let engineData='';let buf='';
         let updateTimer=null;let streaming=true;
         const flushUpdate=(final)=>{
-          const clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
+          let clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
+          // During streaming, also strip unclosed <think> tags
+          if(!final)clean=clean.replace(/<think>[\s\S]*$/,'').trim();
           if(final)streaming=false;
           setMS(m,{result:{response:clean,engineData,structured,_genTime:new Date().toLocaleTimeString(),_elapsed:getMS(m).elapsed,_streaming:streaming},loading:false});
         };
@@ -898,7 +910,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     if(ch.length>=20){alert('本次会话已达上限，请点击"重新提问"开始新分析');return}
     setReportExpanded(false); // auto-collapse report
     // Add user message immediately
-    const newChat=[...ch,{role:'user',text:q}];
+    const newChat=[...ch,{role:'user',text:q,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}];
     setMS(mode,{chatHistory:newChat});
     setFollowUpQ('');
     setChatLoading(true);
@@ -906,12 +918,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       const reportSummary=ms.result?.response?.substring(0,500)||'';
       const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:ch.slice(-6)};
       const r=await apiPost('/api/chat-followup',body);
-      if(r.blocked){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.reason}]});}
-      else if(r.error){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ '+r.error}]});}
-      else{setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.response}]});}
-    }catch(e){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ 网络错误，请重试'}]});}
+      const aiTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      if(r.blocked){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.reason,time:aiTime}]});}
+      else if(r.error){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ '+r.error,time:aiTime}]});}
+      else{setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.response,time:aiTime}]});}
+    }catch(e){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ 网络错误，请重试',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]});}
     setChatLoading(false);
-    setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth',block:'end'}),300);
+    setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),300);
   };
   const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
@@ -934,8 +947,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           ))}
         </div>
       </div>
-      {/* Sticky mode pills — appear when mode grid scrolled out */}
-      {scrolledPastModes&&<div style={{display:'flex',gap:4,marginTop:8,overflowX:'auto',WebkitOverflowScrolling:'touch',paddingBottom:2}}>
+      {/* Sticky mode pills — appear when mode grid hidden or scrolled out */}
+      {(scrolledPastModes||ms.result||ms.loading)&&<div style={{display:'flex',gap:4,marginTop:8,overflowX:'auto',WebkitOverflowScrolling:'touch',paddingBottom:2}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{padding:'4px 10px',borderRadius:12,border:'none',cursor:'pointer',flexShrink:0,fontSize:10,fontWeight:600,whiteSpace:'nowrap',
             background:mode===m.id?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.15)',
@@ -960,8 +973,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     <div style={{padding:'12px 16px 180px'}}>
-      {/* MODE GRID */}
-      <div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6,marginBottom:14}}>
+      {/* MODE GRID — hide when result exists (use sticky pills instead) */}
+      {!ms.result&&!ms.loading&&<div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6,marginBottom:14}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
           const hasResult=!!getMS(m.id).result;
           const isLoading=!!getMS(m.id).loading;
@@ -978,7 +991,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:8,height:8,borderRadius:4,background:isLoading?'#F59E0B':T.success}}/>}
           </button>);
         })}
-      </div>
+      </div>}
 
       {/* HOUR COMPLETION PROMPT (when hour=-1 and not skipped) */}
       {profile.hour===-1&&!hourSkipped&&!ms.loading&&!ms.result&&(()=>{
@@ -1099,8 +1112,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       </div>}
 
       {/* Error */}
-      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #DDD6FE':'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
-        <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444',lineHeight:1.8,whiteSpace:'pre-line'}}>{ms.error}</div>
+      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #DDD6FE':'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14,position:'relative'}}>
+        <button onClick={()=>setMS(mode,{error:null})} style={{position:'absolute',top:8,right:8,background:'none',border:'none',fontSize:16,cursor:'pointer',opacity:.4,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444'}}>✕</button>
+        <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444',lineHeight:1.8,whiteSpace:'pre-line',paddingRight:20}}>{ms.error}</div>
         {!ms.error.startsWith('🔮')&&<button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer',marginTop:8}}>🔄 重试</button>}
       </div>}
 
@@ -1170,9 +1184,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                   <div style={{maxWidth:'85%',padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
                     background:msg.role==='user'?`linear-gradient(135deg,${mc},${mc}dd)`:'#fff',
                     color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
-                    boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)',
-                    whiteSpace:'pre-line'}}>
-                    {msg.text}
+                    boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)'}}>
+                    {msg.role==='user'?msg.text:<div className="markdown" dangerouslySetInnerHTML={md(msg.text)}/>}
+                    {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
                   </div>
                 </div>
               ))}
@@ -1185,6 +1199,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                   </div>
                 </div>
               </div>}
+              <div ref={chatEndRef}/>
             </div>}
           </div>);
         })()}
@@ -1197,7 +1212,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     {/* === FIXED BOTTOM BAR === */}
-    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50}}>
+    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50,minHeight:66}}>
       {(ms.loading||ms.result?._streaming)?<>
         {/* Loading / Streaming: button itself is progress bar */}
         <button disabled style={{width:'100%',height:50,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',position:'relative',overflow:'hidden',cursor:'default',display:'flex',alignItems:'center',justifyContent:'center'}}>
