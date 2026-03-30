@@ -1,8 +1,8 @@
 # 缘合 — 完整开发计划与进度追踪
 
-> 最后更新：2026-03-28 · 当前版本：v0.3.0（核心匹配引擎）
+> 最后更新：2026-03-30 · 当前版本：v0.4.0（流式输出+会话追问）
 > 目标市场：北美华人(主)+亚洲华人(辅) · 双区部署
-> 计划任务：133项 · 已完成：47项 · 待开发：86项（含15项隐私+31项后台+23项推广）
+> 计划任务：~170项 · 已完成：~55项 · 待开发：~115项
 > 原型屏幕：32个 · 产品模块：26个 · 当前覆盖率：37%
 
 ---
@@ -13,7 +13,7 @@
 |------|------|---------|------|--------|
 | Step 1 | App骨架 | 路由+设计系统+5Tab | ✅ 完成 | 100% |
 | Step 2 | 首页+生辰 | Tinder滑卡+生辰输入+闪屏 | ✅ 完成 | 100% |
-| Step 2.5 | 占卜模块 | 8模式AI解读+完整交互 | ✅ 完成 | 100% |
+| Step 2.5 | 占卜模块 | 8模式AI解读+流式输出+追问会话 | ✅ 完成 | 100% |
 | Step 3 | 核心匹配 | 真实匹配引擎+卡片详情+性格卡片 | ✅ 完成 | 100% |
 | Step 4 | 社交互动 | AI聊天+转盘+破冰+引导页 | 📋 待开发 | 0% |
 | Step 5 | 精度+安全 | 天文精算+AI安全+深色模式 | 📋 待开发 | 0% |
@@ -22,6 +22,7 @@
 | Step 7.5 | 后台管理 | 运营后台+AI管理+日志+推送+权限(31项) | 📋 待开发 | 0% |
 | Step 8 | 商业化 | 付费+会员+审核+加密 | 📋 待开发 | 0% |
 | Step 9 | 推广与增长 | 种子→冷启动→付费投放→规模化 | 📋 待开发 | 0% |
+| **Step 10** | **移动端上线** | **WebView验证→RN重写→双端正式上线** | 📋 待开发 | 0% |
 
 ---
 
@@ -198,7 +199,7 @@
 | 7.8 | **图片上传** | P1 | 头像+动态图片，OSS/S3+CDN | 中 |
 | 7.9 | **API限流+缓存** | P0 | LLM调用限流+八字结果缓存 | 中 |
 | 7.10 | **HTTPS+域名+部署** | P0 | 云服务器+SSL+CI/CD | 中 |
-| 7.11 | **前端App打包** | P1 | React Native / uni-app 双端 | 大 |
+| 7.11 | **前端App打包** | P1 | → 详见 Step 10 移动端上线计划 | 大 |
 | 7.12 | **设置系统** | P1 | 通知/隐私/账号安全/关于 | 中 |
 | 7.13 | **注册授权弹窗** | P0 | 隐私政策+数据使用说明，必须勾选才能继续；出生日期单独用途说明弹窗 | 中 |
 | 7.14 | **AES-256加密存储** | P0 | 出生信息AES-256-GCM加密，密钥派生自用户密码(PBKDF2) | 大 |
@@ -654,21 +655,194 @@ Google: Data Safety Section（加密传输+可删除+共享清单）
 
 ---
 
+## Step 10: 移动端上线 📋 待开发
+
+> 目标：从Web验证到双端正式上线App Store + Google Play
+> 路径：Web功能开发 → WebView快速验证 → React Native重写 → 双端正式上线
+
+### 上线路径总览
+
+```
+Phase 1: Web功能完善（当前→1个月）
+  Step 4-5 开发 → Web端功能完整
+  ↓
+Phase 2: WebView快速验证（第2个月）
+  Capacitor包装 → Google Play内测 → 收集反馈
+  ↓
+Phase 3: React Native重写（第3-4个月）
+  核心页面原生化 → 性能优化 → 推送/支付接入
+  ↓
+Phase 4: 双端正式上线（第5个月）
+  App Store审核 → Google Play正式版 → ASO优化
+```
+
+### Phase 1: Web功能完善（当前 → 第1个月）
+
+> 目标：确保Web端功能完整，为移动端打包做准备
+> 依赖：Step 4（社交互动）+ Step 5 部分任务
+
+| # | 任务 | 优先级 | 说明 | 工作量 |
+|---|------|--------|------|--------|
+| 10.1.1 | 完成Step 4核心功能 | P0 | AI聊天+机器人+引导页 | 大 |
+| 10.1.2 | 完成Step 5安全功能 | P0 | AI安全+免责声明+年龄验证 | 中 |
+| 10.1.3 | 响应式适配审查 | P0 | 确保所有页面在375px-428px(iPhone SE~Pro Max)完美展示 | 中 |
+| 10.1.4 | PWA基础配置 | P1 | manifest.json + service worker + 离线缓存策略 | 小 |
+| 10.1.5 | 触控手势优化 | P1 | 滑动/长按/双击手势适配，300ms click延迟消除 | 小 |
+| 10.1.6 | 性能基线测试 | P1 | Lighthouse评分≥80，首屏≤3秒，交互≤100ms | 小 |
+
+### Phase 2: WebView快速验证（第2个月）
+
+> 目标：最快速度上架Google Play，获取真实用户反馈
+> 技术：Capacitor（Ionic出品，Web→Native桥接框架）
+> 为什么先Google Play：审核快(几小时)，Apple审核严(1-2周+可能被拒)
+
+| # | 任务 | 优先级 | 说明 | 工作量 |
+|---|------|--------|------|--------|
+| 10.2.1 | Capacitor项目初始化 | P0 | `npm init @capacitor/app`，配置Android/iOS平台 | 小 |
+| 10.2.2 | Android构建配置 | P0 | Android Studio + Gradle配置 + 签名证书 | 小 |
+| 10.2.3 | 状态栏/安全区适配 | P0 | StatusBar插件 + SafeArea + notch适配 | 小 |
+| 10.2.4 | 本地存储迁移 | P0 | localStorage → Capacitor Preferences（加密存储） | 中 |
+| 10.2.5 | 深度链接(Deep Link) | P1 | yuanhe://divine/bazi 等 scheme 配置 | 小 |
+| 10.2.6 | 推送通知(基础) | P1 | FCM集成，每日运势推送 | 中 |
+| 10.2.7 | 应用图标+启动屏 | P0 | 1024×1024图标 + 自适应启动屏 | 小 |
+| 10.2.8 | Google Play商店素材 | P0 | 截图×8 + 短描述 + 长描述 + 隐私政策URL | 中 |
+| 10.2.9 | Google Play内测发布 | P0 | 内部测试轨道 → 封闭测试(20-100人) | 小 |
+| 10.2.10 | 用户反馈收集+分析 | P0 | 崩溃报告(Sentry) + 用户反馈表单 + 数据埋点 | 中 |
+| 10.2.11 | iOS TestFlight构建 | P1 | Xcode构建 + TestFlight内测(为Phase 4做准备) | 中 |
+
+### Phase 3: React Native重写（第3-4个月）
+
+> 目标：核心体验原生化，解决WebView的性能和体验瓶颈
+> 技术：Expo(managed workflow) + React Native
+> 策略：渐进迁移，不是从零重写——复用所有业务逻辑和API
+
+| # | 任务 | 优先级 | 说明 | 工作量 |
+|---|------|--------|------|--------|
+| **基础架构** | | | | |
+| 10.3.1 | Expo项目初始化 | P0 | `npx create-expo-app`，TypeScript + 路由配置 | 小 |
+| 10.3.2 | 导航系统 | P0 | expo-router: Tab导航(5tab) + Stack导航(详情页) | 中 |
+| 10.3.3 | 设计系统迁移 | P0 | T/P/Icons常量 → RN StyleSheet + 自定义组件库 | 中 |
+| 10.3.4 | API层封装 | P0 | fetch → axios + 拦截器 + token管理 + 错误处理 | 中 |
+| 10.3.5 | 状态管理 | P0 | Zustand/Jotai 替代 useState散落 + AsyncStorage持久化 | 中 |
+| **核心页面迁移** | | | | |
+| 10.3.6 | 首页(滑卡匹配) | P0 | react-native-deck-swiper 原生滑动 + 动画 | 大 |
+| 10.3.7 | AI占卜页 | P0 | 模式选择 + 流式输出(SSE) + 报告卡片 + 追问会话 | 大 |
+| 10.3.8 | 生辰输入页 | P0 | 原生DatePicker + 农历转换 + 时辰选择 | 中 |
+| 10.3.9 | 卡片详情页 | P1 | 个人资料 + 匹配分析 + 缘分解读 | 中 |
+| 10.3.10 | 发现页 | P1 | 今日运势 + 黄历 + 功能入口 | 中 |
+| 10.3.11 | 消息页 | P1 | 聊天列表 + 实时消息(WebSocket) | 大 |
+| 10.3.12 | 我的页 | P1 | 个人信息 + 设置 + 隐私 + 占卜记录 | 中 |
+| **原生能力接入** | | | | |
+| 10.3.13 | 推送通知 | P0 | expo-notifications + FCM/APNs + 通知权限 | 中 |
+| 10.3.14 | 生物认证 | P1 | Face ID / Touch ID / 指纹 (expo-local-authentication) | 小 |
+| 10.3.15 | 相机+图片选择 | P1 | 头像拍照/相册选择 (expo-image-picker) | 小 |
+| 10.3.16 | 分享功能 | P1 | 系统分享(expo-sharing) + 截图分享卡片 | 中 |
+| 10.3.17 | 应用内购买 | P0 | expo-in-app-purchases: iOS IAP + Google Play Billing | 大 |
+| 10.3.18 | Haptic反馈 | P2 | 滑卡/匹配/按钮触觉反馈 (expo-haptics) | 小 |
+| **性能优化** | | | | |
+| 10.3.19 | 列表性能 | P0 | FlashList替代FlatList，虚拟化长报告 | 中 |
+| 10.3.20 | 图片优化 | P1 | expo-image(缓存+渐进加载) + WebP格式 | 小 |
+| 10.3.21 | 启动优化 | P1 | SplashScreen + 延迟加载非首屏模块 | 小 |
+| 10.3.22 | 内存管理 | P1 | 报告卡片按需渲染 + 聊天记录分页 | 中 |
+
+### Phase 4: 双端正式上线（第5个月）
+
+> 目标：App Store + Google Play同时上线，ASO优化获取自然流量
+> 前置：Step 7(后端部署) + Step 8(商业化) 基本完成
+
+| # | 任务 | 优先级 | 说明 | 工作量 |
+|---|------|--------|------|--------|
+| **Apple App Store** | | | | |
+| 10.4.1 | Apple开发者账号 | P0 | $99/年，注册 + 协议签署 | 小 |
+| 10.4.2 | App Store Connect配置 | P0 | 应用信息 + 年龄分级(17+占卜) + 隐私问卷 | 中 |
+| 10.4.3 | App Review Guidelines合规 | P0 | 4.3(抄袭) + 5.1(隐私) + 1.4(占卜免责) 自查 | 中 |
+| 10.4.4 | 截图+预览视频 | P0 | iPhone 6.7" + 6.5" + iPad(可选)，中英双语 | 中 |
+| 10.4.5 | App审核提交 | P0 | TestFlight → App Review → 上架 | 小 |
+| 10.4.6 | 审核被拒应对方案 | P1 | 常见拒绝原因预案(WebView/隐私/内容) | 小 |
+| **Google Play Store** | | | | |
+| 10.4.7 | Google开发者账号 | P0 | $25一次性，注册 + 协议 | 小 |
+| 10.4.8 | Play Console配置 | P0 | 内容分级 + 隐私政策 + 数据安全声明 | 中 |
+| 10.4.9 | 从内测升级到正式 | P0 | 封闭测试 → 开放测试 → 正式发布 | 小 |
+| **上线后** | | | | |
+| 10.4.10 | ASO优化 | P0 | 关键词研究(八字/星座/匹配) + 截图A/B测试 | 中 |
+| 10.4.11 | 版本更新策略 | P1 | 2周一个小版本，1月一个大版本，OTA热更新(expo-updates) | 小 |
+| 10.4.12 | 崩溃监控 | P0 | Sentry + Crashlytics，崩溃率<0.5% | 中 |
+| 10.4.13 | 用户评分引导 | P1 | 使用3天后弹出评分请求(expo-store-review) | 小 |
+| 10.4.14 | 多渠道构建 | P2 | 国内安卓: 华为/小米/OPPO/vivo应用商店 + APK直装 | 大 |
+
+### 移动端里程碑
+
+```
+M1 (第1月末): Web功能完整，PWA可用，Lighthouse≥80
+M2 (第2月末): Google Play内测版上线，50+真实用户测试
+M3 (第3月末): React Native核心页面迁移完成(首页+AI占卜+我的)
+M4 (第4月末): 全部页面迁移+IAP集成+TestFlight内测
+M5 (第5月末): App Store + Google Play同时正式上线
+```
+
+### 移动端技术选型
+
+| 维度 | Phase 2 (WebView) | Phase 3-4 (React Native) |
+|------|-------------------|--------------------------|
+| 框架 | Capacitor 5.x | Expo SDK 52+ |
+| 语言 | JavaScript (现有) | TypeScript |
+| UI | 现有HTML/CSS | React Native + NativeWind |
+| 导航 | 无 (SPA) | expo-router |
+| 状态 | useState + localStorage | Zustand + AsyncStorage |
+| 推送 | Capacitor Push | expo-notifications |
+| 支付 | — | expo-in-app-purchases |
+| 更新 | 重新发版 | OTA热更新(expo-updates) |
+| 构建 | Android Studio/Xcode | EAS Build (云端) |
+| 分发 | Google Play内测 | App Store + Google Play |
+
+### 成本预估
+
+| 项目 | 费用 | 频率 |
+|------|------|------|
+| Apple Developer Program | $99 | 年 |
+| Google Play Developer | $25 | 一次性 |
+| EAS Build (Expo) | $0-$99 | 月 (免费额度够小团队) |
+| Sentry (崩溃监控) | $0 | 免费额度10K事件/月 |
+| 测试设备 | ~$500 | 一次性 (二手iPhone+Android各1台) |
+| **总计首年** | **~$750** | |
+
+---
+
+## 完整时间线
+
+```
+     现在                                                    5个月后
+      │                                                        │
+      ├── Phase 1 ──┤── Phase 2 ──┤── Phase 3 ────┤── Phase 4 ─┤
+      │  Web完善     │  WebView     │  React Native  │  正式上线  │
+      │  Step 4-5    │  验证        │  重写           │           │
+      │  1个月       │  Google Play │  2个月          │  1个月    │
+      │             │  内测 1个月   │                │           │
+      │             │             │                │           │
+      ▼             ▼             ▼                ▼           ▼
+   功能完整      50+用户测试   核心页面原生化    App Store
+   PWA可用      收集反馈     IAP/推送接入     Google Play
+   性能基线     修复问题     TestFlight内测    ASO优化
+```
+
+---
+
 ## 技术栈
 
-| 层 | 当前 | 亚洲生产 | 北美生产 |
-|----|------|---------|---------|
-| 前端 | React (Babel in-browser) | React Native 双端 | 同左 |
-| 后端 | Node.js 原生HTTP | Express + Docker (阿里云K8s) | Express + Docker (AWS ECS) |
-| 数据库 | localStorage | 阿里云RDS PostgreSQL + Redis | AWS RDS PostgreSQL + ElastiCache |
-| 实时通信 | — | Socket.io (阿里云) | Socket.io (AWS) |
-| AI(主) | MiniMax-M2.7 | MiniMax-M2.7 | GPT-4o-mini |
-| AI(备) | — | DeepSeek-V3 | Claude Haiku |
-| 八字 | lunar-javascript | 同 | 同 |
-| 天文 | astronomia | VSOP87 (Step 5) | 同 |
-| CDN | — | Cloudflare | Cloudflare |
-| CI/CD | 手动git push | GitHub Actions → 阿里云ACR | GitHub Actions → AWS ECR |
-| 监控 | /monitor页面 | Prometheus + Grafana | CloudWatch + Grafana |
+| 层 | 当前(Web) | Phase 2(WebView) | Phase 3-4(React Native) | 亚洲生产 | 北美生产 |
+|----|----------|-------------------|------------------------|---------|---------|
+| 前端 | React (Babel in-browser) | Capacitor + WebView | Expo + React Native | 同左 | 同左 |
+| 后端 | Node.js 原生HTTP | 同左 | 同左 | Express + Docker (阿里云K8s) | Express + Docker (AWS ECS) |
+| 数据库 | localStorage | Capacitor Preferences | AsyncStorage + Zustand | 阿里云RDS PostgreSQL + Redis | AWS RDS PostgreSQL + ElastiCache |
+| 实时通信 | — | — | WebSocket | Socket.io (阿里云) | Socket.io (AWS) |
+| AI(主) | MiniMax-M2.7 | 同左 | 同左 | MiniMax-M2.7 | GPT-4o-mini |
+| AI(备) | — | — | — | DeepSeek-V3 | Claude Haiku |
+| 推送 | — | FCM(基础) | expo-notifications | FCM/APNs | FCM/APNs |
+| 支付 | — | — | expo-in-app-purchases | iOS IAP + 微信支付 | iOS IAP + Google Pay |
+| 构建 | — | Android Studio | EAS Build(云端) | 同左 | 同左 |
+| CDN | — | — | — | Cloudflare | Cloudflare |
+| CI/CD | 手动git push | 手动 | EAS + GitHub Actions | → 阿里云ACR | → AWS ECR |
+| 监控 | /monitor页面 | Sentry(基础) | Sentry + Crashlytics | Prometheus + Grafana | CloudWatch + Grafana |
 
 ---
 
