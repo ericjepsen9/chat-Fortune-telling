@@ -176,7 +176,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
       </div>
 
       {/* Info area */}
-      <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'12px 16px 14px',cursor:'pointer'}}>
+      <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'12px 16px 68px',cursor:'pointer'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
           <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
           <span style={{padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:600,background:'#8B5CF615',color:'#8B5CF6'}}>{user.sign}</span>
