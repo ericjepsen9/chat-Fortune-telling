@@ -1087,8 +1087,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>点击底部按钮开始AI预测</div>
       </div>}
 
-      {/* Loading state in content area */}
-      {ms.loading&&<div style={{textAlign:'center',padding:'60px 20px'}}>
+      {/* Loading state in content area — only before init arrives */}
+      {ms.loading&&!ms.result&&<div style={{textAlign:'center',padding:'60px 20px'}}>
         <div style={{position:'relative',width:80,height:80,margin:'0 auto 20px'}}>
           <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid ${mc}15`}}/>
           <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid transparent`,borderTopColor:mc,animation:'spin 1s linear infinite'}}/>
