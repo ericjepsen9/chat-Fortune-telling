@@ -747,7 +747,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [revealCount,setRevealCount]=useState(999);
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
-  const [viewSection,setViewSection]=useState(null); // {sections,index} for fullscreen viewer
+  const [reportExpanded,setReportExpanded]=useState(true); // auto-collapse on followUp
 
   // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
   const [modeStates,setModeStates]=useState(()=>{
@@ -831,6 +831,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     const q = questionOverride !== undefined ? questionOverride : (engineOnly?'':getMS(m).q);
     if(questionOverride!==undefined)setMS(m,{q:questionOverride});
     setMS(m,{loading:true,error:null,result:null});
+    setReportExpanded(true); // new report starts expanded
     startTimer(m);
     try{
       const body={mode:m,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,displayMode:dm};
@@ -872,6 +873,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     if(!q.trim()||chatLoading)return;
     const ch=getMS(mode).chatHistory||[];
     if(ch.length>=20){alert('本次会话已达上限，请点击"重新提问"开始新分析');return}
+    setReportExpanded(false); // auto-collapse report
     // Add user message immediately
     const newChat=[...ch,{role:'user',text:q}];
     setMS(mode,{chatHistory:newChat});
@@ -1074,48 +1076,59 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         {ms.result.response&&(()=>{
           const sections=parseSections(ms.result.response);
           const chatHistory=ms.chatHistory||[];
+          const hasChat=chatHistory.length>0;
+          const expanded=reportExpanded;
           return(<div>
-            {/* Report Header with Radar */}
-            <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:10,opacity:.6}}>命理报告</div>
-                  <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div>
-                  {ms.result.structured?.dayMaster&&<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
-                    <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>日主 {ms.result.structured.dayMaster}{ms.result.structured.element}</span>
-                    <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.strength}</span>
-                    {ms.result.structured.geju&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.geju}</span>}
-                    {ms.result.structured.personality?.type&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.25)',fontSize:10}}>✦ {ms.result.structured.personality.type}</span>}
-                  </div>}
-                  <div style={{fontSize:11,opacity:.75,marginTop:6}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day}</div>
-                </div>
-                {ms.result.structured?.wuxing?
-                  <WuxingRadar data={ms.result.structured.wuxing} size={110}/>
-                  :<div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:700}}>{sections.length}</div><div style={{fontSize:9,opacity:.7}}>维度</div></div>
-                }
+            {/* Collapsed report card (when has chat and not expanded) */}
+            {!expanded&&hasChat&&<div className="anim-in" onClick={()=>setReportExpanded(true)} style={{background:`linear-gradient(135deg,${mc},${mc}cc)`,borderRadius:14,padding:'12px 16px',marginBottom:12,cursor:'pointer',display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:36,height:36,borderRadius:10,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{modeInfo.icon}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{color:'#fff',fontSize:14,fontWeight:700}}>{MODE_FULL[mode]}{ms.result.structured?.dayMaster?` · ${ms.result.structured.dayMaster}${ms.result.structured.element}·${ms.result.structured.strength}`:''}</div>
+                <div style={{color:'rgba(255,255,255,0.6)',fontSize:11,marginTop:2}}>{sections.length}个维度 · {ms.result.response.length}字</div>
               </div>
-            </div>
-            {/* Four Pillars (bazi) */}
-            {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
+              <div style={{color:'rgba(255,255,255,0.8)',fontSize:11,fontWeight:600,flexShrink:0}}>展开 ▾</div>
+            </div>}
 
-            {/* Section Icon Grid — click to view in fullscreen */}
-            <div style={{background:'#fff',borderRadius:14,padding:'12px',marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
-                {sections.map((sec,i)=>(
-                  <button key={i} onClick={()=>setViewSection({sections,index:i})} style={{padding:'10px 4px',borderRadius:12,border:`1px solid ${T.border}`,background:'#FAFAFA',cursor:'pointer',textAlign:'center',transition:'all .15s'}}>
-                    <div style={{fontSize:18,marginBottom:2}}>{sec.icon}</div>
-                    <div style={{fontSize:10,color:T.text,fontWeight:500,lineHeight:1.2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sec.title.replace(/[（(].*/,'').substring(0,5)}</div>
-                  </button>
-                ))}
+            {/* Expanded report (full cards) */}
+            {expanded&&<>
+              {/* Collapse button when has chat */}
+              {hasChat&&<div onClick={()=>setReportExpanded(false)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'6px',marginBottom:8,cursor:'pointer',color:mc,fontSize:11,fontWeight:600}}>
+                ▴ 收起报告
+              </div>}
+              {/* Report Header with Radar */}
+              <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:10,opacity:.6}}>命理报告</div>
+                    <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div>
+                    {ms.result.structured?.dayMaster&&<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+                      <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>日主 {ms.result.structured.dayMaster}{ms.result.structured.element}</span>
+                      <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.strength}</span>
+                      {ms.result.structured.geju&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.geju}</span>}
+                      {ms.result.structured.personality?.type&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.25)',fontSize:10}}>✦ {ms.result.structured.personality.type}</span>}
+                    </div>}
+                    <div style={{fontSize:11,opacity:.75,marginTop:6}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day}</div>
+                  </div>
+                  {ms.result.structured?.wuxing?
+                    <WuxingRadar data={ms.result.structured.wuxing} size={110}/>
+                    :<div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:700}}>{sections.length}</div><div style={{fontSize:9,opacity:.7}}>维度</div></div>
+                  }
+                </div>
               </div>
-              <div style={{display:'flex',gap:8,marginTop:10}}>
+              {/* Four Pillars */}
+              {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
+              {/* All report cards */}
+              {sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+              {/* Actions */}
+              <div style={{display:'flex',gap:8,marginTop:10,marginBottom:8}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
                 <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄 重新提问</button>
               </div>
-            </div>
+            </>}
 
             {/* Chat History (follow-up bubbles) */}
             {chatHistory.length>0&&<div style={{marginBottom:10}}>
+              {expanded&&<div style={{borderTop:`1px solid ${T.border}`,marginTop:4,marginBottom:12}}/>}
               <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8,paddingLeft:2}}>💬 追问会话</div>
               {chatHistory.map((msg,i)=>(
                 <div key={i} style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8}}>
@@ -1201,39 +1214,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
     {/* Hour Correction Assistant */}
     {showHourAssistant&&<HourAssistantModal profile={profile} onResult={(h)=>{onUpdateProfile({...profile,hour:h})}} onClose={()=>setShowHourAssistant(false)}/>}
-
-    {/* Section Detail Viewer — fullscreen modal with prev/next navigation */}
-    {viewSection&&(()=>{
-      const {sections,index}=viewSection;
-      const sec=sections[index];
-      if(!sec)return null;
-      const content=sec.lines.join('\n').trim();
-      const color=SECTION_COLORS[index%SECTION_COLORS.length];
-      const hasPrev=index>0, hasNext=index<sections.length-1;
-      return <div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,display:'flex',flexDirection:'column'}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:'#fff',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-          <button onClick={()=>setViewSection(null)} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
-          <div style={{flex:1}}>
-            <div style={{fontSize:15,fontWeight:700,color:T.text}}>{sec.icon} {sec.title}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{index+1} / {sections.length}</div>
-          </div>
-          <button onClick={()=>{navigator.clipboard?.writeText(content);alert('已复制')}} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋</button>
-        </div>
-        <div style={{flex:1,overflow:'auto',padding:'12px 16px 30px'}}>
-          <div style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
-            <div style={{height:4,background:color}}/>
-            <div style={{padding:'16px',fontSize:14,lineHeight:1.85,color:T.text}}>
-              <div className="markdown" dangerouslySetInnerHTML={md(content)}/>
-            </div>
-          </div>
-        </div>
-        {/* Prev / Next navigation */}
-        <div style={{display:'flex',gap:10,padding:'10px 16px 28px',background:'#fff',borderTop:`1px solid ${T.border}`,flexShrink:0}}>
-          <button onClick={()=>hasPrev&&setViewSection({sections,index:index-1})} disabled={!hasPrev} style={{flex:1,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,background:hasPrev?'#fff':'#F9FAFB',color:hasPrev?T.text:T.textThi,fontSize:13,fontWeight:500,cursor:hasPrev?'pointer':'default'}}>← {hasPrev?sections[index-1].icon+' '+sections[index-1].title.substring(0,4):'无'}</button>
-          <button onClick={()=>hasNext&&setViewSection({sections,index:index+1})} disabled={!hasNext} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:hasNext?`linear-gradient(135deg,${mc},${mc}dd)`:'#F9FAFB',color:hasNext?'#fff':T.textThi,fontSize:13,fontWeight:500,cursor:hasNext?'pointer':'default'}}>{hasNext?sections[index+1].title.substring(0,4)+' '+sections[index+1].icon:'无'} →</button>
-        </div>
-      </div>;
-    })()}
   </div>);
 }
 
