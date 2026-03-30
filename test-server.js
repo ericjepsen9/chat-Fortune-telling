@@ -370,9 +370,9 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: '请输入问题' }));
           return;
         }
-        // Safety check
+        // Safety check — only block truly dangerous content, skip relevance check for follow-ups
         const safety = aiService.buildRequest(mode, {year,month,day,hour,gender}, question, {});
-        if (safety.blocked) {
+        if (safety.blocked && safety.safetyLevel === 'blocked') {
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({ blocked: true, reason: safety.reason }));
           return;
