@@ -879,14 +879,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
   const SECTION_ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
   const SECTION_COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
-  const parseSections=(resp)=>{
+  const parseSections=(resp,isStreaming)=>{
     const sections=[];const clean=resp.replace(/<think>[\s\S]*?<\/think>/g,'').trim();const lines=clean.split('\n');let cur=null;
     lines.forEach(line=>{
       const h1=line.match(/^#\s+(.+)/);const h23=line.match(/^#{2,3}\s+(.+)/);
       if(h1){}
       else if(h23){const title=h23[1].replace(/\*\*/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'').trim();const ik=Object.keys(SECTION_ICONS).find(k=>title.includes(k));cur={title,icon:ik?SECTION_ICONS[ik]:'📌',lines:[]};sections.push(cur)}
       else if(cur){if(line.trim())cur.lines.push(line)}
-      else if(line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}
+      else if(!isStreaming&&line.trim()&&!line.startsWith('让我')&&!line.startsWith('用户要求')&&!line.startsWith('需要我')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'概述',icon:'📋',lines:[]});cur.lines.push(line)}
     });
     return sections.filter(s=>s.lines.some(l=>l.trim()));
   };
@@ -1087,8 +1087,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           </div>
         }
 
-        {ms.result.response&&(()=>{
-          const sections=parseSections(ms.result.response);
+        {(ms.result.response!==null&&ms.result.response!==undefined)&&(()=>{
+          const sections=parseSections(ms.result.response,ms.result._streaming);
           const chatHistory=ms.chatHistory||[];
           const hasChat=chatHistory.length>0;
           const expanded=reportExpanded;
@@ -1173,7 +1173,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           </div>);
         })()}
 
-        {!ms.result.response&&ms.result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
+        {!ms.result.response&&!ms.result._streaming&&ms.result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
           <div style={{fontSize:13,fontWeight:600,color:mc,marginBottom:8}}>📦 引擎结果</div>
           <pre style={{fontSize:12,lineHeight:1.7,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{ms.result.engineData}</pre>
         </div>}
