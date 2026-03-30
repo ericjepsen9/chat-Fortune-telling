@@ -535,12 +535,12 @@ function PersonalityCards({cards,mc}){
 }
 
 // ===== REPORT CARD =====
-function ReportCard({title, icon, color, content, index, md, isLong}) {
+function ReportCard({title, icon, color, content, index, md, isLong, delay}) {
   const [expanded, setExpanded] = useState(true);
   const trimmed = content.replace(/^\s*\n+/, '').trim();
   const displayContent = expanded ? trimmed : trimmed.substring(0, 280) + '…';
   return (
-    <div className="anim-in" style={{animationDelay: index*0.06+'s', background:T.card, borderRadius:16, overflow:'hidden', boxShadow:T.shadow, marginBottom:10}}>
+    <div className="anim-in" style={{animationDelay: (delay||0)+'s', background:T.card, borderRadius:16, overflow:'hidden', boxShadow:T.shadow, marginBottom:10}}>
       <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',borderBottom:`1px solid ${T.border}`,position:'relative'}}>
         <div style={{position:'absolute',left:0,top:0,bottom:0,width:4,background:color,borderRadius:'0 4px 4px 0'}}/>
         <div style={{width:36,height:36,borderRadius:10,background:`${color}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{icon}</div>
@@ -744,9 +744,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
-  const [revealCount,setRevealCount]=useState(999); // 999=show all (cached), 0=hide all (loading)
-  // Reset reveal when switching modes (show cached results fully)
-  useEffect(()=>{if(getMS(mode).result)setRevealCount(999)},[mode]);
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
   const [reportExpanded,setReportExpanded]=useState(true); // auto-collapse on followUp
@@ -821,8 +818,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     const q = questionOverride !== undefined ? questionOverride : (engineOnly?'':getMS(m).q);
     if(questionOverride!==undefined)setMS(m,{q:questionOverride});
     setMS(m,{loading:true,error:null,result:null});
-    setRevealCount(0); // reset for progressive reveal
-    setReportExpanded(true); // new report starts expanded
+    setReportExpanded(true);
     startTimer(m);
     try{
       const body={mode:m,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,displayMode:dm};
@@ -839,15 +835,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             r._elapsed=getMS(m).elapsed;
             // Strip <think> tags from AI response
             if(r.response){r.response=r.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim()}
+            r._isNew=true; // flag for progressive animation
             setMS(m,{result:engineOnly?{engineData:r.engineData,response:null}:r,loading:false});
-            // Start progressive card reveal after render settles
-            if(!engineOnly&&r.response){
-              setTimeout(()=>{
-                setRevealCount(1); // first card immediately
-                let count=1;
-                const rt=setInterval(()=>{count++;setRevealCount(count);if(count>=30)clearInterval(rt)},400);
-              },100);
-            }
           }
     }catch(e){setMS(m,{error:e.message,loading:false})}
     stopTimer(m);
@@ -1109,19 +1098,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               </div>
               {/* Four Pillars */}
               {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
-              {/* All report cards */}
-              {sections.filter((_,i)=>i<revealCount).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
-              {revealCount<sections.length&&<div style={{textAlign:'center',padding:'12px',color:mc}}>
-                <div style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:12}}>
-                  <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
-                  展开更多… {Math.min(revealCount,sections.length)}/{sections.length}
-                </div>
-              </div>}
-              {/* Actions - only after all cards revealed */}
-              {revealCount>=sections.length&&<div style={{display:'flex',gap:8,marginTop:10,marginBottom:8}}>
+              {/* All report cards — progressive animation for new results */}
+              {sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300} delay={ms.result._isNew?i*0.4:0}/>})}
+              {/* Actions */}
+              <div className="anim-in" style={{animationDelay:ms.result._isNew?(sections.length*0.4+0.2)+'s':'0s',display:'flex',gap:8,marginTop:10,marginBottom:8}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
                 <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄 重新提问</button>
-              </div>}
+              </div>
             </>}
 
             {/* Chat History (follow-up bubbles) */}
