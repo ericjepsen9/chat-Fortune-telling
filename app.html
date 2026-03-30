@@ -535,12 +535,12 @@ function PersonalityCards({cards,mc}){
 }
 
 // ===== REPORT CARD =====
-function ReportCard({title, icon, color, content, index, md, isLong, delay}) {
+function ReportCard({title, icon, color, content, index, md, isLong}) {
   const [expanded, setExpanded] = useState(true);
   const trimmed = content.replace(/^\s*\n+/, '').trim();
   const displayContent = expanded ? trimmed : trimmed.substring(0, 280) + '…';
   return (
-    <div className="anim-in" style={{animationDelay: (delay||0)+'s', background:T.card, borderRadius:16, overflow:'hidden', boxShadow:T.shadow, marginBottom:10}}>
+    <div className="anim-in" style={{background:T.card, borderRadius:16, overflow:'hidden', boxShadow:T.shadow, marginBottom:10}}>
       <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',borderBottom:`1px solid ${T.border}`,position:'relative'}}>
         <div style={{position:'absolute',left:0,top:0,bottom:0,width:4,background:color,borderRadius:'0 4px 4px 0'}}/>
         <div style={{width:36,height:36,borderRadius:10,background:`${color}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{icon}</div>
@@ -827,17 +827,50 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       if(['hehun','synastry','hepan'].includes(m))body.profileB=p2;
       if(m==='tarot'){if(tarotCards.length>0)body.selectedCards=tarotCards;body.spreadType=tarotSpread}
       if(m==='meihua'&&mhNum1!==''){body.meihuaNum1=parseInt(mhNum1);if(mhNum2!=='')body.meihuaNum2=parseInt(mhNum2)}
-      const r=await apiPost(engineOnly?'/api/calculate':'/api/divine',body);
-      if(r.blocked)setMS(m,{error:r.reason,loading:false});
-      else if(r.error)setMS(m,{error:r.error,loading:false});
-      else{
-            r._genTime=new Date().toLocaleTimeString();
-            r._elapsed=getMS(m).elapsed;
-            // Strip <think> tags from AI response
-            if(r.response){r.response=r.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim()}
-            r._isNew=true; // flag for progressive animation
-            setMS(m,{result:engineOnly?{engineData:r.engineData,response:null}:r,loading:false});
+
+      if(engineOnly){
+        // Non-streaming for engine-only
+        const r=await apiPost('/api/calculate',body);
+        setMS(m,{result:{engineData:r.engineData,response:null,structured:r.structured},loading:false});
+      }else{
+        // Streaming SSE for AI divine
+        const resp=await fetch('/api/divine-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const reader=resp.body.getReader();
+        const decoder=new TextDecoder();
+        let fullText='';let structured=null;let engineData='';let buf='';
+        let updateTimer=null;let streaming=true;
+        const flushUpdate=(final)=>{
+          const clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
+          if(final)streaming=false;
+          setMS(m,{result:{response:clean,engineData,structured,_genTime:new Date().toLocaleTimeString(),_elapsed:getMS(m).elapsed,_streaming:streaming},loading:false});
+        };
+        while(true){
+          const {done,value}=await reader.read();
+          if(done)break;
+          buf+=decoder.decode(value,{stream:true});
+          const lines=buf.split('\n');
+          buf=lines.pop()||'';
+          for(const line of lines){
+            const t=line.trim();
+            if(!t.startsWith('data: '))continue;
+            const d=t.slice(6);
+            if(d==='[DONE]'){if(updateTimer)clearInterval(updateTimer);flushUpdate(true);break}
+            try{
+              const ev=JSON.parse(d);
+              if(ev.type==='init'){structured=ev.structured;engineData=ev.engineData||'';
+                // Show header immediately with structured data
+                setMS(m,{result:{response:'',engineData,structured,_streaming:true},loading:false});
+                // Start periodic updates every 300ms
+                updateTimer=setInterval(flushUpdate,300);
+              }
+              else if(ev.type==='chunk'){fullText+=ev.text}
+              else if(ev.type==='error'){setMS(m,{error:ev.error,loading:false});if(updateTimer)clearInterval(updateTimer);return}
+            }catch(e){}
           }
+        }
+        if(updateTimer)clearInterval(updateTimer);
+        flushUpdate(true);
+      }
     }catch(e){setMS(m,{error:e.message,loading:false})}
     stopTimer(m);
     if(m===mode)setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
@@ -1099,12 +1132,17 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {/* Four Pillars */}
               {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
               {/* All report cards — progressive animation for new results */}
-              {sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300} delay={ms.result._isNew?i*0.4:0}/>})}
-              {/* Actions */}
-              <div className="anim-in" style={{animationDelay:ms.result._isNew?(sections.length*0.4+0.2)+'s':'0s',display:'flex',gap:8,marginTop:10,marginBottom:8}}>
+              {sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+              {/* Streaming indicator */}
+              {ms.result._streaming&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'12px 16px',color:mc}}>
+                <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
+                <span style={{fontSize:12}}>AI正在生成分析…</span>
+              </div>}
+              {/* Actions - only after streaming complete */}
+              {!ms.result._streaming&&<div style={{display:'flex',gap:8,marginTop:10,marginBottom:8}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
                 <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄 重新提问</button>
-              </div>
+              </div>}
             </>}
 
             {/* Chat History (follow-up bubbles) */}

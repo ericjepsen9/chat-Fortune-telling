@@ -427,6 +427,105 @@ ${(reportSummary || '').substring(0, 500)}
     return;
   }
 
+  // API：流式计算 + AI 解读（SSE）
+  if (parsedUrl.pathname === '/api/divine-stream' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox } = JSON.parse(body);
+        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
+        const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
+
+        const buildReq = aiService.buildRequest(mode, profile, question || '', { displayMode: displayMode || 'simple', ...ctxOptions });
+        if (buildReq.blocked) {
+          res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+          res.write(`data: ${JSON.stringify({type:'error',error:buildReq.reason})}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
+        }
+
+        // SSE headers
+        res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+
+        // 1. Send engine data + structured immediately
+        const structured = aiService.extractStructured(mode, profile);
+        res.write(`data: ${JSON.stringify({type:'init',engineData:buildReq.engineData,structured,mode})}\n\n`);
+
+        // 2. Stream LLM response
+        const apiUrl = `${LLM_BASE_URL}/chat/completions`;
+        const llmBody = JSON.stringify({
+          model: LLM_MODEL,
+          messages: [
+            { role: 'system', content: buildReq.systemPrompt },
+            { role: 'user', content: buildReq.userMessage },
+          ],
+          max_tokens: 6144, temperature: 0.5, stream: true,
+        });
+
+        const parsed = new URL(apiUrl);
+        const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
+          hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LLM_API_KEY}`, 'Content-Length': Buffer.byteLength(llmBody) },
+        }, (llmRes) => {
+          let buf = '';
+          llmRes.on('data', (chunk) => {
+            buf += chunk.toString();
+            const lines = buf.split('\n');
+            buf = lines.pop(); // keep incomplete line
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith('data: ')) continue;
+              const data = trimmed.slice(6);
+              if (data === '[DONE]') {
+                res.write(`data: [DONE]\n\n`);
+                res.end();
+                return;
+              }
+              try {
+                const json = JSON.parse(data);
+                const delta = json.choices?.[0]?.delta?.content;
+                if (delta) {
+                  // Strip <think> tags in real-time
+                  res.write(`data: ${JSON.stringify({type:'chunk',text:delta})}\n\n`);
+                }
+              } catch(e) {} // skip malformed
+            }
+          });
+          llmRes.on('end', () => {
+            // Process remaining buffer
+            if (buf.trim()) {
+              const trimmed = buf.trim();
+              if (trimmed.startsWith('data: ') && trimmed.slice(6) !== '[DONE]') {
+                try {
+                  const json = JSON.parse(trimmed.slice(6));
+                  const delta = json.choices?.[0]?.delta?.content;
+                  if (delta) res.write(`data: ${JSON.stringify({type:'chunk',text:delta})}\n\n`);
+                } catch(e) {}
+              }
+            }
+            res.write(`data: [DONE]\n\n`);
+            res.end();
+          });
+        });
+        llmReq.on('error', (e) => {
+          res.write(`data: ${JSON.stringify({type:'error',error:e.message})}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+        });
+        llmReq.write(llmBody);
+        llmReq.end();
+      } catch (e) {
+        res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+        res.write(`data: ${JSON.stringify({type:'error',error:e.message})}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      }
+    });
+    return;
+  }
+
   // API：计算 + AI 解读
   if (parsedUrl.pathname === '/api/divine' && req.method === 'POST') {
     let body = '';
