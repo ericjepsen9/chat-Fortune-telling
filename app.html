@@ -1072,9 +1072,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       ))}
 
       {/* Error */}
-      {ms.error&&<div className="anim-in" style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
-        <div style={{fontSize:14,fontWeight:600,color:'#EF4444',marginBottom:6}}>⚠️ {ms.error}</div>
-        <button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer'}}>🔄 重试</button>
+      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #DDD6FE':'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444',lineHeight:1.8,whiteSpace:'pre-line'}}>{ms.error}</div>
+        {!ms.error.startsWith('🔮')&&<button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer',marginTop:8}}>🔄 重试</button>}
       </div>}
 
       {/* Results for CURRENT mode */}

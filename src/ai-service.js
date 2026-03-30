@@ -389,11 +389,23 @@ const SENSITIVE_PATTERNS = [
 function safetyCheck(question) {
   if (!question) return { safe: true, level: 'normal' };
   const q = question.trim();
+  if (q.length < 2) return { safe: true, level: 'normal' };
+  // 1. 敏感内容拦截
   for (const p of BLOCKED_PATTERNS) {
     if (p.test(q)) return { safe: false, level: 'blocked', reason: '该问题涉及敏感话题，无法提供分析。如需帮助请联系专业人士。' };
   }
   for (const p of SENSITIVE_PATTERNS) {
     if (p.test(q)) return { safe: true, level: 'sensitive' };
+  }
+  // 2. 相关性检测：问题是否与命理/占卜/运势/人生相关
+  const RELEVANT_KEYWORDS = /运势|命理|八字|星座|塔罗|梅花|占卜|五行|命盘|排盘|性格|感情|恋爱|婚姻|结婚|事业|工作|财运|健康|学业|考试|投资|运气|前途|未来|今年|明年|本月|下半年|桃花|姻缘|合婚|配对|合盘|合适|般配|大运|流年|吉凶|方位|幸运|适合|注意|建议|怎么样|如何|好不好|能不能|会不会|什么时候|跳槽|升职|创业|买房|转行|出国|留学|分手|复合|怀孕|减肥|生意|发财|破财|人生|命运|天赋|潜力|弱点|优势|缺点|身体|手术|脾气|个性|缘分|伴侣|对象|另一半|属相|生肖|日主|天干|地支|纳音|格局|十神|宫位|行星|月亮星座|太阳星座|上升|水逆|卦|爻|易经|风水|方向|数字|时辰|农历|阴历|吠陀|印度占/;
+  const GENERAL_QUESTION = /分析我|解读|预测|看看我|测测|帮我[看测算分]|请问我|想知道我|告诉我|关于我的|我的[命运事感财健学]|帮我分析|我和[他她]|我跟[他她]|我们俩/;
+  const NON_RELEVANT = /天气|代码|编程|写[个一]|翻译|作文|数学|物理|化学|菜谱|做菜|食谱|新闻|电影|音乐|游戏|软件|手机|电脑|价格|多少钱|快递|外卖|打车|地图|导航|搜索|下载|安装|注册|密码|登录/;
+  if (NON_RELEVANT.test(q)) {
+    return { safe: false, level: 'irrelevant', reason: '🔮 我是命理占卜助手，擅长八字、星座、塔罗、梅花易数等分析。\n\n您可以问我：\n• 今年运势如何？\n• 事业方向建议\n• 感情运势分析\n• 财运走势\n• 性格与天赋\n\n请输入与命理占卜相关的问题，我来为您解读 ✦' };
+  }
+  if (!RELEVANT_KEYWORDS.test(q) && !GENERAL_QUESTION.test(q)) {
+    return { safe: false, level: 'irrelevant', reason: '🔮 我是命理占卜助手，擅长八字、星座、塔罗、梅花易数等分析。\n\n您可以问我：\n• 今年运势如何？\n• 事业方向建议\n• 感情运势分析\n• 财运走势\n• 性格与天赋\n\n请输入与命理占卜相关的问题，我来为您解读 ✦' };
   }
   return { safe: true, level: 'normal' };
 }
