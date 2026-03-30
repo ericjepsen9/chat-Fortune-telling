@@ -83,8 +83,8 @@ const USERS=[
   {id:12,name:'郑梦瑶',age:28,bio:'心理学研究生 🔮',year:1997,month:12,day:6,hour:2,gender:'male',score:69,dist:'6km',sign:'射手座',tags:['心理学','冥想','写作']},
 ];
 
-async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('服务器返回非JSON: '+t.substring(0,100))}}
-async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('服务器返回非JSON: '+t.substring(0,100))}}
+async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node test-server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
+async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node test-server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 
 // ===== SCORE RING =====
 function ScoreRing({score,size=60,stroke=4}){
