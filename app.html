@@ -744,6 +744,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
+  const scrollRef=useRef(null);
+  const [scrolledPastModes,setScrolledPastModes]=useState(false);
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
   const [reportExpanded,setReportExpanded]=useState(true); // auto-collapse on followUp
@@ -913,7 +915,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
   const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
-  return(<div style={{height:'100%',overflow:'auto',background:P.bg}}>
+  return(<div ref={scrollRef} onScroll={e=>{setScrolledPastModes(e.target.scrollTop>120)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER === */}
     <div style={{background:P.headerGrad,padding:'44px 16px 12px',position:'sticky',top:0,zIndex:60}}>
       <div style={{marginBottom:8}}>
@@ -932,7 +934,31 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           ))}
         </div>
       </div>
+      {/* Sticky mode pills — appear when mode grid scrolled out */}
+      {scrolledPastModes&&<div style={{display:'flex',gap:4,marginTop:8,overflowX:'auto',WebkitOverflowScrolling:'touch',paddingBottom:2}}>
+        {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
+          <button key={m.id} onClick={()=>setMode(m.id)} style={{padding:'4px 10px',borderRadius:12,border:'none',cursor:'pointer',flexShrink:0,fontSize:10,fontWeight:600,whiteSpace:'nowrap',
+            background:mode===m.id?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.15)',
+            color:mode===m.id?m.c:'rgba(255,255,255,0.8)',transition:'all .2s'}}>
+            {m.icon} {m.label.substring(0,4)}
+            {!!getMS(m.id).result&&<span style={{display:'inline-block',width:5,height:5,borderRadius:3,background:mode===m.id?m.c:'rgba(255,255,255,0.5)',marginLeft:3,verticalAlign:'middle'}}/>}
+          </button>
+        ))}
+      </div>}
     </div>
+
+    {/* === STICKY COLLAPSED REPORT (between header and content) === */}
+    {ms.result&&ms.result.response&&(ms.chatHistory||[]).length>0&&!reportExpanded&&(()=>{
+      const sections=parseSections(ms.result.response,false);
+      return <div onClick={()=>setReportExpanded(true)} style={{position:'sticky',top:0,zIndex:55,background:`linear-gradient(135deg,${mc},${mc}cc)`,padding:'10px 16px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,boxShadow:'0 2px 12px rgba(0,0,0,0.15)'}}>
+        <div style={{width:32,height:32,borderRadius:8,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{modeInfo.icon}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{color:'#fff',fontSize:13,fontWeight:700}}>{MODE_FULL[mode]}{ms.result.structured?.dayMaster?` · ${ms.result.structured.dayMaster}${ms.result.structured.element}`:''}</div>
+          <div style={{color:'rgba(255,255,255,0.6)',fontSize:10,marginTop:1}}>{sections.length}个维度 · {ms.result.response.length}字</div>
+        </div>
+        <div style={{color:'rgba(255,255,255,0.8)',fontSize:10,fontWeight:600,flexShrink:0}}>展开 ▾</div>
+      </div>;
+    })()}
 
     <div style={{padding:'12px 16px 180px'}}>
       {/* MODE GRID */}
@@ -1093,15 +1119,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           const hasChat=chatHistory.length>0;
           const expanded=reportExpanded;
           return(<div>
-            {/* Collapsed report card (when has chat and not expanded) */}
-            {!expanded&&hasChat&&<div className="anim-in" onClick={()=>setReportExpanded(true)} style={{background:`linear-gradient(135deg,${mc},${mc}cc)`,borderRadius:14,padding:'12px 16px',marginBottom:12,cursor:'pointer',display:'flex',alignItems:'center',gap:12}}>
-              <div style={{width:36,height:36,borderRadius:10,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{modeInfo.icon}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{color:'#fff',fontSize:14,fontWeight:700}}>{MODE_FULL[mode]}{ms.result.structured?.dayMaster?` · ${ms.result.structured.dayMaster}${ms.result.structured.element}·${ms.result.structured.strength}`:''}</div>
-                <div style={{color:'rgba(255,255,255,0.6)',fontSize:11,marginTop:2}}>{sections.length}个维度 · {ms.result.response.length}字</div>
-              </div>
-              <div style={{color:'rgba(255,255,255,0.8)',fontSize:11,fontWeight:600,flexShrink:0}}>展开 ▾</div>
-            </div>}
 
             {/* Expanded report (full cards) */}
             {expanded&&<>
