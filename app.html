@@ -744,7 +744,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
-  const [revealCount,setRevealCount]=useState(999);
+  const [revealCount,setRevealCount]=useState(999); // 999=show all (cached), 1=start reveal (new)
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
   const [reportExpanded,setReportExpanded]=useState(true); // auto-collapse on followUp
@@ -799,18 +799,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const stopTimer=(m)=>{if(timers.current[m]){clearInterval(timers.current[m]);delete timers.current[m]}};
   useEffect(()=>()=>{Object.values(timers.current).forEach(clearInterval)},[]);
 
-  // Progressive card reveal
-  useEffect(()=>{
-    // Find if current mode just got a new result
-    const msNow=getMS(mode);
-    if(msNow.result&&msNow.result.response){
-      setRevealCount(1);
-      let count=1;
-      const revealTimer=setInterval(()=>{count++;setRevealCount(count);if(count>=30)clearInterval(revealTimer)},400);
-      return()=>clearInterval(revealTimer);
-    } else { setRevealCount(999); }
-  },[ms.result]);
-
   // Save results to localStorage whenever they change
   useEffect(()=>{
     const toSave={};
@@ -849,6 +837,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             // Strip <think> tags from AI response
             if(r.response){r.response=r.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim()}
             setMS(m,{result:engineOnly?{engineData:r.engineData,response:null}:r,loading:false});
+            // Start progressive card reveal
+            if(!engineOnly&&r.response){
+              setRevealCount(1);
+              let count=1;
+              const rt=setInterval(()=>{count++;setRevealCount(count);if(count>=30)clearInterval(rt)},400);
+            }
           }
     }catch(e){setMS(m,{error:e.message,loading:false})}
     stopTimer(m);
