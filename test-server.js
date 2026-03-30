@@ -42,7 +42,7 @@ const logger = require('./src/logger');
 
 // ============ LLM 调用 ============
 
-async function callLLM(systemPrompt, userMessage, mode = '') {
+async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
   const apiUrl = `${LLM_BASE_URL}/chat/completions`;
   const llmCtx = logger.logLLMStart(mode, systemPrompt.length, userMessage.length);
 
@@ -52,7 +52,7 @@ async function callLLM(systemPrompt, userMessage, mode = '') {
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    max_tokens: 6144,
+    max_tokens: maxTokens,
     temperature: 0.5,
     stream: false,
   });
@@ -352,6 +352,56 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify(result));
       } catch (e) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  // API：轻量追问（聊天气泡，非完整报告）
+  if (parsedUrl.pathname === '/api/chat-followup' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const { mode, year, month, day, hour, gender, question, reportSummary, recentChat } = JSON.parse(body);
+        if (!question || !question.trim()) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: '请输入问题' }));
+          return;
+        }
+        // Safety check
+        const safety = aiService.buildRequest(mode, {year,month,day,hour,gender}, question, {});
+        if (safety.blocked) {
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ blocked: true, reason: safety.reason }));
+          return;
+        }
+        // Build lightweight prompt
+        const systemPrompt = `你是一位精通${mode==='bazi'?'八字命理':mode==='astrology'?'星座运势':mode==='tarot'?'塔罗牌':mode==='meihua'?'梅花易数':'命理'}的专家。
+用户已经做过一次完整分析，现在在追问具体问题。
+
+之前分析的核心摘要：
+${(reportSummary || '').substring(0, 500)}
+
+请基于以上分析背景，简要回答用户的追问。
+要求：
+- 直接回答，不需要章节标题或markdown格式
+- 1-3段文字，简洁有力
+- 结合命理术语但通俗易懂
+- 最后给一句实用建议`;
+        // Include recent chat for context
+        let userMsg = question;
+        if (recentChat && recentChat.length > 0) {
+          const chatCtx = recentChat.slice(-6).map(c => `${c.role==='user'?'用户':'AI'}：${c.text.substring(0,100)}`).join('\n');
+          userMsg = `最近的对话：\n${chatCtx}\n\n当前追问：${question}`;
+        }
+        const response = await callLLM(systemPrompt, userMsg, mode, 1500);
+        const cleanResp = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ response: cleanResp }));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ error: e.message }));
       }
     });

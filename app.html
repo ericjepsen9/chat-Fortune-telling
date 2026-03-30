@@ -745,9 +745,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
   const [revealCount,setRevealCount]=useState(999);
-  const [rounds,setRounds]=useState({});  // {mode: [{question,result,sections},...]}
   const [followUpQ,setFollowUpQ]=useState('');
-  const [viewRound,setViewRound]=useState(null);  // {mode,roundIdx} → fullscreen modal
+  const [chatLoading,setChatLoading]=useState(false);
+  const [viewSection,setViewSection]=useState(null); // {sections,index} for fullscreen viewer
 
   // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
   const [modeStates,setModeStates]=useState(()=>{
@@ -758,8 +758,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     }catch(e){}
     return saved;
   });
-  const getMS=(m)=>modeStates[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:''};
-  const setMS=(m,patch)=>setModeStates(prev=>{const cur=prev[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:''};return{...prev,[m]:{...cur,...patch}}});
+  const getMS=(m)=>modeStates[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:[]};
+  const setMS=(m,patch)=>setModeStates(prev=>{const cur=prev[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:[]};return{...prev,[m]:{...cur,...patch}}});
 
   // Active loading mode (for toast)
   const loadingMode=Object.keys(modeStates).find(k=>modeStates[k]?.loading);
@@ -864,31 +864,24 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     return sections.filter(s=>s.lines.some(l=>l.trim()));
   };
   const followUp=async(q)=>{
-    if(!q.trim()||ms.loading)return;
-    // Save current result as a round
-    if(ms.result?.response){
-      const secs=parseSections(ms.result.response);
-      const prev=rounds[mode]||[];
-      setRounds(r=>({...r,[mode]:[...prev,{question:ms.q||'全面分析',result:ms.result,sections:secs}]}));
-    }
-    // Start new divine with context
-    setMS(mode,{q:q,result:null,loading:true,error:null});
+    if(!q.trim()||chatLoading)return;
+    const ch=getMS(mode).chatHistory||[];
+    if(ch.length>=20){alert('本次会话已达上限，请点击"重新提问"开始新分析');return}
+    // Add user message immediately
+    const newChat=[...ch,{role:'user',text:q}];
+    setMS(mode,{chatHistory:newChat});
     setFollowUpQ('');
-    startTimer(mode);
+    setChatLoading(true);
     try{
-      // Build context from previous rounds
-      const prevRounds=rounds[mode]||[];
-      const allPrev=ms.result?.response?[...prevRounds,{result:ms.result}]:prevRounds;
-      const contextSummary=allPrev.map((r,i)=>`[第${i+1}轮] ${r.result?.response?.substring(0,200)||''}`).join('\n');
-      const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,displayMode:dm,context:contextSummary};
-      if(profile.hour===-1)body.hourUnknown=true;
-      if(['hehun','synastry','hepan'].includes(mode))body.profileB=p2;
-      const r=await apiPost('/api/divine',body);
-      if(r.response)r.response=r.response.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
-      r._genTime=new Date().toLocaleTimeString();r._elapsed=getMS(mode).elapsed;
-      setMS(mode,{result:r,loading:false,q});
-    }catch(e){setMS(mode,{error:e.message,loading:false})}
-    stopTimer(mode);
+      const reportSummary=ms.result?.response?.substring(0,500)||'';
+      const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:ch.slice(-6)};
+      const r=await apiPost('/api/chat-followup',body);
+      if(r.blocked){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.reason}]});}
+      else if(r.error){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ '+r.error}]});}
+      else{setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.response}]});}
+    }catch(e){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ 网络错误，请重试'}]});}
+    setChatLoading(false);
+    setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth',block:'end'}),300);
   };
   const P={bg:'#F8F5FF',accent:'#8B5CF6',accentLight:'#EDE9FE',accentDark:'#7C3AED',headerGrad:'linear-gradient(135deg,#8B5CF6,#A78BFA,#C4B5FD)'};
 
@@ -1059,35 +1052,23 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>
       </div>}
 
-      {/* Previous rounds (collapsed) */}
-      {(rounds[mode]||[]).map((rd,ri)=>(
-        <div key={ri} className="anim-in" onClick={()=>setViewRound({mode,roundIdx:ri})} style={{background:'#fff',borderRadius:14,padding:'12px 14px',marginBottom:8,boxShadow:'0 1px 4px rgba(0,0,0,0.05)',cursor:'pointer',display:'flex',alignItems:'center',gap:10,border:`1px solid ${T.border}`}}>
-          <div style={{width:28,height:28,borderRadius:8,background:`${mc}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:mc,flexShrink:0}}>#{ri+1}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:13,fontWeight:600,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{rd.question||'全面分析'}</div>
-            <div style={{display:'flex',gap:3,marginTop:4,flexWrap:'wrap'}}>{rd.sections.slice(0,6).map((s,i)=><span key={i} style={{fontSize:10,opacity:.7}}>{s.icon}</span>)}{rd.sections.length>6&&<span style={{fontSize:10,opacity:.5}}>+{rd.sections.length-6}</span>}</div>
-          </div>
-          <div style={{fontSize:11,color:mc,fontWeight:600,flexShrink:0}}>查看报告 →</div>
-        </div>
-      ))}
-
       {/* Error */}
       {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #DDD6FE':'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14}}>
         <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444',lineHeight:1.8,whiteSpace:'pre-line'}}>{ms.error}</div>
         {!ms.error.startsWith('🔮')&&<button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer',marginTop:8}}>🔄 重试</button>}
       </div>}
 
-      {/* Results for CURRENT mode */}
+      {/* Results: Header + Icon Grid + Chat */}
       {ms.result&&<div ref={ref} className="anim-slide" style={{scrollMarginTop:120}}>
-        {/* Hour accuracy warning */}
         {(profile.hour===-1||hourApprox)&&['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode)&&
           <div style={{background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,padding:'8px 12px',marginBottom:10,fontSize:11,color:'#92400E',lineHeight:1.5}}>
-            {profile.hour===-1?'⚠️ 未提供出生时辰，以下结果基于年月日三柱分析，时柱相关内容（子女、晚运等）仅供参考。':'⏰ 使用的是大致出生时段，时柱精度可能有偏差。'}
+            {profile.hour===-1?'⚠️ 未提供出生时辰，时柱相关内容仅供参考。':'⏰ 使用大致时段，精度可能有偏差。'}
           </div>
         }
 
         {ms.result.response&&(()=>{
           const sections=parseSections(ms.result.response);
+          const chatHistory=ms.chatHistory||[];
           return(<div>
             {/* Report Header with Radar */}
             <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
@@ -1101,67 +1082,64 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                     {ms.result.structured.geju&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.geju}</span>}
                     {ms.result.structured.personality?.type&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.25)',fontSize:10}}>✦ {ms.result.structured.personality.type}</span>}
                   </div>}
-                  {ms.result.structured?.personality?.traits&&<div style={{display:'flex',gap:3,marginTop:4,flexWrap:'wrap'}}>
-                    {ms.result.structured.personality.traits.map(t=><span key={t} style={{padding:'1px 6px',borderRadius:4,background:'rgba(255,255,255,0.12)',fontSize:9,opacity:.8}}>{t}</span>)}
-                  </div>}
-                  <div style={{fontSize:11,opacity:.75,marginTop:6}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day} · {dm==='expert'?'专家':'大众'}</div>
-                  <div style={{display:'flex',gap:8,marginTop:4,opacity:.6,fontSize:10}}>{ms.result._genTime&&<span>⏰ {ms.result._genTime}</span>}{ms.result._elapsed&&<span>⚡ {ms.result._elapsed}s</span>}<span>📝 {ms.result.response?.length||0}字</span></div>
+                  <div style={{fontSize:11,opacity:.75,marginTop:6}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day}</div>
                 </div>
-                {/* Radar chart or dimension count */}
                 {ms.result.structured?.wuxing?
-                  <WuxingRadar data={ms.result.structured.wuxing} size={120}/>
+                  <WuxingRadar data={ms.result.structured.wuxing} size={110}/>
                   :<div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:700}}>{sections.length}</div><div style={{fontSize:9,opacity:.7}}>维度</div></div>
                 }
               </div>
             </div>
-            {/* Four Pillars card (bazi mode) */}
+            {/* Four Pillars (bazi) */}
             {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
-            {/* Wuxing bar (bazi mode, below fourpillars) */}
-            {ms.result.structured?.wuxing&&ms.result.structured?.fourPillars&&<div style={{background:'#fff',borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-              <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8}}>☯ 五行力量分布</div>
-              <WuxingBar data={ms.result.structured.wuxing} height={8}/>
-            </div>}
-            {/* Personality Cards (5张性格卡片) */}
-            {ms.result.structured?.personalityCards&&<PersonalityCards cards={ms.result.structured.personalityCards} mc={mc}/>}
-            {isPair&&<div style={{background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'12px 14px',marginBottom:10,display:'flex',justifyContent:'space-around',alignItems:'center',gap:8}}>
-              <div style={{textAlign:'center',flex:1}}>
-                <div style={{fontSize:10,opacity:.6}}>甲方</div>
-                <div style={{fontSize:14,fontWeight:700}}>{profile.name||'我'}</div>
-                <div style={{fontSize:10,opacity:.7}}>{profile.year}.{profile.month}.{profile.day} {profile.gender==='male'?'♂':'♀'}</div>
+
+            {/* Section Icon Grid — click to view in fullscreen */}
+            <div style={{background:'#fff',borderRadius:14,padding:'12px',marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+                {sections.map((sec,i)=>(
+                  <button key={i} onClick={()=>setViewSection({sections,index:i})} style={{padding:'10px 4px',borderRadius:12,border:`1px solid ${T.border}`,background:'#FAFAFA',cursor:'pointer',textAlign:'center',transition:'all .15s'}}>
+                    <div style={{fontSize:18,marginBottom:2}}>{sec.icon}</div>
+                    <div style={{fontSize:10,color:T.text,fontWeight:500,lineHeight:1.2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sec.title.replace(/[（(].*/,'').substring(0,5)}</div>
+                  </button>
+                ))}
               </div>
-              <div style={{fontSize:20,opacity:.6}}>💕</div>
-              <div style={{textAlign:'center',flex:1}}>
-                <div style={{fontSize:10,opacity:.6}}>乙方</div>
-                <div style={{fontSize:14,fontWeight:700}}>对方</div>
-                <div style={{fontSize:10,opacity:.7}}>{p2.year}.{p2.month}.{p2.day} {p2.gender==='male'?'♂':'♀'}</div>
+              <div style={{display:'flex',gap:8,marginTop:10}}>
+                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
+                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄 重新提问</button>
               </div>
-            </div>}
-            {sections.filter((_,i)=>i<revealCount).map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
-            {(()=>{const total=sections.length;return revealCount<total?<div style={{textAlign:'center',padding:'16px',color:mc}}>
-              <div style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:13}}>
-                <div style={{width:16,height:16,borderRadius:8,border:`2px solid transparent`,borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
-                正在展开更多分析… ({Math.min(revealCount,total)}/{total})
-              </div>
-            </div>:
-            <div style={{display:'flex',gap:8,marginTop:10,marginBottom:8}}>
-              <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
-              <button onClick={()=>{setMS(mode,{result:null,error:null,q:''});setRounds(r=>({...r,[mode]:[]}))}} style={{padding:'10px 16px',borderRadius:10,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.textThi,cursor:'pointer'}}>🔄 重新提问</button>
             </div>
-            })()}
+
+            {/* Chat History (follow-up bubbles) */}
+            {chatHistory.length>0&&<div style={{marginBottom:10}}>
+              <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8,paddingLeft:2}}>💬 追问会话</div>
+              {chatHistory.map((msg,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8}}>
+                  <div style={{maxWidth:'85%',padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
+                    background:msg.role==='user'?`linear-gradient(135deg,${mc},${mc}dd)`:'#fff',
+                    color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
+                    boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)',
+                    whiteSpace:'pre-line'}}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {chatLoading&&<div style={{display:'flex',justifyContent:'flex-start',marginBottom:8}}>
+                <div style={{padding:'10px 14px',borderRadius:'16px 16px 16px 4px',background:'#fff',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+                  <div style={{display:'flex',gap:4,alignItems:'center'}}>
+                    <div style={{width:6,height:6,borderRadius:3,background:mc,animation:'pulse 1s infinite'}}/>
+                    <div style={{width:6,height:6,borderRadius:3,background:mc,animation:'pulse 1s infinite 0.2s'}}/>
+                    <div style={{width:6,height:6,borderRadius:3,background:mc,animation:'pulse 1s infinite 0.4s'}}/>
+                  </div>
+                </div>
+              </div>}
+            </div>}
           </div>);
         })()}
-
-        
 
         {!ms.result.response&&ms.result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
           <div style={{fontSize:13,fontWeight:600,color:mc,marginBottom:8}}>📦 引擎结果</div>
           <pre style={{fontSize:12,lineHeight:1.7,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{ms.result.engineData}</pre>
         </div>}
-
-        {ms.result.response&&<details style={{background:'#fff',borderRadius:14,boxShadow:T.shadow,marginTop:10}}>
-          <summary style={{padding:'12px 16px',fontSize:12,fontWeight:600,color:mc,cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>📦 引擎数据（{ms.result.engineData?.length||0}字）</span><span style={{color:T.textThi}}>▾</span></summary>
-          <div style={{padding:'0 16px 12px'}}><pre style={{fontSize:11,lineHeight:1.6,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{ms.result.engineData}</pre></div>
-        </details>}
       </div>}
     </div>
 
@@ -1192,12 +1170,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#FAFAFA',fontSize:13,outline:'none'}}
           />
           <button onClick={()=>{if(ms.result)followUp(followUpQ);else divine(mode,false,ms.q)}}
-            disabled={ms.result&&!followUpQ.trim()}
+            disabled={(ms.result&&!followUpQ.trim())||chatLoading}
             style={{width:40,height:40,borderRadius:20,border:'none',
-              background:(ms.result&&!followUpQ.trim())?T.border:`linear-gradient(135deg,${mc},${mc}dd)`,
-              color:'#fff',fontSize:16,cursor:(ms.result&&!followUpQ.trim())?'default':'pointer',
+              background:((ms.result&&!followUpQ.trim())||chatLoading)?T.border:`linear-gradient(135deg,${mc},${mc}dd)`,
+              color:'#fff',fontSize:16,cursor:((ms.result&&!followUpQ.trim())||chatLoading)?'default':'pointer',
               flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
-              boxShadow:(ms.result&&!followUpQ.trim())?'none':`0 2px 8px ${mc}40`}}>↑</button>
+              boxShadow:((ms.result&&!followUpQ.trim())||chatLoading)?'none':`0 2px 8px ${mc}40`}}>{chatLoading?'…':'↑'}</button>
         </div>
         {/* Engine-only shortcut (initial only) */}
         {!ms.result&&<div style={{textAlign:'center',marginTop:3}}>
@@ -1219,37 +1197,35 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     {/* Hour Correction Assistant */}
     {showHourAssistant&&<HourAssistantModal profile={profile} onResult={(h)=>{onUpdateProfile({...profile,hour:h})}} onClose={()=>setShowHourAssistant(false)}/>}
 
-    {/* Fullscreen Report Modal for viewing collapsed rounds */}
-    {viewRound&&(()=>{
-      const rd=(rounds[viewRound.mode]||[])[viewRound.roundIdx];
-      if(!rd)return null;
+    {/* Section Detail Viewer — fullscreen modal with prev/next navigation */}
+    {viewSection&&(()=>{
+      const {sections,index}=viewSection;
+      const sec=sections[index];
+      if(!sec)return null;
+      const content=sec.lines.join('\n').trim();
+      const color=SECTION_COLORS[index%SECTION_COLORS.length];
+      const hasPrev=index>0, hasNext=index<sections.length-1;
       return <div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,display:'flex',flexDirection:'column'}}>
-        {/* Top bar */}
         <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:'#fff',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-          <button onClick={()=>setViewRound(null)} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+          <button onClick={()=>setViewSection(null)} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
           <div style={{flex:1}}>
-            <div style={{fontSize:15,fontWeight:700,color:T.text}}>第{viewRound.roundIdx+1}轮 · {rd.question||'全面分析'}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{rd.sections.length}个维度 · {rd.result.response?.length||0}字</div>
+            <div style={{fontSize:15,fontWeight:700,color:T.text}}>{sec.icon} {sec.title}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{index+1} / {sections.length}</div>
           </div>
-          <button onClick={()=>{navigator.clipboard?.writeText(rd.result.response);alert('已复制')}} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+          <button onClick={()=>{navigator.clipboard?.writeText(content);alert('已复制')}} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.textSec,cursor:'pointer'}}>📋</button>
         </div>
-        {/* Scrollable content */}
         <div style={{flex:1,overflow:'auto',padding:'12px 16px 30px'}}>
-          {/* Header card */}
-          <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:16,marginBottom:10,color:'#fff'}}>
-            <div style={{fontSize:10,opacity:.6}}>命理报告 · 第{viewRound.roundIdx+1}轮</div>
-            <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {rd.question||'全面分析'}</div>
-            <div style={{fontSize:11,opacity:.75,marginTop:4}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day}</div>
-            {rd.result._genTime&&<div style={{fontSize:10,opacity:.5,marginTop:4}}>⏰ {rd.result._genTime} ⚡ {rd.result._elapsed}s</div>}
+          <div style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+            <div style={{height:4,background:color}}/>
+            <div style={{padding:'16px',fontSize:14,lineHeight:1.85,color:T.text}}>
+              <div className="markdown" dangerouslySetInnerHTML={md(content)}/>
+            </div>
           </div>
-          {/* Structured data cards if available */}
-          {rd.result.structured?.fourPillars&&<FourPillarsCard structured={rd.result.structured} mc={mc}/>}
-          {rd.result.structured?.wuxing&&rd.result.structured?.fourPillars&&<div style={{background:'#fff',borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-            <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8}}>☯ 五行力量分布</div>
-            <WuxingBar data={rd.result.structured.wuxing} height={8}/>
-          </div>}
-          {/* All report cards */}
-          {rd.sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+        </div>
+        {/* Prev / Next navigation */}
+        <div style={{display:'flex',gap:10,padding:'10px 16px 28px',background:'#fff',borderTop:`1px solid ${T.border}`,flexShrink:0}}>
+          <button onClick={()=>hasPrev&&setViewSection({sections,index:index-1})} disabled={!hasPrev} style={{flex:1,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,background:hasPrev?'#fff':'#F9FAFB',color:hasPrev?T.text:T.textThi,fontSize:13,fontWeight:500,cursor:hasPrev?'pointer':'default'}}>← {hasPrev?sections[index-1].icon+' '+sections[index-1].title.substring(0,4):'无'}</button>
+          <button onClick={()=>hasNext&&setViewSection({sections,index:index+1})} disabled={!hasNext} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:hasNext?`linear-gradient(135deg,${mc},${mc}dd)`:'#F9FAFB',color:hasNext?'#fff':T.textThi,fontSize:13,fontWeight:500,cursor:hasNext?'pointer':'default'}}>{hasNext?sections[index+1].title.substring(0,4)+' '+sections[index+1].icon:'无'} →</button>
         </div>
       </div>;
     })()}
