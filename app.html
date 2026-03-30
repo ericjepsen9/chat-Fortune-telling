@@ -846,7 +846,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         setMS(m,{result:{engineData:r.engineData,response:null,structured:r.structured},loading:false});
       }else{
         // Streaming SSE for AI divine
-        const resp=await fetch('/api/divine-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const abortCtrl=new AbortController();
+        const timeout=setTimeout(()=>abortCtrl.abort(),180000); // 3 min timeout
+        try{
+        const resp=await fetch('/api/divine-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:abortCtrl.signal});
         const reader=resp.body.getReader();
         const decoder=new TextDecoder();
         let fullText='';let structured=null;let engineData='';let buf='';
@@ -884,6 +887,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         }
         if(updateTimer)clearInterval(updateTimer);
         flushUpdate(true);
+        }catch(abortErr){
+          if(abortErr.name==='AbortError'){
+            if(fullText){flushUpdate(true)}
+            else{setMS(m,{error:'请求超时，请重试',loading:false})}
+          }else throw abortErr;
+        }finally{clearTimeout(timeout)}
       }
     }catch(e){setMS(m,{error:e.message,loading:false})}
     stopTimer(m);
@@ -1097,8 +1106,31 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{width:56,height:56,borderRadius:28,background:`${mc}10`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px',fontSize:28}}>{modeInfo.icon}</div>
         <div style={{fontSize:15,fontWeight:600,color:T.text}}>{MODE_FULL[mode]}</div>
         <div style={{fontSize:12,color:T.textThi,marginTop:4,lineHeight:1.6}}>{MODE_INTRO[mode]||''}</div>
-        <div style={{fontSize:11,color:mc,marginTop:8,opacity:.7}}>点击底部按钮开始AI预测</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center',marginTop:12}}>
+          {(QUICK_QS[mode]||[]).map(q=><span key={q} style={{padding:'4px 10px',borderRadius:8,background:`${mc}08`,border:`1px solid ${mc}15`,color:mc,fontSize:11}}>"{q}"</span>)}
+        </div>
+        <div style={{fontSize:10,color:T.textThi,marginTop:10,opacity:.6}}>分析约需60-90秒 · 包含{isPair?'配合度/相处/建议':'性格/事业/财运/感情'}等维度</div>
+        <div style={{fontSize:11,color:mc,marginTop:6,opacity:.7}}>点击底部按钮开始AI预测</div>
       </div>}
+
+      {/* History: show other modes that have saved results */}
+      {!ms.loading&&!ms.result&&(()=>{
+        const saved=MODES.filter(m=>m.id!==mode&&getMS(m.id).result);
+        if(!saved.length)return null;
+        return <div style={{marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>📜 历史报告</div>
+          {saved.map(m=>{const s=getMS(m.id);const chatLen=(s.chatHistory||[]).length;
+            return <div key={m.id} onClick={()=>setMode(m.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#fff',borderRadius:12,marginBottom:6,cursor:'pointer',boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
+              <div style={{width:32,height:32,borderRadius:8,background:`${m.c}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{m.icon}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600,color:T.text}}>{MODE_FULL[m.id]}</div>
+                <div style={{fontSize:10,color:T.textThi,marginTop:1}}>{s.result?.response?.length||0}字{chatLen>0?` · ${chatLen/2|0}轮追问`:''}</div>
+              </div>
+              <div style={{fontSize:11,color:m.c,fontWeight:500}}>查看 →</div>
+            </div>;
+          })}
+        </div>;
+      })()}
 
       {/* Loading state in content area — only before init arrives */}
       {ms.loading&&!ms.result&&<div style={{textAlign:'center',padding:'60px 20px'}}>
@@ -1169,9 +1201,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <span style={{fontSize:12}}>AI正在生成分析…</span>
               </div>}
               {/* Actions - only after streaming complete */}
-              {!ms.result._streaming&&<div style={{display:'flex',gap:8,marginTop:10,marginBottom:8}}>
-                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制全文</button>
-                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄 重新提问</button>
+              {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:8}}>
+                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+                <button onClick={()=>divine(mode,false)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>🔄 重新生成</button>
+                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>清空</button>
               </div>}
             </>}
 
@@ -1236,9 +1269,22 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       </>:<>
         {/* Has result: chips + input + send */}
         <div style={{display:'flex',gap:4,marginBottom:6,overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
-          {(QUICK_QS[mode]||[]).filter(qq=>qq!==(ms.q||'')).slice(0,5).map(qq=>(
-            <button key={qq} onClick={()=>followUp(qq)} disabled={chatLoading} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${mc}25`,background:`${mc}06`,color:mc,fontSize:10,fontWeight:500,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>{qq}</button>
-          ))}
+          {(()=>{
+            const ch=ms.chatHistory||[];
+            const asked=ch.filter(m=>m.role==='user').map(m=>m.text);
+            const base=(QUICK_QS[mode]||[]).filter(q=>!asked.includes(q));
+            // Dynamic chips based on report content
+            const resp=ms.result?.response||'';
+            const dynamic=[];
+            if(resp.includes('桃花')&&!asked.some(a=>a.includes('桃花')))dynamic.push('桃花运详解');
+            if(resp.includes('大运')&&!asked.some(a=>a.includes('大运')))dynamic.push('当前大运分析');
+            if(resp.includes('创业')&&!asked.some(a=>a.includes('创业')))dynamic.push('适合创业吗');
+            if(resp.includes('贵人')&&!asked.some(a=>a.includes('贵人')))dynamic.push('贵人方位');
+            const chips=[...dynamic,...base].slice(0,5);
+            return chips.map(qq=>(
+              <button key={qq} onClick={()=>followUp(qq)} disabled={chatLoading} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${mc}25`,background:`${mc}06`,color:mc,fontSize:10,fontWeight:500,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>{qq}</button>
+            ));
+          })()}
         </div>
         <div style={{display:'flex',gap:8}}>
           <input
