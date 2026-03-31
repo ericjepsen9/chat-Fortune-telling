@@ -390,9 +390,12 @@ function HomeScreen({profile,goTo}){
 // ===== WUXING RADAR (SVG五行雷达图) =====
 function WuxingRadar({data,size=140}){
   if(!data)return null;
-  const cx=size/2,cy=size/2,r=size*0.38;
+  const pad=24; // padding for labels
+  const vw=size+pad*2;
+  const cx=vw/2,cy=vw/2,r=size*0.34;
   const labels=['木','火','土','金','水'];
-  const colors=['#22C55E','#EF4444','#D97706','#C4A35A','#3B82F6'];
+  const dotColors=['#86EFAC','#FCA5A5','#FCD34D','#E2E8F0','#93C5FD']; // softer dots on purple
+  const labelColors=['#D1FAE5','#FEE2E2','#FEF3C7','#F1F5F9','#DBEAFE']; // light label colors
   const vals=labels.map(l=>data[l]||0);
   const max=Math.max(...vals,1);
   const pts=labels.map((_,i)=>{
@@ -403,22 +406,20 @@ function WuxingRadar({data,size=140}){
   const poly=pts.map(p=>p.join(',')).join(' ');
   const gridLevels=[0.25,0.5,0.75,1];
   return(
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <svg width={size} height={size} viewBox={`0 0 ${vw} ${vw}`}>
       {/* Grid */}
       {gridLevels.map(gl=>(
         <polygon key={gl} points={labels.map((_,i)=>{const a=Math.PI*2*i/5-Math.PI/2;return`${cx+r*gl*Math.cos(a)},${cy+r*gl*Math.sin(a)}`}).join(' ')}
-          fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={0.5}/>
+          fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={0.5}/>
       ))}
       {/* Axes */}
-      {labels.map((_,i)=>{const a=Math.PI*2*i/5-Math.PI/2;return<line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(a)} y2={cy+r*Math.sin(a)} stroke="rgba(255,255,255,0.1)" strokeWidth={0.5}/>})}
+      {labels.map((_,i)=>{const a=Math.PI*2*i/5-Math.PI/2;return<line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(a)} y2={cy+r*Math.sin(a)} stroke="rgba(255,255,255,0.08)" strokeWidth={0.5}/>})}
       {/* Data polygon */}
-      <polygon points={poly} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.8)" strokeWidth={1.5}/>
+      <polygon points={poly} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" strokeWidth={1.5}/>
       {/* Data points */}
-      {pts.map((p,i)=><circle key={i} cx={p[0]} cy={p[1]} r={3} fill={colors[i]} stroke="#fff" strokeWidth={1}/>)}
+      {pts.map((p,i)=><circle key={i} cx={p[0]} cy={p[1]} r={3} fill={dotColors[i]} stroke="rgba(255,255,255,0.6)" strokeWidth={1}/>)}
       {/* Labels */}
-      {labels.map((l,i)=>{const a=Math.PI*2*i/5-Math.PI/2;const lx=cx+(r+16)*Math.cos(a);const ly=cy+(r+16)*Math.sin(a);return<text key={l} x={lx} y={ly} fill={colors[i]} fontSize={11} fontWeight={700} textAnchor="middle" dominantBaseline="central">{l}</text>})}
-      {/* Values */}
-      {labels.map((l,i)=>{const a=Math.PI*2*i/5-Math.PI/2;const vx=cx+(r+28)*Math.cos(a);const vy=cy+(r+28)*Math.sin(a);return<text key={'v'+i} x={vx} y={vy} fill="rgba(255,255,255,0.5)" fontSize={8} textAnchor="middle" dominantBaseline="central">{vals[i].toFixed(1)}</text>})}
+      {labels.map((l,i)=>{const a=Math.PI*2*i/5-Math.PI/2;const lx=cx+(r+14)*Math.cos(a);const ly=cy+(r+14)*Math.sin(a);return<text key={l} x={lx} y={ly} fill={labelColors[i]} fontSize={11} fontWeight={700} textAnchor="middle" dominantBaseline="central">{l}</text>})}
     </svg>
   );
 }
