@@ -975,7 +975,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       {/* Sticky collapsed report — inside header so it's always below title */}
       {ms.result&&ms.result.response&&(ms.chatHistory||[]).length>0&&!reportExpanded&&(()=>{
         const secs=parseSections(ms.result.response,false);
-        return <div onClick={()=>setReportExpanded(true)} style={{marginTop:8,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 14px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,backdropFilter:'blur(8px)'}}>
+        return <div onClick={()=>{setReportExpanded(true);setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth',block:'start'}),100)}} style={{marginTop:8,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 14px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,backdropFilter:'blur(8px)'}}>
           <div style={{width:28,height:28,borderRadius:8,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{modeInfo.icon}</div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{color:'#fff',fontSize:12,fontWeight:700}}>{MODE_FULL[mode]}{ms.result.structured?.dayMaster?` · ${ms.result.structured.dayMaster}${ms.result.structured.element}`:''}</div>
