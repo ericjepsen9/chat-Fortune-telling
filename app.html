@@ -309,9 +309,9 @@ function CardDetailModal({user,profile,onClose,goTo}){
   const grad=GRADS[user.id%GRADS.length];
   return(
     <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:T.bg,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'92vh',overflow:'auto',animation:'slideUp .3s ease'}}>
+      <div style={{background:T.bg,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'95vh',overflow:'auto',animation:'slideUp .3s ease'}}>
         {/* Top bar */}
-        <div style={{position:'sticky',top:0,zIndex:10,padding:'16px 16px 10px',background:T.bg,display:'flex',alignItems:'center',gap:12}}>
+        <div style={{position:'sticky',top:0,zIndex:10,padding:'48px 16px 10px',background:T.bg,display:'flex',alignItems:'center',gap:12}}>
           <button onClick={onClose} style={{width:36,height:36,borderRadius:'50%',border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
           <div style={{flex:1,fontSize:17,fontWeight:700,color:T.text}}>个人资料</div>
           {match&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:ac,color:'#fff'}}>{match.score}% 匹配</span>}
