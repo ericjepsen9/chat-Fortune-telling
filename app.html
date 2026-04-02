@@ -962,7 +962,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>
       </div>
       {/* Sticky mode pills — appear when mode grid hidden or scrolled out */}
-      {(scrolledPastModes||ms.result||ms.loading)&&<div style={{display:'flex',gap:4,marginTop:8,overflowX:'auto',WebkitOverflowScrolling:'touch',paddingBottom:2}}>
+      {scrolledPastModes&&<div style={{display:'flex',gap:4,marginTop:8,overflowX:'auto',WebkitOverflowScrolling:'touch',paddingBottom:2}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)} style={{padding:'4px 10px',borderRadius:12,border:'none',cursor:'pointer',flexShrink:0,fontSize:10,fontWeight:600,whiteSpace:'nowrap',
             background:mode===m.id?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.15)',
@@ -987,8 +987,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     <div style={{padding:'12px 16px 180px'}}>
-      {/* MODE GRID — hide when result exists (use sticky pills instead) */}
-      {!ms.result&&!ms.loading&&<div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6,marginBottom:14}}>
+      {/* MODE GRID — always visible */}
+      <div style={{display:'grid',gridTemplateColumns:isPair?'repeat(3,1fr)':'repeat(5,1fr)',gap:6,marginBottom:14}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
           const hasResult=!!getMS(m.id).result;
           const isLoading=!!getMS(m.id).loading;
@@ -1005,7 +1005,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:8,height:8,borderRadius:4,background:isLoading?'#F59E0B':T.success}}/>}
           </button>);
         })}
-      </div>}
+      </div>
 
       {/* HOUR COMPLETION PROMPT (when hour=-1 and not skipped) */}
       {profile.hour===-1&&!hourSkipped&&!ms.loading&&!ms.result&&(()=>{
