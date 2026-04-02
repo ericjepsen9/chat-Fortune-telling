@@ -1778,6 +1778,42 @@ function App(){
       if(r.reply){ChatStore.addMessage(conv.id,{role:'ai',text:r.reply});setConvs(ChatStore.getAll())}
     }catch(e){}
   };
+
+  // Bot proactive messages — bots initiate conversation after idle periods
+  const BOT_PROACTIVE_PROMPTS=[
+    '[系统：对方已经有一段时间没回复了。根据你的性格，主动发一条消息，可以分享你今天做了什么，或者问一个轻松的问题。]',
+    '[系统：根据当前时间段，发一条应景的消息。早上说早安分享计划，中午聊吃什么，晚上聊今天的感受。简短自然。]',
+    '[系统：分享一个和你兴趣爱好相关的小事，比如看到了什么、做了什么、想到了什么。像朋友圈一样自然。]',
+  ];
+  useEffect(()=>{
+    if(!profile)return;
+    const checkBots=()=>{
+      const allConvs=ChatStore.getAll();
+      allConvs.forEach(conv=>{
+        if(!conv.user.isBot)return; // only bots
+        if(conv.messages.length===0)return; // no messages yet, autoGreet handles this
+        const lastMsg=conv.messages[conv.messages.length-1];
+        const idleMs=Date.now()-(lastMsg.ts||0);
+        const idleMin=idleMs/60000;
+        // Send proactive message if idle 3-10 minutes (demo timing, production would be hours)
+        if(idleMin<3||idleMin>30)return; // too recent or too old
+        // Check if we already sent a proactive in this idle period
+        const proactiveKey='yuanhe_bot_proactive_'+conv.id;
+        const lastProactive=parseInt(localStorage.getItem(proactiveKey)||'0');
+        if(Date.now()-lastProactive<180000)return; // max 1 proactive per 3 min
+        // 25% chance each check (don't spam)
+        if(Math.random()>0.25)return;
+        // Send proactive message
+        localStorage.setItem(proactiveKey,String(Date.now()));
+        const prompt=BOT_PROACTIVE_PROMPTS[Math.floor(Math.random()*BOT_PROACTIVE_PROMPTS.length)];
+        apiPost('/api/chat',{partner:conv.user,message:prompt,history:conv.messages.slice(-6)}).then(r=>{
+          if(r.reply){ChatStore.addMessage(conv.id,{role:'ai',text:r.reply});setConvs(ChatStore.getAll())}
+        }).catch(()=>{});
+      });
+    };
+    const timer=setInterval(checkBots,60000); // check every 60s
+    return()=>clearInterval(timer);
+  },[profile]);
   const showTabs=[S.HOME,S.DISCOVER,S.AI,S.MSGS,S.ME].includes(scr)&&!chatActive;
   return(<div style={{maxWidth:480,margin:'0 auto',height:window.innerHeight,position:'relative',overflow:'hidden',background:T.bg,boxShadow:'0 0 40px rgba(0,0,0,0.08)'}}>
     {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:onboarded?S.BIRTH:S.ONBOARD)}/>}
