@@ -1504,42 +1504,54 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 // ===== DISCOVER =====
 function FortuneWheel({profile,goTo}){
   const tg=profile.gender==='male'?'female':'male';
-  const pool=[...USERS,...BOTS].filter(u=>u.gender===tg).sort(()=>Math.random()-0.5).slice(0,8);
-  const n=pool.length;
   const COLORS=['#8B5CF6','#EC4899','#F59E0B','#10B981','#3B82F6','#F43F5E','#0D9488','#D97706'];
+  const [pool,setPool]=useState([]);
   const [spinning,setSpinning]=useState(false);
   const [result,setResult]=useState(null);
   const [angle,setAngle]=useState(0);
-  const [matchScore,setMatchScore]=useState(null);
   const todayKey='yuanhe_wheel_'+new Date().toDateString();
   const [spinsLeft,setSpinsLeft]=useState(()=>{const used=parseInt(localStorage.getItem(todayKey)||'0');return Math.max(0,2-used)});
+  const [loading,setLoading]=useState(true);
+
+  // Fetch scores and sort by match score descending, take top 8
+  useEffect(()=>{
+    const cands=[...USERS,...BOTS].filter(u=>u.gender===tg);
+    apiPost('/api/batch-match',{profile,candidates:cands}).then(results=>{
+      const scored=results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort((a,b)=>b.score-a.score).slice(0,8);
+      setPool(scored);setLoading(false);
+    }).catch(()=>{
+      const fallback=cands.sort(()=>Math.random()-0.5).slice(0,8);
+      setPool(fallback);setLoading(false);
+    });
+  },[]);
 
   const spin=()=>{
-    if(spinning||spinsLeft<=0||n===0)return;
-    setSpinning(true);setResult(null);setMatchScore(null);
-    const target=Math.floor(Math.random()*n);
+    if(spinning||spinsLeft<=0||pool.length===0)return;
+    setSpinning(true);setResult(null);
+    // Weighted random: higher score = higher probability
+    const weights=pool.map(u=>{const s=u.score||60;return s*s}); // square for stronger bias
+    const totalW=weights.reduce((a,b)=>a+b,0);
+    let rand=Math.random()*totalW,target=0;
+    for(let i=0;i<weights.length;i++){rand-=weights[i];if(rand<=0){target=i;break}}
+    const n=pool.length;
     const extra=5*360+target*(360/n)+(360/n/2);
-    const newAngle=angle+extra;
-    setAngle(newAngle);
+    setAngle(prev=>prev+extra);
     setTimeout(()=>{
-      const matched=pool[target];
-      setResult(matched);
+      setResult(pool[target]);
       setSpinning(false);
       const used=parseInt(localStorage.getItem(todayKey)||'0')+1;
       localStorage.setItem(todayKey,String(used));
       setSpinsLeft(Math.max(0,2-used));
-      // Fetch real match score
-      apiPost('/api/match',{profileA:profile,profileB:matched}).then(r=>{
-        setMatchScore(r.score||Math.round(60+Math.random()*30));
-      }).catch(()=>setMatchScore(Math.round(60+Math.random()*30)));
     },4000);
   };
 
+  const n=pool.length||8;
   const sz=240,cx=sz/2,cy=sz/2,r=sz/2-8;
   return(
     <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:18,boxShadow:T.shadow,marginBottom:14,border:'1px solid #EDE9FE'}}>
       <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:4,textAlign:'center'}}>🎡 命运转盘</div>
       <div style={{fontSize:11,color:T.textThi,textAlign:'center',marginBottom:12}}>转一转，看看谁是你的命中注定</div>
+      {loading?<div style={{textAlign:'center',padding:'40px 0',color:T.textThi,fontSize:12}}>加载缘分数据中…</div>:<>
       <div style={{position:'relative',width:sz,height:sz,margin:'0 auto'}}>
         <div style={{position:'absolute',top:-8,left:'50%',transform:'translateX(-50%)',zIndex:5,fontSize:22,filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'}}>▼</div>
         <svg width={sz} height={sz} style={{transition:spinning?'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)':'none',transform:`rotate(${angle}deg)`}}>
@@ -1580,15 +1592,16 @@ function FortuneWheel({profile,goTo}){
             <div style={{display:'flex',gap:4,marginTop:6}}>{(result.tags||[]).map(t=><span key={t} style={{padding:'2px 8px',borderRadius:6,background:'#F5F3FF',fontSize:10,color:'#8B5CF6'}}>{t}</span>)}</div>
           </div>
         </div>
-        {matchScore&&<div style={{display:'flex',alignItems:'center',gap:10,marginTop:12,padding:'10px 14px',background:'linear-gradient(135deg,#F5F3FF,#EDE9FE)',borderRadius:12}}>
-          <div style={{fontSize:24,fontWeight:800,color:'#8B5CF6'}}>{matchScore}%</div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginTop:12,padding:'10px 14px',background:result.score>=80?'linear-gradient(135deg,#FEF2F2,#FCE7F3)':result.score>=65?'linear-gradient(135deg,#F5F3FF,#EDE9FE)':'linear-gradient(135deg,#F0FDF4,#ECFDF5)',borderRadius:12}}>
+          <div style={{fontSize:24,fontWeight:800,color:result.score>=80?'#E11D48':result.score>=65?'#8B5CF6':'#059669'}}>{result.score}%</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#8B5CF6'}}>缘分值</div>
-            <div style={{fontSize:10,color:T.textThi}}>{matchScore>=80?'天作之合 💕':matchScore>=65?'有缘有份 ✨':'需要磨合 🌱'}</div>
+            <div style={{fontSize:12,fontWeight:600,color:result.score>=80?'#E11D48':result.score>=65?'#8B5CF6':'#059669'}}>{result.score>=80?'天作之合 💕':result.score>=65?'有缘有份 ✨':'潜力之缘 🌱'}</div>
+            <div style={{fontSize:10,color:T.textThi}}>{result.score>=80?'命中注定的缘分':result.score>=65?'值得深入了解':'用心经营会绽放'}</div>
           </div>
-          <button onClick={()=>goTo(S.AI,'hehun')} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'#8B5CF6',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>合婚分析 →</button>
-        </div>}
+          <button onClick={()=>goTo(S.AI,'hehun')} style={{padding:'8px 14px',borderRadius:10,border:'none',background:result.score>=80?'#E11D48':'#8B5CF6',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>合婚分析 →</button>
+        </div>
       </div>}
+      </>}
     </div>
   );
 }
