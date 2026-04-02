@@ -479,14 +479,19 @@ function CardDetailModal({user,profile,onClose,goTo}){
 }
 
 function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
-  const [cards,setCards]=useState(()=>{const tg=profile.gender==='male'?'female':'male';return USERS.filter(u=>u.gender===tg).sort(()=>Math.random()-0.5)});
+  const [cards,setCards]=useState(()=>{
+    const tg=profile.gender==='male'?'female':'male';
+    // Mix real users + bots, shuffle together
+    const all=[...USERS,...BOTS].filter(u=>u.gender===tg).sort(()=>Math.random()-0.5);
+    return all;
+  });
   const [matchUser,setMatchUser]=useState(null);
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
-  // Fetch real match scores on mount
+  // Fetch real match scores on mount (for both users and bots)
   useEffect(()=>{
     const tg=profile.gender==='male'?'female':'male';
-    const cands=USERS.filter(u=>u.gender===tg);
+    const cands=[...USERS,...BOTS].filter(u=>u.gender===tg);
     apiPost('/api/batch-match',{profile,candidates:cands}).then(results=>{
       const scored=results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5);
       setCards(scored);
