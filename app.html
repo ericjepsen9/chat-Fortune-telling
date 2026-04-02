@@ -1837,6 +1837,111 @@ function MeScreen({profile,onLogout,goTo,onEdit}){
   {showPrivacy&&<PrivacySettingsModal onClose={()=>setShowPrivacy(false)}/>}
 </div>);}
 
+// ===== SHARE CARDS (分享卡片) =====
+function PersonalityShareCard({profile,structured}){
+  const dm=structured?.dayMaster||'?';const el=structured?.element||'';const str=structured?.strength||'';
+  const geju=structured?.geju||'';const pType=structured?.personality?.type||'';
+  const wx=structured?.wuxing||{};const wxArr=Object.entries(wx).sort((a,b)=>b[1]-a[1]);
+  return(
+    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#8B5CF6,#6D28D9)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
+      <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · 命理性格卡</div>
+      <div style={{fontSize:22,fontWeight:800,marginBottom:2}}>{profile.name||'缘友'}</div>
+      <div style={{fontSize:12,opacity:.7}}>{profile.year}.{profile.month}.{profile.day}</div>
+      <div style={{margin:'16px 0',height:1,background:'rgba(255,255,255,0.15)'}}/>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:14}}>
+        {[`日主 ${dm}${el}`,str,geju,pType].filter(Boolean).map(t=><span key={t} style={{padding:'4px 10px',borderRadius:8,background:'rgba(255,255,255,0.15)',fontSize:11,fontWeight:600}}>{t}</span>)}
+      </div>
+      {pType&&<div style={{background:'rgba(255,255,255,0.1)',borderRadius:14,padding:'12px 14px',marginBottom:14,borderLeft:'3px solid rgba(255,255,255,0.4)'}}>
+        <div style={{fontSize:12,fontWeight:700,marginBottom:4}}>✦ {pType}</div>
+        <div style={{fontSize:11,opacity:.8,lineHeight:1.6}}>{structured?.personality?.desc?.substring(0,60)||'独一无二的命理性格'}</div>
+      </div>}
+      <div style={{display:'flex',gap:6,marginBottom:16}}>
+        {wxArr.slice(0,5).map(([k,v])=><div key={k} style={{flex:1,textAlign:'center',background:'rgba(255,255,255,0.1)',borderRadius:8,padding:'6px 2px'}}>
+          <div style={{fontSize:14,fontWeight:700}}>{k}</div>
+          <div style={{fontSize:10,opacity:.6,marginTop:2}}>{v.toFixed(1)}</div>
+        </div>)}
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
+        <span style={{fontSize:10}}>扫码查看你的命理</span>
+        <span style={{fontSize:10}}>缘合 yuanhe.app</span>
+      </div>
+    </div>
+  );
+}
+
+function MatchShareCard({profile,partner,score,compatibility}){
+  return(
+    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#EC4899,#BE185D)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
+      <div style={{fontSize:10,opacity:.6,marginBottom:12}}>缘合 · 命理匹配卡</div>
+      <div style={{display:'flex',justifyContent:'space-around',alignItems:'center',marginBottom:16}}>
+        <div style={{textAlign:'center'}}>
+          <div style={{width:56,height:56,borderRadius:28,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto'}}>{profile.gender==='female'?'👩':'👨'}</div>
+          <div style={{fontSize:14,fontWeight:700,marginTop:6}}>{profile.name||'我'}</div>
+        </div>
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:28,fontWeight:800,color:'#FFF'}}>{score||'?'}%</div>
+          <div style={{fontSize:10,opacity:.7}}>缘分值</div>
+        </div>
+        <div style={{textAlign:'center'}}>
+          <div style={{width:56,height:56,borderRadius:28,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto'}}>{partner?.gender==='female'?'👩':'👨'}</div>
+          <div style={{fontSize:14,fontWeight:700,marginTop:6}}>{partner?.name||'TA'}</div>
+        </div>
+      </div>
+      {compatibility&&<div style={{background:'rgba(255,255,255,0.12)',borderRadius:12,padding:'10px 14px',marginBottom:16,textAlign:'center'}}>
+        <div style={{fontSize:13,fontWeight:700}}>{compatibility.icon||'💕'} {compatibility.type||'有缘有份'}</div>
+        <div style={{fontSize:11,opacity:.7,marginTop:4}}>{compatibility.desc||'命理相合，值得珍惜'}</div>
+      </div>}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
+        <span style={{fontSize:10}}>扫码测测你们的缘分</span>
+        <span style={{fontSize:10}}>缘合 yuanhe.app</span>
+      </div>
+    </div>
+  );
+}
+
+function FortuneShareCard({profile}){
+  const today=new Date();const d=today.getDate();const m=today.getMonth()+1;
+  const luck=['大吉','吉','中吉','小吉','平','小凶'][d%6];
+  const luckColors={大吉:'#DC2626',吉:'#F59E0B',中吉:'#8B5CF6',小吉:'#0D9488',平:'#6B7280',小凶:'#EF4444'};
+  const yis=['学习','冥想','远行','社交','投资','表白','运动','创作','谈判','约会'];
+  const jis=['冲动决策','熬夜','争吵','借钱','搬家','签约','赌博'];
+  const yi=yis.filter((_,i)=>(d+i*7)%3===0).slice(0,3).join(' · ');
+  const ji=jis.filter((_,i)=>(d+i*5)%3===0).slice(0,2).join(' · ');
+  const colors=['#E11D48','#7C3AED','#0891B2','#D97706','#059669'];
+  const luckyColor=colors[d%colors.length];
+  return(
+    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#F59E0B,#D97706)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
+      <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · 今日运势</div>
+      <div style={{fontSize:14,fontWeight:600,opacity:.8}}>{today.getFullYear()}年{m}月{d}日</div>
+      <div style={{textAlign:'center',margin:'20px 0'}}>
+        <div style={{fontSize:48,fontWeight:900,letterSpacing:4}}>{luck}</div>
+        <div style={{fontSize:12,opacity:.7,marginTop:4}}>{profile.name||'缘友'} 的今日运势</div>
+      </div>
+      <div style={{display:'flex',gap:12,marginBottom:16}}>
+        <div style={{flex:1,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 12px'}}>
+          <div style={{fontSize:10,opacity:.6}}>宜</div>
+          <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{yi}</div>
+        </div>
+        <div style={{flex:1,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 12px'}}>
+          <div style={{fontSize:10,opacity:.6}}>忌</div>
+          <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{ji}</div>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:12,marginBottom:16}}>
+        <div style={{background:'rgba(255,255,255,0.15)',borderRadius:10,padding:'8px 14px',display:'flex',alignItems:'center',gap:6}}>
+          <div style={{width:16,height:16,borderRadius:4,background:luckyColor}}/>
+          <span style={{fontSize:11}}>幸运色</span>
+        </div>
+        <div style={{background:'rgba(255,255,255,0.15)',borderRadius:10,padding:'8px 14px',fontSize:11}}>🔢 幸运数 {(d*3+7)%10}</div>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
+        <span style={{fontSize:10}}>扫码查看详细运势</span>
+        <span style={{fontSize:10}}>缘合 yuanhe.app</span>
+      </div>
+    </div>
+  );
+}
+
 // ===== TAB BAR =====
 function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
