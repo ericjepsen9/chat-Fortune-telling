@@ -1468,12 +1468,10 @@ function DiscoverScreen({goTo,profile}){
 }
 
 // ===== MESSAGES =====
-function MsgsScreen({goTo}){
+function MsgsScreen(){
   const [convs,setConvs]=useState(()=>ChatStore.getAll());
-  // Refresh when screen mounts
-  useEffect(()=>setConvs(ChatStore.getAll()),[]);
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
-    <div style={{padding:'48px 20px 16px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div><div style={{fontSize:12,color:T.textThi,marginTop:4}}>匹配成功后在这里聊天</div></div>
+    <div style={{padding:'48px 20px 16px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div><div style={{fontSize:12,color:T.textThi,marginTop:4}}>{convs.length>0?convs.length+'个会话':'匹配成功后在这里聊天'}</div></div>
     {convs.length===0?
       <div style={{padding:'50px 20px',textAlign:'center',color:T.textThi}}>
         <div style={{width:80,height:80,borderRadius:40,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}><Icons.msgCircle s={36} c="#D1D5DB"/></div>
@@ -1482,7 +1480,7 @@ function MsgsScreen({goTo}){
       </div>
       :
       <div style={{padding:'0 16px'}}>{convs.map(conv=>(
-        <div key={conv.id} onClick={()=>goTo(S.MSGS,conv.id)} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
+        <div key={conv.id} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
           <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
             {conv.user.gender==='female'?'👩':'👨'}
             {conv.unread>0&&<div style={{position:'absolute',top:-2,right:-2,minWidth:16,height:16,borderRadius:8,background:'#EF4444',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',border:'2px solid #fff'}}>{conv.unread}</div>}
@@ -1492,8 +1490,9 @@ function MsgsScreen({goTo}){
               <span style={{fontSize:14,fontWeight:600,color:T.text}}>{conv.user.name}</span>
               <span style={{fontSize:10,color:T.textThi}}>{conv.lastTime?new Date(conv.lastTime).toLocaleDateString([],{month:'numeric',day:'numeric'}):''}</span>
             </div>
-            <div style={{fontSize:12,color:conv.unread>0?T.text:T.textThi,marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontWeight:conv.unread>0?500:400}}>{conv.lastMessage||'匹配成功！打个招呼吧'}</div>
+            <div style={{fontSize:12,color:T.textThi,marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{conv.lastMessage||'匹配成功！打个招呼吧 👋'}</div>
           </div>
+          <div style={{fontSize:11,color:T.primary,fontWeight:500,flexShrink:0}}>聊天 →</div>
         </div>
       ))}</div>
     }
@@ -1639,7 +1638,7 @@ function App(){
     {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo} profile={profile}/>}
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
-    {scr===S.MSGS&&<MsgsScreen goTo={goTo}/>}
+    {scr===S.MSGS&&<MsgsScreen/>}
     {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)}/>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
   </div>);
