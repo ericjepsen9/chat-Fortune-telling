@@ -146,7 +146,7 @@ const ChatStore={
     if(existing)return existing;
     const conv={
       id:'conv_'+user.id+'_'+Date.now(),
-      user:{id:user.id,name:user.name,age:user.age,gender:user.gender,sign:user.sign,bio:user.bio,tags:user.tags||[],score:user.score,year:user.year,month:user.month,day:user.day,hour:user.hour},
+      user:{id:user.id,name:user.name,age:user.age,gender:user.gender,sign:user.sign,bio:user.bio,tags:user.tags||[],score:user.score,year:user.year,month:user.month,day:user.day,hour:user.hour,isBot:user.isBot||false,chatStyle:user.chatStyle||''},
       messages:[],
       unread:0,
       lastMessage:'',
