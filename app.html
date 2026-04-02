@@ -1502,6 +1502,86 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 }
 
 // ===== DISCOVER =====
+function FortuneWheel({profile}){
+  const SECTORS=[
+    {label:'事业',icon:'💼',c:'#8B5CF6',tips:['适合推进重要项目','有贵人相助','注意团队沟通','避免冲动决策','把握晋升机会','稳扎稳打为上']},
+    {label:'感情',icon:'💕',c:'#EC4899',tips:['桃花运旺盛','适合表达心意','注意倾听对方','旧情复燃之机','单身宜主动出击','感情需多包容']},
+    {label:'财运',icon:'💰',c:'#F59E0B',tips:['偏财运佳','理财宜稳健','避免大额支出','有意外收获','投资需谨慎','适合开源节流']},
+    {label:'健康',icon:'🏥',c:'#10B981',tips:['注意休息','适合户外运动','饮食宜清淡','避免熬夜','情绪管理很重要','适合开始新的健身计划']},
+    {label:'桃花',icon:'🌸',c:'#F43F5E',tips:['有新的邂逅','社交场合有机遇','展现真实的自己','注意第一印象','缘分就在身边','主动创造机会']},
+    {label:'学业',icon:'📚',c:'#3B82F6',tips:['学习效率高','适合考试备考','多向前辈请教','创意灵感涌现','适合钻研新领域','注意劳逸结合']},
+  ];
+  const n=SECTORS.length;
+  const [spinning,setSpinning]=useState(false);
+  const [result,setResult]=useState(null);
+  const [angle,setAngle]=useState(0);
+  const todayKey='yuanhe_wheel_'+new Date().toDateString();
+  const [spinsLeft,setSpinsLeft]=useState(()=>{const used=parseInt(localStorage.getItem(todayKey)||'0');return Math.max(0,2-used)});
+
+  const spin=()=>{
+    if(spinning||spinsLeft<=0)return;
+    setSpinning(true);setResult(null);
+    const target=Math.floor(Math.random()*n);
+    const extra=5*360+target*(360/n)+(360/n/2); // 5 full rotations + land on sector
+    const newAngle=angle+extra;
+    setAngle(newAngle);
+    setTimeout(()=>{
+      const sec=SECTORS[target];
+      const seed=(new Date().getDate()*13+target*7+(profile.year||1990))%sec.tips.length;
+      setResult({...sec,tip:sec.tips[seed]});
+      setSpinning(false);
+      const used=parseInt(localStorage.getItem(todayKey)||'0')+1;
+      localStorage.setItem(todayKey,String(used));
+      setSpinsLeft(Math.max(0,2-used));
+    },4000);
+  };
+
+  const sz=220,cx=sz/2,cy=sz/2,r=sz/2-8;
+  return(
+    <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:18,boxShadow:T.shadow,marginBottom:14,border:'1px solid #EDE9FE'}}>
+      <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:12,textAlign:'center'}}>🎡 命运转盘</div>
+      <div style={{position:'relative',width:sz,height:sz,margin:'0 auto'}}>
+        {/* Pointer */}
+        <div style={{position:'absolute',top:-6,left:'50%',transform:'translateX(-50%)',zIndex:5,fontSize:20}}>▼</div>
+        {/* Wheel */}
+        <svg width={sz} height={sz} style={{transition:spinning?'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)':'none',transform:`rotate(${angle}deg)`}}>
+          {SECTORS.map((sec,i)=>{
+            const a1=(i*360/n-90)*Math.PI/180;
+            const a2=((i+1)*360/n-90)*Math.PI/180;
+            const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+            const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+            const mid=((i+0.5)*360/n-90)*Math.PI/180;
+            const tx=cx+(r*0.62)*Math.cos(mid),ty=cy+(r*0.62)*Math.sin(mid);
+            const textAngle=(i+0.5)*360/n;
+            return(<g key={i}>
+              <path d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`} fill={sec.c} stroke="#fff" strokeWidth={2}/>
+              <text x={tx} y={ty-6} fill="#fff" fontSize={16} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty-6})`}>{sec.icon}</text>
+              <text x={tx} y={ty+10} fill="#fff" fontSize={10} fontWeight={700} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty+10})`}>{sec.label}</text>
+            </g>);
+          })}
+          <circle cx={cx} cy={cy} r={22} fill="#fff" stroke="#EDE9FE" strokeWidth={2}/>
+          <text x={cx} y={cy} fill="#8B5CF6" fontSize={10} fontWeight={700} textAnchor="middle" dominantBaseline="central">缘合</text>
+        </svg>
+      </div>
+      {/* Spin button */}
+      <button onClick={spin} disabled={spinning||spinsLeft<=0} style={{width:'100%',padding:'12px',borderRadius:14,border:'none',marginTop:12,fontSize:14,fontWeight:700,cursor:spinning||spinsLeft<=0?'default':'pointer',
+        background:spinning?T.border:spinsLeft<=0?T.border:'linear-gradient(135deg,#8B5CF6,#7C3AED)',
+        color:spinning||spinsLeft<=0?T.textThi:'#fff',boxShadow:spinning||spinsLeft<=0?'none':'0 4px 14px rgba(139,92,246,0.3)'}}>
+        {spinning?'🌀 转动中…':spinsLeft<=0?'今日次数已用完（每天2次）':`🎡 转动命运之轮（剩余${spinsLeft}次）`}
+      </button>
+      {/* Result */}
+      {result&&<div className="anim-in" style={{marginTop:12,background:`${result.c}08`,border:`1px solid ${result.c}20`,borderRadius:14,padding:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+          <span style={{fontSize:20}}>{result.icon}</span>
+          <span style={{fontSize:15,fontWeight:700,color:result.c}}>{result.label}运势</span>
+        </div>
+        <div style={{fontSize:13,color:T.text,lineHeight:1.7}}>{result.tip}</div>
+        <div style={{fontSize:10,color:T.textThi,marginTop:6}}>— {profile.name||'缘友'} · {new Date().getMonth()+1}月{new Date().getDate()}日</div>
+      </div>}
+    </div>
+  );
+}
+
 function DiscoverScreen({goTo,profile}){
   const [showShare,setShowShare]=useState(false);
   const today=new Date();const dayN=today.getDate();
@@ -1527,6 +1607,9 @@ function DiscoverScreen({goTo,profile}){
           </div>
         </div>
       </div>
+
+      {/* Fortune Wheel */}
+      <FortuneWheel profile={profile}/>
 
       {/* Quick entry cards */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
