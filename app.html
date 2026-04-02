@@ -1042,6 +1042,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               if(ev.type==='init'){structured=ev.structured;engineData=ev.engineData||'';
                 // Show header immediately with structured data
                 setMS(m,{result:{response:'',engineData,structured,_streaming:true},loading:false});
+                // Scroll to report when it first appears
+                if(m===mode)setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
                 // Start periodic updates every 300ms
                 updateTimer=setInterval(flushUpdate,300);
               }
@@ -1061,7 +1063,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       }
     }catch(e){setMS(m,{error:e.message,loading:false})}
     stopTimer(m);
-    if(m===mode)setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
   };
 
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
