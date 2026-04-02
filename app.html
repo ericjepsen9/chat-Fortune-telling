@@ -448,7 +448,7 @@ function HomeScreen({profile,goTo}){
       setCards(scored);
     }).catch(()=>{});
   },[]);
-  const swipe=(dir)=>{const top=cards[cards.length-1];if(dir==='right'&&top.score>=80)setTimeout(()=>setMatchUser(top),300);setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
+  const swipe=(dir)=>{const top=cards[cards.length-1];if(dir==='right'&&top.score>=65)setTimeout(()=>setMatchUser(top),300);setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
   return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:64}}>
     <div style={{padding:'48px 20px 10px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
       <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
