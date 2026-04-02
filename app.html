@@ -86,6 +86,54 @@ const USERS=[
 async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node test-server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node test-server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 
+// ===== CHAT DATA LAYER =====
+const ChatStore={
+  _key:'yuanhe_conversations',
+  load(){try{return JSON.parse(localStorage.getItem(this._key)||'[]')}catch(e){return[]}},
+  save(convs){try{localStorage.setItem(this._key,JSON.stringify(convs))}catch(e){}},
+  getAll(){return this.load()},
+  getById(id){return this.load().find(c=>c.id===id)||null},
+  // Create new conversation (if not exists for this user)
+  create(user,profile){
+    const convs=this.load();
+    const existing=convs.find(c=>c.user.id===user.id);
+    if(existing)return existing;
+    const conv={
+      id:'conv_'+user.id+'_'+Date.now(),
+      user:{id:user.id,name:user.name,age:user.age,gender:user.gender,sign:user.sign,bio:user.bio,tags:user.tags||[],score:user.score,year:user.year,month:user.month,day:user.day,hour:user.hour},
+      messages:[],
+      unread:0,
+      lastMessage:'',
+      lastTime:new Date().toISOString(),
+      createdAt:new Date().toISOString(),
+    };
+    convs.unshift(conv);
+    this.save(convs);
+    return conv;
+  },
+  // Add message to conversation
+  addMessage(convId,msg){
+    const convs=this.load();
+    const conv=convs.find(c=>c.id===convId);
+    if(!conv)return null;
+    const message={id:'msg_'+Date.now()+'_'+Math.random().toString(36).substr(2,4),role:msg.role,text:msg.text,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),ts:Date.now()};
+    conv.messages.push(message);
+    conv.lastMessage=msg.text.substring(0,50);
+    conv.lastTime=new Date().toISOString();
+    if(msg.role==='ai')conv.unread=(conv.unread||0)+1;
+    this.save(convs);
+    return message;
+  },
+  // Mark conversation as read
+  markRead(convId){
+    const convs=this.load();
+    const conv=convs.find(c=>c.id===convId);
+    if(conv){conv.unread=0;this.save(convs)}
+  },
+  // Get total unread count
+  totalUnread(){return this.load().reduce((sum,c)=>sum+(c.unread||0),0)},
+};
+
 // ===== SCORE RING =====
 function ScoreRing({score,size=60,stroke=4}){
   const r=(size-stroke)/2,c=2*Math.PI*r;
@@ -419,7 +467,7 @@ function HomeScreen({profile,goTo}){
         <button onClick={()=>swipe('right')} style={{pointerEvents:'auto',width:52,height:52,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(52,211,153,0.3)'}}><Icons.heart s={24} c="#fff" fill="#fff"/></button>
       </div>}
     </div>
-    {matchUser&&<MatchPopup user={matchUser} onChat={()=>{setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
+    {matchUser&&<MatchPopup user={matchUser} onChat={()=>{ChatStore.create(matchUser,profile);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
   </div>);
 }
@@ -1553,10 +1601,15 @@ function MeScreen({profile,onLogout,goTo,onEdit}){
 
 // ===== TAB BAR =====
 function TabBar({active,onTap}){
-  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息"},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
+  const unread=ChatStore.totalUnread();
+  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息",badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
   return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:64,background:'#fff',borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'flex-end',justifyContent:'space-around',padding:'0 4px 6px',zIndex:100}}>
     {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 16px rgba(139,92,246,.35)',marginBottom:4}}><Icons.sparkles s={22} c="#fff"/></button>;
-    return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5}}>{tab.ic(act?T.primary:T.textThi)}<span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span></button>})}
+    return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5,position:'relative'}}>
+      {tab.ic(act?T.primary:T.textThi)}
+      {tab.badge>0&&<div style={{position:'absolute',top:0,right:2,minWidth:16,height:16,borderRadius:8,background:'#EF4444',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
+      <span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
+    </button>})}
   </div>);
 }
 
