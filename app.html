@@ -1521,13 +1521,24 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive})
   const [chatInput,setChatInput]=useState('');
   const [sending,setSending]=useState(false);
   const [typing,setTyping]=useState(false);
+  const [readStatus,setReadStatus]=useState(''); // ''|'已发送'|'已读'
   const chatEndRef=useRef(null);
   const activeConv=activeId?(ChatStore.getById(activeId)||convs.find(c=>c.id===activeId)):null;
   const scrollBottom=()=>setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),100);
 
+  // Bot online status — simulate based on hour + bot id seed
+  const getBotOnline=(bot)=>{
+    if(!bot?.isBot)return true; // real users always "online" for now
+    const h=new Date().getHours();
+    const seed=(bot.id*7+h*13)%100;
+    // Bots "online" 70% of daytime (8-23), 20% of night (0-7)
+    if(h>=8&&h<=23)return seed<70;
+    return seed<20;
+  };
+  const isOnline=activeConv?getBotOnline(activeConv.user):false;
+
   // Notify App when entering/leaving chat detail
   useEffect(()=>{setChatActive(!!activeId);return()=>setChatActive(false)},[activeId]);
-  // Clear openConvId after using it
   useEffect(()=>{if(openConvId){setActiveId(openConvId);setOpenConvId(null)}},[openConvId]);
 
   const sendMsg=async()=>{
@@ -1538,14 +1549,34 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive})
     ChatStore.addMessage(activeConv.id,{role:'user',text});
     refreshConvs();
     scrollBottom();
-    setTyping(true);
-    await new Promise(r=>setTimeout(r,1000+Math.random()*1500));
+
+    // Bot behavior simulation
+    const isBot=activeConv.user.isBot;
+    if(isBot){
+      // Phase 1: "已发送" → delay → "已读"
+      setReadStatus('已发送');
+      const readDelay=2000+Math.random()*5000; // 2-7s before "read"
+      await new Promise(r=>setTimeout(r,readDelay));
+      setReadStatus('已读');
+      // Phase 2: delay before typing (thinking time)
+      const thinkDelay=1000+Math.random()*3000; // 1-4s think
+      await new Promise(r=>setTimeout(r,thinkDelay));
+      // Phase 3: typing animation
+      setTyping(true);
+      const typeDelay=2000+Math.random()*4000; // 2-6s typing
+      await new Promise(r=>setTimeout(r,typeDelay));
+    }else{
+      // Non-bot: quick reply
+      setTyping(true);
+      await new Promise(r=>setTimeout(r,1000+Math.random()*1500));
+    }
+
     try{
       const freshConv=ChatStore.getById(activeConv.id);
       const r=await apiPost('/api/chat',{partner:activeConv.user,message:text,history:(freshConv?.messages||[]).slice(-10)});
       ChatStore.addMessage(activeConv.id,{role:'ai',text:r.reply||'😊'});
     }catch(e){ChatStore.addMessage(activeConv.id,{role:'ai',text:'[网络不稳定，请重试]'})}
-    setTyping(false);setSending(false);
+    setTyping(false);setSending(false);setReadStatus('');
     refreshConvs();scrollBottom();
   };
 
@@ -1555,10 +1586,13 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive})
     return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:T.bg}}>
       <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:'#fff',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
         <button onClick={()=>{ChatStore.markRead(activeConv.id);refreshConvs();setActiveId(null)}} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
-        <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{activeConv.user.gender==='female'?'👩':'👨'}</div>
+        <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,position:'relative'}}>
+          {activeConv.user.gender==='female'?'👩':'👨'}
+          <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:isOnline?'#22C55E':'#D1D5DB',border:'2px solid #fff'}}/>
+        </div>
         <div style={{flex:1}}>
           <div style={{fontSize:15,fontWeight:700,color:T.text}}>{activeConv.user.name}</div>
-          <div style={{fontSize:11,color:T.textThi}}>{activeConv.user.sign} · {activeConv.user.score}%缘分{typing?' · 正在输入…':''}</div>
+          <div style={{fontSize:11,color:typing?T.primary:T.textThi}}>{typing?'正在输入…':isOnline?'在线':'离线'} · {activeConv.user.sign} · {activeConv.user.score}%</div>
         </div>
       </div>
       <div style={{flex:1,overflow:'auto',padding:'12px 16px'}}>
@@ -1570,14 +1604,18 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive})
           <div style={{fontSize:14,fontWeight:500,color:T.text}}>打个招呼吧</div>
           <div style={{fontSize:12,marginTop:6}}>发送第一条消息开始聊天</div>
         </div>}
-        {msgs.map(msg=>(
+        {msgs.map((msg,idx)=>(
           <div key={msg.id} className="anim-in" style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8}}>
-            <div style={{maxWidth:'75%',padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
-              background:msg.role==='user'?`linear-gradient(135deg,${T.primary},#7C3AED)`:'#fff',
-              color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
-              boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)'}}>
-              {msg.text}
-              {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
+            <div style={{maxWidth:'75%'}}>
+              <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
+                background:msg.role==='user'?`linear-gradient(135deg,${T.primary},#7C3AED)`:'#fff',
+                color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
+                boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)'}}>
+                {msg.text}
+                {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
+              </div>
+              {/* Read receipt on last user message */}
+              {msg.role==='user'&&idx===msgs.length-1&&readStatus&&<div style={{fontSize:9,color:readStatus==='已读'?T.primary:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
             </div>
           </div>
         ))}
