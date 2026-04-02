@@ -65,7 +65,7 @@ const Icons={
 };
 
 const T={bg:"#FAFAF7",card:"#FFFFFF",primary:"#FF6B6B",primaryDark:"#E85555",secondary:"#FFB347",accent1:"#4ECDC4",accent2:"#7C5CFC",accent3:"#FF8A9B",accent4:"#45B7D1",gold:"#F4C542",text:"#1A1A2E",textSec:"#6B7280",textThi:"#9CA3AF",border:"#F0F0EC",borderDark:"#E5E5E0",success:"#34D399",shadow:"0 2px 16px rgba(0,0,0,0.06)",shadowLg:"0 8px 32px rgba(0,0,0,0.10)"};
-const S={SPLASH:0,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
+const S={SPLASH:0,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
 const GRADS=['linear-gradient(135deg,#FF6B6B,#FF8A9B)','linear-gradient(135deg,#4ECDC4,#45B7D1)','linear-gradient(135deg,#7C5CFC,#9B7BFF)','linear-gradient(135deg,#FFB347,#FF6B6B)','linear-gradient(135deg,#34D399,#4ECDC4)','linear-gradient(135deg,#FF8A9B,#FFB347)','linear-gradient(135deg,#45B7D1,#7C5CFC)','linear-gradient(135deg,#F4C542,#FFB347)','linear-gradient(135deg,#9B7BFF,#FF6B6B)','linear-gradient(135deg,#4ECDC4,#34D399)','linear-gradient(135deg,#FF6B6B,#7C5CFC)','linear-gradient(135deg,#FFB347,#4ECDC4)'];
 const USERS=[
@@ -103,6 +103,43 @@ function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return(
 }
 
 // ===== BIRTH =====
+// ===== ONBOARDING (3-step guide) =====
+function OnboardingScreen({onDone}){
+  const [step,setStep]=useState(0);
+  const pages=[
+    {icon:'🔮',title:'认识自己',desc:'通过八字、星座、塔罗等古老命理体系\n发现你的性格天赋与人生方向',bg:'linear-gradient(135deg,#8B5CF6,#7C3AED,#6D28D9)'},
+    {icon:'💕',title:'命理匹配',desc:'不只看外貌和兴趣\n用命理维度找到真正契合的灵魂',bg:'linear-gradient(135deg,#EC4899,#DB2777,#BE185D)'},
+    {icon:'✦',title:'开启缘分',desc:'AI深度解读 + 智能匹配\n你的命中注定，就在这里',bg:'linear-gradient(135deg,#F59E0B,#D97706,#B45309)'},
+  ];
+  const p=pages[step];
+  const isLast=step===pages.length-1;
+  return(
+    <div style={{height:'100%',display:'flex',flexDirection:'column',background:p.bg,transition:'background .5s ease',overflow:'hidden'}}>
+      {/* Skip */}
+      <div style={{padding:'48px 20px 0',textAlign:'right',flexShrink:0}}>
+        {!isLast&&<button onClick={onDone} style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:16,padding:'6px 16px',color:'rgba(255,255,255,0.8)',fontSize:12,cursor:'pointer'}}>跳过</button>}
+      </div>
+      {/* Content */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'0 40px',textAlign:'center'}}>
+        <div className="anim-in" key={step} style={{fontSize:80,marginBottom:24}}>{p.icon}</div>
+        <div className="anim-in serif" key={'t'+step} style={{color:'#fff',fontSize:28,fontWeight:700,letterSpacing:2}}>{p.title}</div>
+        <div className="anim-in" key={'d'+step} style={{color:'rgba(255,255,255,0.8)',fontSize:14,lineHeight:1.8,marginTop:16,whiteSpace:'pre-line'}}>{p.desc}</div>
+      </div>
+      {/* Bottom: dots + button */}
+      <div style={{padding:'0 40px 60px',flexShrink:0}}>
+        {/* Dots */}
+        <div style={{display:'flex',justifyContent:'center',gap:8,marginBottom:24}}>
+          {pages.map((_,i)=><div key={i} style={{width:i===step?24:8,height:8,borderRadius:4,background:i===step?'#fff':'rgba(255,255,255,0.3)',transition:'all .3s'}}/>)}
+        </div>
+        {/* Button */}
+        <button onClick={()=>{if(isLast)onDone();else setStep(s=>s+1)}} style={{width:'100%',height:52,borderRadius:26,border:'none',fontSize:16,fontWeight:700,cursor:'pointer',background:'rgba(255,255,255,0.95)',color:p.bg.includes('8B5CF6')?'#7C3AED':p.bg.includes('EC4899')?'#DB2777':'#D97706',boxShadow:'0 4px 20px rgba(0,0,0,0.15)',transition:'all .3s'}}>
+          {isLast?'开始探索命运 →':'下一步'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BirthScreen({onSubmit}){
   const [f,sF]=useState(()=>{
     try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));
@@ -1528,10 +1565,12 @@ function App(){
   const [scr,setScr]=useState(S.SPLASH);
   const [profile,setProfile]=useState(()=>{try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));return p&&p.year?p:null}catch(e){return null}});
   const [aiMode,setAiMode]=useState(null);
+  const onboarded=!!localStorage.getItem('yuanhe_onboarded');
   const goTo=(s,m)=>{setScr(s);if(m)setAiMode(m)};
   const showTabs=[S.HOME,S.DISCOVER,S.AI,S.MSGS,S.ME].includes(scr);
   return(<div style={{maxWidth:480,margin:'0 auto',height:window.innerHeight,position:'relative',overflow:'hidden',background:T.bg,boxShadow:'0 0 40px rgba(0,0,0,0.08)'}}>
-    {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:S.BIRTH)}/>}
+    {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:onboarded?S.BIRTH:S.ONBOARD)}/>}
+    {scr===S.ONBOARD&&<OnboardingScreen onDone={()=>{localStorage.setItem('yuanhe_onboarded','1');setScr(S.BIRTH)}}/>}
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<HomeScreen profile={profile} goTo={goTo}/>}
     {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo} profile={profile}/>}
