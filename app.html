@@ -478,20 +478,42 @@ function CardDetailModal({user,profile,onClose,goTo}){
   );
 }
 
+// ===== BOT RATIO CONFIG (渐进退出) =====
+// Simulates real user count — in production this comes from backend
+function getBotConfig(){
+  const realUserCount=USERS.length; // 12 real users currently
+  // Ratio rules: fewer real users → more bots
+  let botRatio,label;
+  if(realUserCount<100){botRatio=0.8;label='冷启动(80%机器人)'}
+  else if(realUserCount<1000){botRatio=0.5;label='成长期(50%机器人)'}
+  else if(realUserCount<5000){botRatio=0.2;label='活跃期(20%机器人)'}
+  else{botRatio=0;label='成熟期(机器人已关闭)'}
+  return{realUserCount,botRatio,label};
+}
+
 function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [cards,setCards]=useState(()=>{
     const tg=profile.gender==='male'?'female':'male';
-    // Mix real users + bots, shuffle together
-    const all=[...USERS,...BOTS].filter(u=>u.gender===tg).sort(()=>Math.random()-0.5);
-    return all;
+    const {botRatio}=getBotConfig();
+    const realCards=USERS.filter(u=>u.gender===tg);
+    if(botRatio<=0)return realCards.sort(()=>Math.random()-0.5);
+    // Calculate how many bots to mix in
+    const botPool=BOTS.filter(u=>u.gender===tg).sort(()=>Math.random()-0.5);
+    const botCount=Math.round(realCards.length*(botRatio/(1-botRatio)));
+    const selectedBots=botPool.slice(0,Math.min(botCount,botPool.length));
+    return[...realCards,...selectedBots].sort(()=>Math.random()-0.5);
   });
   const [matchUser,setMatchUser]=useState(null);
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
-  // Fetch real match scores on mount (for both users and bots)
+  // Fetch real match scores on mount
   useEffect(()=>{
     const tg=profile.gender==='male'?'female':'male';
-    const cands=[...USERS,...BOTS].filter(u=>u.gender===tg);
+    const {botRatio}=getBotConfig();
+    const realCands=USERS.filter(u=>u.gender===tg);
+    const botPool=BOTS.filter(u=>u.gender===tg).sort(()=>Math.random()-0.5);
+    const botCount=botRatio>0?Math.round(realCands.length*(botRatio/(1-botRatio))):0;
+    const cands=[...realCands,...botPool.slice(0,Math.min(botCount,botPool.length))];
     apiPost('/api/batch-match',{profile,candidates:cands}).then(results=>{
       const scored=results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5);
       setCards(scored);
@@ -1778,6 +1800,37 @@ function MeScreen({profile,onLogout,goTo,onEdit}){
         </div>
       )}
     </>}
+
+    {/* Dev/Admin: Bot System Stats */}
+    {(()=>{
+      const cfg=getBotConfig();
+      const allConvs=ChatStore.getAll();
+      const botConvs=allConvs.filter(c=>c.user.isBot);
+      const realConvs=allConvs.filter(c=>!c.user.isBot);
+      const totalMsgs=allConvs.reduce((s,c)=>s+(c.messages?.length||0),0);
+      return <div style={{marginTop:16,background:'#F8FAFC',borderRadius:14,padding:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>🤖 系统状态</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+            <div style={{fontSize:10,color:T.textThi}}>阶段</div>
+            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{cfg.label}</div>
+          </div>
+          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+            <div style={{fontSize:10,color:T.textThi}}>真人/机器人</div>
+            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{realConvs.length}/{botConvs.length}</div>
+          </div>
+          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+            <div style={{fontSize:10,color:T.textThi}}>机器人比例</div>
+            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{Math.round(cfg.botRatio*100)}%</div>
+          </div>
+          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+            <div style={{fontSize:10,color:T.textThi}}>总消息数</div>
+            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{totalMsgs}</div>
+          </div>
+        </div>
+        <div style={{fontSize:9,color:T.textThi,marginTop:6,textAlign:'center'}}>此面板仅管理员可见，用户版本将隐藏</div>
+      </div>;
+    })()}
 
     <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,color:T.textSec,cursor:'pointer',marginTop:20}}>退出登录</button>
   </div>
