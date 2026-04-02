@@ -1546,14 +1546,29 @@ function FortuneWheel({profile,goTo}){
   };
 
   const n=pool.length||8;
-  const sz=240,cx=sz/2,cy=sz/2,r=sz/2-8;
+  const sz=260,cx=sz/2,cy=sz/2,r=sz/2-14;
   return(
-    <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:18,boxShadow:T.shadow,marginBottom:14,border:'1px solid #EDE9FE'}}>
-      <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:4,textAlign:'center'}}>🎡 命运转盘</div>
-      <div style={{fontSize:11,color:T.textThi,textAlign:'center',marginBottom:12}}>转一转，看看谁是你的命中注定</div>
-      {loading?<div style={{textAlign:'center',padding:'40px 0',color:T.textThi,fontSize:12}}>加载缘分数据中…</div>:<>
+    <div className="anim-in" style={{background:'linear-gradient(135deg,#1E1146,#2D1B69,#1E1146)',borderRadius:20,padding:20,boxShadow:'0 8px 32px rgba(30,17,70,0.4)',marginBottom:14,position:'relative',overflow:'hidden'}}>
+      {/* Subtle star decorations */}
+      {[...Array(12)].map((_,i)=><div key={i} style={{position:'absolute',width:2,height:2,borderRadius:1,background:'rgba(255,255,255,'+(0.1+Math.random()*0.3)+')',top:Math.random()*100+'%',left:Math.random()*100+'%'}}/>)}
+      <div style={{textAlign:'center',marginBottom:14}}>
+        <div style={{fontSize:16,fontWeight:800,color:'#E9D5FF',letterSpacing:2}}>✦ 命运转盘 ✦</div>
+        <div style={{fontSize:11,color:'rgba(196,181,253,0.6)',marginTop:4}}>转动命运之轮，寻找你的命中注定</div>
+      </div>
+      {loading?<div style={{textAlign:'center',padding:'40px 0',color:'rgba(196,181,253,0.5)',fontSize:12}}>✦ 感应缘分中… ✦</div>:<>
       <div style={{position:'relative',width:sz,height:sz,margin:'0 auto'}}>
-        <div style={{position:'absolute',top:-8,left:'50%',transform:'translateX(-50%)',zIndex:5,fontSize:22,filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'}}>▼</div>
+        {/* Outer glow ring */}
+        <div style={{position:'absolute',inset:-6,borderRadius:'50%',background:'radial-gradient(circle,rgba(139,92,246,0.15) 60%,transparent 70%)',animation:spinning?'pulse 1s infinite':'none'}}/>
+        {/* Outer decorative ring */}
+        <svg width={sz} height={sz} style={{position:'absolute',top:0,left:0}}>
+          <circle cx={cx} cy={cy} r={r+8} fill="none" stroke="rgba(196,181,253,0.12)" strokeWidth={1}/>
+          <circle cx={cx} cy={cy} r={r+4} fill="none" stroke="rgba(196,181,253,0.08)" strokeWidth={1} strokeDasharray="4,6"/>
+        </svg>
+        {/* Golden pointer */}
+        <div style={{position:'absolute',top:2,left:'50%',transform:'translateX(-50%)',zIndex:5}}>
+          <svg width={20} height={24}><polygon points="10,0 3,20 17,20" fill="#F59E0B"/><polygon points="10,2 5,18 15,18" fill="#FBBF24"/></svg>
+        </div>
+        {/* Wheel */}
         <svg width={sz} height={sz} style={{transition:spinning?'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)':'none',transform:`rotate(${angle}deg)`}}>
           {pool.map((u,i)=>{
             const a1=(i*360/n-90)*Math.PI/180;
@@ -1561,44 +1576,48 @@ function FortuneWheel({profile,goTo}){
             const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
             const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
             const mid=((i+0.5)*360/n-90)*Math.PI/180;
-            const tx=cx+(r*0.6)*Math.cos(mid),ty=cy+(r*0.6)*Math.sin(mid);
+            const tx=cx+(r*0.58)*Math.cos(mid),ty=cy+(r*0.58)*Math.sin(mid);
             const textAngle=(i+0.5)*360/n;
             const emoji=u.gender==='female'?'👩':'👨';
+            const sectorColors=['#4C1D95','#6D28D9','#5B21B6','#7C3AED','#4C1D95','#6D28D9','#5B21B6','#7C3AED'];
             return(<g key={i}>
-              <path d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`} fill={COLORS[i%COLORS.length]} stroke="#fff" strokeWidth={2}/>
-              <text x={tx} y={ty-5} fill="#fff" fontSize={16} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty-5})`}>{emoji}</text>
-              <text x={tx} y={ty+11} fill="rgba(255,255,255,0.9)" fontSize={8} fontWeight={600} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty+11})`}>{u.name.substring(0,3)}</text>
+              <path d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`} fill={sectorColors[i%sectorColors.length]} stroke="rgba(196,181,253,0.2)" strokeWidth={1}/>
+              <text x={tx} y={ty-4} fill="#fff" fontSize={15} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty-4})`}>{emoji}</text>
+              <text x={tx} y={ty+12} fill="rgba(233,213,255,0.8)" fontSize={8} fontWeight={600} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty+12})`}>{u.name.substring(0,3)}</text>
             </g>);
           })}
-          <circle cx={cx} cy={cy} r={26} fill="#fff" stroke="#EDE9FE" strokeWidth={2}/>
-          <text x={cx} y={cy-4} fill="#8B5CF6" fontSize={8} fontWeight={700} textAnchor="middle" dominantBaseline="central">命中</text>
-          <text x={cx} y={cy+7} fill="#8B5CF6" fontSize={8} fontWeight={700} textAnchor="middle" dominantBaseline="central">注定</text>
+          {/* Center orb */}
+          <circle cx={cx} cy={cy} r={30} fill="url(#centerGrad)"/>
+          <circle cx={cx} cy={cy} r={28} fill="none" stroke="rgba(251,191,36,0.3)" strokeWidth={1}/>
+          <defs><radialGradient id="centerGrad"><stop offset="0%" stopColor="#2D1B69"/><stop offset="100%" stopColor="#1E1146"/></radialGradient></defs>
+          <text x={cx} y={cy-5} fill="#FBBF24" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">命中</text>
+          <text x={cx} y={cy+7} fill="#FBBF24" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">注定</text>
         </svg>
       </div>
-      <button onClick={spin} disabled={spinning||spinsLeft<=0} style={{width:'100%',padding:'12px',borderRadius:14,border:'none',marginTop:12,fontSize:14,fontWeight:700,cursor:spinning||spinsLeft<=0?'default':'pointer',
-        background:spinning?T.border:spinsLeft<=0?T.border:'linear-gradient(135deg,#8B5CF6,#7C3AED)',
-        color:spinning||spinsLeft<=0?T.textThi:'#fff',boxShadow:spinning||spinsLeft<=0?'none':'0 4px 14px rgba(139,92,246,0.3)'}}>
-        {spinning?'🌀 命运之轮转动中…':spinsLeft<=0?'今日次数已用完（每天2次）':`🎡 转动命运之轮（${spinsLeft}次）`}
+      <button onClick={spin} disabled={spinning||spinsLeft<=0} style={{width:'100%',padding:'14px',borderRadius:28,border:'none',marginTop:14,fontSize:15,fontWeight:700,cursor:spinning||spinsLeft<=0?'default':'pointer',letterSpacing:1,
+        background:spinning?'rgba(255,255,255,0.08)':spinsLeft<=0?'rgba(255,255,255,0.05)':'linear-gradient(135deg,#F59E0B,#D97706)',
+        color:spinning||spinsLeft<=0?'rgba(196,181,253,0.4)':'#fff',boxShadow:spinning||spinsLeft<=0?'none':'0 4px 20px rgba(245,158,11,0.3)'}}>
+        {spinning?'✦ 命运之轮转动中 ✦':spinsLeft<=0?'今日感应已用完（每天2次）':`✦ 感应命运（${spinsLeft}次）`}
       </button>
-      {result&&<div className="anim-in" style={{marginTop:12,background:'#fff',border:`1px solid ${T.border}`,borderRadius:16,padding:16,boxShadow:T.shadow}}>
+      {result&&<div className="anim-in" style={{marginTop:14,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(196,181,253,0.15)',borderRadius:16,padding:16,backdropFilter:'blur(4px)'}}>
         <div style={{textAlign:'center',marginBottom:10}}>
-          <div style={{fontSize:11,color:T.textThi}}>🎯 命运之轮指向了</div>
+          <div style={{fontSize:11,color:'rgba(196,181,253,0.6)'}}>✦ 命运之轮指向了 ✦</div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:14}}>
-          <div style={{width:56,height:56,borderRadius:28,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>{result.gender==='female'?'👩':'👨'}</div>
+          <div style={{width:56,height:56,borderRadius:28,background:'linear-gradient(135deg,#4C1D95,#6D28D9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0,border:'2px solid rgba(251,191,36,0.3)'}}>{result.gender==='female'?'👩':'👨'}</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:16,fontWeight:700,color:T.text}}>{result.name}，{result.age}岁</div>
-            <div style={{fontSize:12,color:T.textSec,marginTop:2}}>{result.sign} · {result.bio}</div>
-            <div style={{display:'flex',gap:4,marginTop:6}}>{(result.tags||[]).map(t=><span key={t} style={{padding:'2px 8px',borderRadius:6,background:'#F5F3FF',fontSize:10,color:'#8B5CF6'}}>{t}</span>)}</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#E9D5FF'}}>{result.name}，{result.age}岁</div>
+            <div style={{fontSize:12,color:'rgba(196,181,253,0.7)',marginTop:2}}>{result.sign} · {result.bio}</div>
+            <div style={{display:'flex',gap:4,marginTop:6}}>{(result.tags||[]).map(t=><span key={t} style={{padding:'2px 8px',borderRadius:6,background:'rgba(139,92,246,0.15)',fontSize:10,color:'#C4B5FD'}}>{t}</span>)}</div>
           </div>
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:10,marginTop:12,padding:'10px 14px',background:result.score>=80?'linear-gradient(135deg,#FEF2F2,#FCE7F3)':result.score>=65?'linear-gradient(135deg,#F5F3FF,#EDE9FE)':'linear-gradient(135deg,#F0FDF4,#ECFDF5)',borderRadius:12}}>
-          <div style={{fontSize:24,fontWeight:800,color:result.score>=80?'#E11D48':result.score>=65?'#8B5CF6':'#059669'}}>{result.score}%</div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginTop:12,padding:'10px 14px',background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.15)',borderRadius:12}}>
+          <div style={{fontSize:24,fontWeight:800,color:'#FBBF24'}}>{result.score}%</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:12,fontWeight:600,color:result.score>=80?'#E11D48':result.score>=65?'#8B5CF6':'#059669'}}>{result.score>=80?'天作之合 💕':result.score>=65?'有缘有份 ✨':'潜力之缘 🌱'}</div>
-            <div style={{fontSize:10,color:T.textThi}}>{result.score>=80?'命中注定的缘分':result.score>=65?'值得深入了解':'用心经营会绽放'}</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#FBBF24'}}>{result.score>=80?'天作之合 💕':result.score>=65?'有缘有份 ✨':'潜力之缘 🌱'}</div>
+            <div style={{fontSize:10,color:'rgba(196,181,253,0.5)'}}>{result.score>=80?'命中注定的缘分':result.score>=65?'值得深入了解':'用心经营会绽放'}</div>
           </div>
-          <button onClick={()=>goTo(S.AI,'hehun')} style={{padding:'8px 14px',borderRadius:10,border:'none',background:result.score>=80?'#E11D48':'#8B5CF6',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>合婚分析 →</button>
+          <button onClick={()=>goTo(S.AI,'hehun')} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#F59E0B,#D97706)',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>合婚 →</button>
         </div>
       </div>}
       </>}
