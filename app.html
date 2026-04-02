@@ -35,6 +35,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-web
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 
@@ -347,6 +348,7 @@ function MatchPopup({user,onChat,onClose}){
 function CardDetailModal({user,profile,onClose,goTo}){
   const [match,setMatch]=useState(null);
   const [tab,setTab]=useState('info');
+  const [showShare,setShowShare]=useState(false);
   useEffect(()=>{
     apiPost('/api/match',{profileA:profile,profileB:user}).then(setMatch).catch(()=>{});
   },[]);
@@ -473,7 +475,9 @@ function CardDetailModal({user,profile,onClose,goTo}){
         {/* Bottom action */}
         <div style={{position:'sticky',bottom:0,padding:'12px 16px 20px',background:T.bg}}>
           <button onClick={()=>{onClose();goTo(S.AI,'hehun')}} style={{width:'100%',padding:'14px',borderRadius:28,border:'none',background:`linear-gradient(135deg,${ac},${ac}dd)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:`0 4px 14px ${ac}33`,letterSpacing:1}}>💑 AI深度合婚分析</button>
+          <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'10px',borderRadius:20,border:`1px solid ${T.border}`,background:'#fff',color:T.textSec,fontSize:12,cursor:'pointer',marginTop:8}}>📤 分享匹配卡</button>
         </div>
+    {showShare&&<ShareModal type="match" profile={profile} partner={user} score={match?.score||user.score} compatibility={match?.compatibility} onClose={()=>setShowShare(false)}/>}
     </div>
   );
 }
@@ -897,6 +901,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [dm,setDm]=useState('expert');
     const [showTarotModal,setShowTarotModal]=useState(false);
   const [showHourAssistant,setShowHourAssistant]=useState(false);
+  const [showShare,setShowShare]=useState(false);
   const [hourSkipped,setHourSkipped]=useState(false); // user chose to skip hour
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
@@ -1376,8 +1381,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {/* Actions - only after streaming complete */}
               {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:8}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
-                <button onClick={()=>divine(mode,false)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>🔄 重新生成</button>
-                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>清空</button>
+                <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
+                <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
+                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🗑️</button>
               </div>}
             </>}
 
@@ -1490,11 +1496,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
     {/* Hour Correction Assistant */}
     {showHourAssistant&&<HourAssistantModal profile={profile} onResult={(h)=>{onUpdateProfile({...profile,hour:h})}} onClose={()=>setShowHourAssistant(false)}/>}
+    {showShare&&<ShareModal type="personality" profile={profile} structured={ms.result?.structured} onClose={()=>setShowShare(false)}/>}
   </div>);
 }
 
 // ===== DISCOVER =====
 function DiscoverScreen({goTo,profile}){
+  const [showShare,setShowShare]=useState(false);
   const today=new Date();const dayN=today.getDate();
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
   const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
@@ -1512,7 +1520,10 @@ function DiscoverScreen({goTo,profile}){
             <div style={{fontSize:22,fontWeight:700,color:luckColor,marginTop:4}}>{todayLuck}</div>
             <div style={{fontSize:11,color:T.textThi,marginTop:4}}>宜：学习、冥想 · 忌：冲动决策</div>
           </div>
-          <button onClick={()=>goTo(S.AI)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            <button onClick={()=>goTo(S.AI)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
+            <button onClick={()=>setShowShare(true)} style={{padding:'6px 18px',borderRadius:12,border:`1px solid ${T.border}`,background:'#fff',color:T.textSec,fontSize:11,cursor:'pointer'}}>📤 分享运势</button>
+          </div>
         </div>
       </div>
 
@@ -1534,6 +1545,7 @@ function DiscoverScreen({goTo,profile}){
           <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
         </div>)}
     </div>
+    {showShare&&<ShareModal type="fortune" profile={profile} onClose={()=>setShowShare(false)}/>}
   </div>);
 }
 
@@ -1937,6 +1949,45 @@ function FortuneShareCard({profile}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
         <span style={{fontSize:10}}>扫码查看详细运势</span>
         <span style={{fontSize:10}}>缘合 yuanhe.app</span>
+      </div>
+    </div>
+  );
+}
+
+function ShareModal({type,profile,structured,partner,score,compatibility,onClose}){
+  const [saving,setSaving]=useState(false);
+  const [saved,setSaved]=useState(false);
+  const cardRef=useRef(null);
+
+  const saveImage=async()=>{
+    if(!cardRef.current||saving)return;
+    setSaving(true);
+    try{
+      const canvas=await html2canvas(cardRef.current,{scale:2,backgroundColor:null,useCORS:true});
+      const link=document.createElement('a');
+      link.download=`yuanhe_${type}_${Date.now()}.png`;
+      link.href=canvas.toDataURL('image/png');
+      link.click();
+      setSaved(true);
+      setTimeout(()=>setSaved(false),2000);
+    }catch(e){alert('保存失败，请重试')}
+    setSaving(false);
+  };
+
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.7)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{marginBottom:16,transform:'scale(0.9)',transformOrigin:'center'}}>
+        <div ref={cardRef}>
+          {type==='personality'&&<PersonalityShareCard profile={profile} structured={structured}/>}
+          {type==='match'&&<MatchShareCard profile={profile} partner={partner} score={score} compatibility={compatibility}/>}
+          {type==='fortune'&&<FortuneShareCard profile={profile}/>}
+        </div>
+      </div>
+      <div style={{display:'flex',gap:12}}>
+        <button onClick={saveImage} disabled={saving} style={{padding:'12px 28px',borderRadius:20,border:'none',background:saved?'#22C55E':'#fff',color:saved?'#fff':'#8B5CF6',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.2)'}}>
+          {saving?'生成中…':saved?'✓ 已保存':'📥 保存图片'}
+        </button>
+        <button onClick={onClose} style={{padding:'12px 28px',borderRadius:20,border:'2px solid rgba(255,255,255,0.3)',background:'transparent',color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>关闭</button>
       </div>
     </div>
   );
