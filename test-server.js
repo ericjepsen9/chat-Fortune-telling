@@ -408,6 +408,99 @@ ${(reportSummary || '').substring(0, 500)}
     return;
   }
 
+  // API：AI模拟聊天（LLM扮演匹配对象）
+  if (parsedUrl.pathname === '/api/chat' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const { partner, userProfile, message, history } = JSON.parse(body);
+        if (!message || !message.trim()) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: '请输入消息' }));
+          return;
+        }
+
+        // Build character prompt from partner's profile
+        const p = partner;
+        const traits = p.tags ? p.tags.join('、') : '';
+        const systemPrompt = `你现在扮演一个真实的人在社交App上和刚匹配的对象聊天。
+
+你的人设：
+- 姓名：${p.name}
+- 年龄：${p.age}岁
+- 性别：${p.gender === 'female' ? '女' : '男'}
+- 星座：${p.sign || '未知'}
+- 个人简介：${p.bio || ''}
+- 兴趣爱好：${traits || '未知'}
+
+聊天规则（必须严格遵守）：
+1. 你是一个真实的人，不是AI，绝不能暴露自己是机器人
+2. 回复要简短自然，像真人发微信一样，每条1-3句话，不超过80字
+3. 要有个性和情感，不要客套敷衍
+4. 根据你的兴趣爱好主动展开话题
+5. 适当用emoji但不要太多（0-2个）
+6. 偶尔可以反问对方问题，保持对话互动
+7. 不要用"亲""宝"等过于亲密的称呼（你们刚认识）
+8. 语气要活泼但不做作，像同龄人之间自然聊天
+9. 绝对不要说"作为AI"、"我是一个语言模型"等任何暴露身份的话`;
+
+        // Build messages with history
+        const messages = [{ role: 'system', content: systemPrompt }];
+        // Add recent history (last 10 messages)
+        const recentHistory = (history || []).slice(-10);
+        for (const h of recentHistory) {
+          messages.push({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text });
+        }
+        // Add current message
+        messages.push({ role: 'user', content: message });
+
+        // Call LLM with low max_tokens for short replies
+        const apiUrl = `${LLM_BASE_URL}/chat/completions`;
+        const llmBody = JSON.stringify({
+          model: LLM_MODEL,
+          messages,
+          max_tokens: 200,
+          temperature: 0.8,
+          stream: false,
+        });
+
+        const parsed = new URL(apiUrl);
+        const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
+          hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LLM_API_KEY}`, 'Content-Length': Buffer.byteLength(llmBody) },
+        }, (llmRes) => {
+          let data = '';
+          llmRes.on('data', chunk => data += chunk);
+          llmRes.on('end', () => {
+            try {
+              const json = JSON.parse(data);
+              let reply = json.choices?.[0]?.message?.content || '';
+              reply = reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+              // Strip quotes if the model wraps response in quotes
+              reply = reply.replace(/^["「]|["」]$/g, '').trim();
+              res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+              res.end(JSON.stringify({ reply }));
+            } catch (e) {
+              res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+              res.end(JSON.stringify({ error: 'AI回复解析失败' }));
+            }
+          });
+        });
+        llmReq.on('error', (e) => {
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: e.message }));
+        });
+        llmReq.write(llmBody);
+        llmReq.end();
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (parsedUrl.pathname === '/api/calculate' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);
@@ -575,6 +668,7 @@ server.listen(PORT, () => {
 ║  POST /api/calculate - 仅引擎计算         ║
 ║  POST /api/divine    - 引擎+AI解读        ║
 ║  POST /api/chat-followup - 轻量追问       ║
+║  POST /api/chat          - AI模拟聊天     ║
 ║                                          ║
 ╚══════════════════════════════════════════╝
 `);
