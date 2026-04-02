@@ -1677,6 +1677,162 @@ function DiscoverScreen({goTo,profile}){
 }
 
 // ===== MESSAGES =====
+// ===== ICEBREAKER SYSTEM (破冰任务) =====
+const ICE_TOPICS=[
+  '如果明天放假一周，你第一件事做什么？','最近看的一部剧或电影是什么？','你觉得自己像哪种动物？','深夜emo的时候你会做什么？',
+  '用三个词形容你自己','你最想去旅行的地方？','你最拿手的一道菜是什么？','小时候的梦想是什么？',
+  '你的手机里最常用的3个App？','如果有超能力你想要什么？','你最近一次大笑是因为什么？','最让你放松的事情是什么？',
+  '你相信一见钟情吗？','你更喜欢大城市还是小城市？','你有什么奇怪的小习惯？','最难忘的一次旅行经历？',
+];
+const ICE_COMPAT=[
+  {q:'周末更想？',opts:['🏠 宅家','🏔️ 出去浪']},
+  {q:'约会选哪？',opts:['☕ 咖啡厅','🌳 公园','🎨 展览','🍜 美食街']},
+  {q:'你属于？',opts:['🌙 夜猫子','🌅 早起鸟']},
+  {q:'旅行风格？',opts:['📋 做攻略','🎒 说走就走']},
+  {q:'更在意？',opts:['💬 聊得来','💕 心动感','🤝 靠谱','🎯 上进']},
+  {q:'理想周末？',opts:['🎬 看电影','🍳 做饭','🏃 运动','😴 补觉']},
+  {q:'心情不好时？',opts:['🎵 听音乐','🍰 吃好吃的','👫 找人聊','🚶 独处']},
+];
+const ICE_CHOOSE=[
+  {a:'🐱 猫',b:'🐶 狗'},{a:'☀️ 夏天',b:'❄️ 冬天'},{a:'🍰 甜食',b:'🌶️ 辣味'},
+  {a:'🧘 独处',b:'🎉 热闹'},{a:'📺 追剧',b:'📖 看书'},{a:'🌊 海边',b:'🏔️ 山里'},
+  {a:'☕ 咖啡',b:'🍵 奶茶'},{a:'🎧 耳机',b:'🔊 外放'},
+];
+const ICE_DAILY=[
+  '分享你此刻的窗外风景 📷','推荐一首歌给TA 🎵','说一件今天开心的事 😊','给TA起个专属昵称 💭',
+  '发一个最能代表你心情的emoji','分享你今天吃的最好吃的东西 🍽️','说一个你从没告诉过别人的小秘密 🤫',
+];
+
+function IcebreakerCard({type,data,onAction,done}){
+  const [picked,setPicked]=useState(null);
+  const [aiPick,setAiPick]=useState(null);
+  const [revealed,setRevealed]=useState(false);
+
+  const handlePick=(opt)=>{
+    if(picked)return;
+    setPicked(opt);
+    // AI also picks after delay
+    setTimeout(()=>{
+      const aiChoice=data.opts?data.opts[Math.floor(Math.random()*data.opts.length)]:null;
+      setAiPick(aiChoice);
+      setRevealed(true);
+      if(onAction)onAction(opt,aiChoice);
+    },1200);
+  };
+
+  const handleChoose=(choice)=>{
+    if(picked)return;
+    setPicked(choice);
+    const aiChoice=Math.random()>0.5?data.a:data.b;
+    setTimeout(()=>{setAiPick(aiChoice);setRevealed(true);if(onAction)onAction(choice,aiChoice)},1000);
+  };
+
+  if(type==='topic'){
+    return(<div style={{background:'linear-gradient(135deg,#F5F3FF,#EDE9FE)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #DDD6FE'}}>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+        <span style={{fontSize:14}}>💬</span>
+        <span style={{fontSize:11,fontWeight:600,color:'#7C3AED'}}>破冰话题</span>
+      </div>
+      <div style={{fontSize:14,fontWeight:600,color:'#1F2937',lineHeight:1.6,marginBottom:12}}>{data}</div>
+      {!done&&<button onClick={()=>onAction&&onAction(data)} style={{padding:'8px 20px',borderRadius:20,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>聊这个话题 →</button>}
+    </div>);
+  }
+
+  if(type==='compat'){
+    return(<div style={{background:'linear-gradient(135deg,#FDF2F8,#FCE7F3)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #FBCFE8'}}>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+        <span style={{fontSize:14}}>🎯</span>
+        <span style={{fontSize:11,fontWeight:600,color:'#DB2777'}}>默契测试</span>
+      </div>
+      <div style={{fontSize:14,fontWeight:600,color:'#1F2937',marginBottom:12}}>{data.q}</div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+        {data.opts.map(opt=>{
+          const isPicked=picked===opt;const isAi=aiPick===opt;
+          const match=revealed&&picked===aiPick;
+          return <button key={opt} onClick={()=>handlePick(opt)} disabled={!!picked}
+            style={{padding:'8px 14px',borderRadius:12,border:isPicked?'2px solid #DB2777':isAi&&revealed?'2px solid #F59E0B':'1.5px solid #FBCFE8',
+              background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#FDE68A,#FCD34D)':isPicked?'#FCE7F3':isAi&&revealed?'#FEF3C7':'#fff',
+              fontSize:12,fontWeight:isPicked||isAi?700:500,color:'#1F2937',cursor:picked?'default':'pointer',position:'relative'}}>
+            {opt}
+            {isPicked&&!revealed&&<span style={{marginLeft:4,fontSize:10}}>✓</span>}
+            {revealed&&isPicked&&<span style={{marginLeft:4,fontSize:10}}>你</span>}
+            {revealed&&isAi&&!isPicked&&<span style={{marginLeft:4,fontSize:10}}>TA</span>}
+          </button>;
+        })}
+      </div>
+      {revealed&&<div style={{marginTop:10,fontSize:12,fontWeight:600,color:picked===aiPick?'#059669':'#D97706',textAlign:'center'}}>
+        {picked===aiPick?'🎉 你们选了一样的！太有默契了':'😄 你们的选择不同，互补也是一种缘分'}
+      </div>}
+      {picked&&!revealed&&<div style={{marginTop:8,fontSize:11,color:'#DB2777',textAlign:'center'}}>等TA选择中…</div>}
+    </div>);
+  }
+
+  if(type==='choose'){
+    return(<div style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #FDE68A'}}>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+        <span style={{fontSize:14}}>⚡</span>
+        <span style={{fontSize:11,fontWeight:600,color:'#D97706'}}>二选一</span>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        {[data.a,data.b].map(choice=>{
+          const isPicked=picked===choice;const isAi=aiPick===choice;
+          return <button key={choice} onClick={()=>handleChoose(choice)} disabled={!!picked}
+            style={{flex:1,padding:'14px 8px',borderRadius:14,border:isPicked?'2px solid #D97706':'1.5px solid #FDE68A',
+              background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#BBF7D0,#86EFAC)':isPicked?'#FEF3C7':'#fff',
+              fontSize:14,fontWeight:600,color:'#1F2937',cursor:picked?'default':'pointer',textAlign:'center'}}>
+            {choice}
+            {revealed&&isPicked&&<div style={{fontSize:9,color:'#D97706',marginTop:4}}>你选的</div>}
+            {revealed&&isAi&&!isPicked&&<div style={{fontSize:9,color:'#D97706',marginTop:4}}>TA选的</div>}
+          </button>;
+        })}
+      </div>
+      {revealed&&<div style={{marginTop:10,fontSize:12,fontWeight:600,color:picked===aiPick?'#059669':'#D97706',textAlign:'center'}}>
+        {picked===aiPick?'🎉 英雄所见略同！':'🤝 不同的选择，更多的惊喜'}
+      </div>}
+    </div>);
+  }
+
+  if(type==='daily'){
+    return(<div style={{background:'linear-gradient(135deg,#ECFDF5,#D1FAE5)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #A7F3D0'}}>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+        <span style={{fontSize:14}}>✨</span>
+        <span style={{fontSize:11,fontWeight:600,color:'#059669'}}>今日缘分任务</span>
+      </div>
+      <div style={{fontSize:14,fontWeight:600,color:'#1F2937',lineHeight:1.6}}>{data}</div>
+      {!done&&<button onClick={()=>onAction&&onAction(data)} style={{marginTop:10,padding:'8px 20px',borderRadius:20,border:'none',background:'linear-gradient(135deg,#10B981,#059669)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>完成任务 ✓</button>}
+    </div>);
+  }
+  return null;
+}
+
+// Get icebreaker for conversation based on state
+function getIcebreaker(conv){
+  const msgs=conv.messages||[];
+  const msgCount=msgs.length;
+  const seed=(conv.user.id*7+new Date().getDate()*13)%100;
+  // Already shown icebreakers in this session?
+  const shownKey='yuanhe_ice_'+conv.id;
+  const shown=parseInt(localStorage.getItem(shownKey)||'0');
+
+  // First interaction (0-1 messages): topic card
+  if(msgCount<=1&&shown<1){
+    return{type:'topic',data:ICE_TOPICS[seed%ICE_TOPICS.length],shown:1};
+  }
+  // After 4+ messages: compatibility test
+  if(msgCount>=4&&msgCount<8&&shown<2){
+    return{type:'compat',data:ICE_COMPAT[seed%ICE_COMPAT.length],shown:2};
+  }
+  // After 8+ messages: this-or-that
+  if(msgCount>=8&&msgCount<14&&shown<3){
+    return{type:'choose',data:ICE_CHOOSE[seed%ICE_CHOOSE.length],shown:3};
+  }
+  // After 14+ messages: daily task
+  if(msgCount>=14&&shown<4){
+    return{type:'daily',data:ICE_DAILY[seed%ICE_DAILY.length],shown:4};
+  }
+  return null;
+}
+
 function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive}){
   const [activeId,setActiveId]=useState(openConvId||null);
   const [chatInput,setChatInput]=useState('');
@@ -1744,6 +1900,20 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive})
   if(activeConv){
     const freshConv=ChatStore.getById(activeConv.id)||activeConv;
     const msgs=freshConv.messages||[];
+    const ice=getIcebreaker(freshConv);
+    const iceShownKey='yuanhe_ice_'+activeConv.id;
+    const handleIceAction=(type,userChoice,aiChoice)=>{
+      if(type==='topic'){
+        // User clicked "聊这个话题" → set as chat input hint
+        setChatInput(userChoice);
+        localStorage.setItem(iceShownKey,String(ice.shown));
+      }else if(type==='daily'){
+        localStorage.setItem(iceShownKey,String(ice.shown));
+      }else{
+        // compat/choose → mark as shown after interaction
+        localStorage.setItem(iceShownKey,String(ice.shown));
+      }
+    };
     return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:T.bg}}>
       <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:'#fff',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
         <button onClick={()=>{ChatStore.markRead(activeConv.id);refreshConvs();setActiveId(null)}} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
@@ -1775,11 +1945,14 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive})
                 {msg.text}
                 {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
               </div>
-              {/* Read receipt on last user message */}
               {msg.role==='user'&&idx===msgs.length-1&&readStatus&&<div style={{fontSize:9,color:readStatus==='已读'?T.primary:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
             </div>
           </div>
         ))}
+        {/* Icebreaker card */}
+        {ice&&!typing&&!sending&&<div className="anim-in">
+          <IcebreakerCard type={ice.type} data={ice.data} onAction={(c,ac)=>handleIceAction(ice.type,c,ac)}/>
+        </div>}
         {typing&&<div className="anim-in" style={{display:'flex',justifyContent:'flex-start',marginBottom:8}}>
           <div style={{padding:'12px 16px',borderRadius:'16px 16px 16px 4px',background:'#fff',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
             <div style={{display:'flex',gap:4,alignItems:'center'}}>
