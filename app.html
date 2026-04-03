@@ -2461,21 +2461,25 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   };
 
   // Voice recording
+  const cancelledRef=useRef(false);
   const startRecording=async()=>{
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      const recorder=new MediaRecorder(stream,{mimeType:'audio/webm'});
+      const recorder=new MediaRecorder(stream);
       const chunks=[];
+      cancelledRef.current=false;
       recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
       recorder.onstop=()=>{
         stream.getTracks().forEach(t=>t.stop());
-        const blob=new Blob(chunks,{type:'audio/webm'});
+        clearInterval(recTimerRef.current);
+        if(cancelledRef.current){setRecording(false);setRecordDuration(0);return}
+        if(chunks.length===0){setRecording(false);setRecordDuration(0);return}
+        const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
         const reader=new FileReader();
         reader.onload=()=>{
-          const dur=recordDuration;
+          const dur=recordDuration||1;
           ChatStore.addMessage(activeConv.id,{role:'user',text:`[语音 ${dur}″]`,voice:reader.result,voiceDur:dur});
           refreshConvs();scrollBottom();
-          // Bot reacts
           if(activeConv.user.isBot){
             setTimeout(async()=>{
               setTyping(true);
@@ -2489,7 +2493,6 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         };
         reader.readAsDataURL(blob);
         setRecording(false);setRecordDuration(0);
-        clearInterval(recTimerRef.current);
       };
       recorder.start();
       recorderRef.current=recorder;
@@ -2497,8 +2500,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       recTimerRef.current=setInterval(()=>setRecordDuration(d=>{if(d>=59){stopRecording();return d}return d+1}),1000);
     }catch(e){showToast('无法访问麦克风')}
   };
-  const stopRecording=()=>{if(recorderRef.current&&recorderRef.current.state==='recording'){recorderRef.current.stop()}};
-  const cancelRecording=()=>{if(recorderRef.current){recorderRef.current.stop();recorderRef.current=null}setRecording(false);setRecordDuration(0);clearInterval(recTimerRef.current);showToast('已取消')};
+  const stopRecording=()=>{if(recorderRef.current?.state==='recording')recorderRef.current.stop()};
+  const cancelRecording=()=>{cancelledRef.current=true;if(recorderRef.current?.state==='recording')recorderRef.current.stop();setRecording(false);setRecordDuration(0);clearInterval(recTimerRef.current);showToast('已取消')};
 
   // Bot online status
   const getBotOnline=(bot)=>{
@@ -2620,9 +2623,9 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
                 color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:13,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
                 boxShadow:msg.recalled?'none':msg.role==='user'?`0 2px 8px ${T.accent2}20`:`0 1px 4px rgba(0,0,0,0.04)`,overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
                 {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.voice?
-                  <div onClick={()=>{const a=new Audio(msg.voice);a.play()}} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',minWidth:80+Math.min((msg.voiceDur||3)*8,120)}}>
+                  <div onClick={()=>{const a=new Audio(msg.voice);a.play();showToast('播放中…')}} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',minWidth:80+Math.min((msg.voiceDur||3)*8,120)}}>
                     <span style={{fontSize:16}}>▶️</span>
-                    <div style={{flex:1,display:'flex',gap:2,alignItems:'center'}}>{[...Array(Math.max(3,Math.min(msg.voiceDur||3,12)))].map((_,i)=><div key={i} style={{width:3,height:4+Math.random()*10,borderRadius:2,background:msg.role==='user'?'rgba(255,255,255,0.5)':`${T.accent2}40`}}/>)}</div>
+                    <div style={{flex:1,display:'flex',gap:2,alignItems:'center'}}>{[...Array(Math.max(4,Math.min(msg.voiceDur||3,14)))].map((_,i)=>{const h=4+((i*7+3)%12);return <div key={i} style={{width:3,height:h,borderRadius:2,background:msg.role==='user'?'rgba(255,255,255,0.5)':`${T.accent2}40`}}/>})}</div>
                     <span style={{fontSize:10,opacity:.6,flexShrink:0}}>{msg.voiceDur||0}″</span>
                   </div>
                 :msg.text}
@@ -2684,13 +2687,13 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         </div>)}
       </div>}
       {/* Recording overlay */}
-      {recording&&<div style={{padding:'16px',background:`${T.primary}08`,borderTop:`1px solid ${T.primary}20`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <button onClick={cancelRecording} style={{padding:'8px 16px',borderRadius:20,border:`1px solid ${T.primary}`,background:T.card,color:T.primary,fontSize:12,fontWeight:600,cursor:'pointer'}}>取消</button>
+      {recording&&<div style={{padding:'16px 16px 28px',background:`${T.primary}06`,borderTop:`1px solid ${T.primary}15`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <button onClick={cancelRecording} style={{padding:'8px 18px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:13,fontWeight:500,cursor:'pointer'}}>取消</button>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <div style={{width:8,height:8,borderRadius:4,background:T.primary,animation:'pulse 1s infinite'}}/>
-          <span style={{fontSize:14,fontWeight:600,color:T.primary}}>{recordDuration}″</span>
+          <div style={{width:10,height:10,borderRadius:5,background:T.primary,animation:'pulse 1s infinite'}}/>
+          <span style={{fontSize:16,fontWeight:700,color:T.primary,fontVariantNumeric:'tabular-nums'}}>{recordDuration}″</span>
         </div>
-        <button onClick={stopRecording} style={{padding:'8px 16px',borderRadius:20,border:'none',background:T.accent2,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>发送</button>
+        <button onClick={stopRecording} style={{padding:'8px 18px',borderRadius:20,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:`0 2px 8px ${T.accent2}30`}}>发送</button>
       </div>}
       {/* Input bar */}
       {!recording&&<div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
