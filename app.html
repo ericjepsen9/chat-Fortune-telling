@@ -869,8 +869,10 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
         <div style={{fontSize:16,fontWeight:700,color:'#E9D5FF'}}>🎡 命运转盘</div>
         <button onClick={()=>setShowWheel(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:'rgba(255,255,255,0.1)',color:'#C4B5FD',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
       </div>
-      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px'}}>
-        <FortuneWheel profile={profile} goTo={(s,m)=>{setShowWheel(false);goTo(s,m)}}/>
+      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 12px'}}>
+        <div style={{width:'100%',maxWidth:360}}>
+          <FortuneWheel profile={profile} goTo={(s,m)=>{setShowWheel(false);goTo(s,m)}} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet} onClose={()=>setShowWheel(false)}/>
+        </div>
       </div>
     </div>}
     {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
@@ -1664,7 +1666,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       </div>}
 
       {/* Error */}
-      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #C4B5FD':'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14,position:'relative'}}>
+      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #C4B5FD':'1px solid #FECACA',borderRadius:14,padding:16,position:'relative'}}>
         <button onClick={()=>setMS(mode,{error:null})} style={{position:'absolute',top:8,right:8,background:'none',border:'none',fontSize:16,cursor:'pointer',opacity:.4,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444'}}>✕</button>
         <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444',lineHeight:1.8,whiteSpace:'pre-line',paddingRight:20}}>{ms.error}</div>
         {!ms.error.startsWith('🔮')&&<button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer',marginTop:8}}>🔄 重试</button>}
@@ -1860,12 +1862,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 }
 
 // ===== DISCOVER =====
-function FortuneWheel({profile,goTo}){
+function FortuneWheel({profile,goTo,addConv,setOpenConvId,autoGreet,onClose}){
   const tg=profile.gender==='male'?'female':'male';
-  const COLORS=['#8B5CF6','#EC4899','#F59E0B','#10B981','#3B82F6','#F43F5E','#0D9488','#D97706'];
   const [pool,setPool]=useState([]);
   const [spinning,setSpinning]=useState(false);
   const [result,setResult]=useState(null);
+  const [showDetail,setShowDetail]=useState(false);
   const [angle,setAngle]=useState(0);
   const todayKey='yuanhe_wheel_'+new Date().toDateString();
   const [spinsLeft,setSpinsLeft]=useState(()=>{const used=parseInt(localStorage.getItem(todayKey)||'0');return Math.max(0,2-used)});
@@ -1907,7 +1909,7 @@ function FortuneWheel({profile,goTo}){
   const sz=320,cx=sz/2,cy=sz/2,r=sz/2-14;
   const revealed=!!result; // show names/avatars only after spin result
   return(
-    <div className="anim-in" style={{background:'linear-gradient(135deg,#1E1146,#2D1B69,#1E1146)',borderRadius:20,padding:16,boxShadow:'0 8px 32px rgba(30,17,70,0.4)',marginBottom:14,position:'relative',overflow:'hidden'}}>
+    <div className="anim-in" style={{background:'linear-gradient(135deg,#1E1146,#2D1B69,#1E1146)',borderRadius:20,padding:16,boxShadow:'0 8px 32px rgba(30,17,70,0.4)',position:'relative',overflow:'hidden'}}>
       {/* Stars */}
       {[...Array(12)].map((_,i)=><div key={i} style={{position:'absolute',width:2,height:2,borderRadius:1,background:'rgba(255,255,255,'+(0.1+Math.random()*0.3)+')',top:Math.random()*100+'%',left:Math.random()*100+'%'}}/>)}
       <div style={{textAlign:'center',marginBottom:10}}>
@@ -1915,11 +1917,11 @@ function FortuneWheel({profile,goTo}){
         <div style={{fontSize:11,color:'rgba(196,181,253,0.6)',marginTop:4}}>转动命运之轮，寻找你的命中注定</div>
       </div>
       {loading?<div style={{textAlign:'center',padding:'40px 0',color:'rgba(196,181,253,0.5)',fontSize:12}}>✦ 感应缘分中… ✦</div>:<>
-      <div style={{position:'relative',width:sz,height:sz,margin:'0 auto'}}>
+      <div style={{position:'relative',width:'100%',maxWidth:sz,margin:'0 auto',aspectRatio:'1'}}>
         {/* Glow */}
         <div style={{position:'absolute',inset:-6,borderRadius:'50%',background:'radial-gradient(circle,rgba(139,92,246,0.15) 60%,transparent 70%)',animation:spinning?'pulse 1s infinite':'none'}}/>
         {/* Decorative rings */}
-        <svg width={sz} height={sz} style={{position:'absolute',top:0,left:0}}>
+        <svg viewBox={`0 0 ${sz} ${sz}`} style={{width:'100%',height:'100%',position:'absolute',top:0,left:0}}>
           <circle cx={cx} cy={cy} r={r+8} fill="none" stroke="rgba(196,181,253,0.12)" strokeWidth={1}/>
           <circle cx={cx} cy={cy} r={r+4} fill="none" stroke="rgba(196,181,253,0.08)" strokeWidth={1} strokeDasharray="4,6"/>
         </svg>
@@ -1928,7 +1930,7 @@ function FortuneWheel({profile,goTo}){
           <svg width={22} height={28}><polygon points="11,0 3,24 19,24" fill="#F59E0B"/><polygon points="11,3 6,21 16,21" fill="#FBBF24"/></svg>
         </div>
         {/* Wheel SVG */}
-        <svg width={sz} height={sz} style={{transition:spinning?'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)':'none',transform:`rotate(${angle}deg)`}}>
+        <svg viewBox={`0 0 ${sz} ${sz}`} style={{width:'100%',height:'100%',transition:spinning?'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)':'none',transform:`rotate(${angle}deg)`}}>
           {pool.map((u,i)=>{
             const a1=(i*360/n-90)*Math.PI/180;
             const a2=((i+1)*360/n-90)*Math.PI/180;
@@ -1980,9 +1982,15 @@ function FortuneWheel({profile,goTo}){
             <div style={{fontSize:12,fontWeight:600,color:'#FBBF24'}}>{result.score>=80?'天作之合 💕':result.score>=65?'有缘有份 ✨':'潜力之缘 🌱'}</div>
             <div style={{fontSize:10,color:'rgba(196,181,253,0.5)'}}>{result.score>=80?'命中注定的缘分':result.score>=65?'值得深入了解':'用心经营会绽放'}</div>
           </div>
-          <button onClick={()=>goTo(S.AI,'hehun')} style={{padding:'8px 14px',borderRadius:10,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>合婚 →</button>
+        </div>
+        {/* Action buttons */}
+        <div style={{display:'flex',gap:8,marginTop:12}}>
+          <button onClick={()=>setShowDetail(true)} style={{flex:1,padding:'12px',borderRadius:12,border:'1px solid rgba(196,181,253,0.2)',background:'rgba(255,255,255,0.05)',color:'#E9D5FF',fontSize:13,fontWeight:600,cursor:'pointer'}}>查看详情</button>
+          <button onClick={()=>{if(addConv&&autoGreet){const c=addConv(result);autoGreet(c);if(setOpenConvId)setOpenConvId(c.id);if(onClose)onClose();goTo(S.MSGS)}}} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#F59E0B,#D97706)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 3px 12px rgba(245,158,11,0.3)'}}>💬 发起聊天</button>
         </div>
       </div>}
+      {/* Detail modal */}
+      {showDetail&&result&&<CardDetailModal user={result} profile={profile} onClose={()=>setShowDetail(false)} goTo={goTo}/>}
       </>}
     </div>
   );
