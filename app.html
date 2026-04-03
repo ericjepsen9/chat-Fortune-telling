@@ -40,7 +40,7 @@ button{-webkit-tap-highlight-color:transparent;user-select:none}
 button:active:not(:disabled){transform:scale(0.96);transition:transform 0.1s}
 button{transition:transform 0.1s,opacity 0.15s}
 .markdown h1,.markdown h2,.markdown h3{margin:12px 0 6px;font-weight:600;font-size:14px;line-height:1.5}
-.markdown h1{font-size:15px} .markdown h2{font-size:14px} .markdown h3{font-size:14px;color:#E88B8B}
+.markdown h1{font-size:15px} .markdown h2{font-size:14px} .markdown h3{font-size:14px;color:#D95B5B}
 .markdown p{margin:6px 0;line-height:1.7;font-size:inherit}
 .markdown ul,.markdown ol{padding-left:20px;margin:6px 0}
 .markdown li{margin:4px 0;line-height:1.6;font-size:inherit}
@@ -92,8 +92,8 @@ const Icons={
 };
 
 const THEMES={
-  light:{bg:"#FAFAF7",card:"#FFFFFF",primary:"#E88B8B",primaryDark:"#D07878",secondary:"#D4A76A",accent1:"#6DBFB8",accent2:"#9185C2",accent3:"#D9949E",accent4:"#6AAFBF",gold:"#C9A855",text:"#1A1A2E",textSec:"#6B7280",textThi:"#9CA3AF",border:"#EEEEE8",borderDark:"#E0E0DA",success:"#6CB89E",shadow:"0 1px 8px rgba(0,0,0,0.04)",shadowLg:"0 4px 20px rgba(0,0,0,0.06)",isDark:false},
-  dark:{bg:"#0F0F1A",card:"#1A1A2E",primary:"#D9949E",primaryDark:"#C08088",secondary:"#D4A76A",accent1:"#6DBFB8",accent2:"#A79BD0",accent3:"#D9949E",accent4:"#6AAFBF",gold:"#C9A855",text:"#E5E7EB",textSec:"#9CA3AF",textThi:"#6B7280",border:"#2D2D3F",borderDark:"#3D3D52",success:"#6CB89E",shadow:"0 1px 8px rgba(0,0,0,0.2)",shadowLg:"0 4px 20px rgba(0,0,0,0.3)",isDark:true},
+  light:{bg:"#FAFAF7",card:"#FFFFFF",primary:"#D95B5B",primaryDark:"#CB3A3A",secondary:"#D9983C",accent1:"#42AEA7",accent2:"#764ED1",accent3:"#D97584",accent4:"#3B9CB2",gold:"#D08609",text:"#1A1A2E",textSec:"#6B7280",textThi:"#9CA3AF",border:"#EEEEE8",borderDark:"#E0E0DA",success:"#2CB382",shadow:"0 1px 8px rgba(0,0,0,0.04)",shadowLg:"0 4px 20px rgba(0,0,0,0.06)",isDark:false},
+  dark:{bg:"#0F0F1A",card:"#1A1A2E",primary:"#D97584",primaryDark:"#CB3A3A",secondary:"#D9983C",accent1:"#42AEA7",accent2:"#8E76D5",accent3:"#D97584",accent4:"#3B9CB2",gold:"#D08609",text:"#E5E7EB",textSec:"#9CA3AF",textThi:"#6B7280",border:"#2D2D3F",borderDark:"#3D3D52",success:"#2CB382",shadow:"0 1px 8px rgba(0,0,0,0.2)",shadowLg:"0 4px 20px rgba(0,0,0,0.3)",isDark:true},
 };
 function getThemeMode(){
   const saved=localStorage.getItem('yuanhe_theme');
@@ -105,7 +105,7 @@ function getThemeMode(){
 let T=THEMES[getThemeMode()];
 const S={SPLASH:0,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
-const GRADS=['linear-gradient(135deg,#E8C4C4,#D9B5BE)','linear-gradient(135deg,#B5D8D4,#A5C5CC)','linear-gradient(135deg,#C4B8D8,#B5AAD0)','linear-gradient(135deg,#D8C4A5,#E8C4C4)','linear-gradient(135deg,#B5D0C4,#B5D8D4)','linear-gradient(135deg,#D9B5BE,#D8C4A5)','linear-gradient(135deg,#A5C5CC,#C4B8D8)','linear-gradient(135deg,#D4C49E,#D8C4A5)','linear-gradient(135deg,#B5AAD0,#E8C4C4)','linear-gradient(135deg,#B5D8D4,#B5D0C4)','linear-gradient(135deg,#E8C4C4,#C4B8D8)','linear-gradient(135deg,#D8C4A5,#B5D8D4)'];
+const GRADS=['linear-gradient(135deg,#D98B8B,#D97584)','linear-gradient(135deg,#42AEA7,#3B9CB2)','linear-gradient(135deg,#764ED1,#8469D9)','linear-gradient(135deg,#D9983C,#D95B5B)','linear-gradient(135deg,#2CB382,#42AEA7)','linear-gradient(135deg,#D97584,#D9983C)','linear-gradient(135deg,#3B9CB2,#764ED1)','linear-gradient(135deg,#D08609,#D9983C)','linear-gradient(135deg,#8469D9,#D95B5B)','linear-gradient(135deg,#42AEA7,#2CB382)','linear-gradient(135deg,#D95B5B,#764ED1)','linear-gradient(135deg,#D9983C,#42AEA7)'];
 const USERS=[
   {id:1,name:'林雨薇',age:31,bio:'喜欢旅行和音乐 ✈️',year:1994,month:3,day:15,hour:8,gender:'female',score:92,dist:'1km',sign:'双鱼座',tags:['旅行','音乐','瑜伽']},
   {id:2,name:'张子轩',age:30,bio:'代码写诗的程序员 💻',year:1995,month:7,day:22,hour:14,gender:'male',score:87,dist:'11km',sign:'巨蟹座',tags:['编程','读书','咖啡']},
@@ -230,7 +230,7 @@ const ChatStore={
 // ===== SCORE RING =====
 function ScoreRing({score,size=60,stroke=4}){
   const r=(size-stroke)/2,c=2*Math.PI*r;
-  const color=score>=90?'#E88B8B':score>=80?'#D4A76A':score>=70?'#6DBFB8':'#9CA3AF';
+  const color=score>=90?'#D95B5B':score>=80?'#D9983C':score>=70?'#42AEA7':'#9CA3AF';
   const label=score>=90?'天作之合':score>=80?'良缘佳偶':score>=70?'有缘有份':'需要磨合';
   return(<div style={{position:'relative',width:size,height:size,display:'inline-flex',alignItems:'center',justifyContent:'center'}}>
     <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={stroke}/><circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={c} strokeDashoffset={c*(1-score/100)} strokeLinecap="round" style={{transition:'stroke-dashoffset 1s ease'}}/></svg>
@@ -292,7 +292,7 @@ function SkeletonCard(){
 }
 
 function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return()=>clearTimeout(t)},[]);
-  return(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#E88B8B 0%,#9185C2 50%,#6DBFB8 100%)'}}><div className="anim-in" style={{color:'#fff',textAlign:'center'}}><div className="serif" style={{fontSize:48,fontWeight:700,letterSpacing:8}}>缘合</div><div style={{fontSize:14,opacity:.8,marginTop:8,letterSpacing:4}}>YUANHE</div><div style={{fontSize:12,opacity:.6,marginTop:16}}>以命理连接缘分</div></div></div>);
+  return(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#D95B5B 0%,#764ED1 50%,#42AEA7 100%)'}}><div className="anim-in" style={{color:'#fff',textAlign:'center'}}><div className="serif" style={{fontSize:48,fontWeight:700,letterSpacing:8}}>缘合</div><div style={{fontSize:14,opacity:.8,marginTop:8,letterSpacing:4}}>YUANHE</div><div style={{fontSize:12,opacity:.6,marginTop:16}}>以命理连接缘分</div></div></div>);
 }
 
 // ===== BIRTH =====
@@ -300,9 +300,9 @@ function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return(
 function OnboardingScreen({onDone}){
   const [step,setStep]=useState(0);
   const pages=[
-    {icon:'🔮',title:'认识自己',desc:'通过八字、星座、塔罗等古老命理体系\n发现你的性格天赋与人生方向',bg:'linear-gradient(135deg,#9185C2,#7B6FB5,#6D28D9)'},
-    {icon:'💕',title:'命理匹配',desc:'不只看外貌和兴趣\n用命理维度找到真正契合的灵魂',bg:'linear-gradient(135deg,#C47A9E,#DB2777,#BE185D)'},
-    {icon:'✦',title:'开启缘分',desc:'AI深度解读 + 智能匹配\n你的命中注定，就在这里',bg:'linear-gradient(135deg,#C9A855,#B8943F,#B45309)'},
+    {icon:'🔮',title:'认识自己',desc:'通过八字、星座、塔罗等古老命理体系\n发现你的性格天赋与人生方向',bg:'linear-gradient(135deg,#764ED1,#6931C9,#6D28D9)'},
+    {icon:'💕',title:'命理匹配',desc:'不只看外貌和兴趣\n用命理维度找到真正契合的灵魂',bg:'linear-gradient(135deg,#C93D82,#DB2777,#BE185D)'},
+    {icon:'✦',title:'开启缘分',desc:'AI深度解读 + 智能匹配\n你的命中注定，就在这里',bg:'linear-gradient(135deg,#D08609,#B86505,#B45309)'},
   ];
   const p=pages[step];
   const isLast=step===pages.length-1;
@@ -325,7 +325,7 @@ function OnboardingScreen({onDone}){
           {pages.map((_,i)=><div key={i} style={{width:i===step?24:8,height:8,borderRadius:4,background:i===step?'#fff':'rgba(255,255,255,0.3)',transition:'all .3s'}}/>)}
         </div>
         {/* Button */}
-        <button onClick={()=>{if(isLast)onDone();else setStep(s=>s+1)}} style={{width:'100%',height:52,borderRadius:26,border:'none',fontSize:16,fontWeight:700,cursor:'pointer',background:'rgba(255,255,255,0.95)',color:p.bg.includes('8B5CF6')?'#7B6FB5':p.bg.includes('EC4899')?'#DB2777':'#B8943F',boxShadow:'0 4px 20px rgba(0,0,0,0.15)',transition:'all .3s'}}>
+        <button onClick={()=>{if(isLast)onDone();else setStep(s=>s+1)}} style={{width:'100%',height:52,borderRadius:26,border:'none',fontSize:16,fontWeight:700,cursor:'pointer',background:'rgba(255,255,255,0.95)',color:p.bg.includes('8B5CF6')?'#6931C9':p.bg.includes('EC4899')?'#DB2777':'#B86505',boxShadow:'0 4px 20px rgba(0,0,0,0.15)',transition:'all .3s'}}>
           {isLast?'开始探索命运 →':'下一步'}
         </button>
       </div>
@@ -366,17 +366,17 @@ function BirthScreen({onSubmit}){
   const filled=f.year&&f.month&&f.day;
   return(<div style={{height:'100%',overflow:'auto',background:T.bg}}><div style={{padding:'60px 24px 100px'}}>
     <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>你的生辰</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>请输入公历出生信息</div></div>
-    {lunar&&<div className="anim-in" style={{background:'linear-gradient(135deg,#E88B8B10,#9185C210)',padding:'14px 16px',borderRadius:14,marginBottom:24,textAlign:'center'}}><div style={{fontSize:13,color:T.primary,fontWeight:500}}>{lunar.lunarFull}</div><div style={{fontSize:12,color:T.textSec,marginTop:4}}>{lunar.ganzhi}</div></div>}
+    {lunar&&<div className="anim-in" style={{background:'linear-gradient(135deg,#D95B5B10,#764ED110)',padding:'14px 16px',borderRadius:14,marginBottom:24,textAlign:'center'}}><div style={{fontSize:13,color:T.primary,fontWeight:500}}>{lunar.lunarFull}</div><div style={{fontSize:12,color:T.textSec,marginTop:4}}>{lunar.ganzhi}</div></div>}
     <div style={{marginBottom:16}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="输入昵称（可选）" style={is}/></div>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:8}}>
-      {[['年*','year','1996'],['月*','month','8'],['日*','day','15'],['时辰','hour','14']].map(([l,k,ph])=><div key={k}><label style={{fontSize:12,color:k==='hour'?T.textThi:T.textSec,marginBottom:4,display:'block'}}>{l}</label><input type="number" value={f[k]} onChange={e=>{sF({...f,[k]:e.target.value});setErr('')}} placeholder={ph} style={{...is,padding:'10px 8px',textAlign:'center',borderColor:err&&!f[k]&&k!=='hour'?'#D07878':T.borderDark}}/></div>)}
+      {[['年*','year','1996'],['月*','month','8'],['日*','day','15'],['时辰','hour','14']].map(([l,k,ph])=><div key={k}><label style={{fontSize:12,color:k==='hour'?T.textThi:T.textSec,marginBottom:4,display:'block'}}>{l}</label><input type="number" value={f[k]} onChange={e=>{sF({...f,[k]:e.target.value});setErr('')}} placeholder={ph} style={{...is,padding:'10px 8px',textAlign:'center',borderColor:err&&!f[k]&&k!=='hour'?'#CB3A3A':T.borderDark}}/></div>)}
     </div>
     <div style={{fontSize:11,color:T.textThi,marginBottom:16}}>* 年月日为必填 · 时辰留空也可使用（部分功能精度降低）</div>
-    {err&&<div style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:13,color:'#D07878',fontWeight:500}}>{err}</div>}
+    {err&&<div style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:13,color:'#CB3A3A',fontWeight:500}}>{err}</div>}
     <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>性别</label><div style={{display:'flex',gap:12}}>
       {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:'#fff',color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
     </div></div>
-    <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#E88B8B,#D9A0A8)':'#ccc',boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>开启我的命运之旅 ✦</button>
+    <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#D95B5B,#D97584)':'#ccc',boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>开启我的命运之旅 ✦</button>
   </div></div>);
 }
 
@@ -389,7 +389,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
   const rot=dx*0.05,opa=Math.min(Math.abs(dx)/100,1);
   const grad=GRADS[user.id%GRADS.length];
   // Wuxing mini bars for card
-  const wxC=['#C9A855','#5BAE7C','#6B95CF','#D07878','#B8943F'];
+  const wxC=['#D08609','#1DA750','#326FD1','#CB3A3A','#B86505'];
   const wxL=['金','木','水','火','土'];
   const wxV=wxL.map((_,i)=>20+((user.id*(i+1)*13)%60));
   const isOnline=user.isBot?((user.id*7+new Date().getHours())%3!==0):true;
@@ -404,15 +404,15 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
         opacity:isTop?1:0.5,pointerEvents:isTop?'auto':'none',
         background:T.card,boxShadow:'0 1px 6px rgba(0,0,0,0.03)',display:'flex',flexDirection:'column'}}>
       {/* LIKE/NOPE labels */}
-      {dx>20&&<div style={{position:'absolute',top:16,left:16,padding:'8px 18px',borderRadius:12,background:'rgba(52,211,153,0.12)',border:'2px solid #6CB89E',color:'#6CB89E',fontSize:16,fontWeight:800,transform:'rotate(-12deg)',opacity:opa,zIndex:10}}>有缘 ♥</div>}
-      {dx<-20&&<div style={{position:'absolute',top:16,right:16,padding:'8px 18px',borderRadius:12,background:'rgba(255,107,107,0.12)',border:'2px solid #E88B8B',color:'#E88B8B',fontSize:16,fontWeight:800,transform:'rotate(12deg)',opacity:opa,zIndex:10}}>无缘</div>}
+      {dx>20&&<div style={{position:'absolute',top:16,left:16,padding:'8px 18px',borderRadius:12,background:'rgba(52,211,153,0.12)',border:'2px solid #2CB382',color:'#2CB382',fontSize:16,fontWeight:800,transform:'rotate(-12deg)',opacity:opa,zIndex:10}}>有缘 ♥</div>}
+      {dx<-20&&<div style={{position:'absolute',top:16,right:16,padding:'8px 18px',borderRadius:12,background:'rgba(255,107,107,0.12)',border:'2px solid #D95B5B',color:'#D95B5B',fontSize:16,fontWeight:800,transform:'rotate(12deg)',opacity:opa,zIndex:10}}>无缘</div>}
 
       {/* Photo area */}
       <div style={{flex:1,background:grad,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',minHeight:0}}>
         <div style={{fontSize:88}}>{AVATARS[user.id%AVATARS.length]}</div>
         {/* Online badge */}
         <div style={{position:'absolute',top:10,left:10,padding:'4px 10px',borderRadius:12,background:'rgba(0,0,0,0.25)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',gap:4}}>
-          <div style={{width:6,height:6,borderRadius:3,background:isOnline?'#6CB89E':'#9CA3AF'}}/>
+          <div style={{width:6,height:6,borderRadius:3,background:isOnline?'#2CB382':'#9CA3AF'}}/>
           <span style={{fontSize:10,color:'#fff',fontWeight:500}}>{isOnline?'在线':'离线'}</span>
         </div>
         {/* Score + wuxing bars */}
@@ -431,12 +431,12 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
       <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'12px 16px 14px',cursor:'pointer'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
           <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
-          <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,background:user.score>=80?'#ECFDF5':user.score>=65?'#F0EEF5':'#FEF3C7',color:user.score>=80?'#4A9E7A':user.score>=65?'#7B6FB5':'#B8943F'}}>{typeTag}</span>
+          <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#047D57':user.score>=65?'#6931C9':'#B86505'}}>{typeTag}</span>
         </div>
         <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.5}}>{user.bio}</div>
         {/* Match reason */}
-        {user.matchResult&&<div style={{padding:'8px 12px',borderRadius:10,background:'#9185C208',border:'1px solid #9185C212',marginBottom:8}}>
-          <div style={{fontSize:11,color:'#9185C2',fontWeight:700,marginBottom:2}}>☯ 缘分解读</div>
+        {user.matchResult&&<div style={{padding:'8px 12px',borderRadius:10,background:'#764ED108',border:'1px solid #764ED112',marginBottom:8}}>
+          <div style={{fontSize:11,color:'#764ED1',fontWeight:700,marginBottom:2}}>☯ 缘分解读</div>
           <div style={{fontSize:12,color:T.textSec,lineHeight:1.5}}>{user.matchResult.gradeDesc}</div>
         </div>}
         <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
@@ -456,11 +456,11 @@ function MatchPopup({user,onChat,onClose}){
     <style>{`@keyframes float0{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(10deg)}}@keyframes float1{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-15px) rotate(-8deg)}}@keyframes float2{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-25px) scale(1.1)}}`}</style>
     <div style={{background:T.card,borderRadius:28,padding:'36px 28px',textAlign:'center',maxWidth:320,width:'100%',animation:'matchPop 0.5s ease',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
       <div style={{fontSize:56,marginBottom:4,animation:'pulse 1.5s ease infinite'}}>💕</div>
-      <div className="serif" style={{fontSize:24,fontWeight:800,background:'linear-gradient(135deg,#9185C2,#C47A9E)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>缘分已到！</div>
+      <div className="serif" style={{fontSize:24,fontWeight:800,background:'linear-gradient(135deg,#764ED1,#C93D82)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>缘分已到！</div>
       <div style={{fontSize:14,color:T.textSec,marginTop:10}}>你和 <b style={{color:T.text}}>{user.name}</b> 命理契合</div>
       <div style={{margin:'16px auto'}}><ScoreRing score={user.score} size={88} stroke={5}/></div>
       <div style={{fontSize:12,color:T.textThi,marginBottom:20}}>{user.score>=80?'天作之合，千万别错过！':user.score>=65?'有缘有份，值得深入了解':'命理相合，试试聊聊？'}</div>
-      <button onClick={onChat} style={{width:'100%',padding:'14px',borderRadius:16,border:'none',background:'linear-gradient(135deg,#C47A9E,#9185C2)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(236,72,153,0.3)',marginBottom:10}}>💬 打个招呼</button>
+      <button onClick={onChat} style={{width:'100%',padding:'14px',borderRadius:16,border:'none',background:'linear-gradient(135deg,#C93D82,#764ED1)',color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(236,72,153,0.3)',marginBottom:10}}>💬 打个招呼</button>
       <button onClick={onClose} style={{width:'100%',padding:'12px',borderRadius:16,border:'none',background:'transparent',color:T.textThi,fontSize:14,cursor:'pointer'}}>继续看看</button>
     </div>
   </div>);
@@ -475,8 +475,8 @@ function CardDetailModal({user,profile,onClose,goTo}){
   useEffect(()=>{
     apiPost('/api/match',{profileA:profile,profileB:user}).then(setMatch).catch(()=>{});
   },[]);
-  const WX_COLORS={木:'#5BAE7C',火:'#D07878',土:'#C9A855',金:'#A3A3A3',水:'#6B95CF'};
-  const ac='#9185C2'; // accent color
+  const WX_COLORS={木:'#1DA750',火:'#CB3A3A',土:'#D08609',金:'#A3A3A3',水:'#326FD1'};
+  const ac='#764ED1'; // accent color
   const grad=GRADS[user.id%GRADS.length];
   return(
     <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
@@ -501,7 +501,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
             <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
               <span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:`${ac}15`,color:ac}}>{user.sign}</span>
               {match?.personB?.element&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:`${ac}15`,color:ac}}>{match.personB.element}象</span>}
-              {match?.personB?.strength&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:'#6AAFBF15',color:'#6AAFBF'}}>{match.personB.strength}</span>}
+              {match?.personB?.strength&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:'#3B9CB215',color:'#3B9CB2'}}>{match.personB.strength}</span>}
             </div>
             <div style={{fontSize:14,color:T.textSec,lineHeight:1.7}}>{user.bio}</div>
           </div>
@@ -556,10 +556,10 @@ function CardDetailModal({user,profile,onClose,goTo}){
                 <div key={i} style={{marginBottom:12}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
                     <span style={{fontSize:13,fontWeight:600}}>{d.icon} {d.name}</span>
-                    <span style={{fontSize:13,fontWeight:700,color:d.score>=80?'#5BAE7C':d.score>=60?'#C9A855':'#D07878'}}>{d.score}分</span>
+                    <span style={{fontSize:13,fontWeight:700,color:d.score>=80?'#1DA750':d.score>=60?'#D08609':'#CB3A3A'}}>{d.score}分</span>
                   </div>
                   <div style={{height:8,background:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
-                    <div style={{height:'100%',background:d.score>=80?'#5BAE7C':d.score>=60?'#C9A855':'#D07878',borderRadius:4,width:d.score+'%',transition:'width .6s ease'}}/>
+                    <div style={{height:'100%',background:d.score>=80?'#1DA750':d.score>=60?'#D08609':'#CB3A3A',borderRadius:4,width:d.score+'%',transition:'width .6s ease'}}/>
                   </div>
                   {d.desc&&<div style={{fontSize:11,color:T.textThi,marginTop:3}}>{d.desc.substring(0,50)}</div>}
                 </div>
@@ -588,7 +588,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
                       </div>
                     </div>
                   ))}
-                  {p.wuxingLack?.length>0&&<div style={{fontSize:11,color:'#D07878',marginTop:6,fontWeight:600}}>缺: {p.wuxingLack.join('、')}</div>}
+                  {p.wuxingLack?.length>0&&<div style={{fontSize:11,color:'#CB3A3A',marginTop:6,fontWeight:600}}>缺: {p.wuxingLack.join('、')}</div>}
                 </div>;
               })}
             </div>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
@@ -659,13 +659,13 @@ function DailyStatusModal({profile,onClose}){
   const TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
   const DZ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
   const WX_TG={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
-  const WX_DOT={木:'#5BAE7C',火:'#D07878',土:'#B8943F',金:'#9CA3AF',水:'#6B95CF'};
+  const WX_DOT={木:'#1DA750',火:'#CB3A3A',土:'#B86505',金:'#9CA3AF',水:'#326FD1'};
   const wxThemes={
-    木:{theme:'成长·突破',color:'#5BAE7C',bg:'#ECFDF5',keywords:['学习','拓展','尝试新事物','接触自然'],relation:['主动表达感受','适合认识新朋友','多倾听对方的想法'],action:['列出本周目标','学一个新技能','去户外走走']},
-    火:{theme:'表达·行动',color:'#D07878',bg:'#FEF2F2',keywords:['独处','反思','整理','沉淀'],relation:['避免情绪波动时做承诺','适合与老朋友深度对话','给自己和伴侣一些空间'],action:['写下困扰你的三件事','用10分钟冥想静坐','整理社交关系清单']},
-    土:{theme:'稳定·积累',color:'#B8943F',bg:'#FFFBEB',keywords:['踏实','规划','耐心','沉稳'],relation:['适合讨论未来规划','给对方安全感','避免急于求成'],action:['整理财务记录','制定长期计划','做一顿用心的饭']},
+    木:{theme:'成长·突破',color:'#1DA750',bg:'#ECFDF5',keywords:['学习','拓展','尝试新事物','接触自然'],relation:['主动表达感受','适合认识新朋友','多倾听对方的想法'],action:['列出本周目标','学一个新技能','去户外走走']},
+    火:{theme:'表达·行动',color:'#CB3A3A',bg:'#FEF2F2',keywords:['独处','反思','整理','沉淀'],relation:['避免情绪波动时做承诺','适合与老朋友深度对话','给自己和伴侣一些空间'],action:['写下困扰你的三件事','用10分钟冥想静坐','整理社交关系清单']},
+    土:{theme:'稳定·积累',color:'#B86505',bg:'#FFFBEB',keywords:['踏实','规划','耐心','沉稳'],relation:['适合讨论未来规划','给对方安全感','避免急于求成'],action:['整理财务记录','制定长期计划','做一顿用心的饭']},
     金:{theme:'决断·收获',color:'#6B7280',bg:'#F9FAFB',keywords:['果断','取舍','效率','简化'],relation:['适合解决悬而未决的问题','坦诚沟通比委婉更好','尊重彼此的边界'],action:['清理不需要的物品','做一个重要决定','完成拖延的任务']},
-    水:{theme:'智慧·流动',color:'#6B95CF',bg:'#EFF6FF',keywords:['灵感','直觉','适应','变通'],relation:['用心感受对方的情绪','适合浪漫的小惊喜','保持神秘感'],action:['写日记记录灵感','听一张新专辑','泡澡或散步放空']},
+    水:{theme:'智慧·流动',color:'#326FD1',bg:'#EFF6FF',keywords:['灵感','直觉','适应','变通'],relation:['用心感受对方的情绪','适合浪漫的小惊喜','保持神秘感'],action:['写日记记录灵感','听一张新专辑','泡澡或散步放空']},
   };
 
   // Get day pillar for any date
@@ -742,7 +742,7 @@ function DailyStatusModal({profile,onClose}){
       </div>
 
       {/* Sections */}
-      {[{title:'今日关键词',items:t.keywords,color:t.color},{title:'关系建议',items:t.relation,color:'#0D9488'},{title:'行动建议',items:t.action,color:'#6B95CF'}].map(sec=>(
+      {[{title:'今日关键词',items:t.keywords,color:t.color},{title:'关系建议',items:t.relation,color:'#0D9488'},{title:'行动建议',items:t.action,color:'#326FD1'}].map(sec=>(
         <div key={sec.title} style={{background:T.card,borderRadius:16,padding:'16px 20px',marginBottom:12,boxShadow:T.shadow}}>
           <div style={{fontSize:14,fontWeight:700,color:sec.color,marginBottom:10}}>{sec.title}</div>
           {sec.items.map(item=><div key={item} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'6px 0'}}>
@@ -792,7 +792,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const undoSwipe=()=>{if(!lastSwiped)return;setCards(c=>[...c,lastSwiped]);setLastSwiped(null);setSwiped(s=>Math.max(0,s-1))};
   // 五行 energy data from profile
   const wxLabels=['金','木','水','火','土'];
-  const wxColors=['#C9A855','#5BAE7C','#6B95CF','#D07878','#B8943F'];
+  const wxColors=['#D08609','#1DA750','#326FD1','#CB3A3A','#B86505'];
   const wxSeed=(profile.year*7+profile.month*13+profile.day*3+new Date().getDate()*11);
   const wxValues=wxLabels.map((_,i)=>15+((wxSeed*(i+1)*17)%40)); // 15-55 range
   const wxTotal=wxValues.reduce((a,b)=>a+b,0);
@@ -831,9 +831,9 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
         </div>
       </div>
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-        <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:'#C9A855',fontWeight:700}}>★ {swiped||0}</div>
-        <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A79BD0'}}>✦</span></button>
-        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:'#D07878',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></button>
+        <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:'#D08609',fontWeight:700}}>★ {swiped||0}</div>
+        <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#8E76D5'}}>✦</span></button>
+        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:'#CB3A3A',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></button>
       </div>
     </div>
     {/* Card area — buttons overlaid at bottom */}
@@ -919,7 +919,7 @@ function FourPillarsCard({structured,mc}){
   if(!structured?.fourPillars)return null;
   const fp=structured.fourPillars;
   const ny=structured.nayin||{};
-  const WX_C={木:'#5BAE7C',火:'#D07878',土:'#B8943F',金:'#C4A35A',水:'#6B95CF'};
+  const WX_C={木:'#1DA750',火:'#CB3A3A',土:'#B86505',金:'#C4A35A',水:'#326FD1'};
   const WX_MAP={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
   const pillars=[
     {name:'年柱',gz:fp.year,ny:ny.year},
@@ -943,10 +943,10 @@ function FourPillarsCard({structured,mc}){
       {/* Info row */}
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
         {structured.dayMaster&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:`${mc}10`,color:mc}}>日主 {structured.dayMaster}{structured.element}</span>}
-        {structured.strength&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:structured.strength==='身强'?'#D0787810':'#6B95CF10',color:structured.strength==='身强'?'#D07878':'#6B95CF'}}>{structured.strength}</span>}
-        {structured.geju&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#B8943F10',color:'#B8943F'}}>{structured.geju}</span>}
-        {structured.favorWx&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#5BAE7C10',color:'#5BAE7C'}}>喜 {structured.favorWx}</span>}
-        {structured.wuxingLack?.length>0&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#D0787810',color:'#D07878'}}>缺 {structured.wuxingLack.join('、')}</span>}
+        {structured.strength&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:structured.strength==='身强'?'#CB3A3A10':'#326FD110',color:structured.strength==='身强'?'#CB3A3A':'#326FD1'}}>{structured.strength}</span>}
+        {structured.geju&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#B8650510',color:'#B86505'}}>{structured.geju}</span>}
+        {structured.favorWx&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#1DA75010',color:'#1DA750'}}>喜 {structured.favorWx}</span>}
+        {structured.wuxingLack?.length>0&&<span style={{padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600,background:'#CB3A3A10',color:'#CB3A3A'}}>缺 {structured.wuxingLack.join('、')}</span>}
       </div>
       {/* Personality */}
       {structured.personality&&<div style={{marginTop:10,padding:'10px 12px',borderRadius:10,background:`${mc}06`,borderLeft:`3px solid ${mc}`}}>
@@ -960,7 +960,7 @@ function FourPillarsCard({structured,mc}){
 // ===== WUXING BAR (五行条形图) =====
 function WuxingBar({data,height=6}){
   if(!data)return null;
-  const WX_C={木:'#5BAE7C',火:'#D07878',土:'#B8943F',金:'#C4A35A',水:'#6B95CF'};
+  const WX_C={木:'#1DA750',火:'#CB3A3A',土:'#B86505',金:'#C4A35A',水:'#326FD1'};
   const max=Math.max(...Object.values(data),1);
   return(
     <div style={{display:'flex',flexDirection:'column',gap:4}}>
@@ -1052,10 +1052,10 @@ function ReportCard({title, icon, color, content, index, md, isLong}) {
 
 // ===== AI =====
 const MODES=[
-  {id:'bazi',label:'八字命理',icon:'☰',c:'#9185C2',cat:'single'},
-  {id:'astrology',label:'星座运势',icon:'★',c:'#8A8DC2',cat:'single'},
+  {id:'bazi',label:'八字命理',icon:'☰',c:'#764ED1',cat:'single'},
+  {id:'astrology',label:'星座运势',icon:'★',c:'#5457CD',cat:'single'},
   {id:'tarot',label:'塔罗牌',icon:'✦',c:'#0D9488',cat:'single'},
-  {id:'meihua',label:'梅花易数',icon:'❀',c:'#B8943F',cat:'single'},
+  {id:'meihua',label:'梅花易数',icon:'❀',c:'#B86505',cat:'single'},
   {id:'vedic',label:'印度占星',icon:'◎',c:'#2563EB',cat:'single'},
   {id:'hehun',label:'八字合婚',icon:'💑',c:'#DB2777',cat:'pair'},
   {id:'synastry',label:'星座配对',icon:'💫',c:'#9333EA',cat:'pair'},
@@ -1087,19 +1087,19 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
         {/* Spread type */}
         <div style={{display:'flex',gap:6,marginBottom:14}}>
           {[{k:'single',l:'🃏 单张',n:1},{k:'threeCard',l:'🎴 三张',n:3},{k:'relationship',l:'💕 四张',n:4}].map(s=>(
-            <button key={s.k} onClick={()=>{setSpread(s.k);setCards([])}} style={{flex:1,padding:'8px 4px',borderRadius:10,fontSize:11,fontWeight:600,border:spread===s.k?'2px solid #D4B874':'1px solid rgba(196,181,253,0.2)',cursor:'pointer',background:spread===s.k?'rgba(251,191,36,0.15)':'transparent',color:spread===s.k?'#D4B874':'#C4B5FD',textAlign:'center'}}>{s.l}</button>
+            <button key={s.k} onClick={()=>{setSpread(s.k);setCards([])}} style={{flex:1,padding:'8px 4px',borderRadius:10,fontSize:11,fontWeight:600,border:spread===s.k?'2px solid #D5A21F':'1px solid rgba(196,181,253,0.2)',cursor:'pointer',background:spread===s.k?'rgba(251,191,36,0.15)':'transparent',color:spread===s.k?'#D5A21F':'#C4B5FD',textAlign:'center'}}>{s.l}</button>
           ))}
         </div>
         {/* Selected cards display */}
         {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:8,marginBottom:14}}>
-          {cards.map((cid,i)=><div key={cid} className="anim-in" style={{width:44,height:62,borderRadius:8,background:'linear-gradient(135deg,#D4B874,#C9A855)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 12px rgba(251,191,36,0.3)',transform:`rotate(${(i-Math.floor(cards.length/2))*5}deg)`}}>
+          {cards.map((cid,i)=><div key={cid} className="anim-in" style={{width:44,height:62,borderRadius:8,background:'linear-gradient(135deg,#D5A21F,#D08609)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 12px rgba(251,191,36,0.3)',transform:`rotate(${(i-Math.floor(cards.length/2))*5}deg)`}}>
             <div style={{fontSize:10,fontWeight:700,color:'#fff'}}>第{i+1}张</div>
           </div>)}
         </div>}
         {/* Progress */}
         <div style={{textAlign:'center',marginBottom:10}}>
           <span style={{fontSize:12,fontWeight:600,color:'#C4B5FD'}}>已选 {cards.length} / {need} 张</span>
-          {cards.length>=need&&<span style={{marginLeft:8,fontSize:11,color:'#D4B874'}}>✦ 选好了</span>}
+          {cards.length>=need&&<span style={{marginLeft:8,fontSize:11,color:'#D5A21F'}}>✦ 选好了</span>}
         </div>
         {/* Cards grid */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
@@ -1107,8 +1107,8 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
             const picked=cards.includes(cid);const full=cards.length>=need;const isFlip=flipping===i;
             return <button key={i} onClick={()=>pickCard(cid,i)} style={{
               aspectRatio:'2/3',borderRadius:10,cursor:picked||!full?'pointer':'default',
-              border:picked?'2px solid #D4B874':'1px solid rgba(196,181,253,0.15)',
-              background:picked?'linear-gradient(135deg,#D4B874,#C9A855)':'linear-gradient(160deg,#4C1D95,#6D28D9)',
+              border:picked?'2px solid #D5A21F':'1px solid rgba(196,181,253,0.15)',
+              background:picked?'linear-gradient(135deg,#D5A21F,#D08609)':'linear-gradient(160deg,#4C1D95,#6D28D9)',
               display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',
               transition:'all .3s',transform:isFlip?'rotateY(90deg) scale(0.9)':picked?'translateY(-4px) scale(1.03)':'scale(1)',
               boxShadow:picked?'0 6px 16px rgba(251,191,36,0.3)':'0 2px 8px rgba(0,0,0,0.3)',opacity:!picked&&full?0.25:1,
@@ -1120,7 +1120,7 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
         {/* Actions */}
         <div style={{display:'flex',gap:8,marginTop:16}}>
           <button onClick={()=>{setCards([]);onDone(true)}} style={{flex:1,padding:'12px',borderRadius:14,border:'1px solid rgba(196,181,253,0.2)',background:'transparent',fontSize:13,fontWeight:600,color:'#C4B5FD',cursor:'pointer'}}>🎴 随机抽取</button>
-          <button onClick={()=>onDone(true)} disabled={cards.length===0} style={{flex:1,padding:'12px',borderRadius:14,border:'none',background:cards.length>0?'linear-gradient(135deg,#D4B874,#C9A855)':'rgba(255,255,255,0.05)',fontSize:13,fontWeight:700,color:cards.length>0?'#fff':'rgba(196,181,253,0.3)',cursor:cards.length>0?'pointer':'default'}}>{cards.length>=need?'✦ 确认'+need+'张牌':'继续选牌'}</button>
+          <button onClick={()=>onDone(true)} disabled={cards.length===0} style={{flex:1,padding:'12px',borderRadius:14,border:'none',background:cards.length>0?'linear-gradient(135deg,#D5A21F,#D08609)':'rgba(255,255,255,0.05)',fontSize:13,fontWeight:700,color:cards.length>0?'#fff':'rgba(196,181,253,0.3)',cursor:cards.length>0?'pointer':'default'}}>{cards.length>=need?'✦ 确认'+need+'张牌':'继续选牌'}</button>
         </div>
       </div>
     </div>
@@ -1160,12 +1160,12 @@ function HourAssistantModal({profile,onResult,onClose}){
       <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'90vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
         {/* Header */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <div style={{fontSize:18,fontWeight:700,color:'#B8943F'}}>🔮 AI时辰校正助手</div>
+          <div style={{fontSize:18,fontWeight:700,color:'#B86505'}}>🔮 AI时辰校正助手</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
         {/* Progress */}
         <div style={{height:4,background:'#FEF3C7',borderRadius:2,marginBottom:16,overflow:'hidden'}}>
-          <div style={{height:'100%',background:'linear-gradient(90deg,#B8943F,#C9A855)',borderRadius:2,width:progress+'%',transition:'width .4s ease'}}/>
+          <div style={{height:'100%',background:'linear-gradient(90deg,#B86505,#D08609)',borderRadius:2,width:progress+'%',transition:'width .4s ease'}}/>
         </div>
 
         {!result&&!loading&&<>
@@ -1178,8 +1178,8 @@ function HourAssistantModal({profile,onResult,onClose}){
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {q.opts.map(o=>{
               const selected=answers[q.key]===o.v;
-              return <button key={o.v} onClick={()=>pick(q.key,o.v)} style={{padding:'14px 16px',borderRadius:14,border:selected?'2px solid #B8943F':'1.5px solid #E5E7EB',background:selected?'#FFF8EB':'#fff',cursor:'pointer',textAlign:'left',transition:'all .2s',transform:selected?'scale(1.02)':'none'}}>
-                <div style={{fontSize:14,fontWeight:600,color:selected?'#B8943F':'#374151'}}>{o.l}</div>
+              return <button key={o.v} onClick={()=>pick(q.key,o.v)} style={{padding:'14px 16px',borderRadius:14,border:selected?'2px solid #B86505':'1.5px solid #E5E7EB',background:selected?'#FFF8EB':'#fff',cursor:'pointer',textAlign:'left',transition:'all .2s',transform:selected?'scale(1.02)':'none'}}>
+                <div style={{fontSize:14,fontWeight:600,color:selected?'#B86505':'#374151'}}>{o.l}</div>
                 {o.d&&<div style={{fontSize:11,color:'#6B7280',marginTop:2}}>{o.d}</div>}
               </button>;
             })}
@@ -1188,7 +1188,7 @@ function HourAssistantModal({profile,onResult,onClose}){
           {step>0&&<button onClick={()=>setStep(step-1)} style={{marginTop:12,background:'none',border:'none',fontSize:13,color:'#6B7280',cursor:'pointer'}}>← 上一题</button>}
           {/* Steps indicator */}
           <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:16}}>
-            {questions.map((_,i)=><div key={i} style={{width:i===step?20:8,height:8,borderRadius:4,background:i<step?'#B8943F':i===step?'#C9A855':'#E5E7EB',transition:'all .3s'}}/>)}
+            {questions.map((_,i)=><div key={i} style={{width:i===step?20:8,height:8,borderRadius:4,background:i<step?'#B86505':i===step?'#D08609':'#E5E7EB',transition:'all .3s'}}/>)}
           </div>
         </>}
 
@@ -1196,10 +1196,10 @@ function HourAssistantModal({profile,onResult,onClose}){
         {loading&&<div style={{textAlign:'center',padding:'40px 20px'}}>
           <div style={{width:60,height:60,margin:'0 auto 16px',position:'relative'}}>
             <div style={{position:'absolute',inset:0,borderRadius:'50%',border:'3px solid #FEF3C7'}}/>
-            <div style={{position:'absolute',inset:0,borderRadius:'50%',border:'3px solid transparent',borderTopColor:'#B8943F',animation:'spin 1s linear infinite'}}/>
+            <div style={{position:'absolute',inset:0,borderRadius:'50%',border:'3px solid transparent',borderTopColor:'#B86505',animation:'spin 1s linear infinite'}}/>
             <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>🔮</div>
           </div>
-          <div style={{fontSize:15,fontWeight:600,color:'#B8943F'}}>AI正在分析你的时辰…</div>
+          <div style={{fontSize:15,fontWeight:600,color:'#B86505'}}>AI正在分析你的时辰…</div>
           <div style={{fontSize:12,color:'#6B7280',marginTop:6}}>综合五维特征匹配12个候选时辰</div>
         </div>}
 
@@ -1212,27 +1212,27 @@ function HourAssistantModal({profile,onResult,onClose}){
           {/* Top 3 results */}
           <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
             {result.ranking.map((r,i)=>(
-              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:14,border:i===0?'2px solid #B8943F':'1.5px solid #E5E7EB',background:i===0?'#FFF8EB':'#fff'}}>
-                <div style={{width:36,height:36,borderRadius:18,background:i===0?'#B8943F':i===1?'#C9A855':'#E5E7EB',display:'flex',alignItems:'center',justifyContent:'center',color:i<2?'#fff':'#666',fontSize:14,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:14,border:i===0?'2px solid #B86505':'1.5px solid #E5E7EB',background:i===0?'#FFF8EB':'#fff'}}>
+                <div style={{width:36,height:36,borderRadius:18,background:i===0?'#B86505':i===1?'#D08609':'#E5E7EB',display:'flex',alignItems:'center',justifyContent:'center',color:i<2?'#fff':'#666',fontSize:14,fontWeight:700,flexShrink:0}}>{i+1}</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:700,color:i===0?'#B8943F':'#374151'}}>{r.label}（{r.range}点）</div>
+                  <div style={{fontSize:14,fontWeight:700,color:i===0?'#B86505':'#374151'}}>{r.label}（{r.range}点）</div>
                   <div style={{fontSize:11,color:'#6B7280',marginTop:2}}>{r.reason}</div>
                 </div>
-                <div style={{fontSize:14,fontWeight:700,color:i===0?'#B8943F':'#6B7280'}}>{r.score}分</div>
+                <div style={{fontSize:14,fontWeight:700,color:i===0?'#B86505':'#6B7280'}}>{r.score}分</div>
               </div>
             ))}
           </div>
           <div style={{fontSize:11,color:'#6B7280',textAlign:'center',marginBottom:16}}>置信度 {result.confidence}% · 基于排行+性格+转折+体型+精力五维匹配</div>
           {/* Actions */}
           <div style={{display:'flex',gap:10}}>
-            <button onClick={()=>{onResult(result.bestHour);onClose()}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#B8943F,#B45309)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>✓ 采用{result.bestLabel}</button>
+            <button onClick={()=>{onResult(result.bestHour);onClose()}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#B86505,#B45309)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>✓ 采用{result.bestLabel}</button>
             <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'14px 20px',borderRadius:14,border:'1.5px solid #E5E7EB',background:T.card,fontSize:14,color:'#6B7280',cursor:'pointer'}}>重测</button>
           </div>
         </div>}
 
         {result&&result.error&&<div style={{textAlign:'center',padding:'30px 20px'}}>
-          <div style={{fontSize:14,color:'#D07878',marginBottom:12}}>⚠️ {result.error}</div>
-          <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'10px 20px',borderRadius:10,border:'none',background:'#D07878',color:'#fff',fontSize:13,cursor:'pointer'}}>重试</button>
+          <div style={{fontSize:14,color:'#CB3A3A',marginBottom:12}}>⚠️ {result.error}</div>
+          <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'10px 20px',borderRadius:10,border:'none',background:'#CB3A3A',color:'#fff',fontSize:13,cursor:'pointer'}}>重试</button>
         </div>}
       </div>
     </div>
@@ -1410,7 +1410,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
   const SECTION_ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
-  const SECTION_COLORS=['#9185C2','#DB2777','#0D9488','#B8943F','#2563EB','#C45A5A','#4A9E7A','#7B6FB5','#E11D48','#0891B2'];
+  const SECTION_COLORS=['#764ED1','#DB2777','#0D9488','#B86505','#2563EB','#BB2020','#047D57','#6931C9','#E11D48','#0891B2'];
   const parseSections=(resp,isStreaming)=>{
     const sections=[];const clean=resp.replace(/<think>[\s\S]*?<\/think>/g,'').trim();const lines=clean.split('\n');let cur=null;
     lines.forEach(line=>{
@@ -1444,7 +1444,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     setChatLoading(false);
     setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),300);
   };
-  const P={bg:'#F8F5FF',accent:'#9185C2',accentLight:'#E8E4F0',accentDark:'#7B6FB5',headerGrad:'linear-gradient(135deg,#9185C2,#A79BD0,#C4B5FD)'};
+  const P={bg:'#F8F5FF',accent:'#764ED1',accentLight:'#DDD6FE',accentDark:'#6931C9',headerGrad:'linear-gradient(135deg,#764ED1,#8E76D5,#C4B5FD)'};
 
   return(<div ref={scrollRef} onScroll={e=>{setScrolledPastModes(e.target.scrollTop>120)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER === */}
@@ -1506,7 +1506,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             <div style={{fontSize:18}}>{m.icon}</div>
             <div style={{fontSize:10,fontWeight:600,color:mode===m.id?m.c:T.text,marginTop:3}}>{m.label.substring(0,4)}</div>
             {/* Status dot */}
-            {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:8,height:8,borderRadius:4,background:isLoading?'#C9A855':T.success}}/>}
+            {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:8,height:8,borderRadius:4,background:isLoading?'#D08609':T.success}}/>}
           </button>);
         })}
       </div>
@@ -1516,21 +1516,21 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         const needsHour=['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode);
         if(!needsHour)return null;
         return(<div className="anim-in" style={{background:'linear-gradient(135deg,#FFF8EB,#FEF3C7)',border:'1.5px solid #FCD34D',borderRadius:18,padding:16,marginBottom:14}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#B8943F',marginBottom:4}}>⏰ 补充出生时辰</div>
+          <div style={{fontSize:15,fontWeight:700,color:'#B86505',marginBottom:4}}>⏰ 补充出生时辰</div>
           <div style={{fontSize:12,color:'#92400E',lineHeight:1.6,marginBottom:12}}>{MODE_FULL[mode]}需要时辰信息来提高精度。你可以：</div>
 
           {/* Direct input */}
           <div style={{background:T.card,borderRadius:12,padding:12,marginBottom:8}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#B8943F',marginBottom:6}}>📋 知道具体时间</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#B86505',marginBottom:6}}>📋 知道具体时间</div>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
-              <input type="number" placeholder="0-23时" min="0" max="23" style={{flex:1,padding:'10px',border:'2px solid #FCD34D',borderRadius:10,fontSize:16,textAlign:'center',fontWeight:700,color:'#B8943F',outline:'none',background:'#FFFDF5'}} onChange={e=>{const h=parseInt(e.target.value);if(h>=0&&h<=23)onUpdateProfile({...profile,hour:h})}}/>
+              <input type="number" placeholder="0-23时" min="0" max="23" style={{flex:1,padding:'10px',border:'2px solid #FCD34D',borderRadius:10,fontSize:16,textAlign:'center',fontWeight:700,color:'#B86505',outline:'none',background:'#FFFDF5'}} onChange={e=>{const h=parseInt(e.target.value);if(h>=0&&h<=23)onUpdateProfile({...profile,hour:h})}}/>
               <div style={{fontSize:11,color:T.textThi}}>24小时制</div>
             </div>
           </div>
 
           {/* Approximate time period */}
           <div style={{background:T.card,borderRadius:12,padding:12,marginBottom:8}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#B8943F',marginBottom:8}}>🌅 选择大致时段</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#B86505',marginBottom:8}}>🌅 选择大致时段</div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
               {[{l:'🌙 凌晨',h:2,t:'0-4时'},{l:'🌅 清晨',h:7,t:'5-8时'},{l:'☀️ 上午',h:10,t:'9-11时'},{l:'🌤 中午',h:12,t:'12-13时'},{l:'🌇 下午',h:15,t:'14-17时'},{l:'🌆 傍晚',h:19,t:'18-20时'}].map(p=>(
                 <button key={p.h} onClick={()=>{onUpdateProfile({...profile,hour:p.h});setHourApprox(true)}} style={{padding:'8px 4px',borderRadius:10,border:'1.5px solid #FCD34D',background:'#FFFDF5',cursor:'pointer',textAlign:'center'}}>
@@ -1544,21 +1544,21 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
           {/* AI Hour Correction */}
           <div style={{background:T.card,borderRadius:12,padding:12,marginBottom:8}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#B8943F',marginBottom:6}}>🔮 AI推算时辰</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#B86505',marginBottom:6}}>🔮 AI推算时辰</div>
             <div style={{fontSize:11,color:'#92400E',marginBottom:8}}>回答5个简单问题，AI帮你推算最可能的出生时辰</div>
-            <button onClick={()=>setShowHourAssistant(true)} style={{width:'100%',padding:'10px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#B8943F,#B45309)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',boxShadow:'0 2px 10px rgba(217,119,6,0.3)'}}>🔮 开始AI测时辰（30秒）</button>
+            <button onClick={()=>setShowHourAssistant(true)} style={{width:'100%',padding:'10px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#B86505,#B45309)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',boxShadow:'0 2px 10px rgba(217,119,6,0.3)'}}>🔮 开始AI测时辰（30秒）</button>
           </div>
 
           {/* Skip */}
-          <button onClick={()=>setHourSkipped(true)} style={{width:'100%',padding:'10px',borderRadius:10,border:'none',background:'transparent',fontSize:12,color:'#B8943F',cursor:'pointer',opacity:.6}}>❓ 不知道时辰，继续使用（精度会降低）</button>
+          <button onClick={()=>setHourSkipped(true)} style={{width:'100%',padding:'10px',borderRadius:10,border:'none',background:'transparent',fontSize:12,color:'#B86505',cursor:'pointer',opacity:.6}}>❓ 不知道时辰，继续使用（精度会降低）</button>
         </div>);
       })()}
 
       {/* Hour skipped warning banner */}
       {profile.hour===-1&&hourSkipped&&!ms.loading&&!ms.result&&['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode)&&
-        <div style={{background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,padding:'8px 12px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,color:'#B8943F'}}>
+        <div style={{background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,padding:'8px 12px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,color:'#B86505'}}>
           <span>⚠️ 未填时辰，结果可能不够精确</span>
-          <button onClick={()=>setHourSkipped(false)} style={{background:'#B8943F',border:'none',borderRadius:8,padding:'4px 10px',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>补充</button>
+          <button onClick={()=>setHourSkipped(false)} style={{background:'#B86505',border:'none',borderRadius:8,padding:'4px 10px',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>补充</button>
         </div>
       }
 
@@ -1574,31 +1574,31 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>}
 
         {/* Meihua — question first, then hexagram */}
-        {mode==='meihua'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #B8943F30',borderRadius:16,padding:14,marginBottom:14}}>
-          <div style={{fontSize:14,fontWeight:700,color:'#B8943F',marginBottom:4}}>❀ 梅花易数 · 一事一占</div>
+        {mode==='meihua'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #B8650530',borderRadius:16,padding:14,marginBottom:14}}>
+          <div style={{fontSize:14,fontWeight:700,color:'#B86505',marginBottom:4}}>❀ 梅花易数 · 一事一占</div>
           <div style={{fontSize:11,color:'#92400E',lineHeight:1.5,marginBottom:10}}>心中想着一件事，输入问题后起卦</div>
           {/* Question input */}
           <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="例：这次考试能通过吗？" style={{width:'100%',padding:'10px 12px',border:'2px solid #FCD34D',borderRadius:10,fontSize:13,background:T.card,outline:'none',marginBottom:10,boxSizing:'border-box'}}/>
           {/* Example questions */}
           <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
             {['这件事能成吗','和ta有缘分吗','这个项目值得投资吗','近期运气如何'].map(ex=>(
-              <button key={ex} onClick={()=>setMS(mode,{q:ex})} style={{padding:'3px 8px',borderRadius:6,border:`1px solid ${ms.q===ex?'#B8943F':'#FCD34D'}`,background:ms.q===ex?'#FEF3C7':'#fff',color:'#92400E',fontSize:10,cursor:'pointer'}}>{ex}</button>
+              <button key={ex} onClick={()=>setMS(mode,{q:ex})} style={{padding:'3px 8px',borderRadius:6,border:`1px solid ${ms.q===ex?'#B86505':'#FCD34D'}`,background:ms.q===ex?'#FEF3C7':'#fff',color:'#92400E',fontSize:10,cursor:'pointer'}}>{ex}</button>
             ))}
           </div>
           {/* Hexagram numbers */}
           <div style={{display:'flex',gap:10,alignItems:'stretch'}}>
-            <button onClick={()=>{setMhNum1(String(Math.floor(Math.random()*100)+1));setMhNum2(String(Math.floor(Math.random()*100)+1))}} style={{width:50,borderRadius:10,border:'2px dashed #B8943F40',background:'rgba(255,255,255,0.7)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,flexShrink:0}}>
-              <div style={{fontSize:20}}>🎲</div><div style={{fontSize:9,color:'#B8943F',fontWeight:600}}>掷骰</div>
+            <button onClick={()=>{setMhNum1(String(Math.floor(Math.random()*100)+1));setMhNum2(String(Math.floor(Math.random()*100)+1))}} style={{width:50,borderRadius:10,border:'2px dashed #B8650540',background:'rgba(255,255,255,0.7)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,flexShrink:0}}>
+              <div style={{fontSize:20}}>🎲</div><div style={{fontSize:9,color:'#B86505',fontWeight:600}}>掷骰</div>
             </button>
             <div style={{flex:1,display:'flex',gap:8}}>
               {[['上卦',mhNum1,setMhNum1],['下卦',mhNum2,setMhNum2]].map(([l,v,s])=>(
                 <div key={l} style={{flex:1}}>
-                  <div style={{fontSize:10,color:'#B8943F',marginBottom:2,fontWeight:600}}>{l}</div>
-                  <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'7px 4px',border:'1.5px solid #FCD34D',borderRadius:8,fontSize:14,textAlign:'center',background:T.card,outline:'none',fontWeight:700,color:'#B8943F'}}/>
+                  <div style={{fontSize:10,color:'#B86505',marginBottom:2,fontWeight:600}}>{l}</div>
+                  <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'7px 4px',border:'1.5px solid #FCD34D',borderRadius:8,fontSize:14,textAlign:'center',background:T.card,outline:'none',fontWeight:700,color:'#B86505'}}/>
                 </div>
               ))}
             </div>
-            {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{alignSelf:'center',background:'none',border:'none',fontSize:16,color:'#B8943F',cursor:'pointer',opacity:.4}}>✕</button>}
+            {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{alignSelf:'center',background:'none',border:'none',fontSize:16,color:'#B86505',cursor:'pointer',opacity:.4}}>✕</button>}
           </div>
         </div>}
 
@@ -1664,10 +1664,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       </div>}
 
       {/* Error */}
-      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F0EEF5':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #D5D0E8':'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14,position:'relative'}}>
-        <button onClick={()=>setMS(mode,{error:null})} style={{position:'absolute',top:8,right:8,background:'none',border:'none',fontSize:16,cursor:'pointer',opacity:.4,color:ms.error.startsWith('🔮')?'#6D28D9':'#D07878'}}>✕</button>
-        <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#D07878',lineHeight:1.8,whiteSpace:'pre-line',paddingRight:20}}>{ms.error}</div>
-        {!ms.error.startsWith('🔮')&&<button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#D07878',color:'#fff',fontSize:12,cursor:'pointer',marginTop:8}}>🔄 重试</button>}
+      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #C4B5FD':'1px solid #FECACA',borderRadius:14,padding:16,marginBottom:14,position:'relative'}}>
+        <button onClick={()=>setMS(mode,{error:null})} style={{position:'absolute',top:8,right:8,background:'none',border:'none',fontSize:16,cursor:'pointer',opacity:.4,color:ms.error.startsWith('🔮')?'#6D28D9':'#CB3A3A'}}>✕</button>
+        <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#CB3A3A',lineHeight:1.8,whiteSpace:'pre-line',paddingRight:20}}>{ms.error}</div>
+        {!ms.error.startsWith('🔮')&&<button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#CB3A3A',color:'#fff',fontSize:12,cursor:'pointer',marginTop:8}}>🔄 重试</button>}
       </div>}
 
       {/* Results: Header + Cards + Chat */}
@@ -1730,7 +1730,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
                 <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
-                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,response:ms.result.response?.substring(0,200),time:new Date().toLocaleString()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#B8943F':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
+                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,response:ms.result.response?.substring(0,200),time:new Date().toLocaleString()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#B86505':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
                 <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
               </div>}
               {/* Feedback */}
@@ -1862,7 +1862,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 // ===== DISCOVER =====
 function FortuneWheel({profile,goTo}){
   const tg=profile.gender==='male'?'female':'male';
-  const COLORS=['#9185C2','#C47A9E','#C9A855','#10B981','#6B95CF','#F43F5E','#0D9488','#B8943F'];
+  const COLORS=['#764ED1','#C93D82','#D08609','#10B981','#326FD1','#F43F5E','#0D9488','#B86505'];
   const [pool,setPool]=useState([]);
   const [spinning,setSpinning]=useState(false);
   const [result,setResult]=useState(null);
@@ -1924,7 +1924,7 @@ function FortuneWheel({profile,goTo}){
         </svg>
         {/* Golden pointer */}
         <div style={{position:'absolute',top:2,left:'50%',transform:'translateX(-50%)',zIndex:5}}>
-          <svg width={20} height={24}><polygon points="10,0 3,20 17,20" fill="#C9A855"/><polygon points="10,2 5,18 15,18" fill="#D4B874"/></svg>
+          <svg width={20} height={24}><polygon points="10,0 3,20 17,20" fill="#D08609"/><polygon points="10,2 5,18 15,18" fill="#D5A21F"/></svg>
         </div>
         {/* Wheel */}
         <svg width={sz} height={sz} style={{transition:spinning?'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)':'none',transform:`rotate(${angle}deg)`}}>
@@ -1937,7 +1937,7 @@ function FortuneWheel({profile,goTo}){
             const tx=cx+(r*0.58)*Math.cos(mid),ty=cy+(r*0.58)*Math.sin(mid);
             const textAngle=(i+0.5)*360/n;
             const emoji=u.gender==='female'?'👩':'👨';
-            const sectorColors=['#4C1D95','#6D28D9','#5B21B6','#7B6FB5','#4C1D95','#6D28D9','#5B21B6','#7B6FB5'];
+            const sectorColors=['#4C1D95','#6D28D9','#5B21B6','#6931C9','#4C1D95','#6D28D9','#5B21B6','#6931C9'];
             return(<g key={i}>
               <path d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`} fill={sectorColors[i%sectorColors.length]} stroke="rgba(196,181,253,0.2)" strokeWidth={1}/>
               <text x={tx} y={ty-4} fill="#fff" fontSize={15} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty-4})`}>{emoji}</text>
@@ -1948,12 +1948,12 @@ function FortuneWheel({profile,goTo}){
           <circle cx={cx} cy={cy} r={30} fill="url(#centerGrad)"/>
           <circle cx={cx} cy={cy} r={28} fill="none" stroke="rgba(251,191,36,0.3)" strokeWidth={1}/>
           <defs><radialGradient id="centerGrad"><stop offset="0%" stopColor="#2D1B69"/><stop offset="100%" stopColor="#1E1146"/></radialGradient></defs>
-          <text x={cx} y={cy-5} fill="#D4B874" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">命中</text>
-          <text x={cx} y={cy+7} fill="#D4B874" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">注定</text>
+          <text x={cx} y={cy-5} fill="#D5A21F" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">命中</text>
+          <text x={cx} y={cy+7} fill="#D5A21F" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">注定</text>
         </svg>
       </div>
       <button onClick={spin} disabled={spinning||spinsLeft<=0} style={{width:'100%',padding:'14px',borderRadius:28,border:'none',marginTop:14,fontSize:15,fontWeight:700,cursor:spinning||spinsLeft<=0?'default':'pointer',letterSpacing:1,
-        background:spinning?'rgba(255,255,255,0.08)':spinsLeft<=0?'rgba(255,255,255,0.05)':'linear-gradient(135deg,#C9A855,#B8943F)',
+        background:spinning?'rgba(255,255,255,0.08)':spinsLeft<=0?'rgba(255,255,255,0.05)':'linear-gradient(135deg,#D08609,#B86505)',
         color:spinning||spinsLeft<=0?'rgba(196,181,253,0.4)':'#fff',boxShadow:spinning||spinsLeft<=0?'none':'0 4px 20px rgba(245,158,11,0.3)'}}>
         {spinning?'✦ 命运之轮转动中 ✦':spinsLeft<=0?'今日感应已用完（每天2次）':`✦ 感应命运（${spinsLeft}次）`}
       </button>
@@ -1970,12 +1970,12 @@ function FortuneWheel({profile,goTo}){
           </div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10,marginTop:12,padding:'10px 14px',background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.15)',borderRadius:12}}>
-          <div style={{fontSize:24,fontWeight:800,color:'#D4B874'}}>{result.score}%</div>
+          <div style={{fontSize:24,fontWeight:800,color:'#D5A21F'}}>{result.score}%</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#D4B874'}}>{result.score>=80?'天作之合 💕':result.score>=65?'有缘有份 ✨':'潜力之缘 🌱'}</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#D5A21F'}}>{result.score>=80?'天作之合 💕':result.score>=65?'有缘有份 ✨':'潜力之缘 🌱'}</div>
             <div style={{fontSize:10,color:'rgba(196,181,253,0.5)'}}>{result.score>=80?'命中注定的缘分':result.score>=65?'值得深入了解':'用心经营会绽放'}</div>
           </div>
-          <button onClick={()=>goTo(S.AI,'hehun')} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#C9A855,#B8943F)',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>合婚 →</button>
+          <button onClick={()=>goTo(S.AI,'hehun')} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#D08609,#B86505)',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>合婚 →</button>
         </div>
       </div>}
       </>}
@@ -1986,11 +1986,11 @@ function FortuneWheel({profile,goTo}){
 // ===== MOOD TRACKER (心情打卡) =====
 function MoodTracker({profile}){
   const MOODS=[
-    {emoji:'😄',label:'开心',color:'#5BAE7C',msg:'今天心情真好！保持这份快乐吧～'},
-    {emoji:'😊',label:'不错',color:'#6B95CF',msg:'状态不错哦，继续保持！'},
-    {emoji:'😐',label:'一般',color:'#C9A855',msg:'平淡也是一种幸福，好好照顾自己'},
-    {emoji:'😔',label:'低落',color:'#9185C2',msg:'每个人都有低谷的时候，明天会更好的 💙'},
-    {emoji:'😢',label:'难过',color:'#D07878',msg:'抱抱你。难过的时候允许自己休息一下，你值得被温柔对待 ❤️'},
+    {emoji:'😄',label:'开心',color:'#1DA750',msg:'今天心情真好！保持这份快乐吧～'},
+    {emoji:'😊',label:'不错',color:'#326FD1',msg:'状态不错哦，继续保持！'},
+    {emoji:'😐',label:'一般',color:'#D08609',msg:'平淡也是一种幸福，好好照顾自己'},
+    {emoji:'😔',label:'低落',color:'#764ED1',msg:'每个人都有低谷的时候，明天会更好的 💙'},
+    {emoji:'😢',label:'难过',color:'#CB3A3A',msg:'抱抱你。难过的时候允许自己休息一下，你值得被温柔对待 ❤️'},
   ];
   const todayKey='yuanhe_mood_'+new Date().toDateString();
   const [todayMood,setTodayMood]=useState(()=>{
@@ -2018,7 +2018,7 @@ function MoodTracker({profile}){
 
   const streak=getStreak();
   return(
-    <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:16,boxShadow:T.shadow,marginBottom:14,border:'1px solid #E8E4F0'}}>
+    <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:16,boxShadow:T.shadow,marginBottom:14,border:'1px solid #DDD6FE'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
         <div style={{fontSize:13,fontWeight:700,color:T.text}}>💭 今天心情如何？</div>
         {streak>1&&<div style={{fontSize:10,color:T.primary,fontWeight:600}}>🔥 连续{streak}天</div>}
@@ -2077,7 +2077,7 @@ function DiscoverScreen({goTo,profile}){
     localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));
   };
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
-  const luckColor=['#C45A5A','#C9A855','#9185C2','#0D9488','#6B7280','#D07878'][dayN%6];
+  const luckColor=['#BB2020','#D08609','#764ED1','#0D9488','#6B7280','#CB3A3A'][dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
     <div style={{padding:'14px 20px 12px'}}>
       <div style={{fontSize:24,fontWeight:800,color:T.text}}>发现</div>
@@ -2105,7 +2105,7 @@ function DiscoverScreen({goTo,profile}){
         )}
       </div>
       {/* Today's luck card */}
-      <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:'1px solid #E8E4F0'}}>
+      <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:'1px solid #DDD6FE'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <div style={{fontSize:13,color:T.textThi}}>📅 今日 {today.getMonth()+1}月{today.getDate()}日</div>
@@ -2113,7 +2113,7 @@ function DiscoverScreen({goTo,profile}){
             <div style={{fontSize:11,color:T.textThi,marginTop:4}}>宜：学习、冥想 · 忌：冲动决策</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
-            <button onClick={()=>goTo(S.AI)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#9185C2,#7B6FB5)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
+            <button onClick={()=>goTo(S.AI)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#764ED1,#6931C9)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
             <button onClick={()=>setShowShare(true)} style={{padding:'6px 18px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:11,cursor:'pointer'}}>📤 分享运势</button>
           </div>
         </div>
@@ -2124,7 +2124,7 @@ function DiscoverScreen({goTo,profile}){
 
       {/* Quick entry cards */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-        {[{icon:'☰',title:'八字排盘',desc:'深度命运分析',c:'#9185C2',m:'bazi'},{icon:'✦',title:'塔罗指引',desc:'今日一牌',c:'#0D9488',m:'tarot'},{icon:'❀',title:'梅花速断',desc:'快速问事吉凶',c:'#B8943F',m:'meihua'},{icon:'💑',title:'合婚测试',desc:'看两人缘分',c:'#DB2777',m:'hehun'}].map((it,i)=>
+        {[{icon:'☰',title:'八字排盘',desc:'深度命运分析',c:'#764ED1',m:'bazi'},{icon:'✦',title:'塔罗指引',desc:'今日一牌',c:'#0D9488',m:'tarot'},{icon:'❀',title:'梅花速断',desc:'快速问事吉凶',c:'#B86505',m:'meihua'},{icon:'💑',title:'合婚测试',desc:'看两人缘分',c:'#DB2777',m:'hehun'}].map((it,i)=>
           <button key={it.m} className="anim-in" onClick={()=>goTo(S.AI,it.m)} style={{animationDelay:i*0.06+'s',background:`linear-gradient(135deg,${it.c}08,${it.c}03)`,borderRadius:16,padding:'18px 14px',border:`1px solid ${it.c}20`,cursor:'pointer',textAlign:'left'}}>
             <div style={{fontSize:24,marginBottom:8}}>{it.icon}</div>
             <div style={{fontSize:14,fontWeight:600,color:it.c}}>{it.title}</div>
@@ -2151,7 +2151,7 @@ function DiscoverScreen({goTo,profile}){
       {posts_.map((post,i)=>(
         <div key={post.id} className="anim-in" style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
           <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-            <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#E8E4F0,#D5D0E8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{post.avatar}</div>
+            <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{post.avatar}</div>
             <div style={{flex:1}}>
               <div style={{fontSize:13,fontWeight:600,color:T.text}}>{post.author}</div>
               <div style={{fontSize:10,color:T.textThi}}>{post.tag} · {post.time}</div>
@@ -2207,7 +2207,7 @@ function PostComposeModal({profile,onPost,onClose}){
           style={{width:'100%',minHeight:120,padding:14,borderRadius:14,border:`1.5px solid ${T.border}`,fontSize:14,lineHeight:1.7,outline:'none',resize:'none',background:T.bg}}/>
         <div style={{display:'flex',justifyContent:'space-between',marginTop:8}}>
           <div style={{fontSize:11,color:T.textThi}}>以 {profile.name||'缘友'} 的身份发布</div>
-          <div style={{fontSize:11,color:text.length>180?'#D07878':T.textThi}}>{text.length}/200</div>
+          <div style={{fontSize:11,color:text.length>180?'#CB3A3A':T.textThi}}>{text.length}/200</div>
         </div>
       </div>
     </div>
@@ -2266,13 +2266,13 @@ function IcebreakerCard({type,data,onAction,done}){
   };
 
   if(type==='topic'){
-    return(<div style={{background:'linear-gradient(135deg,#F0EEF5,#E8E4F0)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #D5D0E8'}}>
+    return(<div style={{background:'linear-gradient(135deg,#F5F3FF,#DDD6FE)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #C4B5FD'}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <span style={{fontSize:14}}>💬</span>
-        <span style={{fontSize:11,fontWeight:600,color:'#7B6FB5'}}>破冰话题</span>
+        <span style={{fontSize:11,fontWeight:600,color:'#6931C9'}}>破冰话题</span>
       </div>
       <div style={{fontSize:14,fontWeight:600,color:'#1F2937',lineHeight:1.6,marginBottom:12}}>{data}</div>
-      {!done&&<button onClick={()=>onAction&&onAction(data)} style={{padding:'8px 20px',borderRadius:20,border:'none',background:'linear-gradient(135deg,#9185C2,#7B6FB5)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>聊这个话题 →</button>}
+      {!done&&<button onClick={()=>onAction&&onAction(data)} style={{padding:'8px 20px',borderRadius:20,border:'none',background:'linear-gradient(135deg,#764ED1,#6931C9)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>聊这个话题 →</button>}
     </div>);
   }
 
@@ -2288,7 +2288,7 @@ function IcebreakerCard({type,data,onAction,done}){
           const isPicked=picked===opt;const isAi=aiPick===opt;
           const match=revealed&&picked===aiPick;
           return <button key={opt} onClick={()=>handlePick(opt)} disabled={!!picked}
-            style={{padding:'8px 14px',borderRadius:12,border:isPicked?'2px solid #DB2777':isAi&&revealed?'2px solid #C9A855':'1.5px solid #FBCFE8',
+            style={{padding:'8px 14px',borderRadius:12,border:isPicked?'2px solid #DB2777':isAi&&revealed?'2px solid #D08609':'1.5px solid #FBCFE8',
               background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#FDE68A,#FCD34D)':isPicked?'#FCE7F3':isAi&&revealed?'#FEF3C7':'#fff',
               fontSize:12,fontWeight:isPicked||isAi?700:500,color:'#1F2937',cursor:picked?'default':'pointer',position:'relative'}}>
             {opt}
@@ -2298,7 +2298,7 @@ function IcebreakerCard({type,data,onAction,done}){
           </button>;
         })}
       </div>
-      {revealed&&<div style={{marginTop:10,fontSize:12,fontWeight:600,color:picked===aiPick?'#4A9E7A':'#B8943F',textAlign:'center'}}>
+      {revealed&&<div style={{marginTop:10,fontSize:12,fontWeight:600,color:picked===aiPick?'#047D57':'#B86505',textAlign:'center'}}>
         {picked===aiPick?'🎉 你们选了一样的！太有默契了':'😄 你们的选择不同，互补也是一种缘分'}
       </div>}
       {picked&&!revealed&&<div style={{marginTop:8,fontSize:11,color:'#DB2777',textAlign:'center'}}>等TA选择中…</div>}
@@ -2309,22 +2309,22 @@ function IcebreakerCard({type,data,onAction,done}){
     return(<div style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #FDE68A'}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <span style={{fontSize:14}}>⚡</span>
-        <span style={{fontSize:11,fontWeight:600,color:'#B8943F'}}>二选一</span>
+        <span style={{fontSize:11,fontWeight:600,color:'#B86505'}}>二选一</span>
       </div>
       <div style={{display:'flex',gap:8}}>
         {[data.a,data.b].map(choice=>{
           const isPicked=picked===choice;const isAi=aiPick===choice;
           return <button key={choice} onClick={()=>handleChoose(choice)} disabled={!!picked}
-            style={{flex:1,padding:'14px 8px',borderRadius:14,border:isPicked?'2px solid #B8943F':'1.5px solid #FDE68A',
+            style={{flex:1,padding:'14px 8px',borderRadius:14,border:isPicked?'2px solid #B86505':'1.5px solid #FDE68A',
               background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#BBF7D0,#86EFAC)':isPicked?'#FEF3C7':'#fff',
               fontSize:14,fontWeight:600,color:'#1F2937',cursor:picked?'default':'pointer',textAlign:'center'}}>
             {choice}
-            {revealed&&isPicked&&<div style={{fontSize:9,color:'#B8943F',marginTop:4}}>你选的</div>}
-            {revealed&&isAi&&!isPicked&&<div style={{fontSize:9,color:'#B8943F',marginTop:4}}>TA选的</div>}
+            {revealed&&isPicked&&<div style={{fontSize:9,color:'#B86505',marginTop:4}}>你选的</div>}
+            {revealed&&isAi&&!isPicked&&<div style={{fontSize:9,color:'#B86505',marginTop:4}}>TA选的</div>}
           </button>;
         })}
       </div>
-      {revealed&&<div style={{marginTop:10,fontSize:12,fontWeight:600,color:picked===aiPick?'#4A9E7A':'#B8943F',textAlign:'center'}}>
+      {revealed&&<div style={{marginTop:10,fontSize:12,fontWeight:600,color:picked===aiPick?'#047D57':'#B86505',textAlign:'center'}}>
         {picked===aiPick?'🎉 英雄所见略同！':'🤝 不同的选择，更多的惊喜'}
       </div>}
     </div>);
@@ -2334,10 +2334,10 @@ function IcebreakerCard({type,data,onAction,done}){
     return(<div style={{background:'linear-gradient(135deg,#ECFDF5,#D1FAE5)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #A7F3D0'}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <span style={{fontSize:14}}>✨</span>
-        <span style={{fontSize:11,fontWeight:600,color:'#4A9E7A'}}>今日缘分任务</span>
+        <span style={{fontSize:11,fontWeight:600,color:'#047D57'}}>今日缘分任务</span>
       </div>
       <div style={{fontSize:14,fontWeight:600,color:'#1F2937',lineHeight:1.6}}>{data}</div>
-      {!done&&<button onClick={()=>onAction&&onAction(data)} style={{marginTop:10,padding:'8px 20px',borderRadius:20,border:'none',background:'linear-gradient(135deg,#10B981,#4A9E7A)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>完成任务 ✓</button>}
+      {!done&&<button onClick={()=>onAction&&onAction(data)} style={{marginTop:10,padding:'8px 20px',borderRadius:20,border:'none',background:'linear-gradient(135deg,#10B981,#047D57)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>完成任务 ✓</button>}
     </div>);
   }
   return null;
@@ -2523,16 +2523,16 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:T.card,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
         <button onClick={()=>{ChatStore.markRead(activeConv.id);refreshConvs();setActiveId(null);setSearchMode(false)}} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
         <div onClick={()=>setShowProfile(true)} style={{display:'flex',alignItems:'center',gap:10,flex:1,cursor:'pointer'}}>
-          <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#E8E4F0,#D5D0E8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,position:'relative',flexShrink:0}}>
+          <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,position:'relative',flexShrink:0}}>
             {activeConv.user.gender==='female'?'👩':'👨'}
-            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:isOnline?'#5BAE7C':'#D1D5DB',border:'2px solid #fff'}}/>
+            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:isOnline?'#1DA750':'#D1D5DB',border:'2px solid #fff'}}/>
           </div>
           <div>
             <div style={{fontSize:15,fontWeight:700,color:T.text}}>{activeConv.user.name}</div>
-            <div style={{fontSize:11,color:typing?T.primary:isOnline?'#5BAE7C':T.textThi}}>{typing?'正在输入…':getLastOnlineText(activeConv.user)} · {activeConv.user.sign}</div>
+            <div style={{fontSize:11,color:typing?T.primary:isOnline?'#1DA750':T.textThi}}>{typing?'正在输入…':getLastOnlineText(activeConv.user)} · {activeConv.user.sign}</div>
           </div>
         </div>
-        <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:searchMode?'#F0EEF5':T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.primary:T.textThi}}>🔍</button>
+        <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:searchMode?'#F5F3FF':T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.primary:T.textThi}}>🔍</button>
         <button onClick={()=>setShowReport(true)} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:T.textThi}}>⋯</button>
       </div>
       {/* Search bar */}
@@ -2555,7 +2555,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
             <div style={{maxWidth:'75%'}}>
               <div onClick={()=>{if(msg.role==='user'&&!msg.recalled){const now=Date.now();const msgTime=msg.ts||0;if(now-msgTime<120000){if(confirm('撤回这条消息？')){ChatStore.recallMessage(activeConv.id,msg.id);refreshConvs()}}else{navigator.clipboard?.writeText(msg.text);showToast('已复制')}}}}
                 style={{padding:msg.recalled?'6px 14px':msg.image?'4px':'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
-                background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.primary},#7B6FB5)`:'#fff',
+                background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.primary},#6931C9)`:'#fff',
                 color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:13,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
                 boxShadow:msg.recalled?'none':msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)',overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
                 {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:12,display:'block'}}/>:msg.text}
@@ -2595,7 +2595,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       </div>}
       {/* Input bar */}
       <div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
-        <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showQuick?'#F0EEF5':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.primary:T.textThi}}>{showQuick?'✕':'+'}</button>
+        <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showQuick?'#F5F3FF':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.primary:T.textThi}}>{showQuick?'✕':'+'}</button>
         <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showEmoji?'#FEF3C7':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
         <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
         <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
@@ -2605,7 +2605,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}/>
         <button onClick={sendMsg} disabled={!chatInput.trim()||sending}
           style={{width:34,height:34,borderRadius:17,border:'none',
-            background:(!chatInput.trim()||sending)?T.border:`linear-gradient(135deg,${T.primary},#7B6FB5)`,
+            background:(!chatInput.trim()||sending)?T.border:`linear-gradient(135deg,${T.primary},#6931C9)`,
             color:'#fff',fontSize:14,cursor:(!chatInput.trim()||sending)?'default':'pointer',
             flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
             boxShadow:(!chatInput.trim()||sending)?'none':'0 2px 8px rgba(139,92,246,0.3)'}}>↑</button>
@@ -2646,10 +2646,10 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         const timeAgo=conv.lastTime?(()=>{const ms=Date.now()-new Date(conv.lastTime).getTime();const min=Math.floor(ms/60000);if(min<1)return'刚刚';if(min<60)return min+'分钟前';const hr=Math.floor(min/60);if(hr<24)return hr+'小时前';return Math.floor(hr/24)+'天前'})():'';
         return(
         <div key={conv.id} onClick={()=>setActiveId(conv.id)} style={{background:T.card,borderRadius:14,padding:'12px 14px',boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
-          <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#E8E4F0,#D5D0E8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
+          <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
             {conv.user.gender==='female'?'👩':'👨'}
-            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:convOnline?'#5BAE7C':'#D1D5DB',border:`2px solid ${T.card}`}}/>
-            {conv.unread>0&&<div style={{position:'absolute',top:-2,right:-2,minWidth:16,height:16,borderRadius:8,background:'#D07878',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',border:`2px solid ${T.card}`}}>{conv.unread}</div>}
+            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:convOnline?'#1DA750':'#D1D5DB',border:`2px solid ${T.card}`}}/>
+            {conv.unread>0&&<div style={{position:'absolute',top:-2,right:-2,minWidth:16,height:16,borderRadius:8,background:'#CB3A3A',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',border:`2px solid ${T.card}`}}>{conv.unread}</div>}
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -2673,9 +2673,9 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         const msgCount=(conv.messages||[]).length;
         return(
         <div key={conv.id} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
-          <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#E8E4F0,#D5D0E8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
+          <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
             {conv.user.gender==='female'?'👩':'👨'}
-            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:convOnline?'#5BAE7C':'#D1D5DB',border:'2px solid #fff'}}/>
+            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:convOnline?'#1DA750':'#D1D5DB',border:'2px solid #fff'}}/>
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:14,fontWeight:600,color:T.text}}>{conv.user.name}</div>
@@ -2811,19 +2811,19 @@ function PrivacySettingsModal({onClose}){
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>信息展示级别</div>
         <div style={{fontSize:11,color:T.textThi,marginBottom:12}}>控制其他用户能看到你的哪些信息</div>
         {levels.map(l=>(
-          <button key={l.id} onClick={()=>setLevel(l.id)} style={{width:'100%',padding:'14px',borderRadius:14,border:level===l.id?'2px solid #9185C2':`1.5px solid ${T.border}`,background:level===l.id?'#F0EEF5':'#fff',marginBottom:8,cursor:'pointer',textAlign:'left'}}>
+          <button key={l.id} onClick={()=>setLevel(l.id)} style={{width:'100%',padding:'14px',borderRadius:14,border:level===l.id?'2px solid #764ED1':`1.5px solid ${T.border}`,background:level===l.id?'#F5F3FF':'#fff',marginBottom:8,cursor:'pointer',textAlign:'left'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:20}}>{l.icon}</span>
               <div style={{flex:1}}>
-                <div style={{fontSize:14,fontWeight:600,color:level===l.id?'#9185C2':T.text}}>{l.name}</div>
+                <div style={{fontSize:14,fontWeight:600,color:level===l.id?'#764ED1':T.text}}>{l.name}</div>
                 <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{l.desc}</div>
               </div>
-              <div style={{width:20,height:20,borderRadius:10,border:level===l.id?'none':'2px solid #D1D5DB',background:level===l.id?'#9185C2':'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:20,height:20,borderRadius:10,border:level===l.id?'none':'2px solid #D1D5DB',background:level===l.id?'#764ED1':'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 {level===l.id&&<div style={{width:8,height:8,borderRadius:4,background:'#fff'}}/>}
               </div>
             </div>
             <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:8}}>
-              {l.items.map(it=><span key={it} style={{padding:'2px 8px',borderRadius:6,background:level===l.id?'#E8E4F0':'#F3F4F6',fontSize:10,color:level===l.id?'#7B6FB5':'#6B7280'}}>{it}</span>)}
+              {l.items.map(it=><span key={it} style={{padding:'2px 8px',borderRadius:6,background:level===l.id?'#DDD6FE':'#F3F4F6',fontSize:10,color:level===l.id?'#6931C9':'#6B7280'}}>{it}</span>)}
             </div>
           </button>
         ))}
@@ -2831,18 +2831,18 @@ function PrivacySettingsModal({onClose}){
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:16,marginBottom:8}}>匹配分数显示</div>
         <div style={{display:'flex',gap:8,marginBottom:16}}>
           {[{id:'grade',l:'只显示等级'},{id:'percent',l:'显示百分比'},{id:'hide',l:'不显示'}].map(o=>
-            <button key={o.id} onClick={()=>setScorePref(o.id)} style={{flex:1,padding:'10px',borderRadius:10,border:scorePref===o.id?'2px solid #9185C2':`1.5px solid ${T.border}`,background:scorePref===o.id?'#F0EEF5':'#fff',fontSize:12,fontWeight:scorePref===o.id?600:400,color:scorePref===o.id?'#9185C2':T.textSec,cursor:'pointer'}}>{o.l}</button>
+            <button key={o.id} onClick={()=>setScorePref(o.id)} style={{flex:1,padding:'10px',borderRadius:10,border:scorePref===o.id?'2px solid #764ED1':`1.5px solid ${T.border}`,background:scorePref===o.id?'#F5F3FF':'#fff',fontSize:12,fontWeight:scorePref===o.id?600:400,color:scorePref===o.id?'#764ED1':T.textSec,cursor:'pointer'}}>{o.l}</button>
           )}
         </div>
 
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>距离显示</div>
         <div style={{display:'flex',gap:8,marginBottom:20}}>
           {[{id:'fuzzy',l:'模糊(<5km)'},{id:'precise',l:'较精确(1.2km)'},{id:'city',l:'只显示同城'},{id:'hide',l:'不显示'}].map(o=>
-            <button key={o.id} onClick={()=>setDistPref(o.id)} style={{flex:1,padding:'8px 4px',borderRadius:10,border:distPref===o.id?'2px solid #9185C2':`1.5px solid ${T.border}`,background:distPref===o.id?'#F0EEF5':'#fff',fontSize:10,fontWeight:distPref===o.id?600:400,color:distPref===o.id?'#9185C2':T.textSec,cursor:'pointer'}}>{o.l}</button>
+            <button key={o.id} onClick={()=>setDistPref(o.id)} style={{flex:1,padding:'8px 4px',borderRadius:10,border:distPref===o.id?'2px solid #764ED1':`1.5px solid ${T.border}`,background:distPref===o.id?'#F5F3FF':'#fff',fontSize:10,fontWeight:distPref===o.id?600:400,color:distPref===o.id?'#764ED1':T.textSec,cursor:'pointer'}}>{o.l}</button>
           )}
         </div>
 
-        <button onClick={save} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#9185C2,#7B6FB5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存设置</button>
+        <button onClick={save} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#764ED1,#6931C9)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存设置</button>
       </div>
     </div>
   );
@@ -2866,7 +2866,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   {/* Profile card */}
   <div style={{margin:'12px 16px',background:T.card,borderRadius:18,padding:'16px 18px',boxShadow:T.shadow}}>
     <div onClick={()=>setShowEditProfile(true)} style={{display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
-      <div style={{width:52,height:52,borderRadius:26,background:'linear-gradient(135deg,#E8E4F0,#D5D0E8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>{profile.gender==='female'?'👩':'👨'}</div>
+      <div style={{width:52,height:52,borderRadius:26,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>{profile.gender==='female'?'👩':'👨'}</div>
       <div style={{flex:1}}>
         <div style={{color:T.text,fontSize:17,fontWeight:700}}>{profile.name||'缘友'}</div>
         <div style={{color:T.textSec,fontSize:12,marginTop:2}}>{profile.bio||''}{profile.city?' · '+profile.city:''}</div>
@@ -2885,7 +2885,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     </div>
   </div>
 
-  {profile.hour===-1&&<div style={{margin:'12px 16px 0',padding:'10px 14px',background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,fontSize:12,color:'#B8943F'}}>⚠️ 未填写出生时辰，八字排盘精度会降低。<button onClick={onEdit} style={{background:'none',border:'none',color:'#B8943F',fontWeight:700,cursor:'pointer',textDecoration:'underline',fontSize:12}}>补充时辰</button></div>}
+  {profile.hour===-1&&<div style={{margin:'12px 16px 0',padding:'10px 14px',background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,fontSize:12,color:'#B86505'}}>⚠️ 未填写出生时辰，八字排盘精度会降低。<button onClick={onEdit} style={{background:'none',border:'none',color:'#B86505',fontWeight:700,cursor:'pointer',textDecoration:'underline',fontSize:12}}>补充时辰</button></div>}
 
   <div style={{padding:'0 16px'}}>
     {/* Function group */}
@@ -2921,7 +2921,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       history.forEach(h=>{modeCounts[h.mode]=(modeCounts[h.mode]||0)+1});
       const sorted=Object.entries(modeCounts).sort((a,b)=>b[1]-a[1]);
       const maxCount=sorted[0]?sorted[0][1]:1;
-      const modeColors={bazi:'#9185C2',astrology:'#6B95CF',tarot:'#0D9488',meihua:'#B8943F',hehun:'#C47A9E',vedic:'#C9A855',synastry:'#8A8DC2'};
+      const modeColors={bazi:'#764ED1',astrology:'#326FD1',tarot:'#0D9488',meihua:'#B86505',hehun:'#C93D82',vedic:'#D08609',synastry:'#5457CD'};
       return<div style={{marginTop:16}}>
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>📊 占卜偏好</div>
         <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
@@ -2947,7 +2947,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
           {allConvs.slice(0,6).map((conv,i)=>(
             <div key={conv.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:i<Math.min(allConvs.length,6)-1?`1px solid ${T.border}`:'none'}}>
-              <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#E8E4F0,#D5D0E8)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{conv.user.gender==='female'?'👩':'👨'}</div>
+              <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{conv.user.gender==='female'?'👩':'👨'}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:600,color:T.text}}>{conv.user.name}</div>
                 <div style={{fontSize:10,color:T.textThi,marginTop:1}}>{conv.user.sign} · {(conv.messages||[]).length}条消息</div>
@@ -3017,7 +3017,7 @@ function ProfileEditModal({profile,onSave,onClose}){
         <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>个性签名</label><input value={f.bio} onChange={e=>sF({...f,bio:e.target.value})} placeholder="一句话介绍自己" maxLength={30} style={is}/><div style={{fontSize:10,color:T.textThi,textAlign:'right',marginTop:4}}>{f.bio.length}/30</div></div>
         <div style={{marginBottom:20}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>所在城市</label><input value={f.city} onChange={e=>sF({...f,city:e.target.value})} placeholder="如：北京" maxLength={10} style={is}/></div>
         <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:'#F8FAFC',borderRadius:10}}>修改生辰信息请前往「修改生辰」</div>
-        <button onClick={()=>{const updated={...profile,name:f.name||'缘友',bio:f.bio,city:f.city};localStorage.setItem('yuanhe_profile',JSON.stringify(updated));onSave(updated)}} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#9185C2,#7B6FB5)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存</button>
+        <button onClick={()=>{const updated={...profile,name:f.name||'缘友',bio:f.bio,city:f.city};localStorage.setItem('yuanhe_profile',JSON.stringify(updated));onSave(updated)}} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#764ED1,#6931C9)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存</button>
       </div>
     </div>
   );
@@ -3069,12 +3069,12 @@ function DataManagementModal({profile,onClose,onLogout}){
             <div style={{fontSize:13,fontWeight:600}}>{d.label}</div>
             <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{d.desc}</div>
           </div>
-          <button onClick={()=>deleteItem(d.key,d.label)} style={{padding:'4px 10px',borderRadius:8,border:`1px solid #FECACA`,background:'#FEF2F2',fontSize:10,color:'#D07878',cursor:'pointer'}}>删除</button>
+          <button onClick={()=>deleteItem(d.key,d.label)} style={{padding:'4px 10px',borderRadius:8,border:`1px solid #FECACA`,background:'#FEF2F2',fontSize:10,color:'#CB3A3A',cursor:'pointer'}}>删除</button>
         </div>)}
         <div style={{display:'flex',gap:8,marginTop:16}}>
-          <button onClick={exportData} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#9185C2,#7B6FB5)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 导出全部数据 (JSON)</button>
+          <button onClick={exportData} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#764ED1,#6931C9)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 导出全部数据 (JSON)</button>
         </div>
-        <button onClick={deleteAll} style={{width:'100%',padding:'12px',borderRadius:12,border:'1.5px solid #D07878',background:T.card,color:'#D07878',fontSize:13,fontWeight:600,cursor:'pointer',marginTop:8}}>⚠️ 删除所有数据并注销</button>
+        <button onClick={deleteAll} style={{width:'100%',padding:'12px',borderRadius:12,border:'1.5px solid #CB3A3A',background:T.card,color:'#CB3A3A',fontSize:13,fontWeight:600,cursor:'pointer',marginTop:8}}>⚠️ 删除所有数据并注销</button>
       </div>
     </div>
   );
@@ -3086,7 +3086,7 @@ function PersonalityShareCard({profile,structured}){
   const geju=structured?.geju||'';const pType=structured?.personality?.type||'';
   const wx=structured?.wuxing||{};const wxArr=Object.entries(wx).sort((a,b)=>b[1]-a[1]);
   return(
-    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#9185C2,#6D28D9)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
+    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#764ED1,#6D28D9)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
       <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · 命理性格卡</div>
       <div style={{fontSize:22,fontWeight:800,marginBottom:2}}>{profile.name||'缘友'}</div>
       <div style={{fontSize:12,opacity:.7}}>{profile.year}.{profile.month}.{profile.day}</div>
@@ -3114,7 +3114,7 @@ function PersonalityShareCard({profile,structured}){
 
 function MatchShareCard({profile,partner,score,compatibility}){
   return(
-    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#C47A9E,#BE185D)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
+    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#C93D82,#BE185D)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
       <div style={{fontSize:10,opacity:.6,marginBottom:12}}>缘合 · 命理匹配卡</div>
       <div style={{display:'flex',justifyContent:'space-around',alignItems:'center',marginBottom:16}}>
         <div style={{textAlign:'center'}}>
@@ -3145,15 +3145,15 @@ function MatchShareCard({profile,partner,score,compatibility}){
 function FortuneShareCard({profile}){
   const today=new Date();const d=today.getDate();const m=today.getMonth()+1;
   const luck=['大吉','吉','中吉','小吉','平','小凶'][d%6];
-  const luckColors={大吉:'#C45A5A',吉:'#C9A855',中吉:'#9185C2',小吉:'#0D9488',平:'#6B7280',小凶:'#D07878'};
+  const luckColors={大吉:'#BB2020',吉:'#D08609',中吉:'#764ED1',小吉:'#0D9488',平:'#6B7280',小凶:'#CB3A3A'};
   const yis=['学习','冥想','远行','社交','投资','表白','运动','创作','谈判','约会'];
   const jis=['冲动决策','熬夜','争吵','借钱','搬家','签约','赌博'];
   const yi=yis.filter((_,i)=>(d+i*7)%3===0).slice(0,3).join(' · ');
   const ji=jis.filter((_,i)=>(d+i*5)%3===0).slice(0,2).join(' · ');
-  const colors=['#E11D48','#7B6FB5','#0891B2','#B8943F','#4A9E7A'];
+  const colors=['#E11D48','#6931C9','#0891B2','#B86505','#047D57'];
   const luckyColor=colors[d%colors.length];
   return(
-    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#C9A855,#B8943F)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
+    <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#D08609,#B86505)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
       <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · 今日运势</div>
       <div style={{fontSize:14,fontWeight:600,opacity:.8}}>{today.getFullYear()}年{m}月{d}日</div>
       <div style={{textAlign:'center',margin:'20px 0'}}>
@@ -3215,7 +3215,7 @@ function ShareModal({type,profile,structured,partner,score,compatibility,onClose
         </div>
       </div>
       <div style={{display:'flex',gap:12}}>
-        <button onClick={saveImage} disabled={saving} style={{padding:'12px 28px',borderRadius:20,border:'none',background:saved?'#5BAE7C':'#fff',color:saved?'#fff':'#9185C2',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.2)'}}>
+        <button onClick={saveImage} disabled={saving} style={{padding:'12px 28px',borderRadius:20,border:'none',background:saved?'#1DA750':'#fff',color:saved?'#fff':'#764ED1',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 16px rgba(0,0,0,0.2)'}}>
           {saving?'生成中…':saved?'✓ 已保存':'📥 保存图片'}
         </button>
         <button onClick={onClose} style={{padding:'12px 28px',borderRadius:20,border:'2px solid rgba(255,255,255,0.3)',background:'transparent',color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>关闭</button>
@@ -3229,10 +3229,10 @@ function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
   const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息",badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
   return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:64,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'flex-end',justifyContent:'space-around',padding:'0 4px 6px',zIndex:100}}>
-    {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#9185C2,#7B6FB5)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 16px rgba(139,92,246,.35)',marginBottom:4}}><Icons.sparkles s={22} c="#fff"/></button>;
+    {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#764ED1,#6931C9)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 16px rgba(139,92,246,.35)',marginBottom:4}}><Icons.sparkles s={22} c="#fff"/></button>;
     return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5,position:'relative'}}>
       {tab.ic(act?T.primary:T.textThi)}
-      {tab.badge>0&&<div style={{position:'absolute',top:0,right:2,minWidth:16,height:16,borderRadius:8,background:'#D07878',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
+      {tab.badge>0&&<div style={{position:'absolute',top:0,right:2,minWidth:16,height:16,borderRadius:8,background:'#CB3A3A',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
       <span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
     </button>})}
   </div>);
