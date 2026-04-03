@@ -1452,7 +1452,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     {/* === HEADER — matches Discover style === */}
     <div style={{padding:'14px 16px 0',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
       {/* Category tabs as title — like Discover */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           {[{k:'single',l:'个人模式'},{k:'pair',l:'配对分析'}].map(c=>{
             const active=isPair?(c.k==='pair'):(c.k==='single');
@@ -2075,7 +2075,7 @@ function DiscoverScreen({goTo,profile}){
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
     <div style={{padding:'14px 16px 0'}}>
       {/* Tab as title + mood in top right */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
             <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
@@ -2112,12 +2112,6 @@ function DiscoverScreen({goTo,profile}){
     <div style={{padding:'12px 16px'}}>
       {/* ===== 推荐 Tab ===== */}
       {discoverTab==='recommend'&&<>
-      {/* Hot topics */}
-      <div style={{display:'flex',gap:6,marginBottom:14,overflow:'auto',paddingBottom:4}}>
-        {[{l:'🔥今日运势',a:()=>setShowDaily(true)},{l:'💕桃花运',a:()=>goTo(S.AI,'bazi')},{l:'💼事业',a:()=>goTo(S.AI,'bazi')},{l:'🌙月相',a:()=>goTo(S.AI,'astrology')},{l:'⭐星座配对',a:()=>goTo(S.AI,'synastry')},{l:'📖命理入门',a:null}].map(tag=>
-          <button key={tag.l} onClick={tag.a} style={{padding:'6px 14px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,fontSize:11,fontWeight:500,color:tag.a?T.text:T.textThi,cursor:tag.a?'pointer':'default',whiteSpace:'nowrap',flexShrink:0}}>{tag.l}</button>
-        )}
-      </div>
       {/* Today's luck card */}
       <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:'1px solid #DDD6FE'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -2646,10 +2640,10 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   const blacklist=getBlacklist();
   const filteredConvs=convs.filter(c=>!blacklist.includes(c.user.id)&&(!msgSearch||c.user.name.includes(msgSearch)||c.lastMessage?.includes(msgSearch)));
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
-    <div style={{padding:'14px 20px 0'}}>
-      <div style={{fontSize:24,fontWeight:800,color:T.text}}>消息</div>
+    <div style={{padding:'14px 16px 0'}}>
+      <div style={{fontSize:24,fontWeight:800,color:T.text,marginBottom:14}}>消息</div>
       {/* Search */}
-      <div style={{marginTop:10,position:'relative'}}>
+      <div style={{position:'relative'}}>
         <input value={msgSearch||''} onChange={e=>setMsgSearch(e.target.value)} placeholder="搜索聊天记录…"
           style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.accent2}40`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
         <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
@@ -2897,7 +2891,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const changeAvatar=(a)=>{onUpdateProfile({...profile,avatar:a});setShowAvatarPicker(false)};
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
   {/* Profile card */}
-  <div style={{padding:'16px 16px 0'}}>
+  <div style={{padding:'14px 16px 0'}}>
     <div style={{background:T.card,borderRadius:20,padding:'20px',boxShadow:T.shadow}}>
       <div style={{display:'flex',alignItems:'center',gap:16}}>
         {/* Avatar — clickable to change */}
