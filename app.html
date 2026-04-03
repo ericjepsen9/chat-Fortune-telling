@@ -1641,6 +1641,68 @@ function FortuneWheel({profile,goTo}){
   );
 }
 
+// ===== MOOD TRACKER (心情打卡) =====
+function MoodTracker({profile}){
+  const MOODS=[
+    {emoji:'😄',label:'开心',color:'#22C55E',msg:'今天心情真好！保持这份快乐吧～'},
+    {emoji:'😊',label:'不错',color:'#3B82F6',msg:'状态不错哦，继续保持！'},
+    {emoji:'😐',label:'一般',color:'#F59E0B',msg:'平淡也是一种幸福，好好照顾自己'},
+    {emoji:'😔',label:'低落',color:'#8B5CF6',msg:'每个人都有低谷的时候，明天会更好的 💙'},
+    {emoji:'😢',label:'难过',color:'#EF4444',msg:'抱抱你。难过的时候允许自己休息一下，你值得被温柔对待 ❤️'},
+  ];
+  const todayKey='yuanhe_mood_'+new Date().toDateString();
+  const [todayMood,setTodayMood]=useState(()=>{
+    const saved=localStorage.getItem(todayKey);
+    return saved?parseInt(saved):-1;
+  });
+  const [showMsg,setShowMsg]=useState(false);
+  // Streak calculation
+  const getStreak=()=>{
+    let streak=0;const d=new Date();
+    for(let i=0;i<30;i++){
+      const key='yuanhe_mood_'+new Date(d.getTime()-i*86400000).toDateString();
+      if(localStorage.getItem(key)!==null)streak++;
+      else break;
+    }
+    return streak;
+  };
+
+  const pickMood=(idx)=>{
+    localStorage.setItem(todayKey,String(idx));
+    setTodayMood(idx);
+    setShowMsg(true);
+    setTimeout(()=>setShowMsg(false),4000);
+  };
+
+  const streak=getStreak();
+  return(
+    <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:16,boxShadow:T.shadow,marginBottom:14,border:'1px solid #EDE9FE'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <div style={{fontSize:13,fontWeight:700,color:T.text}}>💭 今天心情如何？</div>
+        {streak>1&&<div style={{fontSize:10,color:T.primary,fontWeight:600}}>🔥 连续{streak}天</div>}
+      </div>
+      <div style={{display:'flex',justifyContent:'space-around',gap:4}}>
+        {MOODS.map((m,i)=>(
+          <button key={i} onClick={()=>pickMood(i)} disabled={todayMood>=0}
+            style={{flex:1,padding:'8px 2px',borderRadius:12,border:todayMood===i?`2px solid ${m.color}`:'1.5px solid transparent',
+              background:todayMood===i?`${m.color}10`:todayMood>=0?'#F9FAFB':'#fff',
+              cursor:todayMood>=0?'default':'pointer',textAlign:'center',opacity:todayMood>=0&&todayMood!==i?0.4:1,
+              transition:'all .2s'}}>
+            <div style={{fontSize:22}}>{m.emoji}</div>
+            <div style={{fontSize:9,color:todayMood===i?m.color:T.textThi,marginTop:2,fontWeight:todayMood===i?700:400}}>{m.label}</div>
+          </button>
+        ))}
+      </div>
+      {showMsg&&todayMood>=0&&<div className="anim-in" style={{marginTop:10,padding:'10px 14px',borderRadius:12,background:`${MOODS[todayMood].color}08`,border:`1px solid ${MOODS[todayMood].color}20`,fontSize:12,color:MOODS[todayMood].color,lineHeight:1.6,textAlign:'center'}}>
+        {MOODS[todayMood].msg}
+      </div>}
+      {todayMood>=0&&!showMsg&&<div style={{marginTop:8,fontSize:10,color:T.textThi,textAlign:'center'}}>
+        今日已打卡 {MOODS[todayMood].emoji} · {profile.name||'缘友'}
+      </div>}
+    </div>
+  );
+}
+
 function DiscoverScreen({goTo,profile}){
   const [showShare,setShowShare]=useState(false);
   const today=new Date();const dayN=today.getDate();
@@ -1669,6 +1731,9 @@ function DiscoverScreen({goTo,profile}){
 
       {/* Fortune Wheel */}
       <FortuneWheel profile={profile} goTo={goTo}/>
+
+      {/* Mood check-in */}
+      <MoodTracker profile={profile}/>
 
       {/* Quick entry cards */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
@@ -2215,22 +2280,24 @@ function PrivacySettingsModal({onClose}){
   );
 }
 
-function MeScreen({profile,onLogout,goTo,onEdit}){
+function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile}){
   const [showPrivacy,setShowPrivacy]=useState(false);
   const [showDataMgmt,setShowDataMgmt]=useState(false);
+  const [showEditProfile,setShowEditProfile]=useState(false);
   const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
   const privacyLabel={standard:'🛡️ 标准',open:'🌐 开放',private:'🔒 保守'}[privacyLevel]||'🛡️ 标准';
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
   <div style={{background:'linear-gradient(135deg,#8B5CF6,#A78BFA)',padding:'48px 24px 28px',borderRadius:'0 0 28px 28px'}}>
-    <div style={{display:'flex',alignItems:'center',gap:14}}>
+    <div onClick={()=>setShowEditProfile(true)} style={{display:'flex',alignItems:'center',gap:14,cursor:'pointer'}}>
       <div style={{width:56,height:56,borderRadius:'50%',background:'rgba(255,255,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,color:'#fff'}}>{profile.gender==='female'?'👩':'👨'}</div>
-      <div>
+      <div style={{flex:1}}>
         <div style={{color:'#fff',fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div>
-        <div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:2}}>{profile.year}年{profile.month}月{profile.day}日{profile.hour>=0?' '+profile.hour+'时':''}</div>
-        {profile.hour===-1&&<div style={{color:'#FCD34D',fontSize:11,marginTop:2}}>⚠️ 时辰未知</div>}
+        <div style={{color:'rgba(255,255,255,.7)',fontSize:12,marginTop:2}}>{profile.bio||''}{profile.city?' · '+profile.city:''}</div>
+        <div style={{color:'rgba(255,255,255,.5)',fontSize:11,marginTop:2}}>{profile.year}年{profile.month}月{profile.day}日{profile.hour>=0?' '+profile.hour+'时':''}</div>
       </div>
+      <span style={{color:'rgba(255,255,255,.5)',fontSize:14}}>✏️</span>
     </div>
     {/* Stats */}
     <div style={{display:'flex',gap:16,marginTop:16}}>
@@ -2295,7 +2362,28 @@ function MeScreen({profile,onLogout,goTo,onEdit}){
   </div>
   {showPrivacy&&<PrivacySettingsModal onClose={()=>setShowPrivacy(false)}/>}
   {showDataMgmt&&<DataManagementModal profile={profile} onClose={()=>setShowDataMgmt(false)} onLogout={onLogout}/>}
+  {showEditProfile&&<ProfileEditModal profile={profile} onSave={(p)=>{onUpdateProfile(p);setShowEditProfile(false)}} onClose={()=>setShowEditProfile(false)}/>}
 </div>);}
+
+function ProfileEditModal({profile,onSave,onClose}){
+  const [f,sF]=useState({name:profile.name||'',bio:profile.bio||'',city:profile.city||''});
+  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:14,background:'#fff',outline:'none'};
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+          <div style={{fontSize:18,fontWeight:700}}>✏️ 编辑资料</div>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+        </div>
+        <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="你的昵称" maxLength={12} style={is}/></div>
+        <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>个性签名</label><input value={f.bio} onChange={e=>sF({...f,bio:e.target.value})} placeholder="一句话介绍自己" maxLength={30} style={is}/><div style={{fontSize:10,color:T.textThi,textAlign:'right',marginTop:4}}>{f.bio.length}/30</div></div>
+        <div style={{marginBottom:20}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>所在城市</label><input value={f.city} onChange={e=>sF({...f,city:e.target.value})} placeholder="如：北京" maxLength={10} style={is}/></div>
+        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:'#F8FAFC',borderRadius:10}}>修改生辰信息请前往「修改生辰」</div>
+        <button onClick={()=>{const updated={...profile,name:f.name||'缘友',bio:f.bio,city:f.city};localStorage.setItem('yuanhe_profile',JSON.stringify(updated));onSave(updated)}} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存</button>
+      </div>
+    </div>
+  );
+}
 
 function DataManagementModal({profile,onClose,onLogout}){
   const dataItems=[
@@ -2576,7 +2664,7 @@ function App(){
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {scr===S.MSGS&&<MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/>}
-    {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)}/>}
+    {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
   </div>);
 }
