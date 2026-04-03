@@ -243,6 +243,26 @@ function ScoreRing({score,size=60,stroke=4}){
 
 // ===== SPLASH =====
 // ===== SHARED UI COMPONENTS =====
+// Haptic feedback (vibration API)
+function haptic(type='light'){
+  if(!navigator.vibrate)return;
+  if(type==='light')navigator.vibrate(10);
+  else if(type==='medium')navigator.vibrate(20);
+  else if(type==='heavy')navigator.vibrate([30,10,30]);
+  else if(type==='success')navigator.vibrate([10,30,10]);
+}
+// Pull-to-refresh hook
+function usePullRefresh(onRefresh){
+  const [pulling,setPulling]=useState(false);
+  const [pullDist,setPullDist]=useState(0);
+  const startY=useRef(0);const scrollRef=useRef(null);
+  const onTouchStart=(e)=>{if(scrollRef.current?.scrollTop<=0)startY.current=e.touches[0].clientY};
+  const onTouchMove=(e)=>{if(startY.current===0)return;const dy=e.touches[0].clientY-startY.current;if(dy>0&&scrollRef.current?.scrollTop<=0){setPullDist(Math.min(dy*0.4,60));if(dy>80)setPulling(true)}};
+  const onTouchEnd=()=>{if(pulling&&onRefresh){onRefresh();haptic('medium')}setPullDist(0);setPulling(false);startY.current=0};
+  const pullIndicator=pullDist>5?React.createElement('div',{style:{textAlign:'center',padding:`${Math.min(pullDist,50)}px 0 8px`,transition:pulling?'none':'padding .3s',fontSize:12,color:T.textThi}},pulling?'🔄 松手刷新':'↓ 下拉刷新'):null;
+  return{scrollRef,onTouchStart,onTouchMove,onTouchEnd,pullIndicator};
+}
+
 function EmptyState({icon,title,desc,action,actionLabel}){
   return(<div style={{textAlign:'center',padding:'40px 20px',color:T.textThi}}>
     <div style={{width:72,height:72,borderRadius:36,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',fontSize:28}}>{icon||'📭'}</div>
@@ -643,7 +663,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       setCards(scored);
     }).catch(()=>{});
   },[]);
-  const swipe=(dir)=>{const top=cards[cards.length-1];if(dir==='right'&&top.score>=65)setTimeout(()=>setMatchUser(top),300);setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
+  const swipe=(dir)=>{haptic('light');const top=cards[cards.length-1];if(dir==='right'&&top.score>=65){haptic('success');setTimeout(()=>setMatchUser(top),300)}setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
   return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:64}}>
     <div style={{padding:'48px 20px 10px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
       <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
