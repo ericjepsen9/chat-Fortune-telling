@@ -2400,8 +2400,14 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   const activeConv=activeId?(ChatStore.getById(activeId)||convs.find(c=>c.id===activeId)):null;
   const scrollBottom=()=>setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),100);
 
-  // Quick phrases
-  const quickPhrases=['你好呀👋','在忙什么呢','晚安🌙','哈哈哈😄','好的👌','吃饭了吗','想你了💕','周末有空吗','今天开心吗😊','拜拜~'];
+  // Quick phrases — user customizable
+  const defaultPhrases=['你好呀👋','在忙什么呢','晚安🌙','哈哈哈😄','好的👌','吃饭了吗','想你了💕','周末有空吗','今天开心吗😊','拜拜~'];
+  const [quickPhrases,setQuickPhrases]=useState(()=>{try{const s=JSON.parse(localStorage.getItem('yuanhe_quick_phrases'));return s&&s.length>0?s:defaultPhrases}catch(e){return defaultPhrases}});
+  const [editingPhrases,setEditingPhrases]=useState(false);
+  const [newPhrase,setNewPhrase]=useState('');
+  const savePhrase=()=>{if(newPhrase.trim()&&quickPhrases.length<20){const updated=[newPhrase.trim(),...quickPhrases];setQuickPhrases(updated);localStorage.setItem('yuanhe_quick_phrases',JSON.stringify(updated));setNewPhrase('')}};
+  const removePhrase=(idx)=>{const updated=quickPhrases.filter((_,i)=>i!==idx);setQuickPhrases(updated);localStorage.setItem('yuanhe_quick_phrases',JSON.stringify(updated))};
+  const resetPhrases=()=>{setQuickPhrases(defaultPhrases);localStorage.removeItem('yuanhe_quick_phrases');setEditingPhrases(false)};
 
   // Emoji panel data
   const EMOJI_GROUPS=[
@@ -2592,8 +2598,31 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <div ref={chatEndRef}/>
       </div>
       {/* Quick phrases panel */}
-      {showQuick&&!showEmoji&&<div style={{padding:'8px 16px',background:T.bg,borderTop:`1px solid ${T.border}`,display:'flex',gap:6,flexWrap:'wrap'}}>
-        {quickPhrases.map(p=><button key={p} onClick={()=>{setChatInput(p);setShowQuick(false)}} style={{padding:'6px 12px',borderRadius:16,border:`1px solid ${T.border}`,background:T.card,fontSize:12,color:T.text,cursor:'pointer'}}>{p}</button>)}
+      {showQuick&&!showEmoji&&<div style={{padding:'8px 16px',background:T.bg,borderTop:`1px solid ${T.border}`}}>
+        {editingPhrases?<div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <span style={{fontSize:12,fontWeight:600,color:T.text}}>管理快捷短语</span>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={resetPhrases} style={{fontSize:10,color:T.textThi,background:'none',border:'none',cursor:'pointer'}}>恢复默认</button>
+              <button onClick={()=>setEditingPhrases(false)} style={{fontSize:10,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>完成</button>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:6,marginBottom:8}}>
+            <input value={newPhrase} onChange={e=>setNewPhrase(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')savePhrase()}} placeholder="添加新短语…" maxLength={20} style={{flex:1,padding:'6px 12px',borderRadius:12,border:`1.5px solid ${T.border}`,background:T.card,fontSize:12,outline:'none'}}/>
+            <button onClick={savePhrase} disabled={!newPhrase.trim()} style={{padding:'6px 12px',borderRadius:12,border:'none',background:newPhrase.trim()?T.accent2:'#ccc',color:'#fff',fontSize:11,fontWeight:600,cursor:newPhrase.trim()?'pointer':'default'}}>添加</button>
+          </div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            {quickPhrases.map((p,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 8px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,fontSize:11}}>
+              <span style={{color:T.text}}>{p}</span>
+              <button onClick={()=>removePhrase(i)} style={{background:'none',border:'none',fontSize:12,color:T.primary,cursor:'pointer',padding:'0 2px'}}>✕</button>
+            </div>)}
+          </div>
+        </div>:<div>
+          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            {quickPhrases.map(p=><button key={p} onClick={()=>{setChatInput(p);setShowQuick(false)}} style={{padding:'6px 12px',borderRadius:16,border:`1px solid ${T.border}`,background:T.card,fontSize:12,color:T.text,cursor:'pointer'}}>{p}</button>)}
+          </div>
+          <button onClick={()=>setEditingPhrases(true)} style={{width:'100%',marginTop:8,padding:'6px',borderRadius:10,border:`1px dashed ${T.border}`,background:'none',fontSize:10,color:T.textThi,cursor:'pointer'}}>✏️ 管理短语</button>
+        </div>}
       </div>}
       {/* Emoji panel */}
       {showEmoji&&<div style={{padding:'8px 16px 4px',background:T.bg,borderTop:`1px solid ${T.border}`,maxHeight:180,overflow:'auto'}}>
@@ -2893,14 +2922,21 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const currentAvatar=profile.avatar||(profile.gender==='female'?'👩':'👨');
   const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦁','🐸','🦄'];
   const changeAvatar=(a)=>{onUpdateProfile({...profile,avatar:a});setShowAvatarPicker(false)};
+  const uploadPhoto=()=>{
+    const input=document.createElement('input');input.type='file';input.accept='image/*';
+    input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024){window.yuanheToast?.('图片不能超过1MB');return}
+      const reader=new FileReader();reader.onload=(ev)=>{changeAvatar(ev.target.result)};reader.readAsDataURL(file)};
+    input.click();
+  };
+  const isPhotoAvatar=(a)=>a&&a.startsWith('data:');
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
   {/* Profile card */}
   <div style={{padding:'14px 16px 0'}}>
     <div style={{background:T.card,borderRadius:20,padding:'20px',boxShadow:T.shadow}}>
       <div style={{display:'flex',alignItems:'center',gap:16}}>
         {/* Avatar — clickable to change */}
-        <div onClick={()=>setShowAvatarPicker(true)} style={{width:60,height:60,borderRadius:30,background:`linear-gradient(135deg,${T.accent2}20,${T.accent2}10)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,border:`2px solid ${T.accent2}30`,cursor:'pointer',position:'relative'}}>
-          {currentAvatar}
+        <div onClick={()=>setShowAvatarPicker(true)} style={{width:60,height:60,borderRadius:30,background:isPhotoAvatar(currentAvatar)?'none':`linear-gradient(135deg,${T.accent2}20,${T.accent2}10)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,border:isPhotoAvatar(currentAvatar)?'none':`2px solid ${T.accent2}30`,cursor:'pointer',position:'relative',overflow:'hidden'}}>
+          {isPhotoAvatar(currentAvatar)?<img src={currentAvatar} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:currentAvatar}
           <div style={{position:'absolute',bottom:-2,right:-2,width:18,height:18,borderRadius:9,background:T.accent2,display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${T.card}`}}>
             <span style={{fontSize:9,color:'#fff'}}>📷</span>
           </div>
@@ -3071,6 +3107,13 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         <div style={{fontSize:16,fontWeight:700,color:T.text}}>选择头像</div>
         <button onClick={()=>setShowAvatarPicker(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
       </div>
+      {/* Photo upload */}
+      <button onClick={uploadPhoto} style={{width:'100%',padding:'12px',borderRadius:14,border:`1.5px dashed ${T.accent2}40`,background:`${T.accent2}06`,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:12}}>
+        <span style={{fontSize:16}}>📷</span>
+        <span style={{fontSize:13,fontWeight:600,color:T.accent2}}>上传照片</span>
+        <span style={{fontSize:10,color:T.textThi}}>（≤1MB）</span>
+      </button>
+      {/* Emoji options */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:8}}>
         {AVATAR_OPTIONS.map(a=>(
           <button key={a} onClick={()=>changeAvatar(a)} style={{width:'100%',aspectRatio:'1',borderRadius:14,border:currentAvatar===a?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:currentAvatar===a?`${T.accent2}10`:T.card,cursor:'pointer',fontSize:28,display:'flex',alignItems:'center',justifyContent:'center'}}>{a}</button>
