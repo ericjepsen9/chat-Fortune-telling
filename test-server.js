@@ -151,7 +151,9 @@ async function handleDivination(mode, profile, question, displayMode, ctxOptions
   const response = await callLLM(req.systemPrompt, req.userMessage, mode);
   // Extract structured data for frontend visualization
   const structured = aiService.extractStructured(mode, profile);
-  return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response, structured };
+  // Append disclaimer to all divination responses
+  const finalResponse = response + (aiService.DIVINATION_DISCLAIMER || '');
+  return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response: finalResponse, structured };
 }
 
 // ============ HTTP 服务器 ============
@@ -584,6 +586,8 @@ ${(reportSummary || '').substring(0, 500)}
               if (!trimmed || !trimmed.startsWith('data: ')) continue;
               const data = trimmed.slice(6);
               if (data === '[DONE]') {
+                // Append disclaimer as final chunk
+                res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.DIVINATION_DISCLAIMER||''})}\n\n`);
                 res.write(`data: [DONE]\n\n`);
                 res.end();
                 return;
@@ -610,6 +614,7 @@ ${(reportSummary || '').substring(0, 500)}
                 } catch(e) {}
               }
             }
+            res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.DIVINATION_DISCLAIMER||''})}\n\n`);
             res.write(`data: [DONE]\n\n`);
             res.end();
           });

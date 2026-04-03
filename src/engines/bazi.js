@@ -619,6 +619,7 @@ function calculate(input) {
     taiyuan, mingGong, tiaohou, trueSolarTimeAdj, taohuaInfo, monthCommander,
     healthWarn, badMonths, goodMonths, hourTrait,
     sanqianfa, dzComboTraits, wxCombo, childAnalysis, careerData, locationData,
+    hourUnknown,
     liunian: { year:nowYear, ganzhi:lnGZ, nayin:lnEc.getYearNaYin(), tianganSS:lnSS, tianganWx:lnTgWx, dizhiWx:DZ_WX[lnDz], dizhiRels:lnDzRels,
       isXiyong:xiyong.includes(lnTgWx), isJishen:jishen.includes(lnTgWx),
       summary: xiyong.includes(lnTgWx)?'流年天干为喜用，整体有利':jishen.includes(lnTgWx)?'流年天干为忌神，需谨慎':'流年天干影响中性',
@@ -641,7 +642,8 @@ function formatForAI(result, mode='simple') {
     o+=`\n年柱：${fp.year}（${r.nayin.year}） ${r.shishen.yearTg}  ${r.stages.year}`;
     o+=`\n月柱：${fp.month}（${r.nayin.month}） ${r.shishen.monthTg}  ${r.stages.month}`;
     o+=`\n日柱：${fp.day}（${r.nayin.day}） 日主  ${r.stages.day}`;
-    o+=`\n时柱：${fp.hour}（${r.nayin.hour}） ${r.shishen.hourTg}  ${r.stages.hour}`;
+    if(!r.hourUnknown)o+=`\n时柱：${fp.hour}（${r.nayin.hour}） ${r.shishen.hourTg}  ${r.stages.hour}`;
+    else o+=`\n时柱：未知（用户未提供出生时辰）`;
     o+=`\n\n【日主】${r.dayMaster}${r.dayMasterElement}（${r.yinyang}${r.dayMasterElement}）·${r.dayStrength}`;
     o+=`\n格局：${r.geju}\n喜用：${r.xiyong}  忌：${r.jishen}`;
     if (r.tiaohou) o+=`\n调候：${r.tiaohou}`;
@@ -694,16 +696,18 @@ function formatForAI(result, mode='simple') {
       if (r.badMonths.length) o+=`\n凶月（注意健康）：农历${r.badMonths.join('、')}月`;
       if (r.goodMonths.length) o+=`\n吉月（宜调理）：农历${r.goodMonths.join('、')}月`;
     }
-    if (r.hourTrait) o+=`\n\n【时支性格】${r.fourPillars.hour[1]}时生人：${r.hourTrait}`;
+    if (r.hourTrait&&!r.hourUnknown) o+=`\n\n【时支性格】${r.fourPillars.hour[1]}时生人：${r.hourTrait}`;
     if (r.dzComboTraits && r.dzComboTraits.length) { o+=`\n\n【地支组合特征】`; r.dzComboTraits.forEach(t => { o+=`\n${t}`; }); }
     if (r.wxCombo && r.wxCombo.length) { r.wxCombo.forEach(t => { o+=`\n${t}`; }); }
     if (r.sanqianfa) {
       o+=`\n\n【三前法·一生概览】`;
       o+=`\n${r.sanqianfa.early.label}：${r.sanqianfa.early.pillars} → ${r.sanqianfa.early.analysis}`;
       o+=`\n${r.sanqianfa.middle.label}：${r.sanqianfa.middle.pillars} → ${r.sanqianfa.middle.analysis}`;
-      o+=`\n${r.sanqianfa.late.label}：${r.sanqianfa.late.pillars} → ${r.sanqianfa.late.analysis}`;
+      if(!r.hourUnknown)o+=`\n${r.sanqianfa.late.label}：${r.sanqianfa.late.pillars} → ${r.sanqianfa.late.analysis}`;
+      else o+=`\n晚年运（50岁后）：需提供出生时辰方可分析`;
     }
-    if (r.childAnalysis) o+=`\n\n【子女缘】时柱${r.fourPillars.hour}（${SS_TABLE[r.dayMaster]?.[r.fourPillars.hour[0]]||''}）：${r.childAnalysis}`;
+    if (r.childAnalysis&&!r.hourUnknown) o+=`\n\n【子女缘】时柱${r.fourPillars.hour}（${SS_TABLE[r.dayMaster]?.[r.fourPillars.hour[0]]||''}）：${r.childAnalysis}`;
+    if (r.hourUnknown&&(r.childAnalysis||r.hourTrait)) o+=`\n\n【提示】时柱相关分析（子女缘、晚运、时支性格）需要出生时辰，当前已跳过。`;
     if (r.careerData) {
       o+=`\n\n【事业行业参考】`;
       o+=`\n适合行业（喜用五行+十神）：`;
@@ -726,7 +730,7 @@ function formatForAI(result, mode='simple') {
     return o;
   }
   const p=r.personality;
-  let o=lunarHeader+`你的八字：${fp.year} ${fp.month} ${fp.day} ${fp.hour}`;
+  let o=lunarHeader+`你的八字：${fp.year} ${fp.month} ${fp.day} ${r.hourUnknown?'（时柱未知）':fp.hour}`;
   o+=`\n日主：${r.dayMaster}${r.dayMasterElement} — ${p.type}`;
   o+=`\n${p.simple}`;
   o+=`\n\n性格关键词：${p.traits.join('、')}`;

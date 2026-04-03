@@ -373,24 +373,39 @@ function buildPrompt(mode, displayMode, question) {
 
 // ============ 安全过滤 ============
 const BLOCKED_PATTERNS = [
-  /自[杀死伤残害]|[吞跳割].*死|不想活|结束生命|轻生/,
-  /[杀害打砍刺].*[人谁他她]/,
-  /[制造买卖].*[毒枪炸]/,
-  /色情|裸照|性交易/,
-  /怎么[偷骗黑]|诈骗.*方法/,
+  // Self-harm / suicide
+  /自[杀死伤残害]|[吞跳割].*死|不想活|结束生命|轻生|活不下去|了断|走上绝路|一死百了|厌世/,
+  // Violence
+  /[杀害打砍刺].*[人谁他她]|报复.*方法|怎么[伤害毒]人/,
+  // Illegal
+  /[制造买卖].*[毒枪炸]|贩毒|走私|洗钱/,
+  // Sexual exploitation
+  /色情|裸照|性交易|未成年.*性|儿童.*色/,
+  // Fraud
+  /怎么[偷骗黑]|诈骗.*方法|盗号|钓鱼/,
 ];
+const CRISIS_RESPONSE = '💙 你的感受很重要。如果你正在经历困难时刻，请联系专业支持：\n\n🆘 全国心理援助热线：400-161-9995\n🆘 北京心理危机研究与干预中心：010-82951332\n🆘 24小时生命热线：400-821-1215\n\n专业的帮助比命理分析更适合你目前的状况。你值得被好好对待 ❤️';
+
 const SENSITIVE_PATTERNS = [
   /[离婚分手].*什么时候|什么时候.*[死亡离婚]/,
-  /[疾]?病.*什么时候[好治愈]|癌|绝症/,
-  /官司.*输赢|牢|坐牢/,
+  /[疾]?病.*什么时候[好治愈]|癌|绝症|抑郁|焦虑症/,
+  /官司.*输赢|牢|坐牢|判刑/,
   /前[男女]友.*[复合回来]/,
+  /堕胎|流产|自残/,
 ];
+
+// Disclaimer appended to all AI divination responses
+const DIVINATION_DISCLAIMER = '\n\n---\n⚠️ *以上分析仅供参考娱乐，不构成任何专业建议。重大人生决策请结合实际情况，必要时咨询专业人士。*';
 
 function safetyCheck(question) {
   if (!question) return { safe: true, level: 'normal' };
   const q = question.trim();
   if (q.length < 2) return { safe: true, level: 'normal' };
-  // 1. 敏感内容拦截
+  // 1. Crisis detection — provide resources
+  if (/自[杀死]|不想活|结束生命|轻生|活不下去|厌世|一死百了/.test(q)) {
+    return { safe: false, level: 'blocked', reason: CRISIS_RESPONSE };
+  }
+  // 2. Other blocked content
   for (const p of BLOCKED_PATTERNS) {
     if (p.test(q)) return { safe: false, level: 'blocked', reason: '该问题涉及敏感话题，无法提供分析。如需帮助请联系专业人士。' };
   }
@@ -526,6 +541,7 @@ function extractStructured(mode, profile) {
         '正印':'被关爱型，享受被照顾的感觉',
       };
       const hourSS = ss.hourTg || '比肩';
+      const hourKnown = p.hour >= 0 && !isNaN(p.hour);
       const cards = [
         { id:'personality', title:'人格卡', icon:'✦', color:'#8B5CF6',
           subtitle:'核心性格特质',
@@ -534,14 +550,14 @@ function extractStructured(mode, profile) {
           desc: r.personality?.simple || `日主${dm}${el}，${str}` },
         { id:'relation', title:'关系模式卡', icon:'◈', color:'#0D9488',
           subtitle:'关系中的角色',
-          main: hourSS + '格·' + (SS_RELATION[hourSS]||'').split('，')[0],
+          main: hourKnown ? hourSS + '格·' + (SS_RELATION[hourSS]||'').split('，')[0] : str+'·关系模式',
           traits: [
-            `时柱${hourSS}：${(SS_RELATION[hourSS]||'').split('，')[0]}`,
+            hourKnown?`时柱${hourSS}：${(SS_RELATION[hourSS]||'').split('，')[0]}`:'时柱未知：补充时辰可解锁完整分析',
             str==='身强'?'倾向主导关系':'倾向被动接受',
             `${el}生${rel.生||''}：善于给予${rel.生||''}型能量`,
             r.wuxingLack?.length?`缺${r.wuxingLack.join('')}：需要伴侣补充`:'五行均衡：适应性强',
           ],
-          desc: `在关系中你是${hourSS}型人格。${SS_RELATION[hourSS]||''}` },
+          desc: hourKnown?`在关系中你是${hourSS}型人格。${SS_RELATION[hourSS]||''}`:`${str}之人，${str==='身强'?'倾向主导关系，需要能包容你的伴侣':'善于借力合作，需要支持型伴侣'}。补充出生时辰可获得更精准的关系分析。` },
         { id:'strength', title:'优势卡', icon:'◆', color:'#22C55E',
           subtitle:'你的核心优势',
           main: r.personality?.traits?.[0] || '坚韧',
@@ -601,4 +617,4 @@ function extractStructured(mode, profile) {
 }
 
 if (require.main === module) test();
-module.exports = { buildRequest, calculateAll, createContext, extractStructured };
+module.exports = { buildRequest, calculateAll, createContext, extractStructured, DIVINATION_DISCLAIMER };
