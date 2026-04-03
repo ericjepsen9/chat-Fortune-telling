@@ -2031,7 +2031,7 @@ function MoodTracker({profile}){
   );
 }
 
-function DiscoverScreen({goTo,profile}){
+function DiscoverScreen({goTo,profile,onUpdateProfile}){
   const [showShare,setShowShare]=useState(false);
   const [showPostCompose,setShowPostCompose]=useState(false);
   const [discoverSearch,setDiscoverSearch]=useState('');
@@ -2040,6 +2040,7 @@ function DiscoverScreen({goTo,profile}){
   const [commentText,setCommentText]=useState('');
   const [reportTarget,setReportTarget]=useState(null);
   const [showDaily,setShowDaily]=useState(false);
+  const [showHourAssistant,setShowHourAssistant]=useState(false);
   const today=new Date();const dayN=today.getDate();
 
   // Generate bot posts (seeded for consistency)
@@ -2140,7 +2141,7 @@ function DiscoverScreen({goTo,profile}){
 
       {/* Feature list */}
       <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:10}}>更多功能</div>
-      {[{icon:'📅',title:'命理日历',desc:'每日五行运势·关键词·建议',a:()=>setShowDaily(true)},{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},{icon:'🔮',title:'AI测时辰',desc:'不知道出生时辰？AI帮你推算',a:()=>goTo(S.AI,'bazi')},{icon:'📖',title:'命理学堂',desc:'即将上线',a:null}].map((it,i)=>
+      {[{icon:'📅',title:'命理日历',desc:'每日五行运势·关键词·建议',a:()=>setShowDaily(true)},{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},profile.hour===-1?{icon:'🔮',title:'AI测时辰',desc:'30秒推算你的出生时辰',a:()=>setShowHourAssistant(true)}:null,{icon:'📖',title:'命理学堂',desc:'即将上线',a:null}].filter(Boolean).map((it,i)=>
         <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'14px 16px',boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default',opacity:it.a?1:.5}}>
           <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
         </div>)}
@@ -2195,6 +2196,7 @@ function DiscoverScreen({goTo,profile}){
     </div>}
     {reportTarget&&<ReportModal target={reportTarget} onClose={()=>setReportTarget(null)}/>}
     {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
+    {showHourAssistant&&onUpdateProfile&&<HourAssistantModal profile={profile} onResult={(h)=>{onUpdateProfile({...profile,hour:h})}} onClose={()=>setShowHourAssistant(false)}/>}
   </div>);
 }
 
@@ -3383,7 +3385,7 @@ function App(){
     {scr===S.BIRTH&&!localStorage.getItem('yuanhe_terms_accepted')&&<TermsModal onAccept={()=>localStorage.setItem('yuanhe_terms_accepted','1')}/>}
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<div key="home" style={{height:'100%'}}><HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/></div>}
-    {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile}/></div>}
+    {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {scr===S.MSGS&&<div key="msgs" style={{height:'100%'}}><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/></div>}
