@@ -21,8 +21,24 @@ body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-web
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes toastOut{from{opacity:1}to{opacity:0}}
+@keyframes screenIn{from{opacity:0;transform:scale(0.98)}to{opacity:1;transform:scale(1)}}
 .anim-in{animation:fadeIn .4s ease both}
 .anim-slide{animation:slideUp .5s ease both}
+.anim-screen{animation:screenIn .25s ease both}
+/* Responsive: small screens */
+@media(max-width:360px){
+  .serif{font-size:18px !important}
+}
+/* Safe area for notch phones */
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0}
+/* Smooth scrolling */
+*{-webkit-overflow-scrolling:touch}
+/* Disable text selection on buttons */
+button{-webkit-tap-highlight-color:transparent;user-select:none}
+/* Landscape warning */
+@media(orientation:landscape) and (max-height:500px){
+  body::after{content:'请旋转手机至竖屏使用 📱';position:fixed;inset:0;background:rgba(0,0,0,0.9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:9999;text-align:center;padding:20px}
+}
 /* Button active feedback */
 button:active:not(:disabled){transform:scale(0.96);transition:transform 0.1s}
 button{transition:transform 0.1s,opacity 0.15s}
@@ -201,6 +217,26 @@ function ScoreRing({score,size=60,stroke=4}){
 }
 
 // ===== SPLASH =====
+// ===== SHARED UI COMPONENTS =====
+function EmptyState({icon,title,desc,action,actionLabel}){
+  return(<div style={{textAlign:'center',padding:'40px 20px',color:T.textThi}}>
+    <div style={{width:72,height:72,borderRadius:36,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',fontSize:28}}>{icon||'📭'}</div>
+    <div style={{fontSize:15,fontWeight:600,color:T.text}}>{title||'暂无内容'}</div>
+    {desc&&<div style={{fontSize:12,marginTop:6,lineHeight:1.6,color:T.textThi}}>{desc}</div>}
+    {action&&<button onClick={action} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>{actionLabel||'去看看'}</button>}
+  </div>);
+}
+function ErrorState({error,onRetry}){
+  const isNetwork=error?.includes?.('网络')||error?.includes?.('连接')||error?.includes?.('fetch');
+  const isTimeout=error?.includes?.('超时');
+  return(<div style={{textAlign:'center',padding:'40px 20px'}}>
+    <div style={{fontSize:36,marginBottom:12}}>{isNetwork?'📡':isTimeout?'⏳':'⚠️'}</div>
+    <div style={{fontSize:15,fontWeight:600,color:T.text}}>{isNetwork?'网络连接异常':isTimeout?'请求超时':'出了点问题'}</div>
+    <div style={{fontSize:12,color:T.textThi,marginTop:6,lineHeight:1.6}}>{error||'请稍后再试'}</div>
+    {onRetry&&<button onClick={onRetry} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>重试</button>}
+  </div>);
+}
+
 function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return()=>clearTimeout(t)},[]);
   return(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#FF6B6B 0%,#7C5CFC 50%,#4ECDC4 100%)'}}><div className="anim-in" style={{color:'#fff',textAlign:'center'}}><div className="serif" style={{fontSize:48,fontWeight:700,letterSpacing:8}}>缘合</div><div style={{fontSize:14,opacity:.8,marginTop:8,letterSpacing:4}}>YUANHE</div><div style={{fontSize:12,opacity:.6,marginTop:16}}>以命理连接缘分</div></div></div>);
 }
@@ -2774,12 +2810,12 @@ function App(){
     {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:onboarded?S.BIRTH:S.ONBOARD)}/>}
     {scr===S.ONBOARD&&<OnboardingScreen onDone={()=>{localStorage.setItem('yuanhe_onboarded','1');setScr(S.BIRTH)}}/>}
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
-    {scr===S.HOME&&profile&&<HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/>}
-    {scr===S.DISCOVER&&<DiscoverScreen goTo={goTo} profile={profile}/>}
+    {scr===S.HOME&&profile&&<div key="home" className="anim-screen"><HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/></div>}
+    {scr===S.DISCOVER&&<div key="discover" className="anim-screen"><DiscoverScreen goTo={goTo} profile={profile}/></div>}
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
-    {scr===S.MSGS&&<MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/>}
-    {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/>}
+    {scr===S.MSGS&&<div key="msgs" className="anim-screen"><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/></div>}
+    {scr===S.ME&&profile&&<div key="me" className="anim-screen"><MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
   </div>);
