@@ -22,9 +22,16 @@ body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-web
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes toastOut{from{opacity:1}to{opacity:0}}
 @keyframes screenIn{from{opacity:0;transform:scale(0.98)}to{opacity:1;transform:scale(1)}}
-.anim-in{animation:fadeIn .4s ease both}
-.anim-slide{animation:slideUp .5s ease both}
-.anim-screen{animation:screenIn .25s ease both}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.anim-in{animation:fadeIn .35s ease both}
+.anim-slide{animation:slideUp .4s ease both}
+.anim-screen{animation:screenIn .2s ease both}
+.anim-scale{animation:scaleIn .3s ease both}
+/* Smooth scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
 /* Responsive: small screens */
 @media(max-width:360px){
   .serif{font-size:18px !important}
@@ -105,7 +112,7 @@ function getThemeMode(){
 let T=THEMES[getThemeMode()];
 const S={SPLASH:0,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
-const GRADS=['linear-gradient(135deg,#D98B8B,#D97584)','linear-gradient(135deg,#42AEA7,#3B9CB2)','linear-gradient(135deg,#764ED1,#8469D9)','linear-gradient(135deg,#D9983C,#D95B5B)','linear-gradient(135deg,#2CB382,#42AEA7)','linear-gradient(135deg,#D97584,#D9983C)','linear-gradient(135deg,#3B9CB2,#764ED1)','linear-gradient(135deg,#D08609,#D9983C)','linear-gradient(135deg,#8469D9,#D95B5B)','linear-gradient(135deg,#42AEA7,#2CB382)','linear-gradient(135deg,#D95B5B,#764ED1)','linear-gradient(135deg,#D9983C,#42AEA7)'];
+const GRADS=['linear-gradient(135deg,#F9E4E4,#F4D5DB)','linear-gradient(135deg,#D5F0ED,#D0E8EE)','linear-gradient(135deg,#E5DEF5,#DDD8F0)','linear-gradient(135deg,#F5E6D0,#F9E4E4)','linear-gradient(135deg,#D5ECDF,#D5F0ED)','linear-gradient(135deg,#F4D5DB,#F5E6D0)','linear-gradient(135deg,#D0E8EE,#E5DEF5)','linear-gradient(135deg,#F0E4C8,#F5E6D0)','linear-gradient(135deg,#DDD8F0,#F9E4E4)','linear-gradient(135deg,#D5F0ED,#D5ECDF)','linear-gradient(135deg,#F9E4E4,#E5DEF5)','linear-gradient(135deg,#F5E6D0,#D5F0ED)'];
 const USERS=[
   {id:1,name:'林雨薇',age:31,bio:'喜欢旅行和音乐 ✈️',year:1994,month:3,day:15,hour:8,gender:'female',score:92,dist:'1km',sign:'双鱼座',tags:['旅行','音乐','瑜伽']},
   {id:2,name:'张子轩',age:30,bio:'代码写诗的程序员 💻',year:1995,month:7,day:22,hour:14,gender:'male',score:87,dist:'11km',sign:'巨蟹座',tags:['编程','读书','咖啡']},
@@ -428,19 +435,19 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
       </div>
 
       {/* Info area */}
-      <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'12px 16px 14px',cursor:'pointer'}}>
+      <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'14px 18px 16px',cursor:'pointer'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
           <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
           <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#047D57':user.score>=65?'#6931C9':'#B86505'}}>{typeTag}</span>
         </div>
-        <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.5}}>{user.bio}</div>
+        <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.6}}>{user.bio}</div>
         {/* Match reason */}
-        {user.matchResult&&<div style={{padding:'8px 12px',borderRadius:10,background:'#764ED108',border:'1px solid #764ED112',marginBottom:8}}>
-          <div style={{fontSize:11,color:'#764ED1',fontWeight:700,marginBottom:2}}>☯ 缘分解读</div>
-          <div style={{fontSize:12,color:T.textSec,lineHeight:1.5}}>{user.matchResult.gradeDesc}</div>
+        {user.matchResult&&<div style={{padding:'10px 14px',borderRadius:12,background:`${T.accent2}06`,border:`1px solid ${T.accent2}10`,marginBottom:8}}>
+          <div style={{fontSize:11,color:T.accent2,fontWeight:700,marginBottom:3}}>☯ 缘分解读</div>
+          <div style={{fontSize:12,color:T.textSec,lineHeight:1.6}}>{user.matchResult.gradeDesc}</div>
         </div>}
-        <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-          {user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,background:`${T.primary}10`,color:T.primary}}>{t}</span>)}
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          {user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,background:`${T.accent2}08`,color:T.accent2}}>{t}</span>)}
         </div>
       </div>
     </div>
@@ -2552,14 +2559,14 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         </div>}
         {searchMode&&searchQuery&&<div style={{fontSize:11,color:T.textThi,marginBottom:8}}>🔍 搜索"{searchQuery}" — {msgs.filter(m=>!m.recalled&&m.text&&m.text.toLowerCase().includes(searchQuery.toLowerCase())).length}条结果</div>}
         {(searchMode&&searchQuery?msgs.filter(m=>!m.recalled&&m.text&&m.text.toLowerCase().includes(searchQuery.toLowerCase())):msgs).map((msg,idx)=>(
-          <div key={msg.id} className="anim-in" style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8,position:'relative',group:'msg'}}>
+          <div key={msg.id} className="anim-in" style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:10,position:'relative',group:'msg'}}>
             <div style={{maxWidth:'75%'}}>
               <div onClick={()=>{if(msg.role==='user'&&!msg.recalled){const now=Date.now();const msgTime=msg.ts||0;if(now-msgTime<120000){if(confirm('撤回这条消息？')){ChatStore.recallMessage(activeConv.id,msg.id);refreshConvs()}}else{navigator.clipboard?.writeText(msg.text);showToast('已复制')}}}}
-                style={{padding:msg.recalled?'6px 14px':msg.image?'4px':'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
-                background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.primary},#6931C9)`:'#fff',
+                style={{padding:msg.recalled?'6px 14px':msg.image?'4px':'10px 14px',borderRadius:msg.role==='user'?'18px 18px 4px 18px':'18px 18px 18px 4px',
+                background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.card,
                 color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:13,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
-                boxShadow:msg.recalled?'none':msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)',overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
-                {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:12,display:'block'}}/>:msg.text}
+                boxShadow:msg.recalled?'none':msg.role==='user'?`0 2px 8px ${T.accent2}20`:`0 1px 4px rgba(0,0,0,0.04)`,overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
+                {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.text}
                 {!msg.recalled&&msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
               </div>
               {msg.role==='user'&&idx===msgs.length-1&&readStatus&&!msg.recalled&&<div style={{fontSize:9,color:readStatus==='已读'?T.primary:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
@@ -3235,13 +3242,15 @@ function ShareModal({type,profile,structured,partner,score,compatibility,onClose
 function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
   const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息",badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
-  return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:64,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'flex-end',justifyContent:'space-around',padding:'0 4px 6px',zIndex:100}}>
-    {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#764ED1,#6931C9)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 16px rgba(139,92,246,.35)',marginBottom:4}}><Icons.sparkles s={22} c="#fff"/></button>;
-    return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5,position:'relative'}}>
-      {tab.ic(act?T.primary:T.textThi)}
-      {tab.badge>0&&<div style={{position:'absolute',top:0,right:2,minWidth:16,height:16,borderRadius:8,background:'#CB3A3A',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
-      <span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
-    </button>})}
+  return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:60,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 4px 0',zIndex:100}}>
+    {tabs.map(tab=>{const act=active===tab.id;
+      if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}DD)`,border:'none',borderRadius:22,width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:`0 3px 12px ${T.accent2}40`,marginTop:-14}}><Icons.sparkles s={20} c="#fff"/></button>;
+      return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1,padding:'6px 12px',position:'relative',transition:'opacity .2s'}}>
+        {tab.ic(act?T.primary:T.textThi)}
+        {tab.badge>0&&<div style={{position:'absolute',top:2,right:4,minWidth:16,height:16,borderRadius:8,background:T.primary,color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
+        <span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
+        {act&&<div style={{position:'absolute',bottom:-1,width:16,height:2,borderRadius:1,background:T.primary}}/>}
+      </button>})}
   </div>);
 }
 
