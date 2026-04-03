@@ -1632,14 +1632,18 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       })()}
 
       {/* Loading state in content area — only before init arrives */}
-      {ms.loading&&!ms.result&&<div style={{textAlign:'center',padding:'60px 20px'}}>
-        <div style={{position:'relative',width:80,height:80,margin:'0 auto 20px'}}>
+      {ms.loading&&!ms.result&&<div className="anim-in" style={{textAlign:'center',padding:'50px 20px'}}>
+        <div style={{position:'relative',width:88,height:88,margin:'0 auto 20px'}}>
           <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid ${mc}15`}}/>
           <div style={{position:'absolute',inset:0,borderRadius:'50%',border:`3px solid transparent`,borderTopColor:mc,animation:'spin 1s linear infinite'}}/>
-          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:32}}>{modeInfo.icon}</div>
+          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:36}}>{modeInfo.icon}</div>
         </div>
-        <div style={{fontSize:16,fontWeight:700,color:mc}}>{ms.loadMsg}</div>
-        <div style={{fontSize:12,color:T.textThi,marginTop:6}}>{ms.elapsed<15?'排盘计算中':ms.elapsed<40?'AI深度分析中':ms.elapsed<70?'报告生成中':'即将完成'} · {ms.elapsed}s</div>
+        <div style={{fontSize:16,fontWeight:700,color:mc,marginBottom:6}}>{ms.loadMsg}</div>
+        {/* Progress bar */}
+        <div style={{width:180,height:4,background:`${mc}15`,borderRadius:2,margin:'0 auto 8px',overflow:'hidden'}}>
+          <div style={{height:'100%',background:mc,borderRadius:2,width:Math.min(ms.elapsed*1.2,95)+'%',transition:'width .5s ease'}}/>
+        </div>
+        <div style={{fontSize:11,color:T.textThi}}>{ms.elapsed}秒</div>
       </div>}
 
       {/* Error */}
@@ -1709,8 +1713,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
                 <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
+                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,response:ms.result.response?.substring(0,200),time:new Date().toLocaleString()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
                 <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
-                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🗑️</button>
               </div>}
               {/* Feedback */}
               {!ms.result._streaming&&(()=>{
@@ -2028,6 +2032,9 @@ function DiscoverScreen({goTo,profile}){
   const [showShare,setShowShare]=useState(false);
   const [showPostCompose,setShowPostCompose]=useState(false);
   const [discoverSearch,setDiscoverSearch]=useState('');
+  const [commentPost,setCommentPost]=useState(null); // post being commented
+  const [commentText,setCommentText]=useState('');
+  const [reportTarget,setReportTarget]=useState(null);
   const today=new Date();const dayN=today.getDate();
 
   // Generate bot posts (seeded for consistency)
@@ -2126,17 +2133,36 @@ function DiscoverScreen({goTo,profile}){
             </div>
           </div>
           <div style={{fontSize:13,color:T.text,lineHeight:1.7,marginBottom:10}}>{post.content}</div>
-          <div style={{display:'flex',gap:16}}>
+          {/* Post comments */}
+          {(()=>{const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+post.id)||'[]');return cmts.length>0?<div style={{background:T.bg,borderRadius:10,padding:'8px 10px',marginBottom:8}}>
+            {cmts.slice(-3).map((c,j)=><div key={j} style={{fontSize:11,color:T.textSec,lineHeight:1.6,padding:'2px 0'}}><span style={{fontWeight:600,color:T.text}}>{c.name}</span>：{c.text}</div>)}
+            {cmts.length>3&&<div style={{fontSize:10,color:T.textThi}}>共{cmts.length}条评论</div>}
+          </div>:null})()}
+          <div style={{display:'flex',gap:12,alignItems:'center'}}>
             <button onClick={()=>{const key='yuanhe_post_like_'+post.id;const liked=localStorage.getItem(key);if(!liked){localStorage.setItem(key,'1');post.likes++;setPosts([...posts_])}}} style={{background:'none',border:'none',fontSize:12,color:localStorage.getItem('yuanhe_post_like_'+post.id)?T.primary:T.textThi,cursor:'pointer'}}>
               {localStorage.getItem('yuanhe_post_like_'+post.id)?'❤️':'🤍'} {post.likes}
             </button>
-            <span style={{fontSize:12,color:T.textThi}}>💬 {post.comments||0}</span>
+            <button onClick={()=>{setCommentPost(post);setCommentText('')}} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer'}}>💬 {(JSON.parse(localStorage.getItem('yuanhe_comments_'+post.id)||'[]')).length||(post.comments||0)}</button>
+            <button onClick={()=>setReportTarget(post.id)} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer',marginLeft:'auto'}}>⋯</button>
           </div>
         </div>
       ))}
     </div>
     {showShare&&<ShareModal type="fortune" profile={profile} onClose={()=>setShowShare(false)}/>}
     {showPostCompose&&<PostComposeModal profile={profile} onPost={(c)=>{addPost(c);setShowPostCompose(false)}} onClose={()=>setShowPostCompose(false)}/>}
+    {/* Comment input */}
+    {commentPost&&<div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 24px',animation:'slideUp .3s ease'}}>
+        <div style={{fontSize:14,fontWeight:600,color:T.text,marginBottom:10}}>评论 {commentPost.author} 的动态</div>
+        <div style={{display:'flex',gap:8}}>
+          <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="写评论…" autoFocus style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}
+            onKeyDown={e=>{if(e.key==='Enter'&&commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}}/>
+          <button onClick={()=>{if(commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.primary:'#ccc',color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button>
+        </div>
+        <button onClick={()=>setCommentPost(null)} style={{width:'100%',padding:'10px',background:'none',border:'none',color:T.textThi,fontSize:12,cursor:'pointer',marginTop:6}}>取消</button>
+      </div>
+    </div>}
+    {reportTarget&&<ReportModal target={reportTarget} onClose={()=>setReportTarget(null)}/>}
   </div>);
 }
 
