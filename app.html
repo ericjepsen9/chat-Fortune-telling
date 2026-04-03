@@ -1244,6 +1244,8 @@ function HourAssistantModal({profile,onResult,onClose}){
 function AIScreen({profile,initialMode,onUpdateProfile}){
   const [mode,setMode]=useState(initialMode||'bazi');
   const [dm,setDm]=useState('expert');
+  // Sync mode when navigated from other pages
+  useEffect(()=>{if(initialMode&&initialMode!==mode)setMode(initialMode)},[initialMode]);
     const [showTarotModal,setShowTarotModal]=useState(false);
   const [showHourAssistant,setShowHourAssistant]=useState(false);
   const [showShare,setShowShare]=useState(false);
@@ -2141,7 +2143,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
 
       {/* Feature list */}
       <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:10}}>更多功能</div>
-      {[{icon:'📅',title:'命理日历',desc:'每日五行运势·关键词·建议',a:()=>setShowDaily(true)},{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},profile.hour===-1?{icon:'🔮',title:'AI测时辰',desc:'30秒推算你的出生时辰',a:()=>setShowHourAssistant(true)}:null,{icon:'📖',title:'命理学堂',desc:'即将上线',a:null}].filter(Boolean).map((it,i)=>
+      {[{icon:'📅',title:'命理日历',desc:'每日五行运势·关键词·建议',a:()=>setShowDaily(true)},{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},profile.hour===-1?{icon:'🔮',title:'AI测时辰',desc:'30秒推算你的出生时辰',a:()=>setShowHourAssistant(true)}:null].filter(Boolean).map((it,i)=>
         <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'14px 16px',boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default',opacity:it.a?1:.5}}>
           <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
         </div>)}
