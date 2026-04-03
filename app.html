@@ -2683,7 +2683,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       </div>
       {/* Tabs */}
       <div style={{display:'flex',gap:4,marginTop:10,marginBottom:14}}>
-        {[{k:'chat',l:'聊天'},{k:'friends',l:'好友'},{k:'blocked',l:'黑名单'}].map(t=>(
+        {[{k:'chat',l:'聊天'},{k:'blocked',l:'黑名单'}].map(t=>(
           <button key={t.k} onClick={()=>setMsgTab(t.k)} style={{padding:'6px 16px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
             background:msgTab===t.k?T.accent2:'#F3F4F6',color:msgTab===t.k?'#fff':T.textSec}}>{t.l}{t.k==='chat'&&filteredConvs.length>0?` ${filteredConvs.length}`:''}</button>
         ))}
@@ -2721,30 +2721,6 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         </div>);
       })}</div>
     )}
-
-    {/* Friends tab */}
-    {msgTab==='friends'&&<div style={{padding:'0 16px'}}>
-      {filteredConvs.length===0?<div style={{padding:'40px 20px',textAlign:'center',color:T.textThi,fontSize:13}}>还没有好友，去首页匹配吧</div>
-      :filteredConvs.map(conv=>{
-        const convOnline=getBotOnline(conv.user);
-        const msgCount=(conv.messages||[]).length;
-        return(
-        <div key={conv.id} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
-          <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
-            {conv.user.gender==='female'?'👩':'👨'}
-            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:convOnline?'#34D399':'#D1D5DB',border:`2px solid ${T.card}`}}/>
-          </div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:14,fontWeight:600,color:T.text}}>{conv.user.name}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{conv.user.sign} · {conv.user.age}岁 · {msgCount}条消息</div>
-          </div>
-          <div style={{display:'flex',gap:4}}>
-            <button onClick={()=>setActiveId(conv.id)} style={{padding:'6px 12px',borderRadius:10,border:'none',background:T.accent2,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>聊天</button>
-            <button onClick={()=>{if(confirm('确定拉黑'+conv.user.name+'？')){blockUser(conv.user.id);refreshConvs();showToast('已拉黑')}}} style={{padding:'6px 8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🚫</button>
-          </div>
-        </div>);
-      })}
-    </div>}
 
     {/* Blacklist tab */}
     {msgTab==='blocked'&&<div style={{padding:'0 16px'}}>
