@@ -51,6 +51,11 @@ button{transition:transform 0.1s,opacity 0.15s}
 .markdown *{max-width:100%;word-break:break-word}
 .markdown strong{color:#1A1A2E;font-weight:600}
 .markdown hr{border:none;border-top:1px solid #F0F0EC;margin:16px 0}
+/* Dark mode overrides */
+body.dark .markdown strong{color:#E5E7EB}
+body.dark .markdown hr{border-color:#2D2D3F}
+body.dark input,body.dark textarea{background:#1A1A2E !important;color:#E5E7EB !important;border-color:#2D2D3F !important}
+body.dark input::placeholder,body.dark textarea::placeholder{color:#6B7280 !important}
 </style>
 </head>
 <body>
@@ -89,7 +94,18 @@ const Icons={
   dice:({s=20,c='currentColor'})=><I d={["M3 3h18v18H3z","M8.5 8.5h.01","M15.5 8.5h.01","M15.5 15.5h.01","M8.5 15.5h.01","M12 12h.01"]} size={s} color={c}/>,
 };
 
-const T={bg:"#FAFAF7",card:"#FFFFFF",primary:"#FF6B6B",primaryDark:"#E85555",secondary:"#FFB347",accent1:"#4ECDC4",accent2:"#7C5CFC",accent3:"#FF8A9B",accent4:"#45B7D1",gold:"#F4C542",text:"#1A1A2E",textSec:"#6B7280",textThi:"#9CA3AF",border:"#F0F0EC",borderDark:"#E5E5E0",success:"#34D399",shadow:"0 2px 16px rgba(0,0,0,0.06)",shadowLg:"0 8px 32px rgba(0,0,0,0.10)"};
+const THEMES={
+  light:{bg:"#FAFAF7",card:"#FFFFFF",primary:"#FF6B6B",primaryDark:"#E85555",secondary:"#FFB347",accent1:"#4ECDC4",accent2:"#7C5CFC",accent3:"#FF8A9B",accent4:"#45B7D1",gold:"#F4C542",text:"#1A1A2E",textSec:"#6B7280",textThi:"#9CA3AF",border:"#F0F0EC",borderDark:"#E5E5E0",success:"#34D399",shadow:"0 2px 16px rgba(0,0,0,0.06)",shadowLg:"0 8px 32px rgba(0,0,0,0.10)",isDark:false},
+  dark:{bg:"#0F0F1A",card:"#1A1A2E",primary:"#FF8A9B",primaryDark:"#FF6B6B",secondary:"#FFB347",accent1:"#4ECDC4",accent2:"#A78BFA",accent3:"#FF8A9B",accent4:"#45B7D1",gold:"#F4C542",text:"#E5E7EB",textSec:"#9CA3AF",textThi:"#6B7280",border:"#2D2D3F",borderDark:"#3D3D52",success:"#34D399",shadow:"0 2px 16px rgba(0,0,0,0.3)",shadowLg:"0 8px 32px rgba(0,0,0,0.4)",isDark:true},
+};
+function getThemeMode(){
+  const saved=localStorage.getItem('yuanhe_theme');
+  if(saved==='dark'||saved==='light')return saved;
+  // Follow system preference
+  if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)return 'dark';
+  return 'light';
+}
+let T=THEMES[getThemeMode()];
 const S={SPLASH:0,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
 const GRADS=['linear-gradient(135deg,#FF6B6B,#FF8A9B)','linear-gradient(135deg,#4ECDC4,#45B7D1)','linear-gradient(135deg,#7C5CFC,#9B7BFF)','linear-gradient(135deg,#FFB347,#FF6B6B)','linear-gradient(135deg,#34D399,#4ECDC4)','linear-gradient(135deg,#FF8A9B,#FFB347)','linear-gradient(135deg,#45B7D1,#7C5CFC)','linear-gradient(135deg,#F4C542,#FFB347)','linear-gradient(135deg,#9B7BFF,#FF6B6B)','linear-gradient(135deg,#4ECDC4,#34D399)','linear-gradient(135deg,#FF6B6B,#7C5CFC)','linear-gradient(135deg,#FFB347,#4ECDC4)'];
@@ -244,6 +260,18 @@ function ErrorState({error,onRetry}){
     <div style={{fontSize:12,color:T.textThi,marginTop:6,lineHeight:1.6}}>{error||'请稍后再试'}</div>
     {onRetry&&<button onClick={onRetry} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>重试</button>}
   </div>);
+}
+function Skeleton({width,height,radius,style}){
+  return<div style={{width:width||'100%',height:height||16,borderRadius:radius||8,background:T.isDark?'#2D2D3F':'#E5E7EB',animation:'pulse 1.5s infinite',...(style||{})}}/>
+}
+function SkeletonCard(){
+  return<div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:10}}>
+    <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:12}}>
+      <Skeleton width={44} height={44} radius={22}/>
+      <div style={{flex:1}}><Skeleton height={14} style={{marginBottom:6}}/><Skeleton width="60%" height={10}/></div>
+    </div>
+    <Skeleton height={12} style={{marginBottom:6}}/><Skeleton width="80%" height={12}/>
+  </div>;
 }
 
 function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return()=>clearTimeout(t)},[]);
@@ -2494,7 +2522,7 @@ function PrivacySettingsModal({onClose}){
   );
 }
 
-function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile}){
+function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggleTheme}){
   const [showPrivacy,setShowPrivacy]=useState(false);
   const [showDataMgmt,setShowDataMgmt]=useState(false);
   const [showEditProfile,setShowEditProfile]=useState(false);
@@ -2527,7 +2555,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile}){
   {profile.hour===-1&&<div style={{margin:'12px 16px 0',padding:'10px 14px',background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,fontSize:12,color:'#D97706'}}>⚠️ 未填写出生时辰，八字排盘精度会降低。<button onClick={onEdit} style={{background:'none',border:'none',color:'#D97706',fontWeight:700,cursor:'pointer',textDecoration:'underline',fontSize:12}}>补充时辰</button></div>}
 
   <div style={{padding:16}}>
-    {[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗·梅花',a:()=>goTo(S.AI)},{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',a:onEdit},{icon:'🔐',label:'隐私设置',desc:'当前: '+privacyLabel,a:()=>setShowPrivacy(true)},{icon:'📊',label:'我的数据',desc:'查看·导出·删除',a:()=>setShowDataMgmt(true)},{icon:'🔮',label:'AI测时辰',desc:'回答5个问题推算时辰',a:()=>goTo(S.AI)},{icon:'🗑️',label:'清除占卜记录',desc:resultCount+'条报告',a:()=>{if(confirm('确定清除所有占卜记录？')){localStorage.removeItem('yuanhe_mode_results');localStorage.removeItem('yuanhe_history');location.reload()}}},{icon:'⚙️',label:'设置',desc:'账号与隐私'}].map((it,i)=>
+    {[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗·梅花',a:()=>goTo(S.AI)},{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',a:onEdit},{icon:'🔐',label:'隐私设置',desc:'当前: '+privacyLabel,a:()=>setShowPrivacy(true)},{icon:'📊',label:'我的数据',desc:'查看·导出·删除',a:()=>setShowDataMgmt(true)},{icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色模式':'浅色模式',a:toggleTheme},{icon:'🗑️',label:'清除占卜记录',desc:resultCount+'条报告',a:()=>{if(confirm('确定清除所有占卜记录？')){localStorage.removeItem('yuanhe_mode_results');localStorage.removeItem('yuanhe_history');location.reload()}}}].map((it,i)=>
       <div key={it.label} className="anim-in" onClick={it.a} style={{animationDelay:i*0.06+'s',background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default'}}><span style={{fontSize:20}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.label}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span></div>)}
 
     {/* Recent history */}
@@ -2871,6 +2899,11 @@ function App(){
   const [chatActive,setChatActive]=useState(false);
   const [openConvId,setOpenConvId]=useState(null);
   const [globalToast,setGlobalToast]=useState('');
+  const [themeMode,setThemeMode]=useState(getThemeMode);
+  // Apply theme globally
+  T=THEMES[themeMode];
+  useEffect(()=>{document.body.style.background=T.bg;document.body.className=themeMode==='dark'?'dark':''},[themeMode]);
+  const toggleTheme=()=>{const next=themeMode==='light'?'dark':'light';localStorage.setItem('yuanhe_theme',next);setThemeMode(next);T=THEMES[next]};
   const onboarded=!!localStorage.getItem('yuanhe_onboarded');
   const goTo=(s,m)=>{setScr(s);if(m)setAiMode(m)};
   const addConv=(user)=>{const c=ChatStore.create(user,profile);setConvs(ChatStore.getAll());return c};
@@ -2930,7 +2963,7 @@ function App(){
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {scr===S.MSGS&&<div key="msgs" className="anim-screen"><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/></div>}
-    {scr===S.ME&&profile&&<div key="me" className="anim-screen"><MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
+    {scr===S.ME&&profile&&<div key="me" className="anim-screen"><MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
   </div>);
