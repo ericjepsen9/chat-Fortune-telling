@@ -396,7 +396,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
   const rot=dx*0.05,opa=Math.min(Math.abs(dx)/100,1);
   const grad=GRADS[user.id%GRADS.length];
   const isOnline=user.isBot?((user.id*7+new Date().getHours())%3!==0):true;
-  const typeTag=user.matchResult?.gradeDesc?user.matchResult.gradeDesc.substring(0,6):(user.score>=80?'天作之合':user.score>=65?'有缘有份':'潜力之缘');
+  const typeTag=user.matchResult?.gradeDesc?user.matchResult.gradeDesc.substring(0,4):(user.score>=80?'天作之合':user.score>=65?'有缘有份':'潜力之缘');
   return(
     <div onMouseDown={e=>onS(e.clientX)} onMouseMove={e=>onM(e.clientX)} onMouseUp={onE} onMouseLeave={()=>dragging&&onE()}
       onTouchStart={e=>onS(e.touches[0].clientX)} onTouchMove={e=>onM(e.touches[0].clientX)} onTouchEnd={onE}
@@ -428,7 +428,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
       <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'14px 18px 16px',cursor:'pointer'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
           <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
-          <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#059669':user.score>=65?'#7C3AED':'#D97706'}}>{typeTag}</span>
+          <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:'nowrap',background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#059669':user.score>=65?'#7C3AED':'#D97706'}}>{typeTag}</span>
         </div>
         <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.6}}>{user.bio}</div>
         {/* Match reason */}
