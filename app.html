@@ -632,6 +632,82 @@ function getBotConfig(){
   return{realUserCount,botRatio,label};
 }
 
+// ===== DAILY STATUS (今日状态) =====
+function DailyStatusModal({profile,onClose}){
+  const now=new Date();
+  const weekDays=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  const dateStr=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 · ${weekDays[now.getDay()]}`;
+
+  // Calculate day pillar (天干地支)
+  const TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  const DZ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const WX_TG={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+  // Approximate JD calculation for day pillar
+  const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
+  const jd=Math.floor(367*y-Math.floor(7*(y+Math.floor((m+9)/12))/4)+Math.floor(275*m/9)+d+1721013.5);
+  const tgIdx=(jd+9)%10;
+  const dzIdx=(jd+1)%12;
+  const dayTG=TG[tgIdx],dayDZ=DZ[dzIdx];
+  const dayWx=WX_TG[dayTG];
+
+  // Theme based on day element + user element
+  const wxThemes={
+    木:{theme:'成长·突破',color:'#22C55E',bg:'#ECFDF5',keywords:['学习','拓展','尝试新事物','接触自然'],relation:['主动表达感受','适合认识新朋友','多倾听对方的想法'],action:['列出本周目标','学一个新技能','去户外走走']},
+    火:{theme:'表达·行动',color:'#EF4444',bg:'#FEF2F2',keywords:['独处','反思','整理','沉淀'],relation:['避免情绪波动时做承诺','适合与老朋友深度对话','给自己和伴侣一些空间'],action:['写下困扰你的三件事','用10分钟冥想静坐','整理社交关系清单']},
+    土:{theme:'稳定·积累',color:'#D97706',bg:'#FFFBEB',keywords:['踏实','规划','耐心','沉稳'],relation:['适合讨论未来规划','给对方安全感','避免急于求成'],action:['整理财务记录','制定长期计划','做一顿用心的饭']},
+    金:{theme:'决断·收获',color:'#6B7280',bg:'#F9FAFB',keywords:['果断','取舍','效率','简化'],relation:['适合解决悬而未决的问题','坦诚沟通比委婉更好','尊重彼此的边界'],action:['清理不需要的物品','做一个重要决定','完成拖延的任务']},
+    水:{theme:'智慧·流动',color:'#3B82F6',bg:'#EFF6FF',keywords:['灵感','直觉','适应','变通'],relation:['用心感受对方的情绪','适合浪漫的小惊喜','保持神秘感'],action:['写日记记录灵感','听一张新专辑','泡澡或散步放空']},
+  };
+  const t=wxThemes[dayWx]||wxThemes['火'];
+
+  return(<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
+    <div style={{maxWidth:480,margin:'0 auto',padding:'12px 16px 40px'}}>
+      {/* Header */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
+        <div style={{fontSize:13,color:T.textThi}}>{dateStr}</div>
+        <div style={{width:32}}/>
+      </div>
+
+      {/* Title */}
+      <div style={{fontSize:24,fontWeight:800,color:T.text,marginBottom:16}}>今日状态</div>
+
+      {/* Theme card */}
+      <div style={{background:t.bg,borderRadius:20,padding:'28px 20px',textAlign:'center',marginBottom:20}}>
+        <div style={{fontSize:32,fontWeight:800,color:t.color,letterSpacing:4}}>{t.theme}</div>
+        <div style={{fontSize:14,color:T.textSec,marginTop:8}}>{dayTG}{dayDZ}日 · {dayWx}旺</div>
+      </div>
+
+      {/* 今日关键词 */}
+      <div style={{background:T.card,borderRadius:16,padding:'18px 20px',marginBottom:14,boxShadow:T.shadow}}>
+        <div style={{fontSize:15,fontWeight:700,color:t.color,marginBottom:12}}>今日关键词</div>
+        {t.keywords.map(k=><div key={k} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0'}}>
+          <div style={{width:8,height:8,borderRadius:4,background:t.color,flexShrink:0}}/>
+          <span style={{fontSize:14,color:T.text}}>{k}</span>
+        </div>)}
+      </div>
+
+      {/* 关系建议 */}
+      <div style={{background:T.card,borderRadius:16,padding:'18px 20px',marginBottom:14,boxShadow:T.shadow}}>
+        <div style={{fontSize:15,fontWeight:700,color:'#0D9488',marginBottom:12}}>关系建议</div>
+        {t.relation.map(r=><div key={r} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 0'}}>
+          <div style={{width:8,height:8,borderRadius:4,background:'#0D9488',flexShrink:0,marginTop:5}}/>
+          <span style={{fontSize:14,color:T.text,lineHeight:1.6}}>{r}</span>
+        </div>)}
+      </div>
+
+      {/* 行动建议 */}
+      <div style={{background:T.card,borderRadius:16,padding:'18px 20px',marginBottom:14,boxShadow:T.shadow}}>
+        <div style={{fontSize:15,fontWeight:700,color:'#3B82F6',marginBottom:12}}>行动建议</div>
+        {t.action.map(a=><div key={a} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 0'}}>
+          <div style={{width:8,height:8,borderRadius:4,background:'#3B82F6',flexShrink:0,marginTop:5}}/>
+          <span style={{fontSize:14,color:T.text,lineHeight:1.6}}>{a}</span>
+        </div>)}
+      </div>
+    </div>
+  </div>);
+}
+
 function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [cards,setCards]=useState(()=>{
     const tg=profile.gender==='male'?'female':'male';
@@ -647,6 +723,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
   const [showWheel,setShowWheel]=useState(false);
+  const [showDaily,setShowDaily]=useState(false);
   // Fetch real match scores
   useEffect(()=>{
     const tg=profile.gender==='male'?'female':'male';
@@ -706,7 +783,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
         <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:'#F59E0B',fontWeight:700}}>★ {swiped||0}</div>
         <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
-        <div style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:'#EF4444',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></div>
+        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:'#EF4444',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></button>
       </div>
     </div>
     {/* Card area */}
@@ -734,6 +811,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
         <FortuneWheel profile={profile} goTo={(s,m)=>{setShowWheel(false);goTo(s,m)}}/>
       </div>
     </div>}
+    {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
   </div>);
 }
 
