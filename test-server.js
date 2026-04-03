@@ -16,10 +16,10 @@ const url = require('url');
 const crypto = require('crypto');
 
 // Anonymous LLM headers — no user-identifying info
-function anonLLMHeaders(bodyLen) {
+function anonLLMHeaders(bodyLen, apiKey) {
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${LLM_API_KEY}`,
+    'Authorization': `Bearer ${apiKey||LLM_API_KEY}`,
     'Content-Length': bodyLen,
     'X-Request-ID': crypto.randomUUID(), // random per-request, not tied to user
   };
@@ -47,6 +47,39 @@ const LLM_API_KEY = process.env.LLM_API_KEY || 'ollama';
 const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-r1:1.5b';
 const PORT = parseInt(process.env.SERVER_PORT) || 3000;
 
+// Multi-LLM failover: primary → backup → fallback
+const LLM_PROVIDERS = [
+  { name:'primary', url:LLM_BASE_URL, key:LLM_API_KEY, model:LLM_MODEL },
+  process.env.LLM_BACKUP_URL ? { name:'backup', url:process.env.LLM_BACKUP_URL, key:process.env.LLM_BACKUP_KEY||LLM_API_KEY, model:process.env.LLM_BACKUP_MODEL||LLM_MODEL } : null,
+  process.env.LLM_FALLBACK_URL ? { name:'fallback', url:process.env.LLM_FALLBACK_URL, key:process.env.LLM_FALLBACK_KEY||LLM_API_KEY, model:process.env.LLM_FALLBACK_MODEL||LLM_MODEL } : null,
+].filter(Boolean);
+
+let activeProvider = 0; // index into LLM_PROVIDERS
+const providerErrors = {}; // track consecutive errors per provider
+
+function getProvider() {
+  // Return current active provider, skip providers with too many recent errors
+  for (let i = 0; i < LLM_PROVIDERS.length; i++) {
+    const idx = (activeProvider + i) % LLM_PROVIDERS.length;
+    const p = LLM_PROVIDERS[idx];
+    const errs = providerErrors[p.name] || 0;
+    if (errs < 3) return { ...p, index: idx };
+  }
+  // All providers have errors, reset and try primary
+  Object.keys(providerErrors).forEach(k => providerErrors[k] = 0);
+  return { ...LLM_PROVIDERS[0], index: 0 };
+}
+
+function onProviderSuccess(name) { providerErrors[name] = 0; }
+function onProviderError(name) {
+  providerErrors[name] = (providerErrors[name] || 0) + 1;
+  if (providerErrors[name] >= 3 && LLM_PROVIDERS.length > 1) {
+    const oldIdx = LLM_PROVIDERS.findIndex(p => p.name === name);
+    activeProvider = (oldIdx + 1) % LLM_PROVIDERS.length;
+    logger.warn('LLM', `${name}连续失败${providerErrors[name]}次，切换到${LLM_PROVIDERS[activeProvider].name}`);
+  }
+}
+
 // 引入新的 AI 服务
 const aiService = require('./src/ai-service');
 const logger = require('./src/logger');
@@ -54,11 +87,12 @@ const logger = require('./src/logger');
 // ============ LLM 调用 ============
 
 async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
-  const apiUrl = `${LLM_BASE_URL}/chat/completions`;
+  const provider = getProvider();
+  const apiUrl = `${provider.url}/chat/completions`;
   const llmCtx = logger.logLLMStart(mode, systemPrompt.length, userMessage.length);
 
   const body = JSON.stringify({
-    model: LLM_MODEL,
+    model: provider.model,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
@@ -72,7 +106,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
     const parsed = new URL(apiUrl);
     const options = {
       hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-      headers: anonLLMHeaders(Buffer.byteLength(body)),
+      headers: anonLLMHeaders(Buffer.byteLength(body), provider.key),
     };
 
     const req = (parsed.protocol === 'https:' ? require('https') : http).request(options, (res) => {
@@ -88,6 +122,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
             let content = json.choices[0].message.content;
             const finishReason = json.choices[0].finish_reason;
             const result = logger.logLLMSuccess(llmCtx, content.length, finishReason, res.statusCode);
+            onProviderSuccess(provider.name);
             if (finishReason === 'length') {
               content += '\n\n---\n⚠️ *AI输出因长度限制被截断，以上为部分内容。可输入具体问题获取更聚焦的分析。*';
             }
@@ -112,6 +147,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
     req.on('error', (e) => {
       const err = new Error(`连接 LLM 失败: ${e.message}`);
       logger.logLLMError(llmCtx, err);
+      onProviderError(provider.name);
       reject(err);
     });
     req.setTimeout(180000, () => { req.destroy(); const err = new Error('LLM 请求超时(180s)'); logger.logLLMError(llmCtx, err); reject(err); });
@@ -470,9 +506,10 @@ ${(reportSummary || '').substring(0, 500)}
         messages.push({ role: 'user', content: message });
 
         // Call LLM with low max_tokens for short replies
-        const apiUrl = `${LLM_BASE_URL}/chat/completions`;
+        const chatProvider = getProvider();
+        const apiUrl = `${chatProvider.url}/chat/completions`;
         const llmBody = JSON.stringify({
-          model: LLM_MODEL,
+          model: chatProvider.model,
           messages,
           max_tokens: 200,
           temperature: 0.8,
@@ -482,7 +519,7 @@ ${(reportSummary || '').substring(0, 500)}
         const parsed = new URL(apiUrl);
         const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
           hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-          headers: anonLLMHeaders(Buffer.byteLength(llmBody)),
+          headers: anonLLMHeaders(Buffer.byteLength(llmBody), chatProvider.key),
         }, (llmRes) => {
           let data = '';
           llmRes.on('data', chunk => data += chunk);
@@ -561,9 +598,10 @@ ${(reportSummary || '').substring(0, 500)}
         res.write(`data: ${JSON.stringify({type:'init',engineData:buildReq.engineData,structured,mode})}\n\n`);
 
         // 2. Stream LLM response
-        const apiUrl = `${LLM_BASE_URL}/chat/completions`;
+        const streamProvider = getProvider();
+        const apiUrl = `${streamProvider.url}/chat/completions`;
         const llmBody = JSON.stringify({
-          model: LLM_MODEL,
+          model: streamProvider.model,
           messages: [
             { role: 'system', content: buildReq.systemPrompt },
             { role: 'user', content: buildReq.userMessage },
@@ -574,7 +612,7 @@ ${(reportSummary || '').substring(0, 500)}
         const parsed = new URL(apiUrl);
         const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
           hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-          headers: anonLLMHeaders(Buffer.byteLength(llmBody)),
+          headers: anonLLMHeaders(Buffer.byteLength(llmBody), streamProvider.key),
         }, (llmRes) => {
           let buf = '';
           llmRes.on('data', (chunk) => {
