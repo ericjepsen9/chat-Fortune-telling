@@ -1158,10 +1158,10 @@ function HourAssistantModal({profile,onResult,onClose}){
   const q=questions[step];
   const progress=result?100:Math.round((step/questions.length)*100);
   return(
-    <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'90vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'90vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
         {/* Header */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div onClick={e=>e.stopPropagation()} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700,color:'#D97706'}}>🔮 AI时辰校正助手</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
@@ -2185,8 +2185,8 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
     {showShare&&<ShareModal type="fortune" profile={profile} onClose={()=>setShowShare(false)}/>}
     {showPostCompose&&<PostComposeModal profile={profile} onPost={(c)=>{addPost(c);setShowPostCompose(false)}} onClose={()=>setShowPostCompose(false)}/>}
     {/* Comment input */}
-    {commentPost&&<div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 24px',animation:'slideUp .3s ease'}}>
+    {commentPost&&<div onClick={()=>setCommentPost(null)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 24px',animation:'slideUp .3s ease'}}>
         <div style={{fontSize:14,fontWeight:600,color:T.text,marginBottom:10}}>评论 {commentPost.author} 的动态</div>
         <div style={{display:'flex',gap:8}}>
           <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="写评论…" autoFocus style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}
@@ -2206,8 +2206,8 @@ function PostComposeModal({profile,onPost,onClose}){
   const [text,setText]=useState('');
   const hints=['今天的心情是…','分享一个命理小发现','最近有什么感悟？','你相信缘分吗？'];
   return(
-    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <button onClick={onClose} style={{fontSize:14,color:T.textSec,background:'none',border:'none',cursor:'pointer'}}>取消</button>
           <div style={{fontSize:16,fontWeight:700}}>发布动态</div>
@@ -2721,8 +2721,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       {toast&&<div style={{position:'fixed',top:'40%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.75)',color:'#fff',padding:'10px 24px',borderRadius:20,fontSize:13,zIndex:600,animation:'fadeIn .2s ease'}}>{toast}</div>}
       {/* Profile modal */}
       {showProfile&&profile&&<CardDetailModal user={activeConv.user} profile={profile} onClose={()=>setShowProfile(false)} goTo={()=>{}}/>}
-      {showReport&&<div style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-        <div style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 30px',animation:'slideUp .3s ease'}}>
+      {showReport&&<div onClick={()=>setShowReport(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 30px',animation:'slideUp .3s ease'}}>
           <div style={{width:32,height:4,borderRadius:2,background:T.border,margin:'0 auto 16px'}}/>
           {[{l:'🔍 搜索聊天记录',a:()=>{setShowReport(false);setSearchMode(true)}},
             {l:'👤 查看个人资料',a:()=>{setShowReport(false);setShowProfile(true)}},
@@ -2816,8 +2816,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
 // ===== PRIVACY SETTINGS MODAL =====
 // ===== TERMS & PRIVACY (用户协议) =====
 function TermsModal({onAccept,onClose}){
-  return(<div style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-    <div style={{background:T.card,borderRadius:20,padding:'24px 20px',maxWidth:360,width:'100%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
+  return(<div onClick={onClose} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:20,padding:'24px 20px',maxWidth:360,width:'100%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
       <div style={{fontSize:18,fontWeight:700,color:T.text,textAlign:'center',marginBottom:16}}>用户协议与隐私政策</div>
       <div style={{flex:1,overflow:'auto',fontSize:12,color:T.textSec,lineHeight:1.8,marginBottom:16}}>
         <div style={{fontWeight:600,color:T.text,marginBottom:8}}>缘合用户服务协议</div>
@@ -2875,8 +2875,8 @@ function ReportModal({target,onClose}){
     localStorage.setItem('yuanhe_reports',JSON.stringify(reports));
     setDone(true);setTimeout(onClose,1500);
   };
-  return(<div style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+  return(<div onClick={onClose} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
       {done?<div style={{textAlign:'center',padding:'30px 0'}}><div style={{fontSize:36,marginBottom:8}}>✅</div><div style={{fontSize:15,fontWeight:600,color:T.text}}>举报已提交</div><div style={{fontSize:12,color:T.textThi,marginTop:4}}>我们会尽快处理</div></div>:<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:16,fontWeight:700,color:T.text}}>举报</div>
@@ -2901,7 +2901,7 @@ function PrivacySettingsModal({onClose}){
     {id:'private',name:'保守模式',desc:'只显示昵称+大致距离',icon:'🔒',items:['昵称','年龄段(25-30)','大致距离']},
   ];
   return(
-    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
       <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700}}>🔐 隐私设置</div>
@@ -3144,8 +3144,8 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   {showTerms&&<TermsModal onClose={()=>setShowTerms(false)}/>}
   {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
   {/* Avatar picker */}
-  {showAvatarPicker&&<div style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+  {showAvatarPicker&&<div onClick={()=>setShowAvatarPicker(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
         <div style={{fontSize:16,fontWeight:700,color:T.text}}>选择头像</div>
         <button onClick={()=>setShowAvatarPicker(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
@@ -3168,19 +3168,45 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
 
 function ProfileEditModal({profile,onSave,onClose}){
   const [f,sF]=useState({name:profile.name||'',bio:profile.bio||'',city:profile.city||''});
-  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:14,background:T.card,outline:'none'};
+  const [avatar,setAvatar]=useState(profile.avatar||(profile.gender==='female'?'👩':'👨'));
+  const [showAvatarPick,setShowAvatarPick]=useState(false);
+  const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦄'];
+  const uploadPhoto=()=>{
+    const input=document.createElement('input');input.type='file';input.accept='image/*';
+    input.onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>2*1024*1024){alert('图片不能超过2MB');return}
+      const reader=new FileReader();reader.onload=ev=>{setAvatar(ev.target.result);setShowAvatarPick(false)};reader.readAsDataURL(file)};
+    input.click();
+  };
+  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:14,background:T.card,outline:'none',boxSizing:'border-box',color:T.text};
+  const save=()=>{const updated={...profile,name:f.name||'缘友',bio:f.bio,city:f.city,avatar};localStorage.setItem('yuanhe_profile',JSON.stringify(updated));onSave(updated)};
   return(
-    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px',maxHeight:'90vh',overflow:'auto'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-          <div style={{fontSize:18,fontWeight:700}}>✏️ 编辑资料</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <div style={{fontSize:18,fontWeight:700,color:T.text}}>✏️ 编辑资料</div>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
+        </div>
+        {/* Avatar edit */}
+        <div style={{textAlign:'center',marginBottom:20}}>
+          <div onClick={()=>setShowAvatarPick(!showAvatarPick)} style={{width:72,height:72,borderRadius:36,margin:'0 auto',background:`linear-gradient(135deg,${T.accent2}20,${T.accent2}10)`,border:`2px solid ${T.accent2}30`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',position:'relative',overflow:avatar?.startsWith('data:')?'hidden':'visible',fontSize:32}}>
+            {avatar?.startsWith('data:')?<img src={avatar} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:avatar}
+            <div style={{position:'absolute',bottom:-2,right:-2,width:22,height:22,borderRadius:11,background:T.accent2,display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${T.card}`}}>
+              <span style={{fontSize:10,color:'#fff'}}>📷</span>
+            </div>
+          </div>
+          <div style={{fontSize:11,color:T.textThi,marginTop:6}}>点击更换头像</div>
+          {showAvatarPick&&<div style={{marginTop:10,background:T.bg,borderRadius:14,padding:12,border:`1px solid ${T.border}`}}>
+            <button onClick={uploadPhoto} style={{width:'100%',padding:'10px',borderRadius:10,border:`1.5px dashed ${T.accent2}`,background:`${T.accent2}06`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer',marginBottom:10}}>📤 上传照片</button>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:4}}>
+              {AVATAR_OPTIONS.map(a=><button key={a} onClick={()=>{setAvatar(a);setShowAvatarPick(false)}} style={{aspectRatio:'1',borderRadius:10,border:avatar===a?`2px solid ${T.accent2}`:`1px solid ${T.border}`,background:avatar===a?`${T.accent2}10`:T.card,cursor:'pointer',fontSize:20,display:'flex',alignItems:'center',justifyContent:'center'}}>{a}</button>)}
+            </div>
+          </div>}
         </div>
         <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="你的昵称" maxLength={12} style={is}/></div>
         <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>个性签名</label><input value={f.bio} onChange={e=>sF({...f,bio:e.target.value})} placeholder="一句话介绍自己" maxLength={30} style={is}/><div style={{fontSize:10,color:T.textThi,textAlign:'right',marginTop:4}}>{f.bio.length}/30</div></div>
         <div style={{marginBottom:20}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>所在城市</label><input value={f.city} onChange={e=>sF({...f,city:e.target.value})} placeholder="如：北京" maxLength={10} style={is}/></div>
-        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:'#F8FAFC',borderRadius:10}}>修改生辰信息请前往「修改生辰」</div>
-        <button onClick={()=>{const updated={...profile,name:f.name||'缘友',bio:f.bio,city:f.city};localStorage.setItem('yuanhe_profile',JSON.stringify(updated));onSave(updated)}} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存</button>
+        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:T.bg,borderRadius:10}}>修改生辰信息请前往「修改生辰」</div>
+        <button onClick={save} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存</button>
       </div>
     </div>
   );
@@ -3219,8 +3245,8 @@ function DataManagementModal({profile,onClose,onLogout}){
     onLogout();onClose();
   };
   return(
-    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700}}>📊 我的数据</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
@@ -3369,8 +3395,8 @@ function ShareModal({type,profile,structured,partner,score,compatibility,onClose
   };
 
   return(
-    <div style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.7)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
-      <div style={{marginBottom:16,transform:'scale(0.9)',transformOrigin:'center'}}>
+    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.7)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{marginBottom:16,transform:'scale(0.9)',transformOrigin:'center'}}>
         <div ref={cardRef}>
           {type==='personality'&&<PersonalityShareCard profile={profile} structured={structured}/>}
           {type==='match'&&<MatchShareCard profile={profile} partner={partner} score={score} compatibility={compatibility}/>}
