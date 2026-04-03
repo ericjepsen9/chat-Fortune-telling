@@ -252,6 +252,11 @@ function BirthScreen({onSubmit}){
     if(m<1||m>12)return'月份请输入1-12';
     if(d<1||d>31)return'日期请输入1-31';
     if(f.hour!==''&&(h<0||h>23))return'时辰请输入0-23（24小时制）';
+    // COPPA: must be ≥13 years old
+    const today=new Date();
+    const birth=new Date(y,m-1,d);
+    const age=Math.floor((today-birth)/(365.25*24*60*60*1000));
+    if(age<13)return'根据相关法规，本应用仅向13岁及以上用户提供服务。';
     return'';
   };
   const submit=()=>{

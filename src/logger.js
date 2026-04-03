@@ -150,7 +150,8 @@ function logLLMError(ctx, err) {
 function logEngine(mode, profile, elapsed, dataLen) {
   stats.engine.calls++;
   stats.engine.totalTime += elapsed;
-  debug('ENGINE', `${mode} | 生辰=${profile.year}-${profile.month}-${profile.day} ${profile.hour}时 | ${dataLen}字 ${elapsed}ms`);
+  // 脱敏: 不记录真实出生信息
+  debug('ENGINE', `${mode} | 生辰=****-**-** **时 | ${dataLen}字 ${elapsed}ms`);
 }
 
 function logEngineError(mode, err) {
@@ -160,10 +161,11 @@ function logEngineError(mode, err) {
 
 // ========== 安全事件 ==========
 function logSafety(question, level) {
+  // 脱敏: 不记录问题内容，只记录事件类型和长度
   if (level === 'blocked') {
-    warn('SAFETY', `拦截敏感问题`, question.substring(0, 50));
+    warn('SAFETY', `拦截敏感问题 | 长度=${question.length}字`);
   } else if (level === 'sensitive') {
-    info('SAFETY', `敏感问题（已放行）`, question.substring(0, 50));
+    info('SAFETY', `敏感问题（已放行）| 长度=${question.length}字`);
   }
 }
 
