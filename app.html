@@ -1841,12 +1841,53 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   const [readStatus,setReadStatus]=useState('');
   const [showQuick,setShowQuick]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
+  const [msgTab,setMsgTab]=useState('chat'); // 'chat'|'friends'
+  const [toast,setToast]=useState('');
   const chatEndRef=useRef(null);
   const activeConv=activeId?(ChatStore.getById(activeId)||convs.find(c=>c.id===activeId)):null;
   const scrollBottom=()=>setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),100);
 
   // Quick phrases
   const quickPhrases=['你好呀👋','在忙什么呢','晚安🌙','哈哈哈😄','好的👌','吃饭了吗','想你了💕','周末有空吗','今天开心吗😊','拜拜~'];
+
+  // Blacklist
+  const getBlacklist=()=>{try{return JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')}catch(e){return[]}};
+  const blockUser=(userId)=>{const bl=getBlacklist();if(!bl.includes(userId)){bl.push(userId);localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl))}};
+  const unblockUser=(userId)=>{const bl=getBlacklist().filter(id=>id!==userId);localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl))};
+  const isBlocked=(userId)=>getBlacklist().includes(userId);
+
+  // Toast helper
+  const showToast=(msg)=>{setToast(msg);setTimeout(()=>setToast(''),2000)};
+
+  // Image handler
+  const sendImage=()=>{
+    const input=document.createElement('input');
+    input.type='file';input.accept='image/*';
+    input.onchange=(e)=>{
+      const file=e.target.files[0];if(!file)return;
+      if(file.size>2*1024*1024){showToast('图片不能超过2MB');return}
+      const reader=new FileReader();
+      reader.onload=(ev)=>{
+        const img=ev.target.result;
+        ChatStore.addMessage(activeConv.id,{role:'user',text:'[图片]',image:img});
+        refreshConvs();scrollBottom();
+        // Bot reacts to image
+        if(activeConv.user.isBot){
+          setTimeout(async()=>{
+            setTyping(true);
+            await new Promise(r=>setTimeout(r,2000+Math.random()*3000));
+            try{
+              const r=await apiPost('/api/chat',{partner:activeConv.user,message:'[用户发了一张图片给你，请自然地回应，比如夸赞或好奇地问是什么]',history:(ChatStore.getById(activeConv.id)?.messages||[]).slice(-6)});
+              ChatStore.addMessage(activeConv.id,{role:'ai',text:r.reply||'好好看！📸'});
+            }catch(e){ChatStore.addMessage(activeConv.id,{role:'ai',text:'好好看！📸'})}
+            setTyping(false);refreshConvs();scrollBottom();
+          },1000);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
 
   // Bot online status
   const getBotOnline=(bot)=>{
@@ -1954,11 +1995,11 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         {msgs.map((msg,idx)=>(
           <div key={msg.id} className="anim-in" style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8}}>
             <div style={{maxWidth:'75%'}}>
-              <div style={{padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
+              <div style={{padding:msg.image?'4px':'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
                 background:msg.role==='user'?`linear-gradient(135deg,${T.primary},#7C3AED)`:'#fff',
                 color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
-                boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)'}}>
-                {msg.text}
+                boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)',overflow:'hidden'}}>
+                {msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:12,display:'block'}}/>:msg.text}
                 {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
               </div>
               {msg.role==='user'&&idx===msgs.length-1&&readStatus&&<div style={{fontSize:9,color:readStatus==='已读'?T.primary:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
@@ -1985,36 +2026,53 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         {quickPhrases.map(p=><button key={p} onClick={()=>{setChatInput(p);setShowQuick(false);setTimeout(()=>{},50)}} style={{padding:'6px 12px',borderRadius:16,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.text,cursor:'pointer'}}>{p}</button>)}
       </div>}
       {/* Input bar */}
-      <div style={{padding:'8px 16px 24px',background:'#fff',borderTop:showQuick?'none':`1px solid ${T.border}`,display:'flex',gap:8,alignItems:'center'}}>
-        <button onClick={()=>setShowQuick(!showQuick)} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:showQuick?'#F5F3FF':'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.primary:T.textThi}}>{showQuick?'✕':'+'}</button>
+      <div style={{padding:'8px 16px 24px',background:'#fff',borderTop:showQuick?'none':`1px solid ${T.border}`,display:'flex',gap:6,alignItems:'center'}}>
+        <button onClick={()=>setShowQuick(!showQuick)} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:showQuick?'#F5F3FF':'#fff',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.primary:T.textThi}}>{showQuick?'✕':'+'}</button>
+        <button onClick={sendImage} disabled={sending} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:'#fff',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
+        <button onClick={()=>showToast('语音消息即将上线 🎤')} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:'#fff',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>🎤</button>
         <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
           onKeyDown={e=>{if(e.key==='Enter'&&chatInput.trim())sendMsg()}}
           onFocus={()=>setShowQuick(false)}
           placeholder="发送消息…" disabled={sending}
-          style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#FAFAFA',fontSize:13,outline:'none'}}/>
+          style={{flex:1,padding:'10px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#FAFAFA',fontSize:13,outline:'none'}}/>
         <button onClick={sendMsg} disabled={!chatInput.trim()||sending}
-          style={{width:40,height:40,borderRadius:20,border:'none',
+          style={{width:36,height:36,borderRadius:18,border:'none',
             background:(!chatInput.trim()||sending)?T.border:`linear-gradient(135deg,${T.primary},#7C3AED)`,
-            color:'#fff',fontSize:16,cursor:(!chatInput.trim()||sending)?'default':'pointer',
+            color:'#fff',fontSize:14,cursor:(!chatInput.trim()||sending)?'default':'pointer',
             flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
             boxShadow:(!chatInput.trim()||sending)?'none':'0 2px 8px rgba(139,92,246,0.3)'}}>↑</button>
       </div>
+      {/* Toast */}
+      {toast&&<div style={{position:'fixed',top:'40%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.75)',color:'#fff',padding:'10px 24px',borderRadius:20,fontSize:13,zIndex:600,animation:'fadeIn .2s ease'}}>{toast}</div>}
       {/* Profile modal */}
       {showProfile&&profile&&<CardDetailModal user={activeConv.user} profile={profile} onClose={()=>setShowProfile(false)} goTo={()=>{}}/>}
     </div>);
   }
 
   // Conversation list
+  const blacklist=getBlacklist();
+  const filteredConvs=convs.filter(c=>!blacklist.includes(c.user.id));
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
-    <div style={{padding:'48px 20px 16px'}}><div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div><div style={{fontSize:12,color:T.textThi,marginTop:4}}>{convs.length>0?convs.length+'个会话':'匹配成功后在这里聊天'}</div></div>
-    {convs.length===0?
+    <div style={{padding:'48px 20px 0'}}>
+      <div className="serif" style={{fontSize:20,fontWeight:700}}>💬 消息</div>
+      {/* Tabs */}
+      <div style={{display:'flex',gap:4,marginTop:10,marginBottom:14}}>
+        {[{k:'chat',l:'聊天'},{k:'friends',l:'好友'},{k:'blocked',l:'黑名单'}].map(t=>(
+          <button key={t.k} onClick={()=>setMsgTab(t.k)} style={{padding:'6px 16px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
+            background:msgTab===t.k?T.primary:'#F3F4F6',color:msgTab===t.k?'#fff':T.textSec}}>{t.l}{t.k==='chat'&&filteredConvs.length>0?` ${filteredConvs.length}`:''}</button>
+        ))}
+      </div>
+    </div>
+
+    {/* Chat tab */}
+    {msgTab==='chat'&&(filteredConvs.length===0?
       <div style={{padding:'50px 20px',textAlign:'center',color:T.textThi}}>
         <div style={{width:80,height:80,borderRadius:40,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}><Icons.msgCircle s={36} c="#D1D5DB"/></div>
         <div style={{fontSize:15,fontWeight:500,color:T.text}}>暂无匹配消息</div>
         <div style={{fontSize:12,marginTop:8,lineHeight:1.6}}>在首页右滑喜欢的人<br/>匹配成功后可以开始聊天</div>
       </div>
       :
-      <div style={{padding:'0 16px'}}>{convs.map(conv=>{
+      <div style={{padding:'0 16px'}}>{filteredConvs.map(conv=>{
         const convOnline=getBotOnline(conv.user);
         return(
         <div key={conv.id} onClick={()=>setActiveId(conv.id)} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
@@ -2032,7 +2090,52 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           </div>
         </div>);
       })}</div>
-    }
+    )}
+
+    {/* Friends tab */}
+    {msgTab==='friends'&&<div style={{padding:'0 16px'}}>
+      {filteredConvs.length===0?<div style={{padding:'40px 20px',textAlign:'center',color:T.textThi,fontSize:13}}>还没有好友，去首页匹配吧</div>
+      :filteredConvs.map(conv=>{
+        const convOnline=getBotOnline(conv.user);
+        const msgCount=(conv.messages||[]).length;
+        return(
+        <div key={conv.id} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
+            {conv.user.gender==='female'?'👩':'👨'}
+            <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:convOnline?'#22C55E':'#D1D5DB',border:'2px solid #fff'}}/>
+          </div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:T.text}}>{conv.user.name}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{conv.user.sign} · {conv.user.age}岁 · {msgCount}条消息</div>
+          </div>
+          <div style={{display:'flex',gap:4}}>
+            <button onClick={()=>setActiveId(conv.id)} style={{padding:'6px 12px',borderRadius:10,border:'none',background:T.primary,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>聊天</button>
+            <button onClick={()=>{if(confirm('确定拉黑'+conv.user.name+'？')){blockUser(conv.user.id);refreshConvs();showToast('已拉黑')}}} style={{padding:'6px 8px',borderRadius:10,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🚫</button>
+          </div>
+        </div>);
+      })}
+    </div>}
+
+    {/* Blacklist tab */}
+    {msgTab==='blocked'&&<div style={{padding:'0 16px'}}>
+      {blacklist.length===0?<div style={{padding:'40px 20px',textAlign:'center',color:T.textThi,fontSize:13}}>黑名单为空 ✨</div>
+      :blacklist.map(uid=>{
+        const conv=convs.find(c=>c.user.id===uid);
+        if(!conv)return null;
+        return(
+        <div key={uid} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:44,height:44,borderRadius:22,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0,opacity:.5}}>{conv.user.gender==='female'?'👩':'👨'}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:600,color:T.textSec}}>{conv.user.name}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{conv.user.sign} · {conv.user.age}岁</div>
+          </div>
+          <button onClick={()=>{unblockUser(uid);refreshConvs();showToast('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>解除拉黑</button>
+        </div>);
+      })}
+    </div>}
+
+    {/* Toast */}
+    {toast&&<div style={{position:'fixed',top:'40%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.75)',color:'#fff',padding:'10px 24px',borderRadius:20,fontSize:13,zIndex:600,animation:'fadeIn .2s ease'}}>{toast}</div>}
   </div>);
 }
 
