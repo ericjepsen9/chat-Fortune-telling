@@ -1469,13 +1469,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>
       </div>
       {/* Sticky mode pills — always visible in header */}
-      {scrolledPastModes&&<div style={{display:'flex',gap:6,paddingBottom:10,overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+      {scrolledPastModes&&<div style={{display:'flex',gap:6,paddingBottom:10}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
-          <button key={m.id} onClick={()=>setMode(m.id)} style={{padding:'6px 14px',borderRadius:20,border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,cursor:'pointer',flexShrink:0,fontSize:12,fontWeight:600,whiteSpace:'nowrap',
+          <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:'6px 4px',borderRadius:12,border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,cursor:'pointer',fontSize:10,fontWeight:600,whiteSpace:'nowrap',textAlign:'center',
             background:mode===m.id?`${m.c}0A`:T.card,
             color:mode===m.id?m.c:T.textSec,transition:'all .2s'}}>
-            {m.icon} {m.label}
-            {!!getMS(m.id).result&&<span style={{display:'inline-block',width:6,height:6,borderRadius:3,background:mode===m.id?m.c:T.textThi,marginLeft:4,verticalAlign:'middle'}}/>}
+            {m.label.substring(0,4)}
+            {!!getMS(m.id).result&&<span style={{display:'inline-block',width:5,height:5,borderRadius:3,background:mode===m.id?m.c:T.textThi,marginLeft:3,verticalAlign:'middle'}}/>}
           </button>
         ))}
       </div>}
@@ -1494,20 +1494,19 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     <div style={{padding:'12px 16px 180px'}}>
-      {/* MODE GRID — pill buttons, all visible in one row */}
-      <div style={{display:'flex',gap:8,marginBottom:14,overflowX:'auto',WebkitOverflowScrolling:'touch',paddingBottom:4}}>
+      {/* MODE GRID — 5 pills in one row, no icons */}
+      <div style={{display:'flex',gap:6,marginBottom:14}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
           const hasResult=!!getMS(m.id).result;
           const isLoading=!!getMS(m.id).loading;
           return(<button key={m.id} onClick={()=>setMode(m.id)} style={{
-            padding:'10px 16px',borderRadius:14,cursor:'pointer',textAlign:'center',transition:'all .25s',position:'relative',flexShrink:0,display:'flex',alignItems:'center',gap:6,
+            flex:1,padding:'10px 2px',borderRadius:12,cursor:'pointer',textAlign:'center',transition:'all .25s',position:'relative',
             border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,
             background:mode===m.id?`${m.c}0A`:T.card,
             boxShadow:mode===m.id?`0 2px 10px ${m.c}20`:T.shadow,
           }}>
-            <span style={{fontSize:18}}>{m.icon}</span>
-            <span style={{fontSize:13,fontWeight:600,color:mode===m.id?m.c:T.text}}>{m.label}</span>
-            {(hasResult||isLoading)&&<div style={{width:6,height:6,borderRadius:3,background:isLoading?'#F59E0B':T.success,marginLeft:2}}/>}
+            <div style={{fontSize:10,fontWeight:600,color:mode===m.id?m.c:T.text}}>{m.label.substring(0,4)}</div>
+            {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:6,height:6,borderRadius:3,background:isLoading?'#F59E0B':T.success}}/>}
           </button>);
         })}
       </div>
