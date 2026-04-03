@@ -238,9 +238,9 @@ function OnboardingScreen({onDone}){
 function BirthScreen({onSubmit}){
   const [f,sF]=useState(()=>{
     try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));
-      if(p&&p.year)return{year:String(p.year),month:String(p.month),day:String(p.day),hour:p.hour>=0?String(p.hour):'',gender:p.gender||'female',name:p.name||''};
+      if(p&&p.year)return{year:String(p.year),month:String(p.month),day:String(p.day),hour:p.hour>=0?String(p.hour):'',gender:p.gender||'female',name:p.name||'',bio:p.bio||'',city:p.city||''};
     }catch(e){}
-    return{year:'',month:'',day:'',hour:'',gender:'female',name:''};
+    return{year:'',month:'',day:'',hour:'',gender:'female',name:'',bio:'',city:''};
   });
   const [err,setErr]=useState('');
   const [lunar,sL]=useState(null);
@@ -261,7 +261,7 @@ function BirthScreen({onSubmit}){
   };
   const submit=()=>{
     const e=validate();if(e){setErr(e);return}
-    const p={year:+f.year,month:+f.month,day:+f.day,hour:f.hour!==''?+f.hour:-1,gender:f.gender,name:f.name||'缘友'};
+    const p={year:+f.year,month:+f.month,day:+f.day,hour:f.hour!==''?+f.hour:-1,gender:f.gender,name:f.name||'缘友',bio:f.bio||'',city:f.city||''};
     localStorage.setItem('yuanhe_profile',JSON.stringify(p));onSubmit(p);
   };
   const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:15,background:'#fff',outline:'none'};
@@ -1385,12 +1385,23 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <span style={{fontSize:12}}>AI正在生成分析…</span>
               </div>}
               {/* Actions - only after streaming complete */}
-              {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:8}}>
+              {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
                 <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
                 <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
                 <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🗑️</button>
               </div>}
+              {/* Feedback */}
+              {!ms.result._streaming&&(()=>{
+                const fbKey='yuanhe_fb_'+mode+'_'+Date.now().toString(36).slice(0,6);
+                const existingFb=localStorage.getItem('yuanhe_fb_'+mode);
+                if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'4px 0',marginBottom:8}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
+                return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'6px 0',marginBottom:8}}>
+                  <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,cursor:'pointer'}}>👍 准</button>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,cursor:'pointer'}}>👎 不准</button>
+                </div>;
+              })()}
             </>}
 
             {/* Chat History (follow-up bubbles) */}
