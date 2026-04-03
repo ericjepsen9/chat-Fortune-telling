@@ -857,7 +857,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     </div>
     {/* Action buttons — below card */}
     {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:24,alignItems:'center',padding:'6px 0 2px',flexShrink:0}}>
-      {lastSwiped&&<button onClick={undoSwipe} style={{width:36,height:36,borderRadius:18,border:`1.5px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:T.textThi}}>↩</button>}
+      {lastSwiped&&<button onClick={undoSwipe} style={{width:36,height:36,borderRadius:18,border:`1.5px solid ${T.success}40`,background:`${T.success}08`,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:T.success}}>↩</button>}
       <button onClick={()=>swipe('left')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c={T.textThi}/></button>
       <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:T.primary,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 3px 12px ${T.primary}40`}}><Icons.heart s={22} c="#fff" fill="#fff"/></button>
     </div>}
