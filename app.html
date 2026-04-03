@@ -2049,7 +2049,8 @@ function DiscoverScreen({goTo,profile}){
   const [showShare,setShowShare]=useState(false);
   const [showPostCompose,setShowPostCompose]=useState(false);
   const [discoverSearch,setDiscoverSearch]=useState('');
-  const [commentPost,setCommentPost]=useState(null); // post being commented
+  const [discoverTab,setDiscoverTab]=useState('recommend'); // 'recommend' | 'community'
+  const [commentPost,setCommentPost]=useState(null);
   const [commentText,setCommentText]=useState('');
   const [reportTarget,setReportTarget]=useState(null);
   const today=new Date();const dayN=today.getDate();
@@ -2090,7 +2091,15 @@ function DiscoverScreen({goTo,profile}){
         <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,opacity:.6}}>🔍</span>
       </div>
     </div>
-    <div style={{padding:'16px 16px'}}>
+    {/* Tab switcher */}
+    <div style={{display:'flex',gap:0,margin:'0 16px 0',background:T.card,borderRadius:12,padding:3,boxShadow:T.shadow}}>
+      {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
+        <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:14,fontWeight:600,cursor:'pointer',background:discoverTab===t.k?T.primary:'transparent',color:discoverTab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
+      ))}
+    </div>
+    <div style={{padding:'12px 16px'}}>
+      {/* ===== 推荐 Tab ===== */}
+      {discoverTab==='recommend'&&<>
       {/* Hot topics */}
       <div style={{display:'flex',gap:6,marginBottom:14,overflow:'auto',paddingBottom:4}}>
         {['🔥今日运势','💕桃花运','💼事业','🌙月相','⭐星座配对','📖命理入门'].map(tag=>
@@ -2133,11 +2142,12 @@ function DiscoverScreen({goTo,profile}){
           <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
         </div>)}
 
-      {/* Community Feed */}
-      <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:16,marginBottom:10}}>🌍 缘友圈</div>
+      </>}
+      {/* ===== 缘友圈 Tab ===== */}
+      {discoverTab==='community'&&<>
       {/* Post input */}
       <div className="anim-in" style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
-        <div onClick={()=>setShowPostCompose(true)} style={{padding:'10px 14px',borderRadius:12,background:'#F9FAFB',fontSize:13,color:T.textThi,cursor:'pointer'}}>✏️ 分享你的想法…</div>
+        <div onClick={()=>setShowPostCompose(true)} style={{padding:'10px 14px',borderRadius:12,background:T.bg,fontSize:13,color:T.textThi,cursor:'pointer'}}>✏️ 分享你的想法…</div>
       </div>
       {/* Posts */}
       {posts_.map((post,i)=>(
@@ -2164,6 +2174,7 @@ function DiscoverScreen({goTo,profile}){
           </div>
         </div>
       ))}
+      </>}
     </div>
     {showShare&&<ShareModal type="fortune" profile={profile} onClose={()=>setShowShare(false)}/>}
     {showPostCompose&&<PostComposeModal profile={profile} onPost={(c)=>{addPost(c);setShowPostCompose(false)}} onClose={()=>setShowPostCompose(false)}/>}
