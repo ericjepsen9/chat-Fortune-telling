@@ -1494,7 +1494,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     <div style={{padding:'12px 16px 180px'}}>
-      {/* MODE GRID — 5 pills in one row, no icons */}
+      {/* MODE GRID — with icons */}
       <div style={{display:'flex',gap:6,marginBottom:14}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
           const hasResult=!!getMS(m.id).result;
@@ -1505,7 +1505,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             background:mode===m.id?`${m.c}0A`:T.card,
             boxShadow:mode===m.id?`0 2px 10px ${m.c}20`:T.shadow,
           }}>
-            <div style={{fontSize:10,fontWeight:600,color:mode===m.id?m.c:T.text}}>{m.label.substring(0,4)}</div>
+            <div style={{fontSize:18}}>{m.icon}</div>
+            <div style={{fontSize:10,fontWeight:600,color:mode===m.id?m.c:T.text,marginTop:3}}>{m.label.substring(0,4)}</div>
             {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:6,height:6,borderRadius:3,background:isLoading?'#F59E0B':T.success}}/>}
           </button>);
         })}
