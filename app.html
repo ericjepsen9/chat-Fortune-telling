@@ -3384,7 +3384,7 @@ function App(){
   return(<div style={{maxWidth:480,margin:'0 auto',height:'100dvh',position:'relative',overflow:'hidden',background:T.bg,boxShadow:'0 0 40px rgba(0,0,0,0.08)'}}>
     {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:onboarded?S.BIRTH:S.ONBOARD)}/>}
     {scr===S.ONBOARD&&<OnboardingScreen onDone={()=>{localStorage.setItem('yuanhe_onboarded','1');setScr(S.BIRTH)}}/>}
-    {scr===S.BIRTH&&!localStorage.getItem('yuanhe_terms_accepted')&&<TermsModal onAccept={()=>localStorage.setItem('yuanhe_terms_accepted','1')}/>}
+    {scr===S.BIRTH&&!profile&&!localStorage.getItem('yuanhe_terms_accepted')&&<TermsModal onAccept={()=>{localStorage.setItem('yuanhe_terms_accepted','1');window.location.reload()}}/>}
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<div key="home" style={{height:'100%'}}><HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/></div>}
     {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
