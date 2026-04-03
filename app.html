@@ -2851,18 +2851,28 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showTerms,setShowTerms]=useState(false);
   const [showDaily,setShowDaily]=useState(false);
   const [showDevStats,setShowDevStats]=useState(false);
+  const [showAvatarPicker,setShowAvatarPicker]=useState(false);
   const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
   const privacyLabel={standard:'标准',open:'开放',private:'保守'}[privacyLevel]||'标准';
   const favCount=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_fav_')).length;
+  const currentAvatar=profile.avatar||(profile.gender==='female'?'👩':'👨');
+  const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦁','🐸','🦄'];
+  const changeAvatar=(a)=>{onUpdateProfile({...profile,avatar:a});setShowAvatarPicker(false)};
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
   {/* Profile card */}
   <div style={{padding:'16px 16px 0'}}>
     <div style={{background:T.card,borderRadius:20,padding:'20px',boxShadow:T.shadow}}>
-      <div onClick={()=>setShowEditProfile(true)} style={{display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
-        <div style={{width:60,height:60,borderRadius:30,background:`linear-gradient(135deg,${T.accent2}20,${T.accent2}10)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,border:`2px solid ${T.accent2}30`}}>{profile.gender==='female'?'👩':'👨'}</div>
-        <div style={{flex:1}}>
+      <div style={{display:'flex',alignItems:'center',gap:16}}>
+        {/* Avatar — clickable to change */}
+        <div onClick={()=>setShowAvatarPicker(true)} style={{width:60,height:60,borderRadius:30,background:`linear-gradient(135deg,${T.accent2}20,${T.accent2}10)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,border:`2px solid ${T.accent2}30`,cursor:'pointer',position:'relative'}}>
+          {currentAvatar}
+          <div style={{position:'absolute',bottom:-2,right:-2,width:18,height:18,borderRadius:9,background:T.accent2,display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${T.card}`}}>
+            <span style={{fontSize:9,color:'#fff'}}>📷</span>
+          </div>
+        </div>
+        <div onClick={()=>setShowEditProfile(true)} style={{flex:1,cursor:'pointer'}}>
           <div style={{color:T.text,fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div>
           <div style={{color:T.textSec,fontSize:12,marginTop:3}}>{profile.bio||'点击编辑个人简介'}</div>
           <div style={{display:'flex',gap:6,marginTop:6,flexWrap:'wrap'}}>
@@ -2871,7 +2881,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
             {profile.city&&<span style={{padding:'2px 8px',borderRadius:10,fontSize:10,background:`${T.gold}10`,color:T.gold,fontWeight:500}}>{profile.city}</span>}
           </div>
         </div>
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+        <div onClick={()=>setShowEditProfile(true)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,cursor:'pointer'}}>
           <span style={{color:T.textThi,fontSize:16}}>›</span>
           <span style={{fontSize:9,color:T.textThi}}>编辑</span>
         </div>
@@ -2895,15 +2905,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   </div>}
 
   <div style={{padding:'10px 16px 0'}}>
-    {/* Quick actions */}
-    <div style={{display:'flex',gap:10,marginBottom:12}}>
-      {[{icon:'✦',label:'AI占卜',c:T.accent2,a:()=>goTo(S.AI)},{icon:'📅',label:'命理日历',c:T.accent4,a:()=>setShowDaily(true)},{icon:'📊',label:'我的数据',c:T.accent1,a:()=>setShowDataMgmt(true)}].map(it=>
-        <button key={it.label} onClick={it.a} style={{flex:1,padding:'14px 8px',borderRadius:14,border:'none',background:T.card,boxShadow:T.shadow,cursor:'pointer',textAlign:'center'}}>
-          <div style={{width:36,height:36,borderRadius:12,background:`${it.c}12`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 6px',fontSize:16}}>{it.icon}</div>
-          <div style={{fontSize:11,fontWeight:600,color:T.text}}>{it.label}</div>
-        </button>
-      )}
-    </div>
+    {/* Quick actions — removed AI占卜 and 命理日历 */}
 
     {/* Settings group */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
@@ -3029,6 +3031,20 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   {showAbout&&<AboutModal onClose={()=>setShowAbout(false)}/>}
   {showTerms&&<TermsModal onClose={()=>setShowTerms(false)}/>}
   {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
+  {/* Avatar picker */}
+  {showAvatarPicker&&<div style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,color:T.text}}>选择头像</div>
+        <button onClick={()=>setShowAvatarPicker(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:8}}>
+        {AVATAR_OPTIONS.map(a=>(
+          <button key={a} onClick={()=>changeAvatar(a)} style={{width:'100%',aspectRatio:'1',borderRadius:14,border:currentAvatar===a?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:currentAvatar===a?`${T.accent2}10`:T.card,cursor:'pointer',fontSize:28,display:'flex',alignItems:'center',justifyContent:'center'}}>{a}</button>
+        ))}
+      </div>
+    </div>
+  </div>}
 </div>);}
 
 function ProfileEditModal({profile,onSave,onClose}){
