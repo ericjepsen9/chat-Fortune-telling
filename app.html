@@ -391,8 +391,8 @@ function CardDetailModal({user,profile,onClose,goTo}){
 
         {/* Tab switcher (prototype style: filled active tab) */}
         <div style={{display:'flex',gap:4,margin:'0 16px 12px',background:'#fff',borderRadius:12,padding:4,boxShadow:T.shadow}}>
-          {[{k:'info',l:'基本信息'},{k:'match',l:'匹配分析'},{k:'wuxing',l:'五行对比'}].map(t=>
-            <button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:13,fontWeight:600,cursor:'pointer',background:tab===t.k?ac:'transparent',color:tab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
+          {[{k:'info',l:'基本信息'},{k:'match',l:'匹配分析'},{k:'wuxing',l:'五行对比'},{k:'posts',l:'动态'}].map(t=>
+            <button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',background:tab===t.k?ac:'transparent',color:tab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
           )}
         </div>
 
@@ -474,6 +474,37 @@ function CardDetailModal({user,profile,onClose,goTo}){
                 </div>;
               })}
             </div>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
+          </div>}
+
+          {tab==='posts'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+            {(()=>{
+              // Get posts for this user: BOT_POSTS if bot, or user posts from localStorage
+              const BOT_POSTS_ALL=[
+                {id:'bp1',author:'苏晚晴',content:'今天画了一只在窗台晒太阳的猫咪，感觉和我的日主壬水好搭 🐱🎨',time:'2小时前',likes:23},
+                {id:'bp2',author:'陆辰逸',content:'每次设计建筑的时候都在想，空间其实和命理一样，讲究气流和平衡。',time:'3小时前',likes:18},
+                {id:'bp3',author:'方念安',content:'做产品经理最大的感受就是——用户需求和五行一样，看似矛盾其实互补😂',time:'5小时前',likes:31},
+                {id:'bp4',author:'江清寒',content:'早晨打了一套太极，感受天地之气。阴阳平衡和八字身强身弱是一个道理。',time:'6小时前',likes:15},
+                {id:'bp5',author:'林清歌',content:'深夜写了一首新歌，灵感来自月亮水瓶的感觉——自由又疏离 🌙',time:'昨天',likes:42},
+                {id:'bp6',author:'沈芷萱',content:'今天教了一堂拉丁舞课，学员们进步好大！舞蹈和命理一样，都是身体的语言 💃',time:'昨天',likes:27},
+                {id:'bp7',author:'温如玉',content:'秋天到了，煲了一锅银耳莲子汤。润肺养阴，正适合金旺的季节 🍵',time:'2天前',likes:35},
+                {id:'bp8',author:'宋子墨',content:'新游戏demo终于跑通了！感觉写代码和算命一样，debug就是找bug的"忌神"😂',time:'2天前',likes:19},
+                {id:'bp9',author:'谢明朗',content:'在云南拍纪录片，遇到一位老中医，他说我的面相带"文昌"，适合做记录者 🎬',time:'3天前',likes:44},
+                {id:'bp10',author:'霍言泽',content:'第三次创业，这次做AI+健康。失败不可怕，可怕的是不敢再开始 🔥',time:'3天前',likes:28},
+              ];
+              const userPosts=user.isBot?BOT_POSTS_ALL.filter(p=>p.author===user.name):
+                (()=>{try{return JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]')}catch(e){return[]}})();
+              if(userPosts.length===0)return <div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}>
+                <div style={{fontSize:28,marginBottom:8}}>📝</div>
+                <div style={{fontSize:13}}>暂无动态</div>
+              </div>;
+              return userPosts.map(p=><div key={p.id} style={{padding:'12px 0',borderBottom:`1px solid ${T.border}`}}>
+                <div style={{fontSize:13,color:T.text,lineHeight:1.7}}>{p.content}</div>
+                <div style={{display:'flex',justifyContent:'space-between',marginTop:8}}>
+                  <span style={{fontSize:11,color:T.textThi}}>{p.time||'刚刚'}</span>
+                  <span style={{fontSize:11,color:T.textThi}}>❤️ {p.likes||0}</span>
+                </div>
+              </div>);
+            })()}
           </div>}
         </div>
 
