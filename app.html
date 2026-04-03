@@ -1904,29 +1904,30 @@ function FortuneWheel({profile,goTo}){
   };
 
   const n=pool.length||8;
-  const sz=260,cx=sz/2,cy=sz/2,r=sz/2-14;
+  const sz=320,cx=sz/2,cy=sz/2,r=sz/2-14;
+  const revealed=!!result; // show names/avatars only after spin result
   return(
-    <div className="anim-in" style={{background:'linear-gradient(135deg,#1E1146,#2D1B69,#1E1146)',borderRadius:20,padding:20,boxShadow:'0 8px 32px rgba(30,17,70,0.4)',marginBottom:14,position:'relative',overflow:'hidden'}}>
-      {/* Subtle star decorations */}
+    <div className="anim-in" style={{background:'linear-gradient(135deg,#1E1146,#2D1B69,#1E1146)',borderRadius:20,padding:16,boxShadow:'0 8px 32px rgba(30,17,70,0.4)',marginBottom:14,position:'relative',overflow:'hidden'}}>
+      {/* Stars */}
       {[...Array(12)].map((_,i)=><div key={i} style={{position:'absolute',width:2,height:2,borderRadius:1,background:'rgba(255,255,255,'+(0.1+Math.random()*0.3)+')',top:Math.random()*100+'%',left:Math.random()*100+'%'}}/>)}
-      <div style={{textAlign:'center',marginBottom:14}}>
+      <div style={{textAlign:'center',marginBottom:10}}>
         <div style={{fontSize:16,fontWeight:800,color:'#E9D5FF',letterSpacing:2}}>✦ 命运转盘 ✦</div>
         <div style={{fontSize:11,color:'rgba(196,181,253,0.6)',marginTop:4}}>转动命运之轮，寻找你的命中注定</div>
       </div>
       {loading?<div style={{textAlign:'center',padding:'40px 0',color:'rgba(196,181,253,0.5)',fontSize:12}}>✦ 感应缘分中… ✦</div>:<>
       <div style={{position:'relative',width:sz,height:sz,margin:'0 auto'}}>
-        {/* Outer glow ring */}
+        {/* Glow */}
         <div style={{position:'absolute',inset:-6,borderRadius:'50%',background:'radial-gradient(circle,rgba(139,92,246,0.15) 60%,transparent 70%)',animation:spinning?'pulse 1s infinite':'none'}}/>
-        {/* Outer decorative ring */}
+        {/* Decorative rings */}
         <svg width={sz} height={sz} style={{position:'absolute',top:0,left:0}}>
           <circle cx={cx} cy={cy} r={r+8} fill="none" stroke="rgba(196,181,253,0.12)" strokeWidth={1}/>
           <circle cx={cx} cy={cy} r={r+4} fill="none" stroke="rgba(196,181,253,0.08)" strokeWidth={1} strokeDasharray="4,6"/>
         </svg>
-        {/* Golden pointer */}
-        <div style={{position:'absolute',top:2,left:'50%',transform:'translateX(-50%)',zIndex:5}}>
-          <svg width={20} height={24}><polygon points="10,0 3,20 17,20" fill="#F59E0B"/><polygon points="10,2 5,18 15,18" fill="#FBBF24"/></svg>
+        {/* Pointer */}
+        <div style={{position:'absolute',top:0,left:'50%',transform:'translateX(-50%)',zIndex:5}}>
+          <svg width={22} height={28}><polygon points="11,0 3,24 19,24" fill="#F59E0B"/><polygon points="11,3 6,21 16,21" fill="#FBBF24"/></svg>
         </div>
-        {/* Wheel */}
+        {/* Wheel SVG */}
         <svg width={sz} height={sz} style={{transition:spinning?'transform 4s cubic-bezier(0.17,0.67,0.12,0.99)':'none',transform:`rotate(${angle}deg)`}}>
           {pool.map((u,i)=>{
             const a1=(i*360/n-90)*Math.PI/180;
@@ -1934,22 +1935,26 @@ function FortuneWheel({profile,goTo}){
             const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
             const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
             const mid=((i+0.5)*360/n-90)*Math.PI/180;
-            const tx=cx+(r*0.58)*Math.cos(mid),ty=cy+(r*0.58)*Math.sin(mid);
+            const tx=cx+(r*0.62)*Math.cos(mid),ty=cy+(r*0.62)*Math.sin(mid);
             const textAngle=(i+0.5)*360/n;
             const emoji=u.gender==='female'?'👩':'👨';
             const sectorColors=['#4C1D95','#6D28D9','#5B21B6','#7C3AED','#4C1D95','#6D28D9','#5B21B6','#7C3AED'];
             return(<g key={i}>
               <path d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`} fill={sectorColors[i%sectorColors.length]} stroke="rgba(196,181,253,0.2)" strokeWidth={1}/>
-              <text x={tx} y={ty-4} fill="#fff" fontSize={15} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty-4})`}>{emoji}</text>
-              <text x={tx} y={ty+12} fill="rgba(233,213,255,0.8)" fontSize={8} fontWeight={600} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty+12})`}>{u.name.substring(0,3)}</text>
+              {revealed?<>
+                <text x={tx} y={ty-6} fill="#fff" fontSize={18} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty-6})`}>{emoji}</text>
+                <text x={tx} y={ty+14} fill="rgba(233,213,255,0.9)" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty+14})`}>{u.name.substring(0,3)}</text>
+              </>:<>
+                <text x={tx} y={ty} fill="rgba(196,181,253,0.3)" fontSize={14} textAnchor="middle" dominantBaseline="central" transform={`rotate(${textAngle},${tx},${ty})`}>?</text>
+              </>}
             </g>);
           })}
-          {/* Center orb */}
-          <circle cx={cx} cy={cy} r={30} fill="url(#centerGrad)"/>
-          <circle cx={cx} cy={cy} r={28} fill="none" stroke="rgba(251,191,36,0.3)" strokeWidth={1}/>
+          {/* Center */}
+          <circle cx={cx} cy={cy} r={34} fill="url(#centerGrad)"/>
+          <circle cx={cx} cy={cy} r={32} fill="none" stroke="rgba(251,191,36,0.3)" strokeWidth={1}/>
           <defs><radialGradient id="centerGrad"><stop offset="0%" stopColor="#2D1B69"/><stop offset="100%" stopColor="#1E1146"/></radialGradient></defs>
-          <text x={cx} y={cy-5} fill="#FBBF24" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">命中</text>
-          <text x={cx} y={cy+7} fill="#FBBF24" fontSize={9} fontWeight={700} textAnchor="middle" dominantBaseline="central">注定</text>
+          <text x={cx} y={cy-6} fill="#FBBF24" fontSize={10} fontWeight={700} textAnchor="middle" dominantBaseline="central">命中</text>
+          <text x={cx} y={cy+8} fill="#FBBF24" fontSize={10} fontWeight={700} textAnchor="middle" dominantBaseline="central">注定</text>
         </svg>
       </div>
       <button onClick={spin} disabled={spinning||spinsLeft<=0} style={{width:'100%',padding:'14px',borderRadius:28,border:'none',marginTop:14,fontSize:15,fontWeight:700,cursor:spinning||spinsLeft<=0?'default':'pointer',letterSpacing:1,
