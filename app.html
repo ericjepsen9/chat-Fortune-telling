@@ -803,41 +803,41 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     {/* Header matching prototype: 五行轮盘 + title + action buttons */}
     <div style={{padding:'10px 16px 6px',flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div style={{display:'flex',alignItems:'center',gap:10}}>
-        {/* 五行 Energy Ring (pie chart style) */}
-        <div style={{position:'relative',width:56,height:56}}>
-          <svg width={56} height={56} viewBox="0 0 56 56">
+        {/* 五行 Energy Ring (donut style) */}
+        <div style={{position:'relative',width:48,height:48}}>
+          <svg width={48} height={48} viewBox="0 0 48 48">
             {(()=>{
               let startAngle=-90;
               return wxValues.map((val,i)=>{
                 const angle=(val/wxTotal)*360;
                 const endAngle=startAngle+angle;
-                const r=24,cx=28,cy=28;
+                const r=19,cx=24,cy=24;
                 const startRad=startAngle*Math.PI/180;
                 const endRad=endAngle*Math.PI/180;
                 const x1=cx+r*Math.cos(startRad),y1=cy+r*Math.sin(startRad);
                 const x2=cx+r*Math.cos(endRad),y2=cy+r*Math.sin(endRad);
                 const large=angle>180?1:0;
-                const path=`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`;
+                const d=`M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2}`;
                 startAngle=endAngle;
-                return React.createElement('path',{key:i,d:path,fill:wxColors[i],opacity:i===dominantIdx?1:0.4,stroke:'#fff',strokeWidth:1});
+                return React.createElement('path',{key:i,d:d,fill:'none',stroke:wxColors[i],strokeWidth:i===dominantIdx?6:4,strokeLinecap:'round',opacity:i===dominantIdx?1:0.35});
               });
             })()}
           </svg>
-          <div style={{position:'absolute',bottom:-2,left:'50%',transform:'translateX(-50%)',fontSize:10,fontWeight:700,color:wxColors[dominantIdx]}}>{dominantWx}</div>
+          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:800,color:wxColors[dominantIdx]}}>{dominantWx}</div>
         </div>
         <div>
-          <div className="serif" style={{fontSize:18,fontWeight:700,color:T.text}}>缘合</div>
+          <div style={{fontSize:17,fontWeight:800,color:T.text,letterSpacing:1}}>缘合</div>
           <div style={{fontSize:10,color:T.textThi}}>今日{dominantWx}象能量活跃</div>
         </div>
       </div>
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-        <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:'#D08609',fontWeight:700}}>★ {swiped||0}</div>
+        <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:T.gold,fontWeight:700}}>★ {swiped||0}</div>
         <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#8E76D5'}}>✦</span></button>
-        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:'#CB3A3A',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></button>
+        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:T.primary,color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></button>
       </div>
     </div>
-    {/* Card area — buttons overlaid at bottom */}
-    <div style={{position:'relative',flex:1,margin:'0 14px',minHeight:100,marginBottom:0}}>
+    {/* Card area */}
+    <div style={{position:'relative',flex:1,margin:'0 14px',minHeight:100,marginBottom:4}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500,color:T.text}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>先去AI占卜</button>
@@ -854,13 +854,13 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
           <div style={{fontSize:11,opacity:.7}}>点击任意位置关闭</div>
         </div>
       </div>}
-      {/* Action buttons — overlaid at bottom of card area */}
-      {cards.length>0&&<div style={{position:'absolute',bottom:12,left:0,right:0,display:'flex',justifyContent:'center',gap:24,alignItems:'center',zIndex:4}}>
-        {lastSwiped&&<button onClick={undoSwipe} style={{width:36,height:36,borderRadius:18,border:'none',background:'rgba(255,255,255,0.85)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:T.textThi,boxShadow:'0 2px 10px rgba(0,0,0,0.08)'}}>↩</button>}
-        <button onClick={()=>swipe('left')} style={{width:52,height:52,borderRadius:26,border:'none',background:'rgba(255,255,255,0.9)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 12px rgba(0,0,0,0.08)'}}><Icons.x s={22} c={T.primary}/></button>
-        <button onClick={()=>swipe('right')} style={{width:52,height:52,borderRadius:26,border:'none',background:'rgba(255,255,255,0.9)',backdropFilter:'blur(8px)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 12px rgba(0,0,0,0.08)'}}><Icons.heart s={22} c={T.success} fill={T.success}/></button>
-      </div>}
     </div>
+    {/* Action buttons — below card */}
+    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:24,alignItems:'center',padding:'6px 0 2px',flexShrink:0}}>
+      {lastSwiped&&<button onClick={undoSwipe} style={{width:36,height:36,borderRadius:18,border:`1.5px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:T.textThi}}>↩</button>}
+      <button onClick={()=>swipe('left')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c={T.primary}/></button>
+      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.heart s={22} c={T.success} fill={T.success}/></button>
+    </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
     {/* Fortune Wheel — fullscreen */}
@@ -2085,7 +2085,7 @@ function DiscoverScreen({goTo,profile}){
       {/* Search bar */}
       <div style={{marginTop:10,position:'relative'}}>
         <input value={discoverSearch||''} onChange={e=>setDiscoverSearch(e.target.value)} placeholder="搜索占术、星座、话题…"
-          style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.border}`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
+          style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.accent2}40`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
         <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
       </div>
     </div>
@@ -2385,6 +2385,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   const [searchQuery,setSearchQuery]=useState('');
   const [searchMode,setSearchMode]=useState(false);
   const [showReport,setShowReport]=useState(false);
+  const [msgSearch,setMsgSearch]=useState('');
   const chatEndRef=useRef(null);
   const activeConv=activeId?(ChatStore.getById(activeId)||convs.find(c=>c.id===activeId)):null;
   const scrollBottom=()=>setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),100);
@@ -2620,12 +2621,18 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
 
   // Conversation list
   const blacklist=getBlacklist();
-  const filteredConvs=convs.filter(c=>!blacklist.includes(c.user.id));
+  const filteredConvs=convs.filter(c=>!blacklist.includes(c.user.id)&&(!msgSearch||c.user.name.includes(msgSearch)||c.lastMessage?.includes(msgSearch)));
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
     <div style={{padding:'14px 20px 0'}}>
       <div style={{fontSize:24,fontWeight:800,color:T.text}}>消息</div>
+      {/* Search */}
+      <div style={{marginTop:10,position:'relative'}}>
+        <input value={msgSearch||''} onChange={e=>setMsgSearch(e.target.value)} placeholder="搜索聊天记录…"
+          style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.accent2}40`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
+        <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
+      </div>
       {/* Tabs */}
-      <div style={{display:'flex',gap:4,marginTop:12,marginBottom:14}}>
+      <div style={{display:'flex',gap:4,marginTop:10,marginBottom:14}}>
         {[{k:'chat',l:'聊天'},{k:'friends',l:'好友'},{k:'blocked',l:'黑名单'}].map(t=>(
           <button key={t.k} onClick={()=>setMsgTab(t.k)} style={{padding:'6px 16px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
             background:msgTab===t.k?T.primary:'#F3F4F6',color:msgTab===t.k?'#fff':T.textSec}}>{t.l}{t.k==='chat'&&filteredConvs.length>0?` ${filteredConvs.length}`:''}</button>
