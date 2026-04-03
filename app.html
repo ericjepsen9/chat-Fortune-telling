@@ -523,7 +523,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
 
         {/* Tab content */}
         <div style={{padding:'0 16px 100px'}}>
-          {tab==='info'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          <div style={{display:tab==='info'?'block':'none',background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {/* Basic info chips */}
             <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>📋 基本资料</div>
             <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>
@@ -550,9 +550,9 @@ function CardDetailModal({user,profile,onClose,goTo}){
               <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>⚖️ 五行缺失</div>
               <div style={{fontSize:14,color:T.text,lineHeight:1.7,padding:'10px 14px',borderRadius:12,background:`${ac}06`,borderLeft:`3px solid ${ac}`}}>缺 {match.personB.wuxingLack.join('、')}</div>
             </>}
-          </div>}
+          </div>
 
-          {tab==='match'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          <div style={{display:tab==='match'?'block':'none',background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {match?<>
               {match.compatibility&&<div style={{background:`${ac}08`,borderRadius:14,padding:16,marginBottom:16,textAlign:'center'}}>
                 <div style={{fontSize:28}}>{match.compatibility.icon}</div>
@@ -577,9 +577,9 @@ function CardDetailModal({user,profile,onClose,goTo}){
                 <div style={{fontSize:13,color:T.textSec,marginTop:4,lineHeight:1.7}}>TA看你 → {match.shishenCross.themToYou?.ss}：{match.shishenCross.themToYou?.desc?.substring(0,30)}</div>
               </div>}
             </>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
-          </div>}
+          </div>
 
-          {tab==='wuxing'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          <div style={{display:tab==='wuxing'?'block':'none',background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {match?<div style={{display:'flex',gap:20,justifyContent:'center'}}>
               {[{label:'你',p:match.personA},{label:user.name,p:match.personB}].map(({label,p})=>{
                 if(!p?.wuxing)return null;
@@ -599,9 +599,9 @@ function CardDetailModal({user,profile,onClose,goTo}){
                 </div>;
               })}
             </div>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
-          </div>}
+          </div>
 
-          {tab==='posts'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          <div style={{display:tab==='posts'?'block':'none',background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {(()=>{
               // Get posts for this user: BOT_POSTS if bot, or user posts from localStorage
               const BOT_POSTS_ALL=[
@@ -630,7 +630,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
                 </div>
               </div>);
             })()}
-          </div>}
+          </div>
         </div>
 
         {/* Bottom action */}
@@ -2000,57 +2000,31 @@ function MoodTracker({profile}){
     {emoji:'😊',label:'不错',color:'#3B82F6',msg:'状态不错哦，继续保持！'},
     {emoji:'😐',label:'一般',color:'#F59E0B',msg:'平淡也是一种幸福，好好照顾自己'},
     {emoji:'😔',label:'低落',color:'#8B5CF6',msg:'每个人都有低谷的时候，明天会更好的 💙'},
-    {emoji:'😢',label:'难过',color:'#EF4444',msg:'抱抱你。难过的时候允许自己休息一下，你值得被温柔对待 ❤️'},
+    {emoji:'😢',label:'难过',color:'#EF4444',msg:'抱抱你，允许自己休息一下 ❤️'},
   ];
   const todayKey='yuanhe_mood_'+new Date().toDateString();
-  const [todayMood,setTodayMood]=useState(()=>{
-    const saved=localStorage.getItem(todayKey);
-    return saved?parseInt(saved):-1;
-  });
+  const [todayMood,setTodayMood]=useState(()=>{const s=localStorage.getItem(todayKey);return s!==null?parseInt(s):-1});
   const [showMsg,setShowMsg]=useState(false);
-  // Streak calculation
-  const getStreak=()=>{
-    let streak=0;const d=new Date();
-    for(let i=0;i<30;i++){
-      const key='yuanhe_mood_'+new Date(d.getTime()-i*86400000).toDateString();
-      if(localStorage.getItem(key)!==null)streak++;
-      else break;
-    }
-    return streak;
-  };
-
-  const pickMood=(idx)=>{
-    localStorage.setItem(todayKey,String(idx));
-    setTodayMood(idx);
-    setShowMsg(true);
-    setTimeout(()=>setShowMsg(false),4000);
-  };
-
+  const getStreak=()=>{let s=0;const d=new Date();for(let i=0;i<30;i++){if(localStorage.getItem('yuanhe_mood_'+new Date(d.getTime()-i*86400000).toDateString())!==null)s++;else break}return s};
+  const pickMood=(idx)=>{localStorage.setItem(todayKey,String(idx));setTodayMood(idx);setShowMsg(true);setTimeout(()=>setShowMsg(false),3000)};
   const streak=getStreak();
+  // Already checked in — compact one-liner
+  if(todayMood>=0&&!showMsg){
+    return(<div style={{background:T.card,borderRadius:14,padding:'10px 16px',boxShadow:T.shadow,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:18}}>{MOODS[todayMood].emoji}</span><span style={{fontSize:12,color:T.textSec}}>今日已打卡 · {MOODS[todayMood].label}</span></div>
+      {streak>1&&<span style={{fontSize:10,color:T.primary,fontWeight:600}}>🔥 {streak}天</span>}
+    </div>);
+  }
   return(
-    <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:16,boxShadow:T.shadow,marginBottom:14,border:'1px solid #DDD6FE'}}>
+    <div style={{background:T.card,borderRadius:18,padding:16,boxShadow:T.shadow,marginBottom:14,border:`1px solid ${T.border}`}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
         <div style={{fontSize:13,fontWeight:700,color:T.text}}>💭 今天心情如何？</div>
         {streak>1&&<div style={{fontSize:10,color:T.primary,fontWeight:600}}>🔥 连续{streak}天</div>}
       </div>
       <div style={{display:'flex',justifyContent:'space-around',gap:4}}>
-        {MOODS.map((m,i)=>(
-          <button key={i} onClick={()=>pickMood(i)} disabled={todayMood>=0}
-            style={{flex:1,padding:'8px 2px',borderRadius:12,border:todayMood===i?`2px solid ${m.color}`:'1.5px solid transparent',
-              background:todayMood===i?`${m.color}10`:todayMood>=0?'#F9FAFB':'#fff',
-              cursor:todayMood>=0?'default':'pointer',textAlign:'center',opacity:todayMood>=0&&todayMood!==i?0.4:1,
-              transition:'all .2s'}}>
-            <div style={{fontSize:22}}>{m.emoji}</div>
-            <div style={{fontSize:9,color:todayMood===i?m.color:T.textThi,marginTop:2,fontWeight:todayMood===i?700:400}}>{m.label}</div>
-          </button>
-        ))}
+        {MOODS.map((m,i)=><button key={i} onClick={()=>pickMood(i)} style={{flex:1,padding:'8px 2px',borderRadius:12,border:'1.5px solid transparent',background:'#fff',cursor:'pointer',textAlign:'center',transition:'all .2s'}}><div style={{fontSize:22}}>{m.emoji}</div><div style={{fontSize:9,color:T.textThi,marginTop:2}}>{m.label}</div></button>)}
       </div>
-      {showMsg&&todayMood>=0&&<div className="anim-in" style={{marginTop:10,padding:'10px 14px',borderRadius:12,background:`${MOODS[todayMood].color}08`,border:`1px solid ${MOODS[todayMood].color}20`,fontSize:12,color:MOODS[todayMood].color,lineHeight:1.6,textAlign:'center'}}>
-        {MOODS[todayMood].msg}
-      </div>}
-      {todayMood>=0&&!showMsg&&<div style={{marginTop:8,fontSize:10,color:T.textThi,textAlign:'center'}}>
-        今日已打卡 {MOODS[todayMood].emoji} · {profile.name||'缘友'}
-      </div>}
+      {showMsg&&todayMood>=0&&<div className="anim-in" style={{marginTop:10,padding:'10px 14px',borderRadius:12,background:`${MOODS[todayMood].color}08`,border:`1px solid ${MOODS[todayMood].color}20`,fontSize:12,color:MOODS[todayMood].color,lineHeight:1.6,textAlign:'center'}}>{MOODS[todayMood].msg}</div>}
     </div>
   );
 }
@@ -2089,21 +2063,22 @@ function DiscoverScreen({goTo,profile}){
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
   const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
-    <div style={{padding:'14px 20px 12px'}}>
-      <div style={{fontSize:24,fontWeight:800,color:T.text}}>发现</div>
-      <div style={{fontSize:12,color:T.textThi,marginTop:2}}>探索命理世界</div>
+    <div style={{padding:'14px 16px 0'}}>
+      {/* Tab as title */}
+      <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:10}}>
+        {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
+          <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
+            <span style={{fontSize:discoverTab===t.k?24:18,fontWeight:discoverTab===t.k?800:500,color:discoverTab===t.k?T.text:T.textThi,transition:'all .2s'}}>{t.l}</span>
+            {discoverTab===t.k&&<div style={{position:'absolute',bottom:-4,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:T.accent2}}/>}
+          </button>
+        ))}
+      </div>
       {/* Search bar */}
-      <div style={{marginTop:10,position:'relative'}}>
+      <div style={{position:'relative'}}>
         <input value={discoverSearch||''} onChange={e=>setDiscoverSearch(e.target.value)} placeholder="搜索占术、星座、话题…"
           style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.accent2}40`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
         <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
       </div>
-    </div>
-    {/* Tab switcher */}
-    <div style={{display:'flex',gap:0,margin:'0 16px 8px',background:T.card,borderRadius:12,padding:3,boxShadow:T.shadow}}>
-      {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
-        <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:14,fontWeight:600,cursor:'pointer',background:discoverTab===t.k?T.accent2:'transparent',color:discoverTab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
-      ))}
     </div>
     <div style={{padding:'12px 16px'}}>
       {/* ===== 推荐 Tab ===== */}
