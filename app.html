@@ -2396,6 +2396,10 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   const [searchMode,setSearchMode]=useState(false);
   const [showReport,setShowReport]=useState(false);
   const [msgSearch,setMsgSearch]=useState('');
+  const [recording,setRecording]=useState(false);
+  const [recordDuration,setRecordDuration]=useState(0);
+  const recorderRef=useRef(null);
+  const recTimerRef=useRef(null);
   const chatEndRef=useRef(null);
   const activeConv=activeId?(ChatStore.getById(activeId)||convs.find(c=>c.id===activeId)):null;
   const scrollBottom=()=>setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),100);
@@ -2455,6 +2459,46 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
     };
     input.click();
   };
+
+  // Voice recording
+  const startRecording=async()=>{
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const recorder=new MediaRecorder(stream,{mimeType:'audio/webm'});
+      const chunks=[];
+      recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+      recorder.onstop=()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        const blob=new Blob(chunks,{type:'audio/webm'});
+        const reader=new FileReader();
+        reader.onload=()=>{
+          const dur=recordDuration;
+          ChatStore.addMessage(activeConv.id,{role:'user',text:`[语音 ${dur}″]`,voice:reader.result,voiceDur:dur});
+          refreshConvs();scrollBottom();
+          // Bot reacts
+          if(activeConv.user.isBot){
+            setTimeout(async()=>{
+              setTyping(true);
+              await new Promise(r=>setTimeout(r,2000+Math.random()*2000));
+              try{const r=await apiPost('/api/chat',{partner:activeConv.user,message:'[用户发了一条语音消息给你，请自然地回应]',history:(ChatStore.getById(activeConv.id)?.messages||[]).slice(-6)});
+                ChatStore.addMessage(activeConv.id,{role:'ai',text:r.reply||'收到你的语音啦～ 🎵'});
+              }catch(e){ChatStore.addMessage(activeConv.id,{role:'ai',text:'收到你的语音啦～ 🎵'})}
+              setTyping(false);refreshConvs();scrollBottom();
+            },1000);
+          }
+        };
+        reader.readAsDataURL(blob);
+        setRecording(false);setRecordDuration(0);
+        clearInterval(recTimerRef.current);
+      };
+      recorder.start();
+      recorderRef.current=recorder;
+      setRecording(true);setRecordDuration(0);
+      recTimerRef.current=setInterval(()=>setRecordDuration(d=>{if(d>=59){stopRecording();return d}return d+1}),1000);
+    }catch(e){showToast('无法访问麦克风')}
+  };
+  const stopRecording=()=>{if(recorderRef.current&&recorderRef.current.state==='recording'){recorderRef.current.stop()}};
+  const cancelRecording=()=>{if(recorderRef.current){recorderRef.current.stop();recorderRef.current=null}setRecording(false);setRecordDuration(0);clearInterval(recTimerRef.current);showToast('已取消')};
 
   // Bot online status
   const getBotOnline=(bot)=>{
@@ -2575,7 +2619,13 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
                 background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.card,
                 color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:13,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
                 boxShadow:msg.recalled?'none':msg.role==='user'?`0 2px 8px ${T.accent2}20`:`0 1px 4px rgba(0,0,0,0.04)`,overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
-                {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.text}
+                {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.voice?
+                  <div onClick={()=>{const a=new Audio(msg.voice);a.play()}} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',minWidth:80+Math.min((msg.voiceDur||3)*8,120)}}>
+                    <span style={{fontSize:16}}>▶️</span>
+                    <div style={{flex:1,display:'flex',gap:2,alignItems:'center'}}>{[...Array(Math.max(3,Math.min(msg.voiceDur||3,12)))].map((_,i)=><div key={i} style={{width:3,height:4+Math.random()*10,borderRadius:2,background:msg.role==='user'?'rgba(255,255,255,0.5)':`${T.accent2}40`}}/>)}</div>
+                    <span style={{fontSize:10,opacity:.6,flexShrink:0}}>{msg.voiceDur||0}″</span>
+                  </div>
+                :msg.text}
                 {!msg.recalled&&msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
               </div>
               {msg.role==='user'&&idx===msgs.length-1&&readStatus&&!msg.recalled&&<div style={{fontSize:9,color:readStatus==='已读'?T.accent2:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
@@ -2633,8 +2683,17 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           </div>
         </div>)}
       </div>}
+      {/* Recording overlay */}
+      {recording&&<div style={{padding:'16px',background:`${T.primary}08`,borderTop:`1px solid ${T.primary}20`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <button onClick={cancelRecording} style={{padding:'8px 16px',borderRadius:20,border:`1px solid ${T.primary}`,background:T.card,color:T.primary,fontSize:12,fontWeight:600,cursor:'pointer'}}>取消</button>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <div style={{width:8,height:8,borderRadius:4,background:T.primary,animation:'pulse 1s infinite'}}/>
+          <span style={{fontSize:14,fontWeight:600,color:T.primary}}>{recordDuration}″</span>
+        </div>
+        <button onClick={stopRecording} style={{padding:'8px 16px',borderRadius:20,border:'none',background:T.accent2,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>发送</button>
+      </div>}
       {/* Input bar */}
-      <div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
+      {!recording&&<div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
         <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showQuick?`${T.accent2}10`:T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.accent2:T.textThi}}>{showQuick?'✕':'+'}</button>
         <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showEmoji?'#FEF3C7':T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
         <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
@@ -2643,13 +2702,18 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           onFocus={()=>{setShowQuick(false);setShowEmoji(false)}}
           placeholder="发送消息…" disabled={sending}
           style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}/>
-        <button onClick={sendMsg} disabled={!chatInput.trim()||sending}
-          style={{width:34,height:34,borderRadius:17,border:'none',
-            background:(!chatInput.trim()||sending)?T.border:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,
-            color:'#fff',fontSize:14,cursor:(!chatInput.trim()||sending)?'default':'pointer',
-            flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
-            boxShadow:(!chatInput.trim()||sending)?'none':`0 2px 8px ${T.accent2}30`}}>↑</button>
-      </div>
+        {chatInput.trim()?
+          <button onClick={sendMsg} disabled={sending}
+            style={{width:34,height:34,borderRadius:17,border:'none',
+              background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,
+              color:'#fff',fontSize:14,cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
+              boxShadow:`0 2px 8px ${T.accent2}30`}}>↑</button>
+          :<button onClick={startRecording} disabled={sending}
+            style={{width:34,height:34,borderRadius:17,border:'none',
+              background:T.card,border:`1px solid ${T.border}`,
+              color:T.textSec,fontSize:16,cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>🎤</button>
+        }
+      </div>}
       {/* Toast */}
       {toast&&<div style={{position:'fixed',top:'40%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.75)',color:'#fff',padding:'10px 24px',borderRadius:20,fontSize:13,zIndex:600,animation:'fadeIn .2s ease'}}>{toast}</div>}
       {/* Profile modal */}
