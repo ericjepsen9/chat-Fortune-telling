@@ -1705,7 +1705,30 @@ function MoodTracker({profile}){
 
 function DiscoverScreen({goTo,profile}){
   const [showShare,setShowShare]=useState(false);
+  const [showPostCompose,setShowPostCompose]=useState(false);
   const today=new Date();const dayN=today.getDate();
+
+  // Generate bot posts (seeded for consistency)
+  const BOT_POSTS=[
+    {id:'bp1',avatar:'👩',author:'苏晚晴',tag:'双鱼座·水象',time:'2小时前',content:'今天画了一只在窗台晒太阳的猫咪，感觉和我的日主壬水好搭——都是静静的、温柔的存在 🐱🎨',likes:23,comments:5},
+    {id:'bp2',avatar:'👨',author:'陆辰逸',tag:'金牛座·土象',time:'3小时前',content:'每次设计建筑的时候都在想，空间其实和命理一样，讲究气流和平衡。你们觉得自己的房间布局合理吗？',likes:18,comments:8},
+    {id:'bp3',avatar:'👩',author:'方念安',tag:'巨蟹座·水象',time:'5小时前',content:'做产品经理最大的感受就是——用户需求和五行一样，看似矛盾其实互补。今天被一个需求搞得头大😂',likes:31,comments:12},
+    {id:'bp4',avatar:'👨',author:'江清寒',tag:'天蝎座·水象',time:'6小时前',content:'早晨打了一套太极，感受天地之气。中医讲究的阴阳平衡，和八字的身强身弱其实是一个道理。',likes:15,comments:3},
+    {id:'bp5',avatar:'👩',author:'林清歌',tag:'双鱼座·水象',time:'昨天',content:'深夜写了一首新歌，灵感来自月亮水瓶的感觉——自由又疏离。你们深夜会做什么？🌙',likes:42,comments:16},
+  ];
+  // Merge with user posts
+  const [userPosts,setUserPosts]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]')}catch(e){return[]}});
+  const posts=[...userPosts,...BOT_POSTS];
+  const [posts_,setPosts]=useState(posts);
+  // Use posts_ for rendering with likes state
+  useEffect(()=>setPosts([...userPosts,...BOT_POSTS]),[userPosts]);
+
+  const addPost=(content)=>{
+    const newPost={id:'up_'+Date.now(),avatar:profile.gender==='female'?'👩':'👨',author:profile.name||'缘友',tag:'缘友',time:'刚刚',content,likes:0,comments:0,isUser:true};
+    const updated=[newPost,...userPosts];
+    setUserPosts(updated);
+    localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));
+  };
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
   const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
@@ -1752,9 +1775,58 @@ function DiscoverScreen({goTo,profile}){
         <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'14px 16px',boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default',opacity:it.a?1:.5}}>
           <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
         </div>)}
+
+      {/* Community Feed */}
+      <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:16,marginBottom:10}}>🌍 缘友圈</div>
+      {/* Post input */}
+      <div className="anim-in" style={{background:'#fff',borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
+        <div onClick={()=>setShowPostCompose(true)} style={{padding:'10px 14px',borderRadius:12,background:'#F9FAFB',fontSize:13,color:T.textThi,cursor:'pointer'}}>✏️ 分享你的想法…</div>
+      </div>
+      {/* Posts */}
+      {posts_.map((post,i)=>(
+        <div key={post.id} className="anim-in" style={{animationDelay:i*0.05+'s',background:'#fff',borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+            <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{post.avatar}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:T.text}}>{post.author}</div>
+              <div style={{fontSize:10,color:T.textThi}}>{post.tag} · {post.time}</div>
+            </div>
+          </div>
+          <div style={{fontSize:13,color:T.text,lineHeight:1.7,marginBottom:10}}>{post.content}</div>
+          <div style={{display:'flex',gap:16}}>
+            <button onClick={()=>{const key='yuanhe_post_like_'+post.id;const liked=localStorage.getItem(key);if(!liked){localStorage.setItem(key,'1');post.likes++;setPosts([...posts_])}}} style={{background:'none',border:'none',fontSize:12,color:localStorage.getItem('yuanhe_post_like_'+post.id)?T.primary:T.textThi,cursor:'pointer'}}>
+              {localStorage.getItem('yuanhe_post_like_'+post.id)?'❤️':'🤍'} {post.likes}
+            </button>
+            <span style={{fontSize:12,color:T.textThi}}>💬 {post.comments||0}</span>
+          </div>
+        </div>
+      ))}
     </div>
     {showShare&&<ShareModal type="fortune" profile={profile} onClose={()=>setShowShare(false)}/>}
+    {showPostCompose&&<PostComposeModal profile={profile} onPost={(c)=>{addPost(c);setShowPostCompose(false)}} onClose={()=>setShowPostCompose(false)}/>}
   </div>);
+}
+
+function PostComposeModal({profile,onPost,onClose}){
+  const [text,setText]=useState('');
+  const hints=['今天的心情是…','分享一个命理小发现','最近有什么感悟？','你相信缘分吗？'];
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <button onClick={onClose} style={{fontSize:14,color:T.textSec,background:'none',border:'none',cursor:'pointer'}}>取消</button>
+          <div style={{fontSize:16,fontWeight:700}}>发布动态</div>
+          <button onClick={()=>{if(text.trim())onPost(text.trim())}} disabled={!text.trim()} style={{fontSize:14,fontWeight:600,background:'none',border:'none',cursor:text.trim()?'pointer':'default',color:text.trim()?T.primary:T.textThi}}>发布</button>
+        </div>
+        <textarea value={text} onChange={e=>setText(e.target.value)} maxLength={200} placeholder={hints[Math.floor(Math.random()*hints.length)]}
+          style={{width:'100%',minHeight:120,padding:14,borderRadius:14,border:`1.5px solid ${T.border}`,fontSize:14,lineHeight:1.7,outline:'none',resize:'none',background:'#FAFAFA'}}/>
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:8}}>
+          <div style={{fontSize:11,color:T.textThi}}>以 {profile.name||'缘友'} 的身份发布</div>
+          <div style={{fontSize:11,color:text.length>180?'#EF4444':T.textThi}}>{text.length}/200</div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ===== MESSAGES =====
