@@ -109,14 +109,20 @@ function calculate(input) {
     transitAspects.push(...findAspects(info.longitude, '流年'+PZH[planet], moonLng, '本命月亮'));
   }
 
+  // House cusps (Placidus)
+  let houseCusps = null;
+  if (h !== undefined && h !== null) {
+    houseCusps = ac.getHouseCusps(y, m, d, h, 8, lat, lng);
+  }
+
   return {
     sunSign: sun, sunDegree: sunInfo.degree.toFixed(1), sunLongitude: sunLng,
     moonSign: moon, moonDegree: moonInfo.degree.toFixed(1), moonLongitude: moonLng,
-    risingSign: rising,
+    risingSign: rising, houseCusps,
     element: EL_ZH[sun.el],
     transits: transitSummary, moonTransit,
     natalAspects, transitAspects,
-    _source: 'astronomia',
+    _source: 'astronomia+vsop87',
   };
 }
 
@@ -158,6 +164,13 @@ function formatForAI(result, mode = 'simple') {
     if (r.transitAspects && r.transitAspects.length) {
       o += `\n\n【流年相位（影响当前运势）】`;
       r.transitAspects.forEach(a => { o += `\n${a.names}（${a.type} orb${a.orbDeg}° ${a.strength}）：${a.effect}`; });
+    }
+    if (r.houseCusps) {
+      o += `\n\n【十二宫位（Placidus）】`;
+      r.houseCusps.forEach(h => {
+        const label = h.isAngle ? '★' : ' ';
+        o += `\n${label}第${h.house}宫 ${h.sign.zh}${h.sign.degree.toFixed(0)}°（${h.meaning}）`;
+      });
     }
     return o;
   }

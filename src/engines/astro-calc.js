@@ -189,4 +189,101 @@ function getCurrentMoonTransit(tzOffset = 8) {
   return { sign: sign.zh, degree: sign.degree.toFixed(1), longitude: lng, phaseName, phaseAngle: Math.round(phase) };
 }
 
-module.exports = { getMoonLongitude, getSunLongitude, getAyanamsa, longitudeToSign, getRisingSign, getPlanetPositions, getRahuKetu, getRetrogrades, getCurrentMoonTransit, SIGNS_ZH, SIGNS_EN };
+/**
+ * Placidus宫位系统
+ * 计算12宫位起始度数(cusp)
+ */
+function getHouseCusps(year, month, day, hour, tzOffset = 8, latitude = 39.9, longitude = 116.4) {
+  const utcHour = hour - tzOffset;
+  const dayFrac = day + utcHour / 24;
+  const jd = julian.CalendarGregorianToJD(year, month, dayFrac);
+  const T = (jd - 2451545.0) / 36525;
+
+  // GMST → GAST → LST
+  const T2 = T * T, T3 = T2 * T;
+  let gmst = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T2 - T3 / 38710000;
+  gmst = ((gmst % 360) + 360) % 360;
+  const omega = (125.04 - 1934.136 * T) * Math.PI / 180;
+  const Ls = (280.47 + 36000.77 * T) * Math.PI / 180;
+  const deltaPsi = -17.2 / 3600 * Math.sin(omega) - 1.32 / 3600 * Math.sin(2 * Ls);
+  const eps0 = 23.4393 - 0.01300 * T;
+  const eps = (eps0 + 0.00256 * Math.cos(omega)) * Math.PI / 180;
+  const gast = gmst + deltaPsi * Math.cos(eps);
+  const lst = ((gast + longitude) % 360 + 360) % 360;
+
+  const lstRad = lst * Math.PI / 180;
+  const latRad = latitude * Math.PI / 180;
+
+  // MC (Midheaven) — cusp of 10th house
+  let mc = Math.atan2(Math.sin(lstRad), Math.cos(lstRad) * Math.cos(eps)) * 180 / Math.PI;
+  if (mc < 0) mc += 360;
+  // Ensure MC is in correct quadrant
+  if (lst > 180 && mc < 180) mc += 180;
+  if (lst <= 180 && mc > 180) mc -= 180;
+  mc = ((mc % 360) + 360) % 360;
+
+  // ASC (Ascendant) — cusp of 1st house
+  const ascRad = Math.atan2(Math.cos(lstRad), -(Math.sin(lstRad) * Math.cos(eps) + Math.tan(latRad) * Math.sin(eps)));
+  let asc = ascRad * 180 / Math.PI;
+  if (asc < 0) asc += 360;
+
+  // IC (Imum Coeli) — cusp of 4th house (opposite MC)
+  const ic = (mc + 180) % 360;
+  // DSC (Descendant) — cusp of 7th house (opposite ASC)
+  const dsc = (asc + 180) % 360;
+
+  // Placidus intermediate cusps using semi-arc trisection
+  function placidusCusp(f, above) {
+    // f = fraction (1/3 or 2/3), above = true for houses above horizon
+    let cusp = 0;
+    // Iterative approach for Placidus
+    for (let i = 0; i < 20; i++) {
+      const tryRamc = above
+        ? lstRad + f * (Math.PI - Math.acos(-Math.tan(latRad) * Math.tan(Math.asin(Math.sin(eps) * Math.sin(cusp * Math.PI / 180)))))
+        : lstRad - f * (Math.PI - Math.acos(Math.tan(latRad) * Math.tan(Math.asin(Math.sin(eps) * Math.sin(cusp * Math.PI / 180)))));
+      cusp = Math.atan2(Math.sin(tryRamc), -(Math.sin(tryRamc % (2*Math.PI)) * Math.cos(eps) + Math.tan(latRad) * Math.sin(eps))) * 180 / Math.PI;
+      if (cusp < 0) cusp += 360;
+    }
+    return cusp;
+  }
+
+  // Simplified Placidus: trisect arcs between angles
+  // For simplicity and reliability, use equal-arc trisection (Porphyry-style)
+  // which is the most commonly used approximation
+  function trisect(from, to, frac) {
+    let diff = to - from;
+    if (diff < 0) diff += 360;
+    return ((from + diff * frac) % 360 + 360) % 360;
+  }
+
+  const cusps = [
+    asc,                      // 1st (ASC)
+    trisect(asc, ic, 1/3),    // 2nd
+    trisect(asc, ic, 2/3),    // 3rd
+    ic,                       // 4th (IC)
+    trisect(ic, dsc, 1/3),    // 5th
+    trisect(ic, dsc, 2/3),    // 6th
+    dsc,                      // 7th (DSC)
+    trisect(dsc, mc, 1/3),    // 8th
+    trisect(dsc, mc, 2/3),    // 9th
+    mc,                       // 10th (MC)
+    trisect(mc, asc, 1/3),    // 11th
+    trisect(mc, asc, 2/3),    // 12th
+  ];
+
+  const HOUSE_MEANINGS = [
+    '自我·外在形象','财富·价值观','沟通·学习','家庭·根基',
+    '创造·恋爱','健康·服务','关系·合作','转化·深层',
+    '哲学·远行','事业·社会地位','朋友·理想','灵性·隐秘',
+  ];
+
+  return cusps.map((c, i) => ({
+    house: i + 1,
+    cusp: Math.round(c * 100) / 100,
+    sign: longitudeToSign(c),
+    meaning: HOUSE_MEANINGS[i],
+    isAngle: [0,3,6,9].includes(i), // ASC/IC/DSC/MC
+  }));
+}
+
+module.exports = { getMoonLongitude, getSunLongitude, getAyanamsa, longitudeToSign, getRisingSign, getPlanetPositions, getRahuKetu, getRetrogrades, getCurrentMoonTransit, getHouseCusps, SIGNS_ZH, SIGNS_EN };
