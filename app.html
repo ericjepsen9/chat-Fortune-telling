@@ -1805,6 +1805,7 @@ function MoodTracker({profile}){
 function DiscoverScreen({goTo,profile}){
   const [showShare,setShowShare]=useState(false);
   const [showPostCompose,setShowPostCompose]=useState(false);
+  const [discoverSearch,setDiscoverSearch]=useState('');
   const today=new Date();const dayN=today.getDate();
 
   // Generate bot posts (seeded for consistency)
@@ -1832,10 +1833,24 @@ function DiscoverScreen({goTo,profile}){
   const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80}}>
     <div style={{background:'linear-gradient(135deg,#8B5CF6,#A78BFA)',padding:'48px 20px 20px',borderRadius:'0 0 28px 28px'}}>
-      <div className="serif" style={{fontSize:20,fontWeight:700,color:'#fff'}}>🌍 发现</div>
-      <div style={{fontSize:12,color:'rgba(255,255,255,.7)',marginTop:4}}>探索命理世界</div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div><div className="serif" style={{fontSize:20,fontWeight:700,color:'#fff'}}>🌍 发现</div>
+        <div style={{fontSize:12,color:'rgba(255,255,255,.7)',marginTop:4}}>探索命理世界</div></div>
+      </div>
+      {/* Search bar */}
+      <div style={{marginTop:12,position:'relative'}}>
+        <input value={discoverSearch||''} onChange={e=>setDiscoverSearch(e.target.value)} placeholder="搜索占术、星座、话题…"
+          style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:20,border:'none',background:'rgba(255,255,255,0.2)',color:'#fff',fontSize:13,outline:'none','::placeholder':{color:'rgba(255,255,255,0.5)'}}}/>
+        <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,opacity:.6}}>🔍</span>
+      </div>
     </div>
     <div style={{padding:'16px 16px'}}>
+      {/* Hot topics */}
+      <div style={{display:'flex',gap:6,marginBottom:14,overflow:'auto',paddingBottom:4}}>
+        {['🔥今日运势','💕桃花运','💼事业','🌙月相','⭐星座配对','📖命理入门'].map(tag=>
+          <button key={tag} onClick={()=>goTo(S.AI)} style={{padding:'6px 14px',borderRadius:20,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,fontWeight:500,color:T.text,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{tag}</button>
+        )}
+      </div>
       {/* Today's luck card */}
       <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:'1px solid #EDE9FE'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
