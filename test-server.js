@@ -13,6 +13,17 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const crypto = require('crypto');
+
+// Anonymous LLM headers — no user-identifying info
+function anonLLMHeaders(bodyLen) {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${LLM_API_KEY}`,
+    'Content-Length': bodyLen,
+    'X-Request-ID': crypto.randomUUID(), // random per-request, not tied to user
+  };
+}
 
 // 读取 .env 配置
 function loadEnv() {
@@ -61,7 +72,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
     const parsed = new URL(apiUrl);
     const options = {
       hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LLM_API_KEY}`, 'Content-Length': Buffer.byteLength(body) },
+      headers: anonLLMHeaders(Buffer.byteLength(body)),
     };
 
     const req = (parsed.protocol === 'https:' ? require('https') : http).request(options, (res) => {
@@ -469,7 +480,7 @@ ${(reportSummary || '').substring(0, 500)}
         const parsed = new URL(apiUrl);
         const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
           hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LLM_API_KEY}`, 'Content-Length': Buffer.byteLength(llmBody) },
+          headers: anonLLMHeaders(Buffer.byteLength(llmBody)),
         }, (llmRes) => {
           let data = '';
           llmRes.on('data', chunk => data += chunk);
@@ -561,7 +572,7 @@ ${(reportSummary || '').substring(0, 500)}
         const parsed = new URL(apiUrl);
         const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
           hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LLM_API_KEY}`, 'Content-Length': Buffer.byteLength(llmBody) },
+          headers: anonLLMHeaders(Buffer.byteLength(llmBody)),
         }, (llmRes) => {
           let buf = '';
           llmRes.on('data', (chunk) => {
