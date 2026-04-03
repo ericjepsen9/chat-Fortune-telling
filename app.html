@@ -388,6 +388,13 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
   const onE=()=>{if(Math.abs(dx)>80)onSwipe(dx>0?'right':'left');else if(Math.abs(dx)<5&&onDetail)onDetail();setDx(0);setDragging(false)};
   const rot=dx*0.05,opa=Math.min(Math.abs(dx)/100,1);
   const grad=GRADS[user.id%GRADS.length];
+  // Wuxing mini bars for card
+  const wxC=['#F59E0B','#22C55E','#3B82F6','#EF4444','#D97706'];
+  const wxL=['金','木','水','火','土'];
+  const wxV=wxL.map((_,i)=>20+((user.id*(i+1)*13)%60));
+  const isOnline=user.isBot?((user.id*7+new Date().getHours())%3!==0):true;
+  // Type tag based on match
+  const typeTag=user.matchResult?.gradeDesc?user.matchResult.gradeDesc.substring(0,6):(user.score>=80?'天作之合':user.score>=65?'有缘有份':'潜力之缘');
   return(
     <div onMouseDown={e=>onS(e.clientX)} onMouseMove={e=>onM(e.clientX)} onMouseUp={onE} onMouseLeave={()=>dragging&&onE()}
       onTouchStart={e=>onS(e.touches[0].clientX)} onTouchMove={e=>onM(e.touches[0].clientX)} onTouchEnd={onE}
@@ -403,27 +410,37 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
       {/* Photo area */}
       <div style={{flex:1,background:grad,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',minHeight:0}}>
         <div style={{fontSize:88}}>{AVATARS[user.id%AVATARS.length]}</div>
-        {/* Score badge top-right */}
-        <div style={{position:'absolute',top:10,right:10,padding:'6px 12px',borderRadius:14,background:'rgba(255,255,255,0.95)',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',display:'flex',alignItems:'center',gap:6}}>
-          <div style={{color:T.primary,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
-          <div style={{fontSize:8,color:T.textThi}}>缘分值</div>
+        {/* Online badge */}
+        <div style={{position:'absolute',top:10,left:10,padding:'4px 10px',borderRadius:12,background:'rgba(0,0,0,0.25)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',gap:4}}>
+          <div style={{width:6,height:6,borderRadius:3,background:isOnline?'#34D399':'#9CA3AF'}}/>
+          <span style={{fontSize:10,color:'#fff',fontWeight:500}}>{isOnline?'在线':'离线'}</span>
+        </div>
+        {/* Score + wuxing bars */}
+        <div style={{position:'absolute',top:10,right:10,padding:'8px 10px',borderRadius:14,background:'rgba(255,255,255,0.95)',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',display:'flex',alignItems:'center',gap:8}}>
+          <div style={{display:'flex',gap:2,alignItems:'flex-end'}}>
+            {wxV.map((v,i)=><div key={i} style={{width:8,height:4+v*0.2,borderRadius:2,background:wxC[i],opacity:0.8}}/>)}
+          </div>
+          <div>
+            <div style={{color:T.primary,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
+            <div style={{fontSize:7,color:T.textThi}}>缘分值</div>
+          </div>
         </div>
       </div>
 
       {/* Info area */}
       <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'12px 16px 14px',cursor:'pointer'}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
           <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
-          <span style={{padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:600,background:'#8B5CF615',color:'#8B5CF6'}}>{user.sign}</span>
+          <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#059669':user.score>=65?'#7C3AED':'#D97706'}}>{typeTag}</span>
         </div>
         <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.5}}>{user.bio}</div>
         {/* Match reason */}
-        {user.matchResult&&<div style={{padding:'8px 12px',borderRadius:10,background:'#8B5CF608',border:'1px solid #8B5CF612',marginBottom:6}}>
+        {user.matchResult&&<div style={{padding:'8px 12px',borderRadius:10,background:'#8B5CF608',border:'1px solid #8B5CF612',marginBottom:8}}>
           <div style={{fontSize:11,color:'#8B5CF6',fontWeight:700,marginBottom:2}}>☯ 缘分解读</div>
           <div style={{fontSize:12,color:T.textSec,lineHeight:1.5}}>{user.matchResult.gradeDesc}</div>
         </div>}
         <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-          {user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:'#8B5CF610',color:'#8B5CF6'}}>{t}</span>)}
+          {user.tags.map(t=><span key={t} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,background:`${T.primary}10`,color:T.primary}}>{t}</span>)}
         </div>
       </div>
     </div>
