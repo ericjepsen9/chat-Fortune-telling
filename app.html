@@ -646,6 +646,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [matchUser,setMatchUser]=useState(null);
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
+  const [showWheel,setShowWheel]=useState(false);
   // Fetch real match scores
   useEffect(()=>{
     const tg=profile.gender==='male'?'female':'male';
@@ -704,7 +705,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       </div>
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
         <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:'#F59E0B',fontWeight:700}}>★ {swiped||0}</div>
-        <button onClick={()=>goTo(S.AI)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
+        <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
         <div style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:'#EF4444',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></div>
       </div>
     </div>
@@ -716,15 +717,23 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       </div>)
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
     </div>
-    {/* Action buttons - 4 buttons matching prototype */}
-    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:12,alignItems:'center',padding:'2px 0 4px',flexShrink:0}}>
-      <button onClick={()=>swipe('left')} style={{width:46,height:46,borderRadius:23,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><Icons.x s={20} c="#FF6B6B"/></button>
-      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#F59E0B,#EF4444)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(245,158,11,0.3)'}}><span style={{fontSize:18,color:'#fff',fontWeight:700}}>★</span></button>
-      <button onClick={()=>{const top=cards[cards.length-1];if(top)setDetailUser(top)}} style={{width:46,height:46,borderRadius:23,border:`2px solid ${T.border}`,background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
-      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(52,211,153,0.25)'}}><Icons.heart s={20} c="#fff" fill="#fff"/></button>
+    {/* Action buttons - ✕ reject / ♥ like */}
+    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:32,alignItems:'center',padding:'2px 0 4px',flexShrink:0}}>
+      <button onClick={()=>swipe('left')} style={{width:54,height:54,borderRadius:27,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><Icons.x s={24} c="#FF6B6B"/></button>
+      <button onClick={()=>swipe('right')} style={{width:54,height:54,borderRadius:27,border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(52,211,153,0.25)'}}><Icons.heart s={24} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
+    {/* Fortune Wheel — fullscreen */}
+    {showWheel&&<div style={{position:'fixed',inset:0,zIndex:250,background:'#0F0F1A',display:'flex',flexDirection:'column',overflow:'auto'}}>
+      <div style={{padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+        <div style={{fontSize:16,fontWeight:700,color:'#E9D5FF'}}>🎡 命运转盘</div>
+        <button onClick={()=>setShowWheel(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:'rgba(255,255,255,0.1)',color:'#C4B5FD',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+      </div>
+      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 16px'}}>
+        <FortuneWheel profile={profile} goTo={(s,m)=>{setShowWheel(false);goTo(s,m)}}/>
+      </div>
+    </div>}
   </div>);
 }
 
