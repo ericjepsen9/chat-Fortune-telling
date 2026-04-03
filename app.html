@@ -2206,6 +2206,7 @@ function PrivacySettingsModal({onClose}){
 
 function MeScreen({profile,onLogout,goTo,onEdit}){
   const [showPrivacy,setShowPrivacy]=useState(false);
+  const [showDataMgmt,setShowDataMgmt]=useState(false);
   const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
@@ -2234,7 +2235,7 @@ function MeScreen({profile,onLogout,goTo,onEdit}){
   {profile.hour===-1&&<div style={{margin:'12px 16px 0',padding:'10px 14px',background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,fontSize:12,color:'#D97706'}}>⚠️ 未填写出生时辰，八字排盘精度会降低。<button onClick={onEdit} style={{background:'none',border:'none',color:'#D97706',fontWeight:700,cursor:'pointer',textDecoration:'underline',fontSize:12}}>补充时辰</button></div>}
 
   <div style={{padding:16}}>
-    {[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗·梅花',a:()=>goTo(S.AI)},{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',a:onEdit},{icon:'🔐',label:'隐私设置',desc:'当前: '+privacyLabel,a:()=>setShowPrivacy(true)},{icon:'🔮',label:'AI测时辰',desc:'回答5个问题推算时辰',a:()=>goTo(S.AI)},{icon:'🗑️',label:'清除占卜记录',desc:resultCount+'条报告',a:()=>{if(confirm('确定清除所有占卜记录？')){localStorage.removeItem('yuanhe_mode_results');localStorage.removeItem('yuanhe_history');location.reload()}}},{icon:'⚙️',label:'设置',desc:'账号与隐私'}].map((it,i)=>
+    {[{icon:'✦',label:'AI占卜',desc:'八字·星座·塔罗·梅花',a:()=>goTo(S.AI)},{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',a:onEdit},{icon:'🔐',label:'隐私设置',desc:'当前: '+privacyLabel,a:()=>setShowPrivacy(true)},{icon:'📊',label:'我的数据',desc:'查看·导出·删除',a:()=>setShowDataMgmt(true)},{icon:'🔮',label:'AI测时辰',desc:'回答5个问题推算时辰',a:()=>goTo(S.AI)},{icon:'🗑️',label:'清除占卜记录',desc:resultCount+'条报告',a:()=>{if(confirm('确定清除所有占卜记录？')){localStorage.removeItem('yuanhe_mode_results');localStorage.removeItem('yuanhe_history');location.reload()}}},{icon:'⚙️',label:'设置',desc:'账号与隐私'}].map((it,i)=>
       <div key={it.label} className="anim-in" onClick={it.a} style={{animationDelay:i*0.06+'s',background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default'}}><span style={{fontSize:20}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.label}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span></div>)}
 
     {/* Recent history */}
@@ -2282,7 +2283,65 @@ function MeScreen({profile,onLogout,goTo,onEdit}){
     <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,color:T.textSec,cursor:'pointer',marginTop:20}}>退出登录</button>
   </div>
   {showPrivacy&&<PrivacySettingsModal onClose={()=>setShowPrivacy(false)}/>}
+  {showDataMgmt&&<DataManagementModal profile={profile} onClose={()=>setShowDataMgmt(false)} onLogout={onLogout}/>}
 </div>);}
+
+function DataManagementModal({profile,onClose,onLogout}){
+  const dataItems=[
+    {key:'yuanhe_profile',label:'出生信息',desc:'年月日时+性别+昵称',icon:'📋'},
+    {key:'yuanhe_mode_results',label:'占卜报告',desc:Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length+'条',icon:'🔮'},
+    {key:'yuanhe_history',label:'占卜历史',desc:(JSON.parse(localStorage.getItem('yuanhe_history')||'[]')).length+'条记录',icon:'📜'},
+    {key:'yuanhe_convs',label:'聊天记录',desc:'所有匹配会话+消息',icon:'💬'},
+    {key:'yuanhe_blacklist',label:'黑名单',desc:(JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')).length+'人',icon:'🚫'},
+    {key:'yuanhe_privacy',label:'隐私设置',desc:localStorage.getItem('yuanhe_privacy')||'standard',icon:'🔐'},
+  ];
+  const exportData=()=>{
+    const data={};
+    dataItems.forEach(d=>{try{data[d.key]=JSON.parse(localStorage.getItem(d.key)||'null')}catch(e){data[d.key]=localStorage.getItem(d.key)}});
+    data._exportTime=new Date().toISOString();
+    data._version='缘合 v0.7.0';
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const link=document.createElement('a');
+    link.download=`yuanhe_data_${Date.now()}.json`;
+    link.href=URL.createObjectURL(blob);
+    link.click();
+  };
+  const deleteItem=(key,label)=>{
+    if(!confirm(`确定删除${label}？此操作不可恢复。`))return;
+    localStorage.removeItem(key);
+    if(key==='yuanhe_profile'){onLogout();onClose();return}
+    onClose();setTimeout(()=>location.reload(),100);
+  };
+  const deleteAll=()=>{
+    if(!confirm('⚠️ 确定删除所有数据并注销账号？\n\n这将清除:\n• 出生信息\n• 所有占卜报告\n• 聊天记录\n• 所有设置\n\n此操作不可恢复。'))return;
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));
+    keys.forEach(k=>localStorage.removeItem(k));
+    onLogout();onClose();
+  };
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div style={{fontSize:18,fontWeight:700}}>📊 我的数据</div>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+        </div>
+        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:'#F8FAFC',borderRadius:10}}>以下是缘合存储在你设备上的所有数据。数据仅保存在本地，不上传到服务器。</div>
+        {dataItems.map(d=><div key={d.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,marginBottom:8}}>
+          <span style={{fontSize:18}}>{d.icon}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:600}}>{d.label}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{d.desc}</div>
+          </div>
+          <button onClick={()=>deleteItem(d.key,d.label)} style={{padding:'4px 10px',borderRadius:8,border:`1px solid #FECACA`,background:'#FEF2F2',fontSize:10,color:'#EF4444',cursor:'pointer'}}>删除</button>
+        </div>)}
+        <div style={{display:'flex',gap:8,marginTop:16}}>
+          <button onClick={exportData} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 导出全部数据 (JSON)</button>
+        </div>
+        <button onClick={deleteAll} style={{width:'100%',padding:'12px',borderRadius:12,border:'1.5px solid #EF4444',background:'#fff',color:'#EF4444',fontSize:13,fontWeight:600,cursor:'pointer',marginTop:8}}>⚠️ 删除所有数据并注销</button>
+      </div>
+    </div>
+  );
+}
 
 // ===== SHARE CARDS (分享卡片) =====
 function PersonalityShareCard({profile,structured}){
