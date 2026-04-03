@@ -398,7 +398,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
         transform:`translateX(${dx}px) rotate(${rot}deg) scale(${isTop?1:0.96})`,
         transition:dragging?'none':'transform 0.4s cubic-bezier(0.4,0,0.2,1)',
         opacity:isTop?1:0.5,pointerEvents:isTop?'auto':'none',
-        background:T.card,boxShadow:T.shadowLg,display:'flex',flexDirection:'column'}}>
+        background:T.card,boxShadow:'0 2px 12px rgba(0,0,0,0.04)',display:'flex',flexDirection:'column'}}>
       {/* LIKE/NOPE labels */}
       {dx>20&&<div style={{position:'absolute',top:16,left:16,padding:'8px 18px',borderRadius:12,background:'rgba(52,211,153,0.12)',border:'2px solid #34D399',color:'#34D399',fontSize:16,fontWeight:800,transform:'rotate(-12deg)',opacity:opa,zIndex:10}}>有缘 ♥</div>}
       {dx<-20&&<div style={{position:'absolute',top:16,right:16,padding:'8px 18px',borderRadius:12,background:'rgba(255,107,107,0.12)',border:'2px solid #FF6B6B',color:'#FF6B6B',fontSize:16,fontWeight:800,transform:'rotate(12deg)',opacity:opa,zIndex:10}}>无缘</div>}
@@ -665,11 +665,11 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   },[]);
   const swipe=(dir)=>{haptic('light');const top=cards[cards.length-1];if(dir==='right'&&top.score>=65){haptic('success');setTimeout(()=>setMatchUser(top),300)}setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
   return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:64}}>
-    <div style={{padding:'48px 20px 10px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+    <div style={{padding:'28px 20px 6px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
       <div><div className="serif" style={{fontSize:22,fontWeight:700,color:T.primary}}>缘合</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>命理匹配 · 已看{swiped}人</div></div>
       <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:12,padding:'8px 14px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:'0 2px 12px rgba(139,92,246,0.3)',display:'flex',alignItems:'center',gap:4}}><Icons.sparkles s={14} c="#fff"/> AI占卜</button>
     </div>
-    <div style={{position:'relative',flex:1,margin:'0 16px',minHeight:0,marginBottom:8}}>
+    <div style={{position:'relative',flex:1,margin:'0 14px',minHeight:0,marginBottom:4}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}><Icons.sparkles s={16} c="#fff"/> 先去AI占卜</button>
@@ -677,7 +677,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
     </div>
     {/* Action buttons - below card */}
-    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:32,alignItems:'center',padding:'8px 0 12px',flexShrink:0}}>
+    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:32,alignItems:'center',padding:'4px 0 8px',flexShrink:0}}>
       <button onClick={()=>swipe('left')} style={{width:60,height:60,borderRadius:'50%',border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.1)'}}><Icons.x s={28} c="#FF6B6B"/></button>
       <button onClick={()=>swipe('right')} style={{width:60,height:60,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(52,211,153,0.3)'}}><Icons.heart s={28} c="#fff" fill="#fff"/></button>
     </div>}
