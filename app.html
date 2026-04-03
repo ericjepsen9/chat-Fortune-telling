@@ -345,7 +345,7 @@ function BirthScreen({onSubmit}){
     const p={year:+f.year,month:+f.month,day:+f.day,hour:f.hour!==''?+f.hour:-1,gender:f.gender,name:f.name||'缘友',bio:f.bio||'',city:f.city||''};
     localStorage.setItem('yuanhe_profile',JSON.stringify(p));onSubmit(p);
   };
-  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:15,background:'#fff',outline:'none'};
+  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:15,background:T.card,outline:'none'};
   const filled=f.year&&f.month&&f.day;
   return(<div style={{height:'100%',overflow:'auto',background:T.bg}}><div style={{padding:'60px 24px 100px'}}>
     <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>你的生辰</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>请输入公历出生信息</div></div>
@@ -378,7 +378,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
         transform:`translateX(${dx}px) rotate(${rot}deg) scale(${isTop?1:0.96})`,
         transition:dragging?'none':'transform 0.4s cubic-bezier(0.4,0,0.2,1)',
         opacity:isTop?1:0.5,pointerEvents:isTop?'auto':'none',
-        background:'#fff',boxShadow:T.shadowLg,display:'flex',flexDirection:'column'}}>
+        background:T.card,boxShadow:T.shadowLg,display:'flex',flexDirection:'column'}}>
       {/* LIKE/NOPE labels */}
       {dx>20&&<div style={{position:'absolute',top:16,left:16,padding:'8px 18px',borderRadius:12,background:'rgba(52,211,153,0.12)',border:'2px solid #34D399',color:'#34D399',fontSize:16,fontWeight:800,transform:'rotate(-12deg)',opacity:opa,zIndex:10}}>有缘 ♥</div>}
       {dx<-20&&<div style={{position:'absolute',top:16,right:16,padding:'8px 18px',borderRadius:12,background:'rgba(255,107,107,0.12)',border:'2px solid #FF6B6B',color:'#FF6B6B',fontSize:16,fontWeight:800,transform:'rotate(12deg)',opacity:opa,zIndex:10}}>无缘</div>}
@@ -420,7 +420,7 @@ function MatchPopup({user,onChat,onClose}){
     {/* Floating hearts */}
     {hearts.map((h,i)=><div key={i} style={{position:'absolute',fontSize:20+i*4,opacity:0.6,animation:`float${i%3} ${3+i*0.5}s ease-in-out infinite`,left:`${10+i*14}%`,top:`${15+i*10}%`}}>{h}</div>)}
     <style>{`@keyframes float0{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(10deg)}}@keyframes float1{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-15px) rotate(-8deg)}}@keyframes float2{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-25px) scale(1.1)}}`}</style>
-    <div style={{background:'#fff',borderRadius:28,padding:'36px 28px',textAlign:'center',maxWidth:320,width:'100%',animation:'matchPop 0.5s ease',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+    <div style={{background:T.card,borderRadius:28,padding:'36px 28px',textAlign:'center',maxWidth:320,width:'100%',animation:'matchPop 0.5s ease',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
       <div style={{fontSize:56,marginBottom:4,animation:'pulse 1.5s ease infinite'}}>💕</div>
       <div className="serif" style={{fontSize:24,fontWeight:800,background:'linear-gradient(135deg,#8B5CF6,#EC4899)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>缘分已到！</div>
       <div style={{fontSize:14,color:T.textSec,marginTop:10}}>你和 <b style={{color:T.text}}>{user.name}</b> 命理契合</div>
@@ -448,13 +448,13 @@ function CardDetailModal({user,profile,onClose,goTo}){
     <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
         {/* Top bar */}
         <div style={{position:'sticky',top:0,zIndex:10,padding:'12px 16px',background:T.bg,display:'flex',alignItems:'center',gap:12,borderBottom:`1px solid ${T.border}`}}>
-          <button onClick={onClose} style={{width:36,height:36,borderRadius:'50%',border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+          <button onClick={onClose} style={{width:36,height:36,borderRadius:'50%',border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
           <div style={{flex:1,fontSize:17,fontWeight:700,color:T.text}}>个人资料</div>
           {match&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:ac,color:'#fff'}}>{match.score}% 匹配</span>}
         </div>
 
         {/* Hero card */}
-        <div style={{margin:'0 16px 16px',borderRadius:20,background:'#fff',boxShadow:T.shadowLg,overflow:'hidden'}}>
+        <div style={{margin:'0 16px 16px',borderRadius:20,background:T.card,boxShadow:T.shadowLg,overflow:'hidden'}}>
           <div style={{height:200,background:grad,display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
             <div style={{fontSize:100}}>{AVATARS[user.id%AVATARS.length]}</div>
             <div style={{position:'absolute',bottom:16,right:16,padding:'4px 12px',borderRadius:12,background:'rgba(0,0,0,0.4)',color:'#fff',fontSize:12}}>📍 {user.dist}</div>
@@ -474,7 +474,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
         </div>
 
         {/* Tab switcher (prototype style: filled active tab) */}
-        <div style={{display:'flex',gap:4,margin:'0 16px 12px',background:'#fff',borderRadius:12,padding:4,boxShadow:T.shadow}}>
+        <div style={{display:'flex',gap:4,margin:'0 16px 12px',background:T.card,borderRadius:12,padding:4,boxShadow:T.shadow}}>
           {[{k:'info',l:'基本信息'},{k:'match',l:'匹配分析'},{k:'wuxing',l:'五行对比'},{k:'posts',l:'动态'}].map(t=>
             <button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',background:tab===t.k?ac:'transparent',color:tab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
           )}
@@ -482,7 +482,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
 
         {/* Tab content */}
         <div style={{padding:'0 16px 100px'}}>
-          {tab==='info'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          {tab==='info'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {/* Basic info chips */}
             <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>📋 基本资料</div>
             <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>
@@ -511,7 +511,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
             </>}
           </div>}
 
-          {tab==='match'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          {tab==='match'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {match?<>
               {match.compatibility&&<div style={{background:`${ac}08`,borderRadius:14,padding:16,marginBottom:16,textAlign:'center'}}>
                 <div style={{fontSize:28}}>{match.compatibility.icon}</div>
@@ -538,7 +538,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
             </>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
           </div>}
 
-          {tab==='wuxing'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          {tab==='wuxing'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {match?<div style={{display:'flex',gap:20,justifyContent:'center'}}>
               {[{label:'你',p:match.personA},{label:user.name,p:match.personB}].map(({label,p})=>{
                 if(!p?.wuxing)return null;
@@ -560,7 +560,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
             </div>:<div style={{textAlign:'center',padding:20,color:T.textThi}}>加载中…</div>}
           </div>}
 
-          {tab==='posts'&&<div style={{background:'#fff',borderRadius:16,padding:16,boxShadow:T.shadow}}>
+          {tab==='posts'&&<div style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {(()=>{
               // Get posts for this user: BOT_POSTS if bot, or user posts from localStorage
               const BOT_POSTS_ALL=[
@@ -595,7 +595,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
         {/* Bottom action */}
         <div style={{position:'sticky',bottom:0,padding:'12px 16px 20px',background:T.bg}}>
           <button onClick={()=>{onClose();goTo(S.AI,'hehun')}} style={{width:'100%',padding:'14px',borderRadius:28,border:'none',background:`linear-gradient(135deg,${ac},${ac}dd)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:`0 4px 14px ${ac}33`,letterSpacing:1}}>💑 AI深度合婚分析</button>
-          <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'10px',borderRadius:20,border:`1px solid ${T.border}`,background:'#fff',color:T.textSec,fontSize:12,cursor:'pointer',marginTop:8}}>📤 分享匹配卡</button>
+          <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'10px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:12,cursor:'pointer',marginTop:8}}>📤 分享匹配卡</button>
         </div>
     {showShare&&<ShareModal type="match" profile={profile} partner={user} score={match?.score||user.score} compatibility={match?.compatibility} onClose={()=>setShowShare(false)}/>}
     </div>
@@ -658,7 +658,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     </div>
     {/* Action buttons - below card */}
     {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:32,alignItems:'center',padding:'8px 0 12px',flexShrink:0}}>
-      <button onClick={()=>swipe('left')} style={{width:60,height:60,borderRadius:'50%',border:`2px solid ${T.border}`,background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.1)'}}><Icons.x s={28} c="#FF6B6B"/></button>
+      <button onClick={()=>swipe('left')} style={{width:60,height:60,borderRadius:'50%',border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.1)'}}><Icons.x s={28} c="#FF6B6B"/></button>
       <button onClick={()=>swipe('right')} style={{width:60,height:60,borderRadius:'50%',border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(52,211,153,0.3)'}}><Icons.heart s={28} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
@@ -717,7 +717,7 @@ function FourPillarsCard({structured,mc}){
     {name:'时柱',gz:fp.hour,ny:ny.hour},
   ];
   return(
-    <div style={{background:'#fff',borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+    <div style={{background:T.card,borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:10}}>
         {pillars.map(p=>{
           const tg=p.gz?.[0],dz=p.gz?.[1];
@@ -787,7 +787,7 @@ function PersonalityCards({cards,mc}){
     {/* Expanded card detail */}
     {activeCard!==null&&cards[activeCard]&&(()=>{
       const c=cards[activeCard];
-      return <div className="anim-in" style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:T.shadow,marginBottom:10}}>
+      return <div className="anim-in" style={{background:T.card,borderRadius:16,overflow:'hidden',boxShadow:T.shadow,marginBottom:10}}>
         <div style={{background:`linear-gradient(135deg,${c.color},${c.color}cc)`,padding:'16px',color:'#fff'}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{fontSize:24}}>{c.icon}</div>
@@ -946,7 +946,7 @@ function HourAssistantModal({profile,onResult,onClose}){
   const progress=result?100:Math.round((step/questions.length)*100);
   return(
     <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'90vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'90vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
         {/* Header */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700,color:'#D97706'}}>🔮 AI时辰校正助手</div>
@@ -1015,7 +1015,7 @@ function HourAssistantModal({profile,onResult,onClose}){
           {/* Actions */}
           <div style={{display:'flex',gap:10}}>
             <button onClick={()=>{onResult(result.bestHour);onClose()}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#D97706,#B45309)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>✓ 采用{result.bestLabel}</button>
-            <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'14px 20px',borderRadius:14,border:'1.5px solid #E5E7EB',background:'#fff',fontSize:14,color:'#6B7280',cursor:'pointer'}}>重测</button>
+            <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'14px 20px',borderRadius:14,border:'1.5px solid #E5E7EB',background:T.card,fontSize:14,color:'#6B7280',cursor:'pointer'}}>重测</button>
           </div>
         </div>}
 
@@ -1309,7 +1309,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           <div style={{fontSize:12,color:'#92400E',lineHeight:1.6,marginBottom:12}}>{MODE_FULL[mode]}需要时辰信息来提高精度。你可以：</div>
 
           {/* Direct input */}
-          <div style={{background:'#fff',borderRadius:12,padding:12,marginBottom:8}}>
+          <div style={{background:T.card,borderRadius:12,padding:12,marginBottom:8}}>
             <div style={{fontSize:12,fontWeight:600,color:'#D97706',marginBottom:6}}>📋 知道具体时间</div>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
               <input type="number" placeholder="0-23时" min="0" max="23" style={{flex:1,padding:'10px',border:'2px solid #FCD34D',borderRadius:10,fontSize:16,textAlign:'center',fontWeight:700,color:'#D97706',outline:'none',background:'#FFFDF5'}} onChange={e=>{const h=parseInt(e.target.value);if(h>=0&&h<=23)onUpdateProfile({...profile,hour:h})}}/>
@@ -1318,7 +1318,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           </div>
 
           {/* Approximate time period */}
-          <div style={{background:'#fff',borderRadius:12,padding:12,marginBottom:8}}>
+          <div style={{background:T.card,borderRadius:12,padding:12,marginBottom:8}}>
             <div style={{fontSize:12,fontWeight:600,color:'#D97706',marginBottom:8}}>🌅 选择大致时段</div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
               {[{l:'🌙 凌晨',h:2,t:'0-4时'},{l:'🌅 清晨',h:7,t:'5-8时'},{l:'☀️ 上午',h:10,t:'9-11时'},{l:'🌤 中午',h:12,t:'12-13时'},{l:'🌇 下午',h:15,t:'14-17时'},{l:'🌆 傍晚',h:19,t:'18-20时'}].map(p=>(
@@ -1332,7 +1332,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           </div>
 
           {/* AI Hour Correction */}
-          <div style={{background:'#fff',borderRadius:12,padding:12,marginBottom:8}}>
+          <div style={{background:T.card,borderRadius:12,padding:12,marginBottom:8}}>
             <div style={{fontSize:12,fontWeight:600,color:'#D97706',marginBottom:6}}>🔮 AI推算时辰</div>
             <div style={{fontSize:11,color:'#92400E',marginBottom:8}}>回答5个简单问题，AI帮你推算最可能的出生时辰</div>
             <button onClick={()=>setShowHourAssistant(true)} style={{width:'100%',padding:'10px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#D97706,#B45309)',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',boxShadow:'0 2px 10px rgba(217,119,6,0.3)'}}>🔮 开始AI测时辰（30秒）</button>
@@ -1367,7 +1367,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           <div style={{fontSize:14,fontWeight:700,color:'#D97706',marginBottom:4}}>❀ 梅花易数 · 一事一占</div>
           <div style={{fontSize:11,color:'#92400E',lineHeight:1.5,marginBottom:10}}>心中想着一件事，输入问题后起卦</div>
           {/* Question input */}
-          <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="例：这次考试能通过吗？" style={{width:'100%',padding:'10px 12px',border:'2px solid #FCD34D',borderRadius:10,fontSize:13,background:'#fff',outline:'none',marginBottom:10,boxSizing:'border-box'}}/>
+          <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="例：这次考试能通过吗？" style={{width:'100%',padding:'10px 12px',border:'2px solid #FCD34D',borderRadius:10,fontSize:13,background:T.card,outline:'none',marginBottom:10,boxSizing:'border-box'}}/>
           {/* Example questions */}
           <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
             {['这件事能成吗','和ta有缘分吗','这个项目值得投资吗','近期运气如何'].map(ex=>(
@@ -1383,7 +1383,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {[['上卦',mhNum1,setMhNum1],['下卦',mhNum2,setMhNum2]].map(([l,v,s])=>(
                 <div key={l} style={{flex:1}}>
                   <div style={{fontSize:10,color:'#D97706',marginBottom:2,fontWeight:600}}>{l}</div>
-                  <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'7px 4px',border:'1.5px solid #FCD34D',borderRadius:8,fontSize:14,textAlign:'center',background:'#fff',outline:'none',fontWeight:700,color:'#D97706'}}/>
+                  <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'7px 4px',border:'1.5px solid #FCD34D',borderRadius:8,fontSize:14,textAlign:'center',background:T.card,outline:'none',fontWeight:700,color:'#D97706'}}/>
                 </div>
               ))}
             </div>
@@ -1400,7 +1400,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6}}>
             {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k} style={{textAlign:'center'}}>
               <div style={{fontSize:10,color:'#DB2777',marginBottom:3,fontWeight:600}}>{l}</div>
-              <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1.5px solid #F9A8D4',borderRadius:8,fontSize:13,textAlign:'center',background:'#fff',outline:'none'}}/>
+              <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1.5px solid #F9A8D4',borderRadius:8,fontSize:13,textAlign:'center',background:T.card,outline:'none'}}/>
             </div>)}
           </div>
         </div>}
@@ -1425,7 +1425,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         return <div style={{marginBottom:14}}>
           <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>📜 历史报告</div>
           {saved.map(m=>{const s=getMS(m.id);const chatLen=(s.chatHistory||[]).length;
-            return <div key={m.id} onClick={()=>setMode(m.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#fff',borderRadius:12,marginBottom:6,cursor:'pointer',boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
+            return <div key={m.id} onClick={()=>setMode(m.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:T.card,borderRadius:12,marginBottom:6,cursor:'pointer',boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
               <div style={{width:32,height:32,borderRadius:8,background:`${m.c}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{m.icon}</div>
               <div style={{flex:1}}>
                 <div style={{fontSize:13,fontWeight:600,color:T.text}}>{MODE_FULL[m.id]}</div>
@@ -1458,7 +1458,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       {/* Results: Header + Cards + Chat */}
       {ms.result&&<div ref={ref} className="anim-slide" style={{scrollMarginTop:120}}>
         {/* Question display — only when report expanded (sticky card shows it when collapsed) */}
-        {ms.q&&reportExpanded&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'#fff',borderRadius:10,marginBottom:8,boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
+        {ms.q&&reportExpanded&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:T.card,borderRadius:10,marginBottom:8,boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
           <div style={{fontSize:12,color:T.textThi,flexShrink:0}}>❓</div>
           <div style={{flex:1,fontSize:12,color:T.text,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>"{ms.q}"</div>
           <button onClick={()=>{const q=ms.q;setMS(mode,{result:null,error:null,chatHistory:[],q});}} style={{background:'none',border:'none',fontSize:14,cursor:'pointer',color:mc,flexShrink:0,padding:'2px 4px'}}>✏️</button>
@@ -1513,10 +1513,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               </div>}
               {/* Actions - only after streaming complete */}
               {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
-                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
                 <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
-                <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
-                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🗑️</button>
+                <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
+                <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🗑️</button>
               </div>}
               {/* Feedback */}
               {!ms.result._streaming&&(()=>{
@@ -1525,8 +1525,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'4px 0',marginBottom:8}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
                 return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'6px 0',marginBottom:8}}>
                   <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
-                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,cursor:'pointer'}}>👍 准</button>
-                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,cursor:'pointer'}}>👎 不准</button>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👍 准</button>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👎 不准</button>
                 </div>;
               })()}
             </>}
@@ -1547,7 +1547,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 </div>
               ))}
               {chatLoading&&<div style={{display:'flex',justifyContent:'flex-start',marginBottom:8}}>
-                <div style={{padding:'10px 14px',borderRadius:'16px 16px 16px 4px',background:'#fff',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+                <div style={{padding:'10px 14px',borderRadius:'16px 16px 16px 4px',background:T.card,boxShadow:T.shadow}}>
                   <div style={{display:'flex',gap:4,alignItems:'center'}}>
                     <div style={{width:6,height:6,borderRadius:3,background:mc,animation:'pulse 1s infinite'}}/>
                     <div style={{width:6,height:6,borderRadius:3,background:mc,animation:'pulse 1s infinite 0.2s'}}/>
@@ -1560,7 +1560,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           </div>);
         })()}
 
-        {!ms.result.response&&!ms.result._streaming&&ms.result.engineData&&<div style={{background:'#fff',borderRadius:14,padding:16,boxShadow:T.shadow}}>
+        {!ms.result.response&&!ms.result._streaming&&ms.result.engineData&&<div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow}}>
           <div style={{fontSize:13,fontWeight:600,color:mc,marginBottom:8}}>📦 引擎结果</div>
           <pre style={{fontSize:12,lineHeight:1.7,color:T.textSec,whiteSpace:'pre-wrap',wordBreak:'break-all',fontFamily:'inherit'}}>{ms.result.engineData}</pre>
         </div>}
@@ -1615,7 +1615,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             onChange={e=>setFollowUpQ(e.target.value)}
             onKeyDown={e=>{if(e.key==='Enter'&&followUpQ.trim())followUp(followUpQ)}}
             placeholder="输入追问…"
-            style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#FAFAFA',fontSize:13,outline:'none'}}
+            style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}
           />
           <button onClick={()=>followUp(followUpQ)}
             disabled={!followUpQ.trim()||chatLoading}
@@ -1876,7 +1876,7 @@ function DiscoverScreen({goTo,profile}){
       {/* Hot topics */}
       <div style={{display:'flex',gap:6,marginBottom:14,overflow:'auto',paddingBottom:4}}>
         {['🔥今日运势','💕桃花运','💼事业','🌙月相','⭐星座配对','📖命理入门'].map(tag=>
-          <button key={tag} onClick={()=>goTo(S.AI)} style={{padding:'6px 14px',borderRadius:20,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,fontWeight:500,color:T.text,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{tag}</button>
+          <button key={tag} onClick={()=>goTo(S.AI)} style={{padding:'6px 14px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,fontSize:11,fontWeight:500,color:T.text,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{tag}</button>
         )}
       </div>
       {/* Today's luck card */}
@@ -1889,7 +1889,7 @@ function DiscoverScreen({goTo,profile}){
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             <button onClick={()=>goTo(S.AI)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
-            <button onClick={()=>setShowShare(true)} style={{padding:'6px 18px',borderRadius:12,border:`1px solid ${T.border}`,background:'#fff',color:T.textSec,fontSize:11,cursor:'pointer'}}>📤 分享运势</button>
+            <button onClick={()=>setShowShare(true)} style={{padding:'6px 18px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:11,cursor:'pointer'}}>📤 分享运势</button>
           </div>
         </div>
       </div>
@@ -1921,12 +1921,12 @@ function DiscoverScreen({goTo,profile}){
       {/* Community Feed */}
       <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:16,marginBottom:10}}>🌍 缘友圈</div>
       {/* Post input */}
-      <div className="anim-in" style={{background:'#fff',borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
+      <div className="anim-in" style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
         <div onClick={()=>setShowPostCompose(true)} style={{padding:'10px 14px',borderRadius:12,background:'#F9FAFB',fontSize:13,color:T.textThi,cursor:'pointer'}}>✏️ 分享你的想法…</div>
       </div>
       {/* Posts */}
       {posts_.map((post,i)=>(
-        <div key={post.id} className="anim-in" style={{animationDelay:i*0.05+'s',background:'#fff',borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
+        <div key={post.id} className="anim-in" style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
           <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
             <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{post.avatar}</div>
             <div style={{flex:1}}>
@@ -1954,14 +1954,14 @@ function PostComposeModal({profile,onPost,onClose}){
   const hints=['今天的心情是…','分享一个命理小发现','最近有什么感悟？','你相信缘分吗？'];
   return(
     <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <button onClick={onClose} style={{fontSize:14,color:T.textSec,background:'none',border:'none',cursor:'pointer'}}>取消</button>
           <div style={{fontSize:16,fontWeight:700}}>发布动态</div>
           <button onClick={()=>{if(text.trim())onPost(text.trim())}} disabled={!text.trim()} style={{fontSize:14,fontWeight:600,background:'none',border:'none',cursor:text.trim()?'pointer':'default',color:text.trim()?T.primary:T.textThi}}>发布</button>
         </div>
         <textarea value={text} onChange={e=>setText(e.target.value)} maxLength={200} placeholder={hints[Math.floor(Math.random()*hints.length)]}
-          style={{width:'100%',minHeight:120,padding:14,borderRadius:14,border:`1.5px solid ${T.border}`,fontSize:14,lineHeight:1.7,outline:'none',resize:'none',background:'#FAFAFA'}}/>
+          style={{width:'100%',minHeight:120,padding:14,borderRadius:14,border:`1.5px solid ${T.border}`,fontSize:14,lineHeight:1.7,outline:'none',resize:'none',background:T.bg}}/>
         <div style={{display:'flex',justifyContent:'space-between',marginTop:8}}>
           <div style={{fontSize:11,color:T.textThi}}>以 {profile.name||'缘友'} 的身份发布</div>
           <div style={{fontSize:11,color:text.length>180?'#EF4444':T.textThi}}>{text.length}/200</div>
@@ -2276,8 +2276,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       }
     };
     return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:T.bg}}>
-      <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:'#fff',borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-        <button onClick={()=>{ChatStore.markRead(activeConv.id);refreshConvs();setActiveId(null);setSearchMode(false)}} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+      <div style={{display:'flex',alignItems:'center',gap:12,padding:'48px 16px 12px',background:T.card,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <button onClick={()=>{ChatStore.markRead(activeConv.id);refreshConvs();setActiveId(null);setSearchMode(false)}} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
         <div onClick={()=>setShowProfile(true)} style={{display:'flex',alignItems:'center',gap:10,flex:1,cursor:'pointer'}}>
           <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,position:'relative',flexShrink:0}}>
             {activeConv.user.gender==='female'?'👩':'👨'}
@@ -2291,8 +2291,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:searchMode?'#F5F3FF':'#fff',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.primary:T.textThi}}>🔍</button>
       </div>
       {/* Search bar */}
-      {searchMode&&<div style={{padding:'8px 16px',background:'#FAFAFA',borderBottom:`1px solid ${T.border}`,display:'flex',gap:8,alignItems:'center'}}>
-        <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="搜索聊天记录…" autoFocus style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#fff',fontSize:13,outline:'none'}}/>
+      {searchMode&&<div style={{padding:'8px 16px',background:T.bg,borderBottom:`1px solid ${T.border}`,display:'flex',gap:8,alignItems:'center'}}>
+        <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="搜索聊天记录…" autoFocus style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.card,fontSize:13,outline:'none'}}/>
         {searchQuery&&<button onClick={()=>setSearchQuery('')} style={{fontSize:12,color:T.textThi,background:'none',border:'none',cursor:'pointer'}}>清空</button>}
       </div>}
       <div style={{flex:1,overflow:'auto',padding:'12px 16px'}}>
@@ -2325,7 +2325,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           <IcebreakerCard type={ice.type} data={ice.data} onAction={(c,ac)=>handleIceAction(ice.type,c,ac)}/>
         </div>}
         {typing&&<div className="anim-in" style={{display:'flex',justifyContent:'flex-start',marginBottom:8}}>
-          <div style={{padding:'12px 16px',borderRadius:'16px 16px 16px 4px',background:'#fff',boxShadow:'0 1px 4px rgba(0,0,0,0.06)'}}>
+          <div style={{padding:'12px 16px',borderRadius:'16px 16px 16px 4px',background:T.card,boxShadow:T.shadow}}>
             <div style={{display:'flex',gap:4,alignItems:'center'}}>
               <div style={{width:6,height:6,borderRadius:3,background:T.primary,animation:'pulse 1s infinite'}}/>
               <div style={{width:6,height:6,borderRadius:3,background:T.primary,animation:'pulse 1s infinite 0.2s'}}/>
@@ -2336,11 +2336,11 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <div ref={chatEndRef}/>
       </div>
       {/* Quick phrases panel */}
-      {showQuick&&!showEmoji&&<div style={{padding:'8px 16px',background:'#FAFAFA',borderTop:`1px solid ${T.border}`,display:'flex',gap:6,flexWrap:'wrap'}}>
-        {quickPhrases.map(p=><button key={p} onClick={()=>{setChatInput(p);setShowQuick(false)}} style={{padding:'6px 12px',borderRadius:16,border:`1px solid ${T.border}`,background:'#fff',fontSize:12,color:T.text,cursor:'pointer'}}>{p}</button>)}
+      {showQuick&&!showEmoji&&<div style={{padding:'8px 16px',background:T.bg,borderTop:`1px solid ${T.border}`,display:'flex',gap:6,flexWrap:'wrap'}}>
+        {quickPhrases.map(p=><button key={p} onClick={()=>{setChatInput(p);setShowQuick(false)}} style={{padding:'6px 12px',borderRadius:16,border:`1px solid ${T.border}`,background:T.card,fontSize:12,color:T.text,cursor:'pointer'}}>{p}</button>)}
       </div>}
       {/* Emoji panel */}
-      {showEmoji&&<div style={{padding:'8px 16px 4px',background:'#FAFAFA',borderTop:`1px solid ${T.border}`,maxHeight:180,overflow:'auto'}}>
+      {showEmoji&&<div style={{padding:'8px 16px 4px',background:T.bg,borderTop:`1px solid ${T.border}`,maxHeight:180,overflow:'auto'}}>
         {EMOJI_GROUPS.map(g=><div key={g.label}>
           <div style={{fontSize:10,color:T.textThi,fontWeight:600,marginBottom:4,marginTop:4}}>{g.label}</div>
           <div style={{display:'flex',flexWrap:'wrap',gap:2}}>
@@ -2349,15 +2349,15 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         </div>)}
       </div>}
       {/* Input bar */}
-      <div style={{padding:'8px 12px 24px',background:'#fff',borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
+      <div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
         <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showQuick?'#F5F3FF':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.primary:T.textThi}}>{showQuick?'✕':'+'}</button>
         <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showEmoji?'#FEF3C7':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
-        <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
+        <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
         <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
           onKeyDown={e=>{if(e.key==='Enter'&&chatInput.trim())sendMsg()}}
           onFocus={()=>{setShowQuick(false);setShowEmoji(false)}}
           placeholder="发送消息…" disabled={sending}
-          style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:'#FAFAFA',fontSize:13,outline:'none'}}/>
+          style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}/>
         <button onClick={sendMsg} disabled={!chatInput.trim()||sending}
           style={{width:34,height:34,borderRadius:17,border:'none',
             background:(!chatInput.trim()||sending)?T.border:`linear-gradient(135deg,${T.primary},#7C3AED)`,
@@ -2433,7 +2433,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           </div>
           <div style={{display:'flex',gap:4}}>
             <button onClick={()=>setActiveId(conv.id)} style={{padding:'6px 12px',borderRadius:10,border:'none',background:T.primary,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>聊天</button>
-            <button onClick={()=>{if(confirm('确定拉黑'+conv.user.name+'？')){blockUser(conv.user.id);refreshConvs();showToast('已拉黑')}}} style={{padding:'6px 8px',borderRadius:10,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🚫</button>
+            <button onClick={()=>{if(confirm('确定拉黑'+conv.user.name+'？')){blockUser(conv.user.id);refreshConvs();showToast('已拉黑')}}} style={{padding:'6px 8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🚫</button>
           </div>
         </div>);
       })}
@@ -2452,7 +2452,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
             <div style={{fontSize:14,fontWeight:600,color:T.textSec}}>{conv.user.name}</div>
             <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{conv.user.sign} · {conv.user.age}岁</div>
           </div>
-          <button onClick={()=>{unblockUser(uid);refreshConvs();showToast('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>解除拉黑</button>
+          <button onClick={()=>{unblockUser(uid);refreshConvs();showToast('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>解除拉黑</button>
         </div>);
       })}
     </div>}
@@ -2476,7 +2476,7 @@ function PrivacySettingsModal({onClose}){
   ];
   return(
     <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700}}>🔐 隐私设置</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
@@ -2578,7 +2578,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       const modeColors={bazi:'#8B5CF6',astrology:'#3B82F6',tarot:'#0D9488',meihua:'#D97706',hehun:'#EC4899',vedic:'#F59E0B',synastry:'#6366F1'};
       return<div style={{marginTop:16}}>
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>📊 占卜偏好</div>
-        <div style={{background:'#fff',borderRadius:14,padding:14,boxShadow:T.shadow}}>
+        <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
           {sorted.map(([mode,count])=>(
             <div key={mode} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
               <div style={{width:60,fontSize:11,color:T.textSec,flexShrink:0}}>{MODE_FULL[mode]||mode}</div>
@@ -2598,7 +2598,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       if(allConvs.length===0)return null;
       return<div style={{marginTop:16}}>
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>💕 匹配历史</div>
-        <div style={{background:'#fff',borderRadius:14,padding:14,boxShadow:T.shadow}}>
+        <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
           {allConvs.slice(0,6).map((conv,i)=>(
             <div key={conv.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:i<Math.min(allConvs.length,6)-1?`1px solid ${T.border}`:'none'}}>
               <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#EDE9FE,#DDD6FE)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{conv.user.gender==='female'?'👩':'👨'}</div>
@@ -2627,19 +2627,19 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       return <div style={{marginTop:16,background:'#F8FAFC',borderRadius:14,padding:14,border:`1px solid ${T.border}`}}>
         <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>🤖 系统状态</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
             <div style={{fontSize:10,color:T.textThi}}>阶段</div>
             <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{cfg.label}</div>
           </div>
-          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
             <div style={{fontSize:10,color:T.textThi}}>真人/机器人</div>
             <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{realConvs.length}/{botConvs.length}</div>
           </div>
-          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
             <div style={{fontSize:10,color:T.textThi}}>机器人比例</div>
             <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{Math.round(cfg.botRatio*100)}%</div>
           </div>
-          <div style={{background:'#fff',borderRadius:10,padding:'8px 10px'}}>
+          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
             <div style={{fontSize:10,color:T.textThi}}>总消息数</div>
             <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{totalMsgs}</div>
           </div>
@@ -2648,7 +2648,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>;
     })()}
 
-    <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:'#fff',fontSize:14,color:T.textSec,cursor:'pointer',marginTop:20}}>退出登录</button>
+    <button onClick={onLogout} style={{width:'100%',padding:'14px',borderRadius:12,border:`1.5px solid ${T.borderDark}`,background:T.card,fontSize:14,color:T.textSec,cursor:'pointer',marginTop:20}}>退出登录</button>
   </div>
   {showPrivacy&&<PrivacySettingsModal onClose={()=>setShowPrivacy(false)}/>}
   {showDataMgmt&&<DataManagementModal profile={profile} onClose={()=>setShowDataMgmt(false)} onLogout={onLogout}/>}
@@ -2657,10 +2657,10 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
 
 function ProfileEditModal({profile,onSave,onClose}){
   const [f,sF]=useState({name:profile.name||'',bio:profile.bio||'',city:profile.city||''});
-  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:14,background:'#fff',outline:'none'};
+  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:14,background:T.card,outline:'none'};
   return(
     <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:700}}>✏️ 编辑资料</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
@@ -2709,7 +2709,7 @@ function DataManagementModal({profile,onClose,onLogout}){
   };
   return(
     <div style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:'#fff',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
+      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700}}>📊 我的数据</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
@@ -2726,7 +2726,7 @@ function DataManagementModal({profile,onClose,onLogout}){
         <div style={{display:'flex',gap:8,marginTop:16}}>
           <button onClick={exportData} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 导出全部数据 (JSON)</button>
         </div>
-        <button onClick={deleteAll} style={{width:'100%',padding:'12px',borderRadius:12,border:'1.5px solid #EF4444',background:'#fff',color:'#EF4444',fontSize:13,fontWeight:600,cursor:'pointer',marginTop:8}}>⚠️ 删除所有数据并注销</button>
+        <button onClick={deleteAll} style={{width:'100%',padding:'12px',borderRadius:12,border:'1.5px solid #EF4444',background:T.card,color:'#EF4444',fontSize:13,fontWeight:600,cursor:'pointer',marginTop:8}}>⚠️ 删除所有数据并注销</button>
       </div>
     </div>
   );
@@ -2880,7 +2880,7 @@ function ShareModal({type,profile,structured,partner,score,compatibility,onClose
 function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
   const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息",badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
-  return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:64,background:'#fff',borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'flex-end',justifyContent:'space-around',padding:'0 4px 6px',zIndex:100}}>
+  return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:64,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'flex-end',justifyContent:'space-around',padding:'0 4px 6px',zIndex:100}}>
     {tabs.map(tab=>{const act=active===tab.id;if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:'50%',width:48,height:48,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 16px rgba(139,92,246,.35)',marginBottom:4}}><Icons.sparkles s={22} c="#fff"/></button>;
     return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',opacity:act?1:.5,position:'relative'}}>
       {tab.ic(act?T.primary:T.textThi)}
