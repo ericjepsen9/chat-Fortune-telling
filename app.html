@@ -2849,12 +2849,15 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showEditProfile,setShowEditProfile]=useState(false);
   const [showAbout,setShowAbout]=useState(false);
   const [showTerms,setShowTerms]=useState(false);
+  const [showDaily,setShowDaily]=useState(false);
+  const [showDevStats,setShowDevStats]=useState(false);
   const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
-  const privacyLabel={standard:'🛡️ 标准',open:'🌐 开放',private:'🔒 保守'}[privacyLevel]||'🛡️ 标准';
+  const privacyLabel={standard:'标准',open:'开放',private:'保守'}[privacyLevel]||'标准';
+  const favCount=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_fav_')).length;
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
-  {/* Profile card — clean, prominent */}
+  {/* Profile card */}
   <div style={{padding:'16px 16px 0'}}>
     <div style={{background:T.card,borderRadius:20,padding:'20px',boxShadow:T.shadow}}>
       <div onClick={()=>setShowEditProfile(true)} style={{display:'flex',alignItems:'center',gap:16,cursor:'pointer'}}>
@@ -2862,18 +2865,21 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         <div style={{flex:1}}>
           <div style={{color:T.text,fontSize:18,fontWeight:700}}>{profile.name||'缘友'}</div>
           <div style={{color:T.textSec,fontSize:12,marginTop:3}}>{profile.bio||'点击编辑个人简介'}</div>
-          <div style={{display:'flex',gap:6,marginTop:6}}>
+          <div style={{display:'flex',gap:6,marginTop:6,flexWrap:'wrap'}}>
             <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,background:`${T.accent2}10`,color:T.accent2,fontWeight:500}}>{profile.year}年{profile.month}月{profile.day}日</span>
             {profile.hour>=0&&<span style={{padding:'2px 8px',borderRadius:10,fontSize:10,background:`${T.accent1}10`,color:T.accent1,fontWeight:500}}>{profile.hour}时</span>}
             {profile.city&&<span style={{padding:'2px 8px',borderRadius:10,fontSize:10,background:`${T.gold}10`,color:T.gold,fontWeight:500}}>{profile.city}</span>}
           </div>
         </div>
-        <span style={{color:T.textThi,fontSize:16}}>›</span>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+          <span style={{color:T.textThi,fontSize:16}}>›</span>
+          <span style={{fontSize:9,color:T.textThi}}>编辑</span>
+        </div>
       </div>
       {/* Stats row */}
       <div style={{display:'flex',gap:0,marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
-        {[{n:resultCount,l:'报告',c:T.accent2},{n:history.length,l:'记录',c:T.accent4},{n:Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_fav_')).length,l:'收藏',c:T.gold}].map(s=>
-          <div key={s.l} style={{textAlign:'center',flex:1}}>
+        {[{n:resultCount,l:'报告',c:T.accent2},{n:history.length,l:'记录',c:T.accent4},{n:favCount,l:'收藏',c:T.gold}].map(s=>
+          <div key={s.l} style={{textAlign:'center',flex:1,cursor:'pointer'}}>
             <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
             <div style={{fontSize:10,color:T.textThi,marginTop:2}}>{s.l}</div>
           </div>
@@ -2888,11 +2894,10 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     <button onClick={onEdit} style={{background:T.gold,border:'none',borderRadius:8,padding:'4px 12px',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>补充</button>
   </div>}
 
-  {/* Menu sections */}
   <div style={{padding:'10px 16px 0'}}>
     {/* Quick actions */}
     <div style={{display:'flex',gap:10,marginBottom:12}}>
-      {[{icon:'✦',label:'AI占卜',c:T.accent2,a:()=>goTo(S.AI)},{icon:'📅',label:'命理日历',c:T.accent4,a:()=>{}},{icon:'📊',label:'我的数据',c:T.accent1,a:()=>setShowDataMgmt(true)}].map(it=>
+      {[{icon:'✦',label:'AI占卜',c:T.accent2,a:()=>goTo(S.AI)},{icon:'📅',label:'命理日历',c:T.accent4,a:()=>setShowDaily(true)},{icon:'📊',label:'我的数据',c:T.accent1,a:()=>setShowDataMgmt(true)}].map(it=>
         <button key={it.label} onClick={it.a} style={{flex:1,padding:'14px 8px',borderRadius:14,border:'none',background:T.card,boxShadow:T.shadow,cursor:'pointer',textAlign:'center'}}>
           <div style={{width:36,height:36,borderRadius:12,background:`${it.c}12`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 6px',fontSize:16}}>{it.icon}</div>
           <div style={{fontSize:11,fontWeight:600,color:T.text}}>{it.label}</div>
@@ -2902,25 +2907,30 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
 
     {/* Settings group */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
-      {[{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',a:onEdit},
-        {icon:'🔐',label:'隐私设置',desc:privacyLabel,a:()=>setShowPrivacy(true)},
-        {icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色':'浅色',a:toggleTheme}].map((it,i,arr)=>
+      {[{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',ic:'#F59E0B',a:onEdit},
+        {icon:'🔐',label:'隐私设置',desc:privacyLabel,ic:'#3B82F6',a:()=>setShowPrivacy(true)},
+        {icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色':'浅色',ic:'#8B5CF6',a:toggleTheme}].map((it,i,arr)=>
         <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:i<arr.length-1?`1px solid ${T.border}`:'none'}}>
-          <div style={{width:30,height:30,borderRadius:8,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
+          <div style={{width:30,height:30,borderRadius:8,background:`${it.ic}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
           <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{it.label}</div></div>
           <span style={{fontSize:12,color:T.textThi}}>{it.desc}</span>
           <span style={{color:T.textThi,fontSize:10,marginLeft:4}}>›</span>
         </div>)}
     </div>
 
-    {/* Info group */}
+    {/* Info + logout group */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
-      {[{icon:'📜',label:'用户协议',a:()=>setShowTerms(true)},{icon:'ℹ️',label:'关于缘合',a:()=>setShowAbout(true)}].map((it,i,arr)=>
-        <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:i<arr.length-1?`1px solid ${T.border}`:'none'}}>
-          <div style={{width:30,height:30,borderRadius:8,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
+      {[{icon:'📜',label:'用户协议',ic:'#6B7280',a:()=>setShowTerms(true)},
+        {icon:'ℹ️',label:'关于缘合',ic:'#9CA3AF',a:()=>setShowAbout(true)}].map((it,i,arr)=>
+        <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:`1px solid ${T.border}`}}>
+          <div style={{width:30,height:30,borderRadius:8,background:`${it.ic}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
           <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{it.label}</div></div>
           <span style={{color:T.textThi,fontSize:10}}>›</span>
         </div>)}
+      <div onClick={onLogout} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
+        <div style={{width:30,height:30,borderRadius:8,background:'#EF444412',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🚪</div>
+        <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:'#EF4444'}}>退出登录</div></div>
+      </div>
     </div>
 
     {/* Recent history */}
@@ -2952,7 +2962,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           {sorted.map(([mode,count])=>(
             <div key={mode} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
               <div style={{width:60,fontSize:11,color:T.textSec,flexShrink:0}}>{MODE_FULL[mode]||mode}</div>
-              <div style={{flex:1,height:8,background:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
+              <div style={{flex:1,height:8,background:T.border,borderRadius:4,overflow:'hidden'}}>
                 <div style={{height:'100%',background:modeColors[mode]||T.primary,borderRadius:4,width:Math.round(count/maxCount*100)+'%',transition:'width .5s'}}/>
               </div>
               <div style={{fontSize:11,fontWeight:600,color:modeColors[mode]||T.primary,width:24,textAlign:'right'}}>{count}</div>
@@ -2977,7 +2987,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
                 <div style={{fontSize:10,color:T.textThi,marginTop:1}}>{conv.user.sign} · {(conv.messages||[]).length}条消息</div>
               </div>
               <div style={{textAlign:'right',flexShrink:0}}>
-                <div style={{fontSize:14,fontWeight:700,color:T.primary}}>{conv.user.score||'?'}%</div>
+                <div style={{fontSize:14,fontWeight:700,color:T.accent2}}>{conv.user.score||'?'}%</div>
                 <div style={{fontSize:9,color:T.textThi}}>{conv.createdAt?new Date(conv.createdAt).toLocaleDateString([],{month:'numeric',day:'numeric'}):''}</div>
               </div>
             </div>
@@ -2987,45 +2997,38 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>;
     })()}
 
-    {/* Dev/Admin stats - hidden in production */}
+    {/* Dev/Admin stats - toggle */}
     {(()=>{
       const cfg=getBotConfig();
       const allConvs=ChatStore.getAll();
       const botConvs=allConvs.filter(c=>c.user.isBot);
       const realConvs=allConvs.filter(c=>!c.user.isBot);
       const totalMsgs=allConvs.reduce((s,c)=>s+(c.messages?.length||0),0);
-      return <div style={{marginTop:16,background:'#F8FAFC',borderRadius:14,padding:14,border:`1px solid ${T.border}`}}>
-        <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>🤖 系统状态</div>
+      return <div style={{marginTop:12}}>
+        <button onClick={()=>setShowDevStats(!showDevStats)} style={{width:'100%',padding:'8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:10,color:T.textThi,cursor:'pointer'}}>
+          {showDevStats?'隐藏':'显示'}系统状态 🤖
+        </button>
+        {showDevStats&&<div style={{marginTop:8,background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
-            <div style={{fontSize:10,color:T.textThi}}>阶段</div>
-            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{cfg.label}</div>
-          </div>
-          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
-            <div style={{fontSize:10,color:T.textThi}}>真人/机器人</div>
-            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{realConvs.length}/{botConvs.length}</div>
-          </div>
-          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
-            <div style={{fontSize:10,color:T.textThi}}>机器人比例</div>
-            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{Math.round(cfg.botRatio*100)}%</div>
-          </div>
-          <div style={{background:T.card,borderRadius:10,padding:'8px 10px'}}>
-            <div style={{fontSize:10,color:T.textThi}}>总消息数</div>
-            <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{totalMsgs}</div>
-          </div>
+          {[{l:'阶段',v:cfg.label},{l:'真人/机器人',v:realConvs.length+'/'+botConvs.length},{l:'机器人比例',v:Math.round(cfg.botRatio*100)+'%'},{l:'总消息数',v:totalMsgs}].map(s=>
+            <div key={s.l} style={{background:T.bg,borderRadius:10,padding:'8px 10px'}}>
+              <div style={{fontSize:10,color:T.textThi}}>{s.l}</div>
+              <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{s.v}</div>
+            </div>
+          )}
         </div>
-        <div style={{fontSize:9,color:T.textThi,marginTop:6,textAlign:'center'}}>此面板仅管理员可见，用户版本将隐藏</div>
+        </div>}
       </div>;
     })()}
 
-    <button onClick={onLogout} style={{width:'100%',padding:'13px',borderRadius:14,border:'none',background:T.card,fontSize:14,color:'#EF4444',cursor:'pointer',marginTop:16,boxShadow:T.shadow,fontWeight:500}}>退出登录</button>
-    <div style={{textAlign:'center',padding:'16px 0 8px',fontSize:10,color:T.textThi}}>缘合 YuanHe v0.8.0</div>
+    <div style={{textAlign:'center',padding:'20px 0 8px',fontSize:10,color:T.textThi}}>缘合 YuanHe v0.8.0</div>
   </div>
   {showPrivacy&&<PrivacySettingsModal onClose={()=>setShowPrivacy(false)}/>}
   {showDataMgmt&&<DataManagementModal profile={profile} onClose={()=>setShowDataMgmt(false)} onLogout={onLogout}/>}
   {showEditProfile&&<ProfileEditModal profile={profile} onSave={(p)=>{onUpdateProfile(p);setShowEditProfile(false)}} onClose={()=>setShowEditProfile(false)}/>}
   {showAbout&&<AboutModal onClose={()=>setShowAbout(false)}/>}
   {showTerms&&<TermsModal onClose={()=>setShowTerms(false)}/>}
+  {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
 </div>);}
 
 function ProfileEditModal({profile,onSave,onClose}){
