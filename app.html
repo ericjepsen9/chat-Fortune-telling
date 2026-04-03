@@ -2051,18 +2051,44 @@ function DiscoverScreen({goTo,profile}){
     setUserPosts(updated);
     localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));
   };
+  // Mood state (inline in header)
+  const MOODS=[{emoji:'😄',label:'开心',color:'#22C55E'},{emoji:'😊',label:'不错',color:'#3B82F6'},{emoji:'😐',label:'一般',color:'#F59E0B'},{emoji:'😔',label:'低落',color:'#8B5CF6'},{emoji:'😢',label:'难过',color:'#EF4444'}];
+  const moodKey='yuanhe_mood_'+new Date().toDateString();
+  const [curMood,setCurMood]=useState(()=>{const s=localStorage.getItem(moodKey);return s!==null?parseInt(s):-1});
+  const [showMoodPicker,setShowMoodPicker]=useState(false);
+  const pickMood=(idx)=>{localStorage.setItem(moodKey,String(idx));setCurMood(idx);setShowMoodPicker(false);window.yuanheToast?.(MOODS[idx].label+' · 今日打卡成功')};
+
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
   const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
     <div style={{padding:'14px 16px 0'}}>
-      {/* Tab as title */}
-      <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:10}}>
-        {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
-          <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
-            <span style={{fontSize:discoverTab===t.k?24:18,fontWeight:discoverTab===t.k?800:500,color:discoverTab===t.k?T.text:T.textThi,transition:'all .2s'}}>{t.l}</span>
-            {discoverTab===t.k&&<div style={{position:'absolute',bottom:-4,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:T.accent2}}/>}
+      {/* Tab as title + mood in top right */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
+            <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
+              <span style={{fontSize:discoverTab===t.k?24:18,fontWeight:discoverTab===t.k?800:500,color:discoverTab===t.k?T.text:T.textThi,transition:'all .2s'}}>{t.l}</span>
+              {discoverTab===t.k&&<div style={{position:'absolute',bottom:-4,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:T.accent2}}/>}
+            </button>
+          ))}
+        </div>
+        {/* Mood indicator */}
+        <div style={{position:'relative'}}>
+          <button onClick={()=>setShowMoodPicker(!showMoodPicker)} style={{padding:'4px 10px',borderRadius:20,border:`1px solid ${curMood>=0?MOODS[curMood].color+'30':T.border}`,background:curMood>=0?MOODS[curMood].color+'08':T.card,cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontSize:12}}>
+            <span style={{fontSize:16}}>{curMood>=0?MOODS[curMood].emoji:'💭'}</span>
+            <span style={{fontSize:10,color:curMood>=0?MOODS[curMood].color:T.textThi,fontWeight:500}}>{curMood>=0?MOODS[curMood].label:'打卡'}</span>
           </button>
-        ))}
+          {/* Mood dropdown */}
+          {showMoodPicker&&curMood<0&&<div style={{position:'absolute',top:'100%',right:0,marginTop:6,background:T.card,borderRadius:14,padding:'10px',boxShadow:T.shadowLg,border:`1px solid ${T.border}`,zIndex:20,width:200}}>
+            <div style={{fontSize:12,fontWeight:600,color:T.text,marginBottom:8}}>今天心情如何？</div>
+            <div style={{display:'flex',justifyContent:'space-between',gap:4}}>
+              {MOODS.map((m,i)=><button key={i} onClick={()=>pickMood(i)} style={{flex:1,padding:'6px 2px',borderRadius:10,border:'none',background:'transparent',cursor:'pointer',textAlign:'center'}}>
+                <div style={{fontSize:20}}>{m.emoji}</div>
+                <div style={{fontSize:8,color:T.textThi,marginTop:2}}>{m.label}</div>
+              </button>)}
+            </div>
+          </div>}
+        </div>
       </div>
       {/* Search bar */}
       <div style={{position:'relative'}}>
@@ -2094,9 +2120,6 @@ function DiscoverScreen({goTo,profile}){
           </div>
         </div>
       </div>
-
-      {/* Mood check-in */}
-      <MoodTracker profile={profile}/>
 
       {/* Quick entry cards */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
