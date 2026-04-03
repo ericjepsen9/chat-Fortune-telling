@@ -647,10 +647,6 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
   const [showWheel,setShowWheel]=useState(false);
-  // Today's energy based on profile + date
-  const todaySeed=(profile.year*13+profile.month*7+profile.day*3+new Date().getDate()*11)%100;
-  const energy=60+Math.round(todaySeed*0.35); // 60-95 range
-  const todayStatus=['✨ 能量充沛','🌟 状态良好','💫 平稳安定','🌙 宜静养'][Math.floor(todaySeed/25)];
   // Fetch real match scores
   useEffect(()=>{
     const tg=profile.gender==='male'?'female':'male';
@@ -667,25 +663,50 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     }).catch(()=>{});
   },[]);
   const swipe=(dir)=>{haptic('light');const top=cards[cards.length-1];if(!top)return;if(dir==='right'&&top.score>=65){haptic('success');setTimeout(()=>setMatchUser(top),300)}setCards(c=>c.slice(0,-1));setSwiped(s=>s+1)};
+  // 五行 energy data from profile
+  const wxLabels=['金','木','水','火','土'];
+  const wxColors=['#F59E0B','#22C55E','#3B82F6','#EF4444','#D97706'];
+  const wxSeed=(profile.year*7+profile.month*13+profile.day*3+new Date().getDate()*11);
+  const wxValues=wxLabels.map((_,i)=>15+((wxSeed*(i+1)*17)%40)); // 15-55 range
+  const wxTotal=wxValues.reduce((a,b)=>a+b,0);
+  const dominantIdx=wxValues.indexOf(Math.max(...wxValues));
+  const dominantWx=wxLabels[dominantIdx];
+
   return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:64}}>
-    {/* Compact header */}
-    <div style={{padding:'12px 16px 4px',flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-      <div style={{display:'flex',alignItems:'center',gap:8}}>
-        <div className="serif" style={{fontSize:20,fontWeight:700,color:T.primary}}>缘合</div>
-        {/* Energy ring */}
-        <div style={{position:'relative',width:28,height:28}}>
-          <svg width={28} height={28} style={{transform:'rotate(-90deg)'}}>
-            <circle cx={14} cy={14} r={11} fill="none" stroke={T.border} strokeWidth={2.5}/>
-            <circle cx={14} cy={14} r={11} fill="none" stroke="#8B5CF6" strokeWidth={2.5} strokeDasharray={`${energy*0.69} 100`} strokeLinecap="round"/>
+    {/* Header matching prototype: 五行轮盘 + title + action buttons */}
+    <div style={{padding:'10px 16px 6px',flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        {/* 五行 Energy Ring (pie chart style) */}
+        <div style={{position:'relative',width:56,height:56}}>
+          <svg width={56} height={56} viewBox="0 0 56 56">
+            {(()=>{
+              let startAngle=-90;
+              return wxValues.map((val,i)=>{
+                const angle=(val/wxTotal)*360;
+                const endAngle=startAngle+angle;
+                const r=24,cx=28,cy=28;
+                const startRad=startAngle*Math.PI/180;
+                const endRad=endAngle*Math.PI/180;
+                const x1=cx+r*Math.cos(startRad),y1=cy+r*Math.sin(startRad);
+                const x2=cx+r*Math.cos(endRad),y2=cy+r*Math.sin(endRad);
+                const large=angle>180?1:0;
+                const path=`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`;
+                startAngle=endAngle;
+                return React.createElement('path',{key:i,d:path,fill:wxColors[i],opacity:i===dominantIdx?1:0.4,stroke:'#fff',strokeWidth:1});
+              });
+            })()}
           </svg>
-          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:7,fontWeight:700,color:'#8B5CF6'}}>{energy}</div>
+          <div style={{position:'absolute',bottom:-2,left:'50%',transform:'translateX(-50)',fontSize:10,fontWeight:700,color:wxColors[dominantIdx]}}>{dominantWx}</div>
         </div>
-        <span style={{fontSize:10,color:T.textThi}}>已看{swiped}人</span>
+        <div>
+          <div className="serif" style={{fontSize:18,fontWeight:700,color:T.text}}>缘合</div>
+          <div style={{fontSize:10,color:T.textThi}}>今日{dominantWx}象能量活跃</div>
+        </div>
       </div>
-      <div style={{display:'flex',gap:4,alignItems:'center'}}>
-        <button onClick={()=>goTo(S.AI)} style={{padding:'5px 8px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:10,color:T.textSec,cursor:'pointer'}}>{todayStatus}</button>
-        <button onClick={()=>setShowWheel(true)} style={{width:30,height:30,borderRadius:15,border:'none',background:'linear-gradient(135deg,#1E1146,#2D1B69)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,boxShadow:'0 2px 6px rgba(30,17,70,0.3)'}}>🎡</button>
-        <button onClick={()=>goTo(S.AI)} style={{background:'linear-gradient(135deg,#8B5CF6,#7C3AED)',border:'none',borderRadius:8,padding:'5px 10px',color:'#fff',fontSize:10,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:2}}><Icons.sparkles s={10} c="#fff"/> AI占卜</button>
+      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+        <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#F59E0B',fontWeight:700}}>★ {swiped||''}</button>
+        <button onClick={()=>goTo(S.AI)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>✦</button>
+        <button onClick={()=>goTo(S.DISCOVER)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.primary,position:'relative'}}>📅<span style={{position:'absolute',top:-2,right:-2,fontSize:7,background:'#EF4444',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700}}>{new Date().getDate()}</span></button>
       </div>
     </div>
     {/* Card area */}
@@ -696,10 +717,12 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       </div>)
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
     </div>
-    {/* Action buttons */}
-    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:28,alignItems:'center',padding:'2px 0 4px',flexShrink:0}}>
-      <button onClick={()=>swipe('left')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(0,0,0,0.05)'}}><Icons.x s={22} c="#FF6B6B"/></button>
-      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(52,211,153,0.25)'}}><Icons.heart s={22} c="#fff" fill="#fff"/></button>
+    {/* Action buttons - 4 buttons matching prototype */}
+    {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:12,alignItems:'center',padding:'2px 0 4px',flexShrink:0}}>
+      <button onClick={()=>swipe('left')} style={{width:46,height:46,borderRadius:23,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><Icons.x s={20} c="#FF6B6B"/></button>
+      <button onClick={()=>setShowWheel(true)} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#F59E0B,#EF4444)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(245,158,11,0.3)'}}><span style={{fontSize:18,color:'#fff',fontWeight:700}}>★</span></button>
+      <button onClick={()=>{const top=cards[cards.length-1];if(top)setDetailUser(top)}} style={{width:46,height:46,borderRadius:23,border:`2px solid ${T.border}`,background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
+      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(52,211,153,0.25)'}}><Icons.heart s={20} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
