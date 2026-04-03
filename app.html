@@ -2499,6 +2499,29 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile}){
       )}
     </>}
 
+    {/* Divination Stats */}
+    {history.length>0&&(()=>{
+      const modeCounts={};
+      history.forEach(h=>{modeCounts[h.mode]=(modeCounts[h.mode]||0)+1});
+      const sorted=Object.entries(modeCounts).sort((a,b)=>b[1]-a[1]);
+      const maxCount=sorted[0]?sorted[0][1]:1;
+      const modeColors={bazi:'#8B5CF6',astrology:'#3B82F6',tarot:'#0D9488',meihua:'#D97706',hehun:'#EC4899',vedic:'#F59E0B',synastry:'#6366F1'};
+      return<div style={{marginTop:16}}>
+        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>📊 占卜偏好</div>
+        <div style={{background:'#fff',borderRadius:14,padding:14,boxShadow:T.shadow}}>
+          {sorted.map(([mode,count])=>(
+            <div key={mode} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+              <div style={{width:60,fontSize:11,color:T.textSec,flexShrink:0}}>{MODE_FULL[mode]||mode}</div>
+              <div style={{flex:1,height:8,background:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
+                <div style={{height:'100%',background:modeColors[mode]||T.primary,borderRadius:4,width:Math.round(count/maxCount*100)+'%',transition:'width .5s'}}/>
+              </div>
+              <div style={{fontSize:11,fontWeight:600,color:modeColors[mode]||T.primary,width:24,textAlign:'right'}}>{count}</div>
+            </div>
+          ))}
+        </div>
+      </div>;
+    })()}
+
     {/* Dev/Admin: Bot System Stats */}
     {(()=>{
       const cfg=getBotConfig();
