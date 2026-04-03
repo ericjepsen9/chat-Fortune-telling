@@ -411,8 +411,8 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
         opacity:isTop?1:0.5,pointerEvents:isTop?'auto':'none',
         background:T.card,boxShadow:'0 1px 6px rgba(0,0,0,0.03)',display:'flex',flexDirection:'column'}}>
       {/* LIKE/NOPE labels */}
-      {dx>20&&<div style={{position:'absolute',top:16,left:16,padding:'8px 18px',borderRadius:12,background:'rgba(52,211,153,0.12)',border:'2px solid #34D399',color:'#34D399',fontSize:16,fontWeight:800,transform:'rotate(-12deg)',opacity:opa,zIndex:10}}>有缘 ♥</div>}
-      {dx<-20&&<div style={{position:'absolute',top:16,right:16,padding:'8px 18px',borderRadius:12,background:'rgba(255,107,107,0.12)',border:'2px solid #FF6B6B',color:'#FF6B6B',fontSize:16,fontWeight:800,transform:'rotate(12deg)',opacity:opa,zIndex:10}}>无缘</div>}
+      {dx>20&&<div style={{position:'absolute',top:16,left:16,padding:'8px 18px',borderRadius:12,background:`${T.primary}15`,border:`2px solid ${T.primary}`,color:T.primary,fontSize:16,fontWeight:800,transform:'rotate(-12deg)',opacity:opa,zIndex:10}}>有缘 ♥</div>}
+      {dx<-20&&<div style={{position:'absolute',top:16,right:16,padding:'8px 18px',borderRadius:12,background:'rgba(156,163,175,0.12)',border:'2px solid #9CA3AF',color:'#9CA3AF',fontSize:16,fontWeight:800,transform:'rotate(12deg)',opacity:opa,zIndex:10}}>无缘</div>}
 
       {/* Photo area */}
       <div style={{flex:1,background:grad,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',minHeight:0}}>
@@ -868,8 +868,8 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     {/* Action buttons — below card */}
     {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:24,alignItems:'center',padding:'6px 0 2px',flexShrink:0}}>
       {lastSwiped&&<button onClick={undoSwipe} style={{width:36,height:36,borderRadius:18,border:`1.5px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:T.textThi}}>↩</button>}
-      <button onClick={()=>swipe('left')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c={T.primary}/></button>
-      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.heart s={22} c={T.success} fill={T.success}/></button>
+      <button onClick={()=>swipe('left')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c={T.textThi}/></button>
+      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:T.primary,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 3px 12px ${T.primary}40`}}><Icons.heart s={22} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
