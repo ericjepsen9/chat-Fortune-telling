@@ -646,7 +646,6 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [matchUser,setMatchUser]=useState(null);
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
-  const [showWheel,setShowWheel]=useState(false);
   // Fetch real match scores
   useEffect(()=>{
     const tg=profile.gender==='male'?'female':'male';
@@ -696,7 +695,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
               });
             })()}
           </svg>
-          <div style={{position:'absolute',bottom:-2,left:'50%',transform:'translateX(-50)',fontSize:10,fontWeight:700,color:wxColors[dominantIdx]}}>{dominantWx}</div>
+          <div style={{position:'absolute',bottom:-2,left:'50%',transform:'translateX(-50%)',fontSize:10,fontWeight:700,color:wxColors[dominantIdx]}}>{dominantWx}</div>
         </div>
         <div>
           <div className="serif" style={{fontSize:18,fontWeight:700,color:T.text}}>缘合</div>
@@ -704,9 +703,9 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
         </div>
       </div>
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-        <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#F59E0B',fontWeight:700}}>★ {swiped||''}</button>
-        <button onClick={()=>goTo(S.AI)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>✦</button>
-        <button onClick={()=>goTo(S.DISCOVER)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.primary,position:'relative'}}>📅<span style={{position:'absolute',top:-2,right:-2,fontSize:7,background:'#EF4444',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700}}>{new Date().getDate()}</span></button>
+        <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:'#F59E0B',fontWeight:700}}>★ {swiped||0}</div>
+        <button onClick={()=>goTo(S.AI)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
+        <div style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:'#EF4444',color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></div>
       </div>
     </div>
     {/* Card area */}
@@ -720,19 +719,12 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     {/* Action buttons - 4 buttons matching prototype */}
     {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:12,alignItems:'center',padding:'2px 0 4px',flexShrink:0}}>
       <button onClick={()=>swipe('left')} style={{width:46,height:46,borderRadius:23,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><Icons.x s={20} c="#FF6B6B"/></button>
-      <button onClick={()=>setShowWheel(true)} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#F59E0B,#EF4444)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(245,158,11,0.3)'}}><span style={{fontSize:18,color:'#fff',fontWeight:700}}>★</span></button>
+      <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#F59E0B,#EF4444)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(245,158,11,0.3)'}}><span style={{fontSize:18,color:'#fff',fontWeight:700}}>★</span></button>
       <button onClick={()=>{const top=cards[cards.length-1];if(top)setDetailUser(top)}} style={{width:46,height:46,borderRadius:23,border:`2px solid ${T.border}`,background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
       <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:'linear-gradient(135deg,#34D399,#6EE7B7)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 12px rgba(52,211,153,0.25)'}}><Icons.heart s={20} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
-    {/* Fortune Wheel Modal */}
-    {showWheel&&<div style={{position:'fixed',inset:0,zIndex:250,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{width:'100%',maxWidth:380}}>
-        <FortuneWheel profile={profile} goTo={goTo}/>
-        <button onClick={()=>setShowWheel(false)} style={{width:'100%',padding:'12px',borderRadius:14,border:'none',background:'rgba(255,255,255,0.1)',color:'#fff',fontSize:14,cursor:'pointer',marginTop:8}}>关闭</button>
-      </div>
-    </div>}
   </div>);
 }
 
