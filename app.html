@@ -395,12 +395,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
   const onE=()=>{if(Math.abs(dx)>80)onSwipe(dx>0?'right':'left');else if(Math.abs(dx)<5&&onDetail)onDetail();setDx(0);setDragging(false)};
   const rot=dx*0.05,opa=Math.min(Math.abs(dx)/100,1);
   const grad=GRADS[user.id%GRADS.length];
-  // Wuxing mini bars for card
-  const wxC=['#F59E0B','#22C55E','#3B82F6','#EF4444','#D97706'];
-  const wxL=['金','木','水','火','土'];
-  const wxV=wxL.map((_,i)=>20+((user.id*(i+1)*13)%60));
   const isOnline=user.isBot?((user.id*7+new Date().getHours())%3!==0):true;
-  // Type tag based on match
   const typeTag=user.matchResult?.gradeDesc?user.matchResult.gradeDesc.substring(0,6):(user.score>=80?'天作之合':user.score>=65?'有缘有份':'潜力之缘');
   return(
     <div onMouseDown={e=>onS(e.clientX)} onMouseMove={e=>onM(e.clientX)} onMouseUp={onE} onMouseLeave={()=>dragging&&onE()}
@@ -422,15 +417,10 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
           <div style={{width:6,height:6,borderRadius:3,background:isOnline?'#34D399':'#9CA3AF'}}/>
           <span style={{fontSize:10,color:'#fff',fontWeight:500}}>{isOnline?'在线':'离线'}</span>
         </div>
-        {/* Score + wuxing bars */}
-        <div style={{position:'absolute',top:10,right:10,padding:'8px 10px',borderRadius:14,background:'rgba(255,255,255,0.95)',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',display:'flex',alignItems:'center',gap:8}}>
-          <div style={{display:'flex',gap:2,alignItems:'flex-end'}}>
-            {wxV.map((v,i)=><div key={i} style={{width:8,height:4+v*0.2,borderRadius:2,background:wxC[i],opacity:0.8}}/>)}
-          </div>
-          <div>
-            <div style={{color:T.accent2,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
-            <div style={{fontSize:7,color:T.textThi}}>缘分值</div>
-          </div>
+        {/* Score badge */}
+        <div style={{position:'absolute',top:10,right:10,padding:'6px 12px',borderRadius:14,background:'rgba(255,255,255,0.95)',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+          <div style={{color:T.accent2,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
+          <div style={{fontSize:7,color:T.textThi,textAlign:'center'}}>缘分值</div>
         </div>
       </div>
 
