@@ -2,22 +2,30 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>缘合 YuanHe</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body,#root{height:100%;overflow:hidden}
-body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-webkit-tap-highlight-color:transparent;
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 ::-webkit-scrollbar{display:none}
 .serif{font-family:'Noto Serif SC',serif}
+/* Animations */
 @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideDown{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(40px)}}
 @keyframes matchPop{0%{transform:scale(0);opacity:0}50%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0}}
 .anim-in{animation:fadeIn .4s ease both}
 .anim-slide{animation:slideUp .5s ease both}
+/* Button active feedback */
+button:active:not(:disabled){transform:scale(0.96);transition:transform 0.1s}
+button{transition:transform 0.1s,opacity 0.15s}
 .markdown h1,.markdown h2,.markdown h3{margin:12px 0 6px;font-weight:600;font-size:14px;line-height:1.5}
 .markdown h1{font-size:15px} .markdown h2{font-size:14px} .markdown h3{font-size:14px;color:#FF6B6B}
 .markdown p{margin:6px 0;line-height:1.7;font-size:inherit}
@@ -1118,7 +1126,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const followUp=async(q)=>{
     if(!q.trim()||chatLoading)return;
     const ch=getMS(mode).chatHistory||[];
-    if(ch.length>=20){alert('本次会话已达上限，请点击"重新提问"开始新分析');return}
+    if(ch.length>=20){window.yuanheToast?.('本次会话已达上限，请点击重新提问');return}
     setReportExpanded(false); // auto-collapse report
     // Add user message immediately
     const newChat=[...ch,{role:'user',text:q,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}];
@@ -1417,7 +1425,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               </div>}
               {/* Actions - only after streaming complete */}
               {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
-                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);alert('已复制')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:'#fff',fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
                 <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
                 <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
                 <button onClick={()=>setMS(mode,{result:null,error:null,q:'',chatHistory:[]})} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:'#fff',fontSize:11,color:T.textThi,cursor:'pointer'}}>🗑️</button>
@@ -2666,7 +2674,7 @@ function ShareModal({type,profile,structured,partner,score,compatibility,onClose
       link.click();
       setSaved(true);
       setTimeout(()=>setSaved(false),2000);
-    }catch(e){alert('保存失败，请重试')}
+    }catch(e){window.yuanheToast?.('保存失败，请重试')}
     setSaving(false);
   };
 
@@ -2709,11 +2717,15 @@ function App(){
   const [profile,setProfile]=useState(()=>{try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));return p&&p.year?p:null}catch(e){return null}});
   const [aiMode,setAiMode]=useState(null);
   const [convs,setConvs]=useState(()=>ChatStore.getAll());
-  const [chatActive,setChatActive]=useState(false); // hide TabBar when in chat detail
-  const [openConvId,setOpenConvId]=useState(null); // auto-open this conv
+  const [chatActive,setChatActive]=useState(false);
+  const [openConvId,setOpenConvId]=useState(null);
+  const [globalToast,setGlobalToast]=useState('');
   const onboarded=!!localStorage.getItem('yuanhe_onboarded');
   const goTo=(s,m)=>{setScr(s);if(m)setAiMode(m)};
   const addConv=(user)=>{const c=ChatStore.create(user,profile);setConvs(ChatStore.getAll());return c};
+  // Global toast — accessible from anywhere
+  const toast=(msg)=>{setGlobalToast(msg);setTimeout(()=>setGlobalToast(''),2500)};
+  window.yuanheToast=toast;
   // Auto-greet: AI sends first message after match
   const autoGreet=async(conv)=>{
     try{
@@ -2769,6 +2781,7 @@ function App(){
     {scr===S.MSGS&&<MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/>}
     {scr===S.ME&&profile&&<MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
+    {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
   </div>);
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
