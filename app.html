@@ -272,7 +272,7 @@ function EmptyState({icon,title,desc,action,actionLabel}){
     <div style={{width:72,height:72,borderRadius:36,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',fontSize:28}}>{icon||'📭'}</div>
     <div style={{fontSize:15,fontWeight:600,color:T.text}}>{title||'暂无内容'}</div>
     {desc&&<div style={{fontSize:12,marginTop:6,lineHeight:1.6,color:T.textThi}}>{desc}</div>}
-    {action&&<button onClick={action} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>{actionLabel||'去看看'}</button>}
+    {action&&<button onClick={action} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>{actionLabel||'去看看'}</button>}
   </div>);
 }
 function ErrorState({error,onRetry}){
@@ -282,7 +282,7 @@ function ErrorState({error,onRetry}){
     <div style={{fontSize:36,marginBottom:12}}>{isNetwork?'📡':isTimeout?'⏳':'⚠️'}</div>
     <div style={{fontSize:15,fontWeight:600,color:T.text}}>{isNetwork?'网络连接异常':isTimeout?'请求超时':'出了点问题'}</div>
     <div style={{fontSize:12,color:T.textThi,marginTop:6,lineHeight:1.6}}>{error||'请稍后再试'}</div>
-    {onRetry&&<button onClick={onRetry} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>重试</button>}
+    {onRetry&&<button onClick={onRetry} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>重试</button>}
   </div>);
 }
 function Skeleton({width,height,radius,style}){
@@ -428,7 +428,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
             {wxV.map((v,i)=><div key={i} style={{width:8,height:4+v*0.2,borderRadius:2,background:wxC[i],opacity:0.8}}/>)}
           </div>
           <div>
-            <div style={{color:T.primary,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
+            <div style={{color:T.accent2,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
             <div style={{fontSize:7,color:T.textThi}}>缘分值</div>
           </div>
         </div>
@@ -729,8 +729,8 @@ function DailyStatusModal({profile,onClose}){
             const info=getDayInfo(dateObj);
             const today=isToday(d);const selected=isSel(d);
             return <button key={i} onClick={()=>setSelDate(dateObj)} style={{padding:'6px 0',borderRadius:10,border:'none',cursor:'pointer',textAlign:'center',
-              background:selected?T.primary:today?`${T.primary}15`:'transparent',
-              color:selected?'#fff':today?T.primary:T.text,fontSize:13,fontWeight:today||selected?700:400,position:'relative'}}>
+              background:selected?T.accent2:today?`${T.accent2}15`:'transparent',
+              color:selected?'#fff':today?T.accent2:T.text,fontSize:13,fontWeight:today||selected?700:400,position:'relative'}}>
               {d}
               <div style={{width:4,height:4,borderRadius:2,background:selected?'#fff':WX_DOT[info.wx],margin:'2px auto 0'}}/>
             </button>;
@@ -840,14 +840,17 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
         <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:T.gold,fontWeight:700}}>★ {swiped||0}</div>
         <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#8E76D5'}}>✦</span></button>
-        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:T.textSec,position:'relative'}}>📅<span style={{position:'absolute',top:-3,right:-3,fontSize:7,background:T.primary,color:'#fff',borderRadius:4,padding:'0 3px',fontWeight:700,lineHeight:'14px'}}>{new Date().getDate()}</span></button>
+        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:0,position:'relative'}}>
+          <div style={{fontSize:7,fontWeight:700,color:T.primary,lineHeight:1,marginTop:3}}>{(new Date().getMonth()+1)+'月'}</div>
+          <div style={{fontSize:14,fontWeight:800,color:T.text,lineHeight:1}}>{new Date().getDate()}</div>
+        </button>
       </div>
     </div>
     {/* Card area */}
     <div style={{position:'relative',flex:1,margin:'0 14px',minHeight:100,marginBottom:4}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500,color:T.text}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
-        <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.primary,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>先去AI占卜</button>
+        <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>先去AI占卜</button>
       </div>)
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
       {/* First-time swipe guide */}
@@ -2099,7 +2102,7 @@ function DiscoverScreen({goTo,profile}){
     {/* Tab switcher */}
     <div style={{display:'flex',gap:0,margin:'0 16px 8px',background:T.card,borderRadius:12,padding:3,boxShadow:T.shadow}}>
       {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
-        <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:14,fontWeight:600,cursor:'pointer',background:discoverTab===t.k?T.primary:'transparent',color:discoverTab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
+        <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',fontSize:14,fontWeight:600,cursor:'pointer',background:discoverTab===t.k?T.accent2:'transparent',color:discoverTab===t.k?'#fff':T.textSec,transition:'all .2s'}}>{t.l}</button>
       ))}
     </div>
     <div style={{padding:'12px 16px'}}>
@@ -2190,7 +2193,7 @@ function DiscoverScreen({goTo,profile}){
         <div style={{display:'flex',gap:8}}>
           <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="写评论…" autoFocus style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}
             onKeyDown={e=>{if(e.key==='Enter'&&commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}}/>
-          <button onClick={()=>{if(commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.primary:'#ccc',color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button>
+          <button onClick={()=>{if(commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.accent2:'#ccc',color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button>
         </div>
         <button onClick={()=>setCommentPost(null)} style={{width:'100%',padding:'10px',background:'none',border:'none',color:T.textThi,fontSize:12,cursor:'pointer',marginTop:6}}>取消</button>
       </div>
@@ -2208,7 +2211,7 @@ function PostComposeModal({profile,onPost,onClose}){
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <button onClick={onClose} style={{fontSize:14,color:T.textSec,background:'none',border:'none',cursor:'pointer'}}>取消</button>
           <div style={{fontSize:16,fontWeight:700}}>发布动态</div>
-          <button onClick={()=>{if(text.trim())onPost(text.trim())}} disabled={!text.trim()} style={{fontSize:14,fontWeight:600,background:'none',border:'none',cursor:text.trim()?'pointer':'default',color:text.trim()?T.primary:T.textThi}}>发布</button>
+          <button onClick={()=>{if(text.trim())onPost(text.trim())}} disabled={!text.trim()} style={{fontSize:14,fontWeight:600,background:'none',border:'none',cursor:text.trim()?'pointer':'default',color:text.trim()?T.accent2:T.textThi}}>发布</button>
         </div>
         <textarea value={text} onChange={e=>setText(e.target.value)} maxLength={200} placeholder={hints[Math.floor(Math.random()*hints.length)]}
           style={{width:'100%',minHeight:120,padding:14,borderRadius:14,border:`1.5px solid ${T.border}`,fontSize:14,lineHeight:1.7,outline:'none',resize:'none',background:T.bg}}/>
@@ -2537,10 +2540,10 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           </div>
           <div>
             <div style={{fontSize:15,fontWeight:700,color:T.text}}>{activeConv.user.name}</div>
-            <div style={{fontSize:11,color:typing?T.primary:isOnline?'#1DA750':T.textThi}}>{typing?'正在输入…':getLastOnlineText(activeConv.user)} · {activeConv.user.sign}</div>
+            <div style={{fontSize:11,color:typing?T.accent2:isOnline?'#1DA750':T.textThi}}>{typing?'正在输入…':getLastOnlineText(activeConv.user)} · {activeConv.user.sign}</div>
           </div>
         </div>
-        <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:searchMode?'#F5F3FF':T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.primary:T.textThi}}>🔍</button>
+        <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:searchMode?'#F5F3FF':T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.accent2:T.textThi}}>🔍</button>
         <button onClick={()=>setShowReport(true)} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:T.textThi}}>⋯</button>
       </div>
       {/* Search bar */}
@@ -2569,7 +2572,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
                 {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.text}
                 {!msg.recalled&&msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
               </div>
-              {msg.role==='user'&&idx===msgs.length-1&&readStatus&&!msg.recalled&&<div style={{fontSize:9,color:readStatus==='已读'?T.primary:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
+              {msg.role==='user'&&idx===msgs.length-1&&readStatus&&!msg.recalled&&<div style={{fontSize:9,color:readStatus==='已读'?T.accent2:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
             </div>
           </div>
         ))}
@@ -2580,9 +2583,9 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         {typing&&<div className="anim-in" style={{display:'flex',justifyContent:'flex-start',marginBottom:8}}>
           <div style={{padding:'12px 16px',borderRadius:'16px 16px 16px 4px',background:T.card,boxShadow:T.shadow}}>
             <div style={{display:'flex',gap:4,alignItems:'center'}}>
-              <div style={{width:6,height:6,borderRadius:3,background:T.primary,animation:'pulse 1s infinite'}}/>
-              <div style={{width:6,height:6,borderRadius:3,background:T.primary,animation:'pulse 1s infinite 0.2s'}}/>
-              <div style={{width:6,height:6,borderRadius:3,background:T.primary,animation:'pulse 1s infinite 0.4s'}}/>
+              <div style={{width:6,height:6,borderRadius:3,background:T.accent2,animation:'pulse 1s infinite'}}/>
+              <div style={{width:6,height:6,borderRadius:3,background:T.accent2,animation:'pulse 1s infinite 0.2s'}}/>
+              <div style={{width:6,height:6,borderRadius:3,background:T.accent2,animation:'pulse 1s infinite 0.4s'}}/>
             </div>
           </div>
         </div>}
@@ -2603,7 +2606,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       </div>}
       {/* Input bar */}
       <div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
-        <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showQuick?'#F5F3FF':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.primary:T.textThi}}>{showQuick?'✕':'+'}</button>
+        <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showQuick?'#F5F3FF':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.accent2:T.textThi}}>{showQuick?'✕':'+'}</button>
         <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showEmoji?'#FEF3C7':'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
         <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
         <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
@@ -2642,7 +2645,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       <div style={{display:'flex',gap:4,marginTop:10,marginBottom:14}}>
         {[{k:'chat',l:'聊天'},{k:'friends',l:'好友'},{k:'blocked',l:'黑名单'}].map(t=>(
           <button key={t.k} onClick={()=>setMsgTab(t.k)} style={{padding:'6px 16px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
-            background:msgTab===t.k?T.primary:'#F3F4F6',color:msgTab===t.k?'#fff':T.textSec}}>{t.l}{t.k==='chat'&&filteredConvs.length>0?` ${filteredConvs.length}`:''}</button>
+            background:msgTab===t.k?T.accent2:'#F3F4F6',color:msgTab===t.k?'#fff':T.textSec}}>{t.l}{t.k==='chat'&&filteredConvs.length>0?` ${filteredConvs.length}`:''}</button>
         ))}
       </div>
     </div>
@@ -2696,7 +2699,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
             <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{conv.user.sign} · {conv.user.age}岁 · {msgCount}条消息</div>
           </div>
           <div style={{display:'flex',gap:4}}>
-            <button onClick={()=>setActiveId(conv.id)} style={{padding:'6px 12px',borderRadius:10,border:'none',background:T.primary,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>聊天</button>
+            <button onClick={()=>setActiveId(conv.id)} style={{padding:'6px 12px',borderRadius:10,border:'none',background:T.accent2,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>聊天</button>
             <button onClick={()=>{if(confirm('确定拉黑'+conv.user.name+'？')){blockUser(conv.user.id);refreshConvs();showToast('已拉黑')}}} style={{padding:'6px 8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🚫</button>
           </div>
         </div>);
@@ -2749,7 +2752,7 @@ function TermsModal({onAccept,onClose}){
       </div>
       <div style={{display:'flex',gap:8}}>
         {onClose&&<button onClick={onClose} style={{flex:1,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,fontSize:14,color:T.textSec,cursor:'pointer'}}>取消</button>}
-        <button onClick={onAccept||onClose} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:T.primary,fontSize:14,fontWeight:600,color:'#fff',cursor:'pointer'}}>同意并继续</button>
+        <button onClick={onAccept||onClose} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:T.accent2,fontSize:14,fontWeight:600,color:'#fff',cursor:'pointer'}}>同意并继续</button>
       </div>
     </div>
   </div>);
@@ -2798,7 +2801,7 @@ function ReportModal({target,onClose}){
         </div>
         <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>请选择举报原因：</div>
         {reasons.map(r=><button key={r} onClick={()=>setReason(r)} style={{display:'block',width:'100%',padding:'12px 14px',borderRadius:12,border:reason===r?`2px solid ${T.primary}`:`1px solid ${T.border}`,background:reason===r?`${T.primary}08`:T.card,fontSize:13,color:T.text,cursor:'pointer',marginBottom:6,textAlign:'left'}}>{r}</button>)}
-        <button onClick={submit} disabled={!reason} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:reason?T.primary:'#ccc',fontSize:14,fontWeight:600,color:'#fff',cursor:reason?'pointer':'default',marginTop:8}}>提交举报</button>
+        <button onClick={submit} disabled={!reason} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:reason?T.accent2:'#ccc',fontSize:14,fontWeight:600,color:'#fff',cursor:reason?'pointer':'default',marginTop:8}}>提交举报</button>
       </>}
     </div>
   </div>);
@@ -3246,10 +3249,10 @@ function TabBar({active,onTap}){
     {tabs.map(tab=>{const act=active===tab.id;
       if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}DD)`,border:'none',borderRadius:22,width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:`0 3px 12px ${T.accent2}40`,marginTop:-14}}><Icons.sparkles s={20} c="#fff"/></button>;
       return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1,padding:'6px 12px',position:'relative',transition:'opacity .2s'}}>
-        {tab.ic(act?T.primary:T.textThi)}
+        {tab.ic(act?T.accent2:T.textThi)}
         {tab.badge>0&&<div style={{position:'absolute',top:2,right:4,minWidth:16,height:16,borderRadius:8,background:T.primary,color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
-        <span style={{fontSize:10,color:act?T.primary:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
-        {act&&<div style={{position:'absolute',bottom:-1,width:16,height:2,borderRadius:1,background:T.primary}}/>}
+        <span style={{fontSize:10,color:act?T.accent2:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
+        {act&&<div style={{position:'absolute',bottom:-1,width:16,height:2,borderRadius:1,background:T.accent2}}/>}
       </button>})}
   </div>);
 }
