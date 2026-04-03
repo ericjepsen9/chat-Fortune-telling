@@ -2027,6 +2027,7 @@ function DiscoverScreen({goTo,profile}){
   const [commentPost,setCommentPost]=useState(null);
   const [commentText,setCommentText]=useState('');
   const [reportTarget,setReportTarget]=useState(null);
+  const [showDaily,setShowDaily]=useState(false);
   const today=new Date();const dayN=today.getDate();
 
   // Generate bot posts (seeded for consistency)
@@ -2075,8 +2076,8 @@ function DiscoverScreen({goTo,profile}){
       {discoverTab==='recommend'&&<>
       {/* Hot topics */}
       <div style={{display:'flex',gap:6,marginBottom:14,overflow:'auto',paddingBottom:4}}>
-        {['🔥今日运势','💕桃花运','💼事业','🌙月相','⭐星座配对','📖命理入门'].map(tag=>
-          <button key={tag} onClick={()=>goTo(S.AI)} style={{padding:'6px 14px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,fontSize:11,fontWeight:500,color:T.text,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{tag}</button>
+        {[{l:'🔥今日运势',a:()=>setShowDaily(true)},{l:'💕桃花运',a:()=>goTo(S.AI,'bazi')},{l:'💼事业',a:()=>goTo(S.AI,'bazi')},{l:'🌙月相',a:()=>goTo(S.AI,'astrology')},{l:'⭐星座配对',a:()=>goTo(S.AI,'synastry')},{l:'📖命理入门',a:null}].map(tag=>
+          <button key={tag.l} onClick={tag.a} style={{padding:'6px 14px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,fontSize:11,fontWeight:500,color:tag.a?T.text:T.textThi,cursor:tag.a?'pointer':'default',whiteSpace:'nowrap',flexShrink:0}}>{tag.l}</button>
         )}
       </div>
       {/* Today's luck card */}
@@ -2088,7 +2089,7 @@ function DiscoverScreen({goTo,profile}){
             <div style={{fontSize:11,color:T.textThi,marginTop:4}}>宜：学习、冥想 · 忌：冲动决策</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
-            <button onClick={()=>goTo(S.AI)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
+            <button onClick={()=>setShowDaily(true)} style={{padding:'10px 18px',borderRadius:12,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>详细运势 →</button>
             <button onClick={()=>setShowShare(true)} style={{padding:'6px 18px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:11,cursor:'pointer'}}>📤 分享运势</button>
           </div>
         </div>
@@ -2110,7 +2111,7 @@ function DiscoverScreen({goTo,profile}){
 
       {/* Feature list */}
       <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:10}}>更多功能</div>
-      {[{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'🔮',title:'AI测时辰',desc:'不知道出生时辰？AI帮你推算',a:()=>goTo(S.AI)},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},{icon:'📖',title:'命理学堂',desc:'即将上线',a:null}].map((it,i)=>
+      {[{icon:'📅',title:'命理日历',desc:'每日五行运势·关键词·建议',a:()=>setShowDaily(true)},{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},{icon:'🔮',title:'AI测时辰',desc:'不知道出生时辰？AI帮你推算',a:()=>goTo(S.AI,'bazi')},{icon:'📖',title:'命理学堂',desc:'即将上线',a:null}].map((it,i)=>
         <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'14px 16px',boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default',opacity:it.a?1:.5}}>
           <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
         </div>)}
@@ -2164,6 +2165,7 @@ function DiscoverScreen({goTo,profile}){
       </div>
     </div>}
     {reportTarget&&<ReportModal target={reportTarget} onClose={()=>setReportTarget(null)}/>}
+    {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
   </div>);
 }
 
