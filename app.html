@@ -635,22 +635,14 @@ function getBotConfig(){
 // ===== DAILY STATUS (今日状态) =====
 function DailyStatusModal({profile,onClose}){
   const now=new Date();
-  const weekDays=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-  const dateStr=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 · ${weekDays[now.getDay()]}`;
+  const [selDate,setSelDate]=useState(now);
+  const [viewMonth,setViewMonth]=useState(now.getMonth());
+  const [viewYear,setViewYear]=useState(now.getFullYear());
 
-  // Calculate day pillar (天干地支)
   const TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
   const DZ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
   const WX_TG={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
-  // Approximate JD calculation for day pillar
-  const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
-  const jd=Math.floor(367*y-Math.floor(7*(y+Math.floor((m+9)/12))/4)+Math.floor(275*m/9)+d+1721013.5);
-  const tgIdx=(jd+9)%10;
-  const dzIdx=(jd+1)%12;
-  const dayTG=TG[tgIdx],dayDZ=DZ[dzIdx];
-  const dayWx=WX_TG[dayTG];
-
-  // Theme based on day element + user element
+  const WX_DOT={木:'#22C55E',火:'#EF4444',土:'#D97706',金:'#9CA3AF',水:'#3B82F6'};
   const wxThemes={
     木:{theme:'成长·突破',color:'#22C55E',bg:'#ECFDF5',keywords:['学习','拓展','尝试新事物','接触自然'],relation:['主动表达感受','适合认识新朋友','多倾听对方的想法'],action:['列出本周目标','学一个新技能','去户外走走']},
     火:{theme:'表达·行动',color:'#EF4444',bg:'#FEF2F2',keywords:['独处','反思','整理','沉淀'],relation:['避免情绪波动时做承诺','适合与老朋友深度对话','给自己和伴侣一些空间'],action:['写下困扰你的三件事','用10分钟冥想静坐','整理社交关系清单']},
@@ -658,52 +650,90 @@ function DailyStatusModal({profile,onClose}){
     金:{theme:'决断·收获',color:'#6B7280',bg:'#F9FAFB',keywords:['果断','取舍','效率','简化'],relation:['适合解决悬而未决的问题','坦诚沟通比委婉更好','尊重彼此的边界'],action:['清理不需要的物品','做一个重要决定','完成拖延的任务']},
     水:{theme:'智慧·流动',color:'#3B82F6',bg:'#EFF6FF',keywords:['灵感','直觉','适应','变通'],relation:['用心感受对方的情绪','适合浪漫的小惊喜','保持神秘感'],action:['写日记记录灵感','听一张新专辑','泡澡或散步放空']},
   };
-  const t=wxThemes[dayWx]||wxThemes['火'];
+
+  // Get day pillar for any date
+  const getDayInfo=(date)=>{
+    const y=date.getFullYear(),m=date.getMonth()+1,d=date.getDate();
+    const jd=Math.floor(367*y-Math.floor(7*(y+Math.floor((m+9)/12))/4)+Math.floor(275*m/9)+d+1721013.5);
+    const tg=TG[(jd+9)%10],dz=DZ[(jd+1)%12];
+    const wx=WX_TG[tg];
+    return{tg,dz,wx,theme:wxThemes[wx]||wxThemes['火']};
+  };
+
+  // Calendar grid
+  const firstDay=new Date(viewYear,viewMonth,1).getDay();
+  const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+  const calDays=[];
+  for(let i=0;i<firstDay;i++)calDays.push(null);
+  for(let i=1;i<=daysInMonth;i++)calDays.push(i);
+
+  const isToday=(d)=>d===now.getDate()&&viewMonth===now.getMonth()&&viewYear===now.getFullYear();
+  const isSel=(d)=>d===selDate.getDate()&&viewMonth===selDate.getMonth()&&viewYear===selDate.getFullYear();
+  const prevMonth=()=>{if(viewMonth===0){setViewYear(viewYear-1);setViewMonth(11)}else setViewMonth(viewMonth-1)};
+  const nextMonth=()=>{if(viewMonth===11){setViewYear(viewYear+1);setViewMonth(0)}else setViewMonth(viewMonth+1)};
+
+  const sel=getDayInfo(selDate);
+  const weekDays=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  const selDateStr=`${selDate.getFullYear()}年${selDate.getMonth()+1}月${selDate.getDate()}日 · ${weekDays[selDate.getDay()]}`;
+  const t=sel.theme;
 
   return(<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
     <div style={{maxWidth:480,margin:'0 auto',padding:'12px 16px 40px'}}>
       {/* Header */}
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
-        <div style={{fontSize:13,color:T.textThi}}>{dateStr}</div>
-        <div style={{width:32}}/>
+        <div style={{fontSize:15,fontWeight:700,color:T.text}}>命理日历</div>
+        <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>今天</button>
       </div>
 
-      {/* Title */}
-      <div style={{fontSize:24,fontWeight:800,color:T.text,marginBottom:16}}>今日状态</div>
+      {/* Month navigation */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <button onClick={prevMonth} style={{width:28,height:28,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:T.textSec}}>‹</button>
+        <div style={{fontSize:15,fontWeight:700,color:T.text}}>{viewYear}年{viewMonth+1}月</div>
+        <button onClick={nextMonth} style={{width:28,height:28,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:T.textSec}}>›</button>
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{background:T.card,borderRadius:16,padding:'10px 8px',marginBottom:16,boxShadow:T.shadow}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:4}}>
+          {['日','一','二','三','四','五','六'].map(w=><div key={w} style={{textAlign:'center',fontSize:10,color:T.textThi,padding:'4px 0',fontWeight:600}}>{w}</div>)}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2}}>
+          {calDays.map((d,i)=>{
+            if(!d)return <div key={i}/>;
+            const dateObj=new Date(viewYear,viewMonth,d);
+            const info=getDayInfo(dateObj);
+            const today=isToday(d);const selected=isSel(d);
+            return <button key={i} onClick={()=>setSelDate(dateObj)} style={{padding:'6px 0',borderRadius:10,border:'none',cursor:'pointer',textAlign:'center',
+              background:selected?T.primary:today?`${T.primary}15`:'transparent',
+              color:selected?'#fff':today?T.primary:T.text,fontSize:13,fontWeight:today||selected?700:400,position:'relative'}}>
+              {d}
+              <div style={{width:4,height:4,borderRadius:2,background:selected?'#fff':WX_DOT[info.wx],margin:'2px auto 0'}}/>
+            </button>;
+          })}
+        </div>
+      </div>
+
+      {/* Selected date info */}
+      <div style={{fontSize:12,color:T.textThi,marginBottom:8}}>{selDateStr}</div>
+      <div style={{fontSize:22,fontWeight:800,color:T.text,marginBottom:14}}>{isToday(selDate.getDate())&&viewMonth===now.getMonth()?'今日状态':'当日状态'}</div>
 
       {/* Theme card */}
-      <div style={{background:t.bg,borderRadius:20,padding:'28px 20px',textAlign:'center',marginBottom:20}}>
-        <div style={{fontSize:32,fontWeight:800,color:t.color,letterSpacing:4}}>{t.theme}</div>
-        <div style={{fontSize:14,color:T.textSec,marginTop:8}}>{dayTG}{dayDZ}日 · {dayWx}旺</div>
+      <div style={{background:t.bg,borderRadius:20,padding:'24px 20px',textAlign:'center',marginBottom:16}}>
+        <div style={{fontSize:28,fontWeight:800,color:t.color,letterSpacing:4}}>{t.theme}</div>
+        <div style={{fontSize:13,color:T.textSec,marginTop:6}}>{sel.tg}{sel.dz}日 · {sel.wx}旺</div>
       </div>
 
-      {/* 今日关键词 */}
-      <div style={{background:T.card,borderRadius:16,padding:'18px 20px',marginBottom:14,boxShadow:T.shadow}}>
-        <div style={{fontSize:15,fontWeight:700,color:t.color,marginBottom:12}}>今日关键词</div>
-        {t.keywords.map(k=><div key={k} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0'}}>
-          <div style={{width:8,height:8,borderRadius:4,background:t.color,flexShrink:0}}/>
-          <span style={{fontSize:14,color:T.text}}>{k}</span>
-        </div>)}
-      </div>
-
-      {/* 关系建议 */}
-      <div style={{background:T.card,borderRadius:16,padding:'18px 20px',marginBottom:14,boxShadow:T.shadow}}>
-        <div style={{fontSize:15,fontWeight:700,color:'#0D9488',marginBottom:12}}>关系建议</div>
-        {t.relation.map(r=><div key={r} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 0'}}>
-          <div style={{width:8,height:8,borderRadius:4,background:'#0D9488',flexShrink:0,marginTop:5}}/>
-          <span style={{fontSize:14,color:T.text,lineHeight:1.6}}>{r}</span>
-        </div>)}
-      </div>
-
-      {/* 行动建议 */}
-      <div style={{background:T.card,borderRadius:16,padding:'18px 20px',marginBottom:14,boxShadow:T.shadow}}>
-        <div style={{fontSize:15,fontWeight:700,color:'#3B82F6',marginBottom:12}}>行动建议</div>
-        {t.action.map(a=><div key={a} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 0'}}>
-          <div style={{width:8,height:8,borderRadius:4,background:'#3B82F6',flexShrink:0,marginTop:5}}/>
-          <span style={{fontSize:14,color:T.text,lineHeight:1.6}}>{a}</span>
-        </div>)}
-      </div>
+      {/* Sections */}
+      {[{title:'今日关键词',items:t.keywords,color:t.color},{title:'关系建议',items:t.relation,color:'#0D9488'},{title:'行动建议',items:t.action,color:'#3B82F6'}].map(sec=>(
+        <div key={sec.title} style={{background:T.card,borderRadius:16,padding:'16px 20px',marginBottom:12,boxShadow:T.shadow}}>
+          <div style={{fontSize:14,fontWeight:700,color:sec.color,marginBottom:10}}>{sec.title}</div>
+          {sec.items.map(item=><div key={item} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'6px 0'}}>
+            <div style={{width:7,height:7,borderRadius:4,background:sec.color,flexShrink:0,marginTop:5}}/>
+            <span style={{fontSize:13,color:T.text,lineHeight:1.6}}>{item}</span>
+          </div>)}
+        </div>
+      ))}
     </div>
   </div>);
 }
