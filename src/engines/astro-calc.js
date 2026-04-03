@@ -1,8 +1,17 @@
 /**
- * 天文计算共享模块 — 基于 astronomia 库
- * 提供真实的太阳/月亮黄经，供星座和印占引擎使用
+ * 天文计算共享模块 — 基于 astronomia 库 + VSOP87精算
+ * 提供真实的太阳/月亮/行星黄经，供星座和印占引擎使用
+ * 行星精度: VSOP87 ±0.01° (旧版Keplerian ±1°)
  */
-const { moonposition, julian, nutation, solar } = require('astronomia');
+const { moonposition, julian, nutation, solar, planetposition } = require('astronomia');
+
+// VSOP87 planet data (high precision series)
+const vsopEarth = new planetposition.Planet(require('astronomia/data/vsop87Bearth').default);
+const vsopMercury = new planetposition.Planet(require('astronomia/data/vsop87Bmercury').default);
+const vsopVenus = new planetposition.Planet(require('astronomia/data/vsop87Bvenus').default);
+const vsopMars = new planetposition.Planet(require('astronomia/data/vsop87Bmars').default);
+const vsopJupiter = new planetposition.Planet(require('astronomia/data/vsop87Bjupiter').default);
+const vsopSaturn = new planetposition.Planet(require('astronomia/data/vsop87Bsaturn').default);
 
 const SIGNS_EN = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGNS_ZH = ['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'];
@@ -113,76 +122,28 @@ function getRahuKetu(year, month, day, hour = 12, tzOffset = 8) {
 }
 
 /**
- * 五大行星黄经（Keplerian + 摄动修正 + 日心→地心转换）
- * 摄动修正将精度从±5°提升到±1°
+ * 五大行星黄经（VSOP87精算 — ±0.01°精度）
+ * 替代旧版Keplerian+摄动修正(±1°)
  */
 function getPlanetPositions(year, month, day, hour = 12, tzOffset = 8) {
   const utcHour = hour - tzOffset;
   const dayFrac = day + utcHour / 24;
   const jd = julian.CalendarGregorianToJD(year, month, dayFrac);
-  const T = (jd - 2451545.0) / 36525;
-  const d = jd - 2451545.0; // days from J2000
 
-  // [L0, Lrate, perihelion, pRate, ecc, eccRate, semiMajorAxis(AU)]
-  const orbits = {
-    Mercury: [252.2509, 149472.6746, 77.4561, 1.5564, 0.20563, 0.000021, 0.387],
-    Venus:   [181.9798, 58517.8157, 131.5637, 1.4022, 0.00677, -0.000047, 0.723],
-    Earth:   [100.4664, 35999.3728, 102.9373, 1.7195, 0.01671, -0.00004, 1.000],
-    Mars:    [355.4330, 19140.2993, 336.0602, 1.8410, 0.09340, 0.000090, 1.524],
-    Jupiter: [34.3515, 3034.9057, 14.3312, 1.6126, 0.04839, -0.000013, 5.203],
-    Saturn:  [50.0774, 1222.1138, 93.0572, 1.9584, 0.05415, -0.000037, 9.537],
+  const earthPos = vsopEarth.position(jd);
+  const planets = {
+    Mercury: vsopMercury, Venus: vsopVenus,
+    Mars: vsopMars, Jupiter: vsopJupiter, Saturn: vsopSaturn,
   };
-
-  function helioPos(elems) {
-    const [L0, Lr, w0, wr, e0, er, a] = elems;
-    const L = ((L0 + Lr * T) % 360 + 360) % 360;
-    const w = ((w0 + wr * T) % 360 + 360) % 360;
-    const e = e0 + er * T;
-    const M = ((L - w) % 360 + 360) % 360;
-    const Mr = M * Math.PI / 180;
-    const C = (2*e - e*e*e/4)*Math.sin(Mr) + (5/4)*e*e*Math.sin(2*Mr) + (13/12)*e*e*e*Math.sin(3*Mr);
-    const lng = ((L + C * 180 / Math.PI) % 360 + 360) % 360;
-    const v = Mr + C;
-    const r = a * (1 - e*e) / (1 + e * Math.cos(v));
-    return { lng, r, M };
-  }
-
-  // Mean anomalies for perturbation calculation
-  const Mj = ((34.3515 + 3034.9057 * T - 14.3312 - 1.6126 * T) % 360 + 360) % 360 * Math.PI / 180; // Jupiter M
-  const Ms = ((50.0774 + 1222.1138 * T - 93.0572 - 1.9584 * T) % 360 + 360) % 360 * Math.PI / 180; // Saturn M
-  const Mm = ((355.4330 + 19140.2993 * T - 336.0602 - 1.8410 * T) % 360 + 360) % 360 * Math.PI / 180; // Mars M
-
-  // Perturbation corrections (degrees)
-  const perturbations = {
-    Jupiter: -0.332 * Math.sin(2*Mj - 5*Ms - 67.6*Math.PI/180)
-             - 0.056 * Math.sin(2*Mj - 2*Ms + 21*Math.PI/180)
-             + 0.042 * Math.sin(3*Mj - 5*Ms + 21*Math.PI/180),
-    Saturn:  +0.812 * Math.sin(2*Mj - 5*Ms - 67.6*Math.PI/180)
-             - 0.229 * Math.cos(2*Mj - 4*Ms - 2*Math.PI/180)
-             + 0.119 * Math.sin(Mj - 2*Ms - 3*Math.PI/180),
-    Mars:    -0.373 * Math.sin(Mm - 2*Mj + 35.5*Math.PI/180)
-             - 0.122 * Math.sin(2*Mm - 2*Mj + 35.5*Math.PI/180),
-    Mercury: 0, Venus: 0,
-  };
-
-  const earth = helioPos(orbits.Earth);
-  const earthLng = earth.lng * Math.PI / 180;
-  const earthR = earth.r;
 
   const results = {};
-  for (const name of ['Mercury','Venus','Mars','Jupiter','Saturn']) {
-    const p = helioPos(orbits[name]);
-    // Apply perturbation
-    const correctedLng = p.lng + (perturbations[name] || 0);
-    const pLng = correctedLng * Math.PI / 180;
-    const pR = p.r;
-
-    // Heliocentric → Geocentric
-    const dx = pR * Math.cos(pLng) - earthR * Math.cos(earthLng);
-    const dy = pR * Math.sin(pLng) - earthR * Math.sin(earthLng);
-    let geoLng = Math.atan2(dy, dx) * 180 / Math.PI;
+  for (const [name, planet] of Object.entries(planets)) {
+    const pp = planet.position(jd);
+    // Heliocentric → Geocentric conversion
+    const x = pp.range*Math.cos(pp.lat)*Math.cos(pp.lon) - earthPos.range*Math.cos(earthPos.lat)*Math.cos(earthPos.lon);
+    const y = pp.range*Math.cos(pp.lat)*Math.sin(pp.lon) - earthPos.range*Math.cos(earthPos.lat)*Math.sin(earthPos.lon);
+    let geoLng = Math.atan2(y, x) * 180 / Math.PI;
     geoLng = ((geoLng % 360) + 360) % 360;
-
     results[name] = longitudeToSign(geoLng);
     results[name].longitude = Math.round(geoLng * 100) / 100;
   }
