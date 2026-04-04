@@ -419,7 +419,7 @@ function BirthScreen({onSubmit}){
     <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>性别</label><div style={{display:'flex',gap:12}}>
       {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:T.card,color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
     </div></div>
-    <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#FF6B6B,#FF8A9B)':'#ccc',boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>开启我的命运之旅 ✦</button>
+    <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#FF6B6B,#FF8A9B)':T.border,boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>开启我的命运之旅 ✦</button>
   </div>
   {/* Date Picker Modal */}
   {showDatePicker&&<div onClick={()=>setShowDatePicker(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
@@ -547,7 +547,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
     <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
         {/* Top bar */}
         <div style={{position:'sticky',top:0,zIndex:10,padding:'12px 16px',background:T.bg,display:'flex',alignItems:'center',gap:12,borderBottom:`1px solid ${T.border}`}}>
-          <button onClick={onClose} style={{width:36,height:36,borderRadius:'50%',border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
           <div style={{flex:1,fontSize:17,fontWeight:700,color:T.text}}>个人资料</div>
           {match&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:ac,color:'#fff'}}>{match.score}% 匹配</span>}
         </div>
@@ -765,7 +765,7 @@ function DailyStatusModal({profile,onClose}){
       {/* Header */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
-        <div style={{fontSize:15,fontWeight:700,color:T.text}}>命理日历</div>
+        <div style={{fontSize:16,fontWeight:700,color:T.text}}>命理日历</div>
         <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>今天</button>
       </div>
 
@@ -842,7 +842,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [swiped,setSwiped]=useState(0);
   const [lastSwiped,setLastSwiped]=useState(null); // for undo
   const [showWheel,setShowWheel]=useState(false);
-  const [showDaily,setShowDaily]=useState(false);
+
   const [guideHidden,setGuideHidden]=useState(()=>!!localStorage.getItem('yuanhe_swipe_guided'));
   const showGuide=!guideHidden&&swiped===0;
   const switchPref=(p)=>{setGenderPref(p);localStorage.setItem('yuanhe_gender_pref',p);
@@ -872,7 +872,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const dominantIdx=wxValues.indexOf(Math.max(...wxValues));
   const dominantWx=wxLabels[dominantIdx];
 
-  return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:64}}>
+  return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:80}}>
     {/* Header matching prototype: 五行轮盘 + title + action buttons */}
     <div style={{padding:'10px 16px 6px',flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -1239,7 +1239,7 @@ function HourAssistantModal({profile,onResult,onClose}){
         {/* Header */}
         <div onClick={e=>e.stopPropagation()} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700,color:'#D97706'}}>🔮 AI时辰校正助手</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
         {/* Progress */}
         <div style={{height:4,background:'#FEF3C7',borderRadius:2,marginBottom:16,overflow:'hidden'}}>
@@ -1837,7 +1837,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                   <div style={{maxWidth:'85%',padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
                     background:msg.role==='user'?`linear-gradient(135deg,${mc},${mc}dd)`:'#fff',
                     color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
-                    boxShadow:msg.role==='user'?'none':'0 1px 4px rgba(0,0,0,0.06)'}}>
+                    boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
                     {msg.role==='user'?msg.text:<div className="markdown" dangerouslySetInnerHTML={md(msg.text)}/>}
                     {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
                   </div>
@@ -2105,7 +2105,7 @@ function MoodTracker({profile}){
         {streak>1&&<div style={{fontSize:10,color:T.primary,fontWeight:600}}>🔥 连续{streak}天</div>}
       </div>
       <div style={{display:'flex',justifyContent:'space-around',gap:4}}>
-        {MOODS.map((m,i)=><button key={i} onClick={()=>pickMood(i)} style={{flex:1,padding:'8px 2px',borderRadius:12,border:'1.5px solid transparent',background:'#fff',cursor:'pointer',textAlign:'center',transition:'all .2s'}}><div style={{fontSize:22}}>{m.emoji}</div><div style={{fontSize:9,color:T.textThi,marginTop:2}}>{m.label}</div></button>)}
+        {MOODS.map((m,i)=><button key={i} onClick={()=>pickMood(i)} style={{flex:1,padding:'8px 2px',borderRadius:12,border:'1.5px solid transparent',background:T.card,cursor:'pointer',textAlign:'center',transition:'all .2s'}}><div style={{fontSize:22}}>{m.emoji}</div><div style={{fontSize:9,color:T.textThi,marginTop:2}}>{m.label}</div></button>)}
       </div>
       {showMsg&&todayMood>=0&&<div className="anim-in" style={{marginTop:10,padding:'10px 14px',borderRadius:12,background:`${MOODS[todayMood].color}08`,border:`1px solid ${MOODS[todayMood].color}20`,fontSize:12,color:MOODS[todayMood].color,lineHeight:1.6,textAlign:'center'}}>{MOODS[todayMood].msg}</div>}
     </div>
@@ -2113,7 +2113,6 @@ function MoodTracker({profile}){
 }
 
 function DiscoverScreen({goTo,profile,onUpdateProfile}){
-  const [showShare,setShowShare]=useState(false);
   const [showPostCompose,setShowPostCompose]=useState(false);
   const [discoverSearch,setDiscoverSearch]=useState('');
   const [discoverTab,setDiscoverTab]=useState(()=>window._yuanheDiscoverTab||'recommend');
@@ -2271,7 +2270,6 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
       ))}
       </>}
     </div>
-    {showShare&&<ShareModal type="fortune" profile={profile} onClose={()=>setShowShare(false)}/>}
     {showPostCompose&&<PostComposeModal profile={profile} onPost={(c)=>{addPost(c);setShowPostCompose(false)}} onClose={()=>setShowPostCompose(false)}/>}
     {/* Comment input */}
     {commentPost&&<div onClick={()=>setCommentPost(null)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
@@ -2280,7 +2278,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
         <div style={{display:'flex',gap:8}}>
           <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="写评论…" autoFocus style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}
             onKeyDown={e=>{if(e.key==='Enter'&&commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}}/>
-          <button onClick={()=>{if(commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.accent2:'#ccc',color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button>
+          <button onClick={()=>{if(commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.accent2:T.border,color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button>
         </div>
         <button onClick={()=>setCommentPost(null)} style={{width:'100%',padding:'10px',background:'none',border:'none',color:T.textThi,fontSize:12,cursor:'pointer',marginTop:6}}>取消</button>
       </div>
@@ -2681,7 +2679,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
             <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:isOnline?'#34D399':'#D1D5DB',border:`2px solid ${T.card}`}}/>
           </div>
           <div>
-            <div style={{fontSize:15,fontWeight:700,color:T.text}}>{activeConv.user.name}</div>
+            <div style={{fontSize:16,fontWeight:700,color:T.text}}>{activeConv.user.name}</div>
             <div style={{fontSize:11,color:typing?T.accent2:isOnline?'#34D399':T.textThi}}>{typing?'正在输入…':isOnline?'在线':'离线'} · {activeConv.user.sign}</div>
           </div>
         </div>
@@ -2750,7 +2748,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           </div>
           <div style={{display:'flex',gap:6,marginBottom:8}}>
             <input value={newPhrase} onChange={e=>setNewPhrase(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')savePhrase()}} placeholder="添加新短语…" maxLength={20} style={{flex:1,padding:'6px 12px',borderRadius:12,border:`1.5px solid ${T.border}`,background:T.card,fontSize:12,outline:'none'}}/>
-            <button onClick={savePhrase} disabled={!newPhrase.trim()} style={{padding:'6px 12px',borderRadius:12,border:'none',background:newPhrase.trim()?T.accent2:'#ccc',color:'#fff',fontSize:11,fontWeight:600,cursor:newPhrase.trim()?'pointer':'default'}}>添加</button>
+            <button onClick={savePhrase} disabled={!newPhrase.trim()} style={{padding:'6px 12px',borderRadius:12,border:'none',background:newPhrase.trim()?T.accent2:T.border,color:'#fff',fontSize:11,fontWeight:600,cursor:newPhrase.trim()?'pointer':'default'}}>添加</button>
           </div>
           <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
             {quickPhrases.map((p,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 8px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,fontSize:11}}>
@@ -2958,11 +2956,11 @@ function ReportModal({target,onClose}){
       {done?<div style={{textAlign:'center',padding:'30px 0'}}><div style={{fontSize:36,marginBottom:8}}>✅</div><div style={{fontSize:15,fontWeight:600,color:T.text}}>举报已提交</div><div style={{fontSize:12,color:T.textThi,marginTop:4}}>我们会尽快处理</div></div>:<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:16,fontWeight:700,color:T.text}}>举报</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
         <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>请选择举报原因：</div>
         {reasons.map(r=><button key={r} onClick={()=>setReason(r)} style={{display:'block',width:'100%',padding:'12px 14px',borderRadius:12,border:reason===r?`2px solid ${T.primary}`:`1px solid ${T.border}`,background:reason===r?`${T.primary}08`:T.card,fontSize:13,color:T.text,cursor:'pointer',marginBottom:6,textAlign:'left'}}>{r}</button>)}
-        <button onClick={submit} disabled={!reason} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:reason?T.accent2:'#ccc',fontSize:14,fontWeight:600,color:'#fff',cursor:reason?'pointer':'default',marginTop:8}}>提交举报</button>
+        <button onClick={submit} disabled={!reason} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:reason?T.accent2:T.border,fontSize:14,fontWeight:600,color:'#fff',cursor:reason?'pointer':'default',marginTop:8}}>提交举报</button>
       </>}
     </div>
   </div>);
@@ -2983,7 +2981,7 @@ function PrivacySettingsModal({onClose}){
       <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700}}>🔐 隐私设置</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
 
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>信息展示级别</div>
@@ -3597,9 +3595,9 @@ function DataManagementModal({profile,onClose,onLogout}){
       <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700}}>📊 我的数据</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'#f0f0f0',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
-        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:'#F8FAFC',borderRadius:10}}>以下是缘合存储在你设备上的所有数据。数据仅保存在本地，不上传到服务器。</div>
+        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:'${T.bg}',borderRadius:10}}>以下是缘合存储在你设备上的所有数据。数据仅保存在本地，不上传到服务器。</div>
         {dataItems.map(d=><div key={d.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,marginBottom:8}}>
           <span style={{fontSize:18}}>{d.icon}</span>
           <div style={{flex:1}}>
@@ -3870,7 +3868,7 @@ function App(){
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {scr===S.MSGS&&<div key="msgs" style={{height:'100%'}}><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/></div>}
-    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
+    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm('确定退出登录？',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setProfile(null);setScr(S.BIRTH)},{detail:'退出后本地数据将被清除'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
     {/* Global confirm dialog */}
