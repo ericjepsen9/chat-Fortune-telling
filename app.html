@@ -3195,7 +3195,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       if(posts.length===0)return <div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:12,textAlign:'center'}}>
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:6}}>我的动态</div>
         <div style={{fontSize:12,color:T.textThi,marginBottom:10}}>还没有发布过动态</div>
-        <button onClick={()=>window._yuanheDiscoverTab='community';goTo(S.DISCOVER)} style={{padding:'8px 20px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条 ›</button>
+        <button onClick={()=>{window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}} style={{padding:'8px 20px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条 ›</button>
       </div>;
       return <div style={{marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
