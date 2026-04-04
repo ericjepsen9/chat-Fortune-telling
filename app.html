@@ -2813,6 +2813,11 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         const img=ev.target.result;
         ChatStore.addMessage(activeConv.id,{role:'user',text:'[图片]',image:img});
         refreshConvs();scrollBottom();
+        // 真实用户: 通过WS发送图片
+        if(!activeConv.user.isBot&&WsManager.connected&&activeConv.user.realUserId){
+          WsManager.send({type:'message',to:activeConv.user.realUserId,text:'[图片]',msgType:'image',mediaUrl:img});
+          return;
+        }
         // Bot reacts to image
         if(activeConv.user.isBot){
           setTimeout(async()=>{
@@ -2851,7 +2856,10 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           const dur=recordDuration||1;
           ChatStore.addMessage(activeConv.id,{role:'user',text:`[语音 ${dur}″]`,voice:reader.result,voiceDur:dur});
           refreshConvs();scrollBottom();
-          if(activeConv.user.isBot){
+          // 真实用户: 通过WS发送语音
+          if(!activeConv.user.isBot&&WsManager.connected&&activeConv.user.realUserId){
+            WsManager.send({type:'message',to:activeConv.user.realUserId,text:`[语音 ${dur}″]`,msgType:'voice',mediaUrl:reader.result,voiceDuration:dur});
+          }else if(activeConv.user.isBot){
             setTimeout(async()=>{
               setTyping(true);
               await new Promise(r=>setTimeout(r,2000+Math.random()*2000));
@@ -2907,31 +2915,35 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
     refreshConvs();
     scrollBottom();
 
-    // Bot behavior simulation
     const isBot=activeConv.user.isBot;
-    if(isBot){
-      
-      const readDelay=2000+Math.random()*5000; // 2-7s before "read"
-      await new Promise(r=>setTimeout(r,readDelay));
-      // Phase 2: delay before typing (thinking time)
-      const thinkDelay=1000+Math.random()*3000; // 1-4s think
-      await new Promise(r=>setTimeout(r,thinkDelay));
-      // Phase 3: typing animation
-      setTyping(true);
-      const typeDelay=2000+Math.random()*4000; // 2-6s typing
-      await new Promise(r=>setTimeout(r,typeDelay));
-    }else{
-      // Non-bot: quick reply
-      setTyping(true);
-      await new Promise(r=>setTimeout(r,1000+Math.random()*1500));
-    }
 
-    try{
-      const freshConv=ChatStore.getById(activeConv.id);
-      const r=await apiPost('/api/chat',{partner:activeConv.user,message:text,history:(freshConv?.messages||[]).slice(-10)});
-      ChatStore.addMessage(activeConv.id,{role:'ai',text:r.reply||'😊'});
-    }catch(e){ChatStore.addMessage(activeConv.id,{role:'ai',text:'[网络不稳定，请重试]'})}
-    setTyping(false);setSending(false);
+    if(!isBot&&WsManager.connected&&activeConv.user.realUserId){
+      // === 真实用户: 走WebSocket发送 ===
+      WsManager.send({type:'message',to:activeConv.user.realUserId,text});
+      setSending(false);
+      // 不等回复，回复通过WS message事件异步到达(Step 3处理)
+    }else{
+      // === Bot用户: 走LLM模拟回复(保持原有逻辑) ===
+      if(isBot){
+        const readDelay=2000+Math.random()*5000;
+        await new Promise(r=>setTimeout(r,readDelay));
+        const thinkDelay=1000+Math.random()*3000;
+        await new Promise(r=>setTimeout(r,thinkDelay));
+        setTyping(true);
+        const typeDelay=2000+Math.random()*4000;
+        await new Promise(r=>setTimeout(r,typeDelay));
+      }else{
+        // 非Bot但WebSocket未连接: fallback到LLM
+        setTyping(true);
+        await new Promise(r=>setTimeout(r,1000+Math.random()*1500));
+      }
+      try{
+        const freshConv=ChatStore.getById(activeConv.id);
+        const r=await apiPost('/api/chat',{partner:activeConv.user,message:text,history:(freshConv?.messages||[]).slice(-10)});
+        ChatStore.addMessage(activeConv.id,{role:'ai',text:r.reply||'😊'});
+      }catch(e){ChatStore.addMessage(activeConv.id,{role:'ai',text:'[网络不稳定，请重试]'})}
+      setTyping(false);setSending(false);
+    }
     refreshConvs();scrollBottom();
   };
 
@@ -3069,7 +3081,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:'none',background:showQuick?`${T.accent2}10`:T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.accent2:T.textThi}}>{showQuick?'✕':'+'}</button>
         <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:'none',background:showEmoji?'#FEF3C7':T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
         <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:'none',background:T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
-        <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
+        <input value={chatInput} onChange={e=>{setChatInput(e.target.value);if(activeConv?.user?.realUserId&&WsManager.connected)WsManager.send({type:'typing',to:activeConv.user.realUserId})}}
           onKeyDown={e=>{if(e.key==='Enter'&&chatInput.trim())sendMsg()}}
           onFocus={()=>{setShowQuick(false);setShowEmoji(false)}}
           placeholder="发送消息…" disabled={sending}
