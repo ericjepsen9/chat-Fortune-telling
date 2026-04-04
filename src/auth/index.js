@@ -526,7 +526,40 @@ module.exports = {
   adminListReports,
   adminResolveReport,
   submitReport,
+  // User data sync
+  syncBlacklist,
+  getBlacklist: getUserBlacklist,
+  syncFavorites,
+  getFavorites,
 };
+
+// ============ User Data Sync (黑名单/收藏) ============
+
+function syncBlacklist(userId, blacklist) {
+  const user = users[userId];
+  if (!user) return { error: '用户不存在' };
+  user.blacklist = blacklist || [];
+  saveUsers();
+  return { success: true };
+}
+
+function getUserBlacklist(userId) {
+  const user = users[userId];
+  return user?.blacklist || [];
+}
+
+function syncFavorites(userId, favorites) {
+  const user = users[userId];
+  if (!user) return { error: '用户不存在' };
+  user.favorites = favorites || {};
+  saveUsers();
+  return { success: true };
+}
+
+function getFavorites(userId) {
+  const user = users[userId];
+  return user?.favorites || {};
+}
 
 // ============ Sensitive Words ============
 

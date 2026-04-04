@@ -492,6 +492,24 @@ app.get('/api/auth/divinations', auth.authMiddleware, (req, res) => {
   res.json(list);
 });
 
+// ============ User Data Sync ============
+
+app.post('/api/auth/blacklist', auth.authMiddleware, (req, res) => {
+  res.json(auth.syncBlacklist(req.user.id, req.body.blacklist));
+});
+
+app.get('/api/auth/blacklist', auth.authMiddleware, (req, res) => {
+  res.json(auth.getBlacklist(req.user.id));
+});
+
+app.post('/api/auth/favorites', auth.authMiddleware, (req, res) => {
+  res.json(auth.syncFavorites(req.user.id, req.body.favorites));
+});
+
+app.get('/api/auth/favorites', auth.authMiddleware, (req, res) => {
+  res.json(auth.getFavorites(req.user.id));
+});
+
 // ============ Matching ============
 
 // 获取候选用户

@@ -2572,6 +2572,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
               {postCache[post.id]?.liked?'❤️':'🤍'} {post.likes}
             </button>
             <button onClick={()=>{setCommentPost(post);setCommentText('')}} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer'}}>💬 {(postCache[post.id]?.cmts||[]).length||(post.comments||0)}</button>
+            {!post.isUser&&post.authorId&&localStorage.getItem('yuanhe_token')&&<button onClick={()=>{apiPost('/api/friends/request',{toId:post.authorId,message:`看到你在缘友圈的动态，想认识你！`}).then(r=>{if(r.success)window.yuanheToast?.('已发送好友请求 💌');else window.yuanheToast?.(r.error||'已发送过请求')}).catch(()=>{})}} style={{background:'none',border:'none',fontSize:12,color:T.accent2,cursor:'pointer',fontWeight:500}}>💞 想认识</button>}
             <button onClick={()=>setReportTarget(post.id)} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer',marginLeft:'auto'}}>⋯</button>
           </div>
         </div>
@@ -2869,8 +2870,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
 
   // Blacklist
   const getBlacklist=()=>{try{return JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')}catch(e){return[]}};
-  const blockUser=(userId)=>{const bl=getBlacklist();if(!bl.includes(userId)){bl.push(userId);localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl))}};
-  const unblockUser=(userId)=>{const bl=getBlacklist().filter(id=>id!==userId);localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl))};
+  const blockUser=(userId)=>{const bl=getBlacklist();if(!bl.includes(userId)){bl.push(userId);localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl));if(localStorage.getItem('yuanhe_token'))apiPost('/api/auth/blacklist',{blacklist:bl}).catch(()=>{})}};
+  const unblockUser=(userId)=>{const bl=getBlacklist().filter(id=>id!==userId);localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl));if(localStorage.getItem('yuanhe_token'))apiPost('/api/auth/blacklist',{blacklist:bl}).catch(()=>{})};
   const isBlocked=(userId)=>getBlacklist().includes(userId);
 
   // Toast helper
@@ -3893,7 +3894,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           return <div key={uid} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:`1px solid ${T.border}`}}>
             <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{conv?.user?.gender==='female'?'👩':'👨'}</div>
             <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{conv?.user?.name||'用户'}</div></div>
-            <button onClick={()=>{const newBl=bl.filter(id=>id!==uid);localStorage.setItem('yuanhe_blacklist',JSON.stringify(newBl));setShowBlacklist(false);setTimeout(()=>setShowBlacklist(true),100);window.yuanheToast?.('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>解除</button>
+            <button onClick={()=>{const newBl=bl.filter(id=>id!==uid);localStorage.setItem('yuanhe_blacklist',JSON.stringify(newBl));if(localStorage.getItem('yuanhe_token'))apiPost('/api/auth/blacklist',{blacklist:newBl}).catch(()=>{});setShowBlacklist(false);setTimeout(()=>setShowBlacklist(true),100);window.yuanheToast?.('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>解除</button>
           </div>;
         });
       })()}
@@ -4271,14 +4272,23 @@ function App(){
     }}/>}
     {scr===S.LOGIN&&<LoginScreen onLogin={({token,isNew,user})=>{
       setAuthToken(token);
+      // 登录后同步数据
+      const syncData=async()=>{
+        try{
+          // 黑名单: 服务器→本地
+          const bl=await apiGet('/api/auth/blacklist');
+          if(bl&&bl.length>0)localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl));
+          else{const local=JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]');if(local.length>0)apiPost('/api/auth/blacklist',{blacklist:local}).catch(()=>{})}
+          // 收藏: 服务器→本地
+          const fav=await apiGet('/api/auth/favorites');
+          if(fav&&Object.keys(fav).length>0){Object.entries(fav).forEach(([k,v])=>localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v)))}
+        }catch(e){}
+      };
       if(user.profile&&user.profile.year){
-        // 老用户，服务器有profile
-        setProfile(user.profile);localStorage.setItem('yuanhe_profile',JSON.stringify(user.profile));setScr(S.HOME);
+        setProfile(user.profile);localStorage.setItem('yuanhe_profile',JSON.stringify(user.profile));syncData();setScr(S.HOME);
       }else if(!isNew&&profile){
-        // 老用户但服务器没profile，本地有→迁移
-        apiPost('/api/auth/profile',profile).catch(()=>{});setScr(S.HOME);
+        apiPost('/api/auth/profile',profile).catch(()=>{});syncData();setScr(S.HOME);
       }else{
-        // 新用户→引导流程
         setScr(onboarded?S.BIRTH:S.ONBOARD);
       }
     }}/>}
