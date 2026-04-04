@@ -14,8 +14,9 @@ const path = require('path');
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const JWT_EXPIRES = '30d'; // 30天有效
 
-// SMS provider config (开发阶段用 console.log 模拟)
+// SMS provider config
 const SMS_PROVIDER = process.env.SMS_PROVIDER || 'mock'; // 'mock' | 'aliyun'
+const DEV_MODE = process.env.NODE_ENV !== 'production'; // 测试阶段跳过验证码校验
 
 // 验证码存储 { phone: { code, expires, attempts } }
 const codeSt = {};
@@ -74,6 +75,12 @@ async function sendCode(phone) {
     return { error: '请输入正确的手机号', code: 400 };
   }
 
+  // 开发模式: 不发送验证码，直接返回成功
+  if (DEV_MODE) {
+    console.log(`📱 [DEV] 跳过发送验证码 → ${phone} (输入任意6位数字即可登录)`);
+    return { success: true, message: '测试模式：输入任意6位数字' };
+  }
+
   // 冷却检查
   const existing = codeSt[phone];
   if (existing && Date.now() - existing.sentAt < CODE_COOLDOWN) {
@@ -99,6 +106,20 @@ function verifyCode(phone, code) {
   }
   if (!code || code.length !== 6) {
     return { error: '请输入6位验证码', code: 400 };
+  }
+
+  // 开发模式: 任意6位验证码直接通过
+  if (DEV_MODE) {
+    console.log(`🔓 [DEV] 跳过验证码校验 → ${phone}`);
+    // 直接走下面的用户查找/创建逻辑
+    let user = Object.values(users).find(u => u.phone === phone);
+    const isNew = !user;
+    if (isNew) {
+      user = { id: crypto.randomUUID(), phone, profile: null, createdAt: new Date().toISOString(), lastActiveAt: new Date().toISOString() };
+      users[user.id] = user; saveUsers();
+    } else { user.lastActiveAt = new Date().toISOString(); saveUsers(); }
+    const token = jwt.sign({ uid: user.id, phone: user.phone }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+    return { success: true, token, isNew, user: { id: user.id, phone: user.phone, profile: user.profile } };
   }
 
   const entry = codeSt[phone];
