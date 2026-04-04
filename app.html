@@ -2834,17 +2834,10 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.accent2}40`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
         <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
       </div>
-      {/* Tabs */}
-      <div style={{display:'flex',gap:4,marginTop:10,marginBottom:14}}>
-        {[{k:'chat',l:'聊天'},{k:'blocked',l:'黑名单'}].map(t=>(
-          <button key={t.k} onClick={()=>setMsgTab(t.k)} style={{padding:'6px 16px',borderRadius:20,border:'none',fontSize:12,fontWeight:600,cursor:'pointer',
-            background:msgTab===t.k?T.accent2:'#F3F4F6',color:msgTab===t.k?'#fff':T.textSec}}>{t.l}{t.k==='chat'&&filteredConvs.length>0?` ${filteredConvs.length}`:''}</button>
-        ))}
-      </div>
     </div>
 
-    {/* Chat tab */}
-    {msgTab==='chat'&&(filteredConvs.length===0?
+    {/* Conversation list */}
+    {filteredConvs.length===0?
       <div style={{padding:'60px 20px',textAlign:'center',color:T.textThi}}>
         <div style={{width:72,height:72,borderRadius:36,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}><Icons.msgCircle s={32} c={`${T.accent2}40`}/></div>
         <div style={{fontSize:16,fontWeight:600,color:T.text}}>暂无匹配消息</div>
@@ -2873,24 +2866,6 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         </div>);
       })}</div>
     )}
-
-    {/* Blacklist tab */}
-    {msgTab==='blocked'&&<div style={{padding:'0 16px'}}>
-      {blacklist.length===0?<div style={{padding:'40px 20px',textAlign:'center',color:T.textThi,fontSize:13}}>黑名单为空 ✨</div>
-      :blacklist.map(uid=>{
-        const conv=convs.find(c=>c.user.id===uid);
-        if(!conv)return null;
-        return(
-        <div key={uid} style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
-          <div style={{width:44,height:44,borderRadius:22,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0,opacity:.5}}>{conv.user.gender==='female'?'👩':'👨'}</div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:14,fontWeight:600,color:T.textSec}}>{conv.user.name}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{conv.user.sign} · {conv.user.age}岁</div>
-          </div>
-          <button onClick={()=>{unblockUser(uid);refreshConvs();showToast('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>解除拉黑</button>
-        </div>);
-      })}
-    </div>}
 
     {/* Toast */}
     {toast&&<div style={{position:'fixed',top:'40%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.75)',color:'#fff',padding:'10px 24px',borderRadius:20,fontSize:13,zIndex:600,animation:'fadeIn .2s ease'}}>{toast}</div>}
@@ -3042,6 +3017,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showDaily,setShowDaily]=useState(false);
   const [showDevStats,setShowDevStats]=useState(false);
   const [showAvatarPicker,setShowAvatarPicker]=useState(false);
+  const [showBlacklist,setShowBlacklist]=useState(false);
   const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
@@ -3102,13 +3078,67 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   </div>}
 
   <div style={{padding:'10px 16px 0'}}>
-    {/* Quick actions — removed AI占卜 and 命理日历 */}
+    {/* 1. 性格卡片 */}
+    {(()=>{
+      const baziResult=getMS?null:null;
+      try{const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');
+        const bz=saved.bazi?.result?.structured;
+        if(bz){
+          const elColors={木:'#22C55E',火:'#EF4444',土:'#F59E0B',金:'#A3A3A3',水:'#3B82F6'};
+          const elBg={木:'linear-gradient(135deg,#ECFDF5,#D1FAE5)',火:'linear-gradient(135deg,#FEF2F2,#FECACA)',土:'linear-gradient(135deg,#FFFBEB,#FDE68A)',金:'linear-gradient(135deg,#F9FAFB,#E5E7EB)',水:'linear-gradient(135deg,#EFF6FF,#BFDBFE)'};
+          const el=bz.element||'火';
+          const traits=bz.personality||[];
+          const desc=saved.bazi?.result?.response?.substring(0,60)||'';
+          return <div style={{background:elBg[el]||elBg['火'],borderRadius:16,padding:16,marginBottom:12,boxShadow:T.shadow}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <div style={{fontSize:13,fontWeight:700,color:T.text}}>我的性格</div>
+              <button onClick={()=>goTo(S.AI,'bazi')} style={{fontSize:10,color:T.textThi,background:'none',border:'none',cursor:'pointer'}}>详情 ›</button>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+              <div style={{fontSize:24,fontWeight:800,color:elColors[el]||T.primary}}>{bz.dayMaster||''}{el}</div>
+              <span style={{padding:'2px 8px',borderRadius:8,fontSize:10,fontWeight:600,background:`${elColors[el]}15`,color:elColors[el]}}>{bz.strength||'身强'}</span>
+            </div>
+            {traits.length>0&&<div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+              {traits.slice(0,4).map(t=><span key={t} style={{padding:'3px 10px',borderRadius:10,fontSize:11,fontWeight:500,background:'rgba(255,255,255,0.7)',color:T.text}}>{t}</span>)}
+            </div>}
+            {desc&&<div style={{fontSize:12,color:T.textSec,lineHeight:1.6}}>{desc.replace(/[#*]/g,'').substring(0,50)}…</div>}
+          </div>;
+        }
+      }catch(e){}
+      return <div style={{background:T.card,borderRadius:16,padding:16,marginBottom:12,boxShadow:T.shadow,textAlign:'center'}}>
+        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>我的性格</div>
+        <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>完成一次八字占卜即可生成你的性格卡片</div>
+        <button onClick={()=>goTo(S.AI,'bazi')} style={{padding:'8px 20px',borderRadius:10,border:'none',background:T.accent2,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>去生成 ›</button>
+      </div>;
+    })()}
 
-    {/* Settings group */}
+    {/* 2. 今日任务 */}
+    {(()=>{
+      const tasks=[
+        {l:'完成一次占卜',done:history.length>0&&history[0]?.time?.includes(new Date().toLocaleDateString())},
+        {l:'心情打卡',done:!!localStorage.getItem('yuanhe_mood_'+new Date().toDateString())},
+        {l:'和匹配对象聊天',done:(()=>{const convs=ChatStore.getAll();return convs.some(c=>(c.messages||[]).some(m=>m.role==='user'&&m.time?.includes(new Date().toLocaleTimeString([],{hour:'2-digit'}))))})()}
+      ];
+      const doneCount=tasks.filter(t=>t.done).length;
+      return <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow,marginBottom:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{fontSize:13,fontWeight:700,color:T.text}}>今日任务</div>
+          <span style={{fontSize:11,color:doneCount===3?T.success:T.accent2,fontWeight:600}}>{doneCount===3?'已完成 🎉':`${doneCount}/3`}</span>
+        </div>
+        {tasks.map(t=><div key={t.l} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:`1px solid ${T.border}`}}>
+          <div style={{width:20,height:20,borderRadius:10,border:t.done?'none':`1.5px solid ${T.border}`,background:t.done?T.success:'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#fff'}}>{t.done?'✓':''}</div>
+          <span style={{fontSize:13,color:t.done?T.textThi:T.text,textDecoration:t.done?'line-through':'none'}}>{t.l}</span>
+        </div>)}
+      </div>;
+    })()}
+
+    {/* Settings group + blacklist */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
       {[{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',ic:'#F59E0B',a:onEdit},
         {icon:'🔐',label:'隐私设置',desc:privacyLabel,ic:'#3B82F6',a:()=>setShowPrivacy(true)},
-        {icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色':'浅色',ic:'#8B5CF6',a:toggleTheme}].map((it,i,arr)=>
+        {icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色':'浅色',ic:'#8B5CF6',a:toggleTheme},
+        {icon:'🚫',label:'黑名单',desc:(JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')).length+'人',ic:'#EF4444',a:()=>setShowBlacklist(true)},
+        {icon:'📊',label:'我的数据',desc:'查看·导出·删除',ic:'#0D9488',a:()=>setShowDataMgmt(true)}].map((it,i,arr)=>
         <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:i<arr.length-1?`1px solid ${T.border}`:'none'}}>
           <div style={{width:30,height:30,borderRadius:8,background:`${it.ic}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
           <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{it.label}</div></div>
@@ -3131,6 +3161,75 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:'#EF4444'}}>退出登录</div></div>
       </div>
     </div>
+
+    {/* 3. 我的动态 */}
+    {(()=>{
+      const posts=JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]');
+      if(posts.length===0)return <div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:12,textAlign:'center'}}>
+        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:6}}>我的动态</div>
+        <div style={{fontSize:12,color:T.textThi,marginBottom:10}}>还没有发布过动态</div>
+        <button onClick={()=>goTo(S.DISCOVER)} style={{padding:'6px 16px',borderRadius:10,border:'none',background:T.accent2,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条 ›</button>
+      </div>;
+      return <div style={{marginBottom:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <div style={{fontSize:14,fontWeight:700,color:T.text}}>我的动态</div>
+          <button onClick={()=>goTo(S.DISCOVER)} style={{fontSize:11,color:T.accent2,background:'none',border:'none',cursor:'pointer'}}>全部 ›</button>
+        </div>
+        <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,overflow:'hidden'}}>
+          {posts.slice(0,3).map((p,i,arr)=><div key={p.id||i} style={{padding:'12px 16px',borderBottom:i<Math.min(arr.length,3)-1?`1px solid ${T.border}`:'none'}}>
+            <div style={{fontSize:13,color:T.text,lineHeight:1.6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.content}</div>
+            <div style={{fontSize:10,color:T.textThi,marginTop:4}}>{p.time||'刚刚'}</div>
+          </div>)}
+        </div>
+      </div>;
+    })()}
+
+    {/* 4. 周报/月报 */}
+    {(()=>{
+      const allConvs=ChatStore.getAll();
+      const now=new Date();
+      const weekStart=new Date(now);weekStart.setDate(now.getDate()-now.getDay());weekStart.setHours(0,0,0,0);
+      // 本周占卜
+      const weekHistory=history.filter(h=>{try{const d=new Date(h.time);return d>=weekStart}catch(e){return false}});
+      const weekModes={};weekHistory.forEach(h=>{weekModes[h.mode]=(weekModes[h.mode]||0)+1});
+      const topMode=Object.entries(weekModes).sort((a,b)=>b[1]-a[1])[0];
+      // 本周心情
+      const weekMoods=[];for(let i=0;i<7;i++){const d=new Date(weekStart.getTime()+i*86400000);const m=localStorage.getItem('yuanhe_mood_'+d.toDateString());if(m!==null)weekMoods.push(parseInt(m))}
+      const MOOD_E=['😄','😊','😐','😔','😢'];
+      // 本周匹配
+      const weekConvs=allConvs.filter(c=>{try{return new Date(c.createdAt)>=weekStart}catch(e){return false}});
+      const weekMsgs=allConvs.reduce((s,c)=>{const msgs=(c.messages||[]).filter(m=>m.role==='user');return s+msgs.length},0);
+      const bestMatch=allConvs.sort((a,b)=>(b.user.score||0)-(a.user.score||0))[0];
+      // 本周运势最佳日
+      const dayLucks=[];for(let i=0;i<7;i++){const dn=new Date(weekStart.getTime()+i*86400000).getDate();const luck=['大吉','吉','中吉','小吉','平','小凶'][dn%6];dayLucks.push({day:['日','一','二','三','四','五','六'][i],luck})}
+      const bestDay=dayLucks.find(d=>d.luck==='大吉')||dayLucks.find(d=>d.luck==='吉')||dayLucks.find(d=>d.luck==='中吉');
+      if(weekHistory.length===0&&weekMoods.length===0&&allConvs.length===0)return null;
+      return <div style={{marginBottom:12}}>
+        <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:8}}>本周小结</div>
+        <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
+          {weekHistory.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <span style={{fontSize:14}}>🔮</span>
+            <span style={{fontSize:12,color:T.text}}>占卜 <b>{weekHistory.length}</b> 次{topMode?` · ${MODE_FULL[topMode[0]]||topMode[0]}为主`:''}</span>
+          </div>}
+          {weekMoods.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <span style={{fontSize:14}}>💭</span>
+            <span style={{fontSize:12,color:T.text}}>心情 {weekMoods.map((m,i)=><span key={i} style={{fontSize:14}}>{MOOD_E[m]}</span>)}</span>
+          </div>}
+          {allConvs.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <span style={{fontSize:14}}>💬</span>
+            <span style={{fontSize:12,color:T.text}}>匹配 <b>{allConvs.length}</b> 人 · 发送 <b>{weekMsgs}</b> 条消息</span>
+          </div>}
+          {bestMatch&&<div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <span style={{fontSize:14}}>💕</span>
+            <span style={{fontSize:12,color:T.text}}>最佳匹配 <b>{bestMatch.user.name}</b> {bestMatch.user.score}%</span>
+          </div>}
+          {bestDay&&<div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontSize:14}}>📅</span>
+            <span style={{fontSize:12,color:T.text}}>最佳运势日 周{bestDay.day}（{bestDay.luck}）</span>
+          </div>}
+        </div>
+      </div>;
+    })()}
 
     {/* Recent history */}
     {history.length>0&&<>
@@ -3247,6 +3346,28 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           <button key={a} onClick={()=>changeAvatar(a)} style={{width:'100%',aspectRatio:'1',borderRadius:14,border:currentAvatar===a?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:currentAvatar===a?`${T.accent2}10`:T.card,cursor:'pointer',fontSize:28,display:'flex',alignItems:'center',justifyContent:'center'}}>{a}</button>
         ))}
       </div>
+    </div>
+  </div>}
+  {/* Blacklist modal */}
+  {showBlacklist&&<div onClick={()=>setShowBlacklist(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease',maxHeight:'60vh',overflow:'auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,color:T.text}}>🚫 黑名单</div>
+        <button onClick={()=>setShowBlacklist(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
+      </div>
+      {(()=>{
+        const bl=JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]');
+        const convs=ChatStore.getAll();
+        if(bl.length===0)return <div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}><div style={{fontSize:28,marginBottom:8}}>✨</div><div style={{fontSize:13}}>黑名单为空</div></div>;
+        return bl.map(uid=>{
+          const conv=convs.find(c=>c.user.id===uid);
+          return <div key={uid} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:`1px solid ${T.border}`}}>
+            <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{conv?.user?.gender==='female'?'👩':'👨'}</div>
+            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{conv?.user?.name||'用户'}</div></div>
+            <button onClick={()=>{const newBl=bl.filter(id=>id!==uid);localStorage.setItem('yuanhe_blacklist',JSON.stringify(newBl));setShowBlacklist(false);setTimeout(()=>setShowBlacklist(true),100);window.yuanheToast?.('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>解除</button>
+          </div>;
+        });
+      })()}
     </div>
   </div>}
 </div>);}
