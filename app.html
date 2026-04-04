@@ -3090,52 +3090,42 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         const bz=saved.bazi?.result?.structured;
         if(bz){
           const elEmoji={木:'🌿',火:'🔥',土:'⛰️',金:'✨',水:'💧'};
-          const elDesc={木:'温润如木，内心柔软',火:'热情如火，充满活力',土:'沉稳如土，踏实可靠',金:'果敢如金，意志坚定',水:'灵动如水，善于变通'};
+          const elDesc={木:'温润如木',火:'热情如火',土:'沉稳如土',金:'果敢如金',水:'灵动如水'};
           const elColors={木:'#16A34A',火:'#DC2626',土:'#D97706',金:'#71717A',水:'#2563EB'};
-          const elBg={木:'linear-gradient(135deg,#F0FDF4,#DCFCE7)',火:'linear-gradient(135deg,#FEF2F2,#FEE2E2)',土:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',金:'linear-gradient(135deg,#FAFAFA,#F4F4F5)',水:'linear-gradient(135deg,#EFF6FF,#DBEAFE)'};
           const el=bz.element||'火';
           const defaultTraits={木:['温和','有耐心','富同情心','固执'],火:['热情','有领导力','直觉强','急躁'],土:['稳重','踏实','包容','保守'],金:['果断','正义感','有原则','倔强'],水:['聪慧','灵活','善交际','多变']};
           const traits=bz.personality?.length>0?bz.personality:(defaultTraits[el]||defaultTraits['火']);
-          const resp=saved.bazi?.result?.response||'';
-          const desc=resp.replace(/[#*\n]/g,' ').trim().substring(0,50);
-          return <div onClick={()=>setShowPersonality(true)} style={{background:elBg[el]||elBg['火'],borderRadius:14,padding:16,marginBottom:12,boxShadow:T.shadow,borderLeft:`3px solid ${elColors[el]}30`,cursor:'pointer'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-              <div style={{display:'flex',alignItems:'center',gap:6}}>
-                <span style={{fontSize:15}}>{elEmoji[el]||'🔥'}</span>
-                <span style={{fontSize:13,fontWeight:700,color:T.text}}>我的性格</span>
+          return <div onClick={()=>setShowPersonality(true)} style={{background:T.card,borderRadius:14,padding:'14px 16px',marginBottom:12,boxShadow:T.shadow,cursor:'pointer'}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:38,height:38,borderRadius:12,background:`${elColors[el]}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{elEmoji[el]}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:14,fontWeight:700,color:T.text}}>{el}系性格</span>
+                  <span style={{fontSize:11,color:T.textThi}}>{elDesc[el]}</span>
+                </div>
+                <div style={{display:'flex',gap:4,marginTop:6}}>{traits.slice(0,4).map(t=><span key={t} style={{padding:'2px 8px',borderRadius:8,fontSize:10,background:`${elColors[el]}08`,color:elColors[el]}}>{t}</span>)}</div>
               </div>
-              <button onClick={()=>setShowPersonality(true)} style={{fontSize:11,color:elColors[el],background:'none',border:'none',cursor:'pointer',fontWeight:500,opacity:.7}}>查看详情 ›</button>
+              <span style={{color:T.textThi,fontSize:10,flexShrink:0}}>›</span>
             </div>
-            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,padding:'12px 14px',background:'rgba(255,255,255,0.6)',borderRadius:12}}>
-              <div style={{width:42,height:42,borderRadius:21,background:`${elColors[el]}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,border:`1.5px solid ${elColors[el]}18`}}>{elEmoji[el]||'🔥'}</div>
-              <div>
-                <div style={{fontSize:16,fontWeight:700,color:elColors[el]}}>{el}系性格</div>
-                <div style={{fontSize:12,color:T.textSec,marginTop:2}}>{elDesc[el]||elDesc['火']}</div>
-              </div>
-            </div>
-            <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:desc?10:0}}>
-              {traits.slice(0,4).map(t=><span key={t} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,background:'rgba(255,255,255,0.65)',color:T.text}}>{t}</span>)}
-            </div>
-            {desc&&<div style={{fontSize:12,color:T.textSec,lineHeight:1.7,padding:'10px 14px',background:'rgba(255,255,255,0.5)',borderRadius:10,marginTop:2}}>💬 {desc}…</div>}
           </div>;
         }
       }catch(e){}
-      return <div style={{background:T.card,borderRadius:14,padding:20,marginBottom:12,boxShadow:T.shadow,textAlign:'center'}}>
-        <div style={{width:56,height:56,borderRadius:28,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px',fontSize:28}}>🔮</div>
-        <div style={{fontSize:14,fontWeight:600,color:T.text,marginBottom:4}}>我的性格</div>
-        <div style={{fontSize:12,color:T.textThi,marginBottom:14}}>一键生成你的专属性格分析</div>
-        {generatingPersonality?<div style={{padding:'8px',color:T.accent2,fontSize:12}}>
-          <div style={{display:'inline-block',width:14,height:14,border:`2px solid ${T.accent2}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',verticalAlign:'middle',marginRight:6}}/>
-          正在分析中…
+      return <div style={{background:T.card,borderRadius:14,padding:'14px 16px',marginBottom:12,boxShadow:T.shadow,display:'flex',alignItems:'center',gap:12}}>
+        <div style={{width:38,height:38,borderRadius:12,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>🔮</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:14,fontWeight:600,color:T.text}}>我的性格</div>
+          <div style={{fontSize:11,color:T.textThi,marginTop:2}}>一键生成专属性格分析</div>
         </div>
-        :<button onClick={async()=>{
+        {generatingPersonality?<div style={{color:T.accent2,fontSize:11}}>
+          <div style={{display:'inline-block',width:12,height:12,border:`2px solid ${T.accent2}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',verticalAlign:'middle',marginRight:4}}/>分析中
+        </div>
+        :<button onClick={async(e)=>{e.stopPropagation();
           setGeneratingPersonality(true);
-          try{
-            const r=await apiPost('/api/divine',{mode:'bazi',question:'分析我的性格特点',profile,depth:'simple'});
-            if(r){const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');saved.bazi={result:r,chatHistory:[]};localStorage.setItem('yuanhe_mode_results',JSON.stringify(saved));window.yuanheToast?.('性格卡片已生成 ✨')}
-          }catch(e){window.yuanheToast?.('生成失败，请稍后再试')}
+          try{const r=await apiPost('/api/divine',{mode:'bazi',question:'分析我的性格特点',profile,depth:'simple'});
+            if(r){const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');saved.bazi={result:r,chatHistory:[]};localStorage.setItem('yuanhe_mode_results',JSON.stringify(saved));window.yuanheToast?.('已生成 ✨')}}
+          catch(e){window.yuanheToast?.('生成失败')}
           setGeneratingPersonality(false);
-        }} style={{padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>一键生成</button>}
+        }} style={{padding:'6px 14px',borderRadius:10,border:'none',background:T.accent2,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0}}>生成</button>}
       </div>;
     })()}
 
@@ -3362,9 +3352,8 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       const resp=saved.bazi?.result?.response||'';
       if(!bz)return null;
       const elEmoji={木:'🌿',火:'🔥',土:'⛰️',金:'✨',水:'💧'};
-      const elDesc={木:'温润如木，内心柔软',火:'热情如火，充满活力',土:'沉稳如土，踏实可靠',金:'果敢如金，意志坚定',水:'灵动如水，善于变通'};
+      const elFull={木:'温润如木，内心柔软',火:'热情如火，充满活力',土:'沉稳如土，踏实可靠',金:'果敢如金，意志坚定',水:'灵动如水，善于变通'};
       const elColors={木:'#16A34A',火:'#DC2626',土:'#D97706',金:'#71717A',水:'#2563EB'};
-      const elBg={木:'linear-gradient(135deg,#F0FDF4,#DCFCE7)',火:'linear-gradient(135deg,#FEF2F2,#FEE2E2)',土:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',金:'linear-gradient(135deg,#FAFAFA,#F4F4F5)',水:'linear-gradient(135deg,#EFF6FF,#DBEAFE)'};
       const el=bz.element||'火';
       const defaultTraits={木:['温和','有耐心','富同情心','固执'],火:['热情','有领导力','直觉强','急躁'],土:['稳重','踏实','包容','保守'],金:['果断','正义感','有原则','倔强'],水:['聪慧','灵活','善交际','多变']};
       const traits=bz.personality?.length>0?bz.personality:(defaultTraits[el]||defaultTraits['火']);
@@ -3376,27 +3365,30 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           <div style={{flex:1,fontSize:16,fontWeight:700,color:T.text}}>我的性格分析</div>
         </div>
         <div style={{padding:'16px 16px 80px'}}>
-          {/* Hero card */}
-          <div style={{background:elBg[el],borderRadius:16,padding:20,marginBottom:16,textAlign:'center'}}>
-            <div style={{fontSize:48,marginBottom:8}}>{elEmoji[el]}</div>
-            <div style={{fontSize:22,fontWeight:800,color:elColors[el]}}>{el}系性格</div>
-            <div style={{fontSize:14,color:T.textSec,marginTop:6}}>{elDesc[el]}</div>
-            <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap',marginTop:14}}>
-              {traits.slice(0,4).map(t=><span key={t} style={{padding:'5px 14px',borderRadius:20,fontSize:12,fontWeight:500,background:'rgba(255,255,255,0.7)',color:T.text}}>{t}</span>)}
+          {/* Compact hero */}
+          <div style={{background:T.card,borderRadius:14,padding:16,marginBottom:14,boxShadow:T.shadow,display:'flex',alignItems:'center',gap:14}}>
+            <div style={{width:50,height:50,borderRadius:16,background:`${elColors[el]}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,flexShrink:0}}>{elEmoji[el]}</div>
+            <div>
+              <div style={{fontSize:18,fontWeight:700,color:elColors[el]}}>{el}系性格</div>
+              <div style={{fontSize:12,color:T.textSec,marginTop:3}}>{elFull[el]}</div>
             </div>
           </div>
-          {/* Analysis content */}
-          <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:10}}>详细分析</div>
-          <div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow}}>
-            {paragraphs.length>0?paragraphs.map((p,i)=><div key={i} style={{fontSize:14,color:T.text,lineHeight:1.8,marginBottom:i<paragraphs.length-1?14:0}}>{p.trim()}</div>)
-            :<div style={{fontSize:14,color:T.textSec,lineHeight:1.8}}>{cleanResp||'暂无详细分析'}</div>}
+          {/* Tags */}
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:14}}>
+            {traits.slice(0,4).map(t=><span key={t} style={{padding:'6px 14px',borderRadius:20,fontSize:12,fontWeight:500,background:T.card,color:T.text,boxShadow:T.shadow}}>{t}</span>)}
           </div>
-          {/* Share/redo buttons */}
-          <div style={{display:'flex',gap:10,marginTop:16}}>
-            <button onClick={()=>{navigator.clipboard?.writeText(`我的性格: ${el}系 — ${elDesc[el]}\n性格标签: ${traits.join('、')}`);window.yuanheToast?.('已复制到剪贴板')}} style={{flex:1,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer'}}>📋 复制分享</button>
+          {/* Analysis - card per paragraph for readability */}
+          {paragraphs.length>0?paragraphs.map((p,i)=><div key={i} style={{background:T.card,borderRadius:12,padding:'14px 16px',boxShadow:T.shadow,marginBottom:10}}>
+            <div style={{fontSize:14,color:T.text,lineHeight:2}}>{p.trim()}</div>
+          </div>)
+          :<div style={{background:T.card,borderRadius:12,padding:'14px 16px',boxShadow:T.shadow}}>
+            <div style={{fontSize:14,color:T.textSec,lineHeight:2}}>{cleanResp||'暂无详细分析'}</div>
+          </div>}
+          {/* Actions */}
+          <div style={{display:'flex',gap:10,marginTop:14}}>
+            <button onClick={()=>{navigator.clipboard?.writeText(`我的性格: ${el}系 — ${elFull[el]}\n性格标签: ${traits.join('、')}`);window.yuanheToast?.('已复制')}} style={{flex:1,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
             <button onClick={async()=>{
-              setShowPersonality(false);
-              setGeneratingPersonality(true);
+              setShowPersonality(false);setGeneratingPersonality(true);
               try{const r=await apiPost('/api/divine',{mode:'bazi',question:'重新分析我的性格特点',profile,depth:'simple'});
                 if(r){const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');s.bazi={result:r,chatHistory:[]};localStorage.setItem('yuanhe_mode_results',JSON.stringify(s));window.yuanheToast?.('已重新生成 ✨')}}
               catch(e){window.yuanheToast?.('生成失败')}
