@@ -915,12 +915,12 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       </div>
     </div>
     {/* Card area */}
-    <div style={{position:'relative',flex:1,margin:'0 14px',minHeight:100,marginBottom:4}}>
+    <div key={genderPref} style={{position:'relative',flex:1,margin:'0 14px',minHeight:100,marginBottom:4}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500,color:T.text}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
         <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>先去AI占卜</button>
       </div>)
-      :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
+      :cards.slice(-2).map((u,i,arr)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===arr.length-1} onDetail={()=>setDetailUser(u)}/>)}
       {/* First-time swipe guide */}
       {showGuide&&cards.length>0&&<div onClick={()=>{localStorage.setItem('yuanhe_swipe_guided','1');setGuideHidden(true)}} style={{position:'absolute',inset:0,borderRadius:20,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,cursor:'pointer'}}>
         <div style={{textAlign:'center',color:'#fff'}}>
