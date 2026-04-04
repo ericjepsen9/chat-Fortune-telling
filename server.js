@@ -87,6 +87,8 @@ function onProviderError(name) {
 const aiService = require('./src/ai-service');
 const logger = require('./src/logger');
 const auth = require('./src/auth');
+const admin = require('./src/admin');
+admin.setSecret(auth.JWT_SECRET);
 
 // ============ LLM 调用 ============
 
@@ -281,6 +283,47 @@ app.use((req, res, next) => {
   const origEnd = res.end.bind(res);
   res.end = function(...args) { logger.logResponse(reqCtx, res.statusCode); return origEnd(...args); };
   next();
+});
+
+// ============ Admin Routes ============
+
+// 管理后台页面
+app.get('/admin', (req, res) => {
+  const html = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf-8');
+  res.type('text/html; charset=utf-8').send(html);
+});
+
+// 管理员登录
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
+  const result = admin.login(username, password);
+  if (result.error) return res.status(401).json(result);
+  res.json(result);
+});
+
+// 修改密码
+app.post('/api/admin/change-password', admin.adminAuth, (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const result = admin.changePassword(req.admin.id, oldPassword, newPassword);
+  if (result.error) return res.status(400).json(result);
+  res.json(result);
+});
+
+// 管理员列表 (superadmin only)
+app.get('/api/admin/list', admin.adminAuth, admin.superOnly, (req, res) => {
+  res.json(admin.listAdmins());
+});
+
+// 创建管理员 (superadmin only)
+app.post('/api/admin/create', admin.adminAuth, admin.superOnly, (req, res) => {
+  const result = admin.createAdmin(req.admin.id, req.body);
+  if (result.error) return res.status(400).json(result);
+  res.json(result);
+});
+
+// 操作日志
+app.get('/api/admin/logs', admin.adminAuth, (req, res) => {
+  res.json(admin.getAdminLogs(parseInt(req.query.limit) || 50));
 });
 
 // ============ Auth Routes ============
