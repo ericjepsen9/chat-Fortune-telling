@@ -3080,7 +3080,6 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   <div style={{padding:'10px 16px 0'}}>
     {/* 1. 性格卡片 */}
     {(()=>{
-      const baziResult=getMS?null:null;
       try{const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');
         const bz=saved.bazi?.result?.structured;
         if(bz){
