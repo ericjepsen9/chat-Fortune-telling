@@ -720,6 +720,7 @@ function DailyStatusModal({profile,onClose}){
   const [selDate,setSelDate]=useState(now);
   const [viewMonth,setViewMonth]=useState(now.getMonth());
   const [viewYear,setViewYear]=useState(now.getFullYear());
+  const [showShare,setShowShare]=useState(false);
 
   const TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
   const DZ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
@@ -817,8 +818,9 @@ function DailyStatusModal({profile,onClose}){
         </div>
       ))}
       {/* Share */}
-      <button onClick={()=>{const text=`📅 ${selDateStr}\n${sel.tg}${sel.dz}日 · ${sel.wx}旺\n\n🎯 ${t.theme}\n\n📌 关键词: ${t.keywords.join('、')}\n💕 关系: ${t.relation[0]}\n✅ 行动: ${t.action[0]}\n\n—— 缘合 · 命理日历`;navigator.clipboard?.writeText(text);window.yuanheToast?.('已复制，可分享给好友')}} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 分享今日运势</button>
+      <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 分享今日运势</button>
     </div>
+    {showShare&&<ShareModal type="fortune" profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:t.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:t.color,keywords:t.keywords}} onClose={()=>setShowShare(false)}/>}
   </div>);
 }
 
@@ -3668,8 +3670,8 @@ function MatchShareCard({profile,partner,score,compatibility}){
   );
 }
 
-function FortuneShareCard({profile}){
-  const today=new Date();const d=today.getDate();const m=today.getMonth()+1;
+function FortuneShareCard({profile,dayInfo}){
+  const today=new Date();const d=dayInfo?.date||today.getDate();const m=dayInfo?.month||(today.getMonth()+1);const y=dayInfo?.year||today.getFullYear();
   const luck=['大吉','吉','中吉','小吉','平','小凶'][d%6];
   const luckColors={大吉:'#DC2626',吉:'#F59E0B',中吉:'#8B5CF6',小吉:'#0D9488',平:'#6B7280',小凶:'#EF4444'};
   const yis=['学习','冥想','远行','社交','投资','表白','运动','创作','谈判','约会'];
@@ -3678,15 +3680,29 @@ function FortuneShareCard({profile}){
   const ji=jis.filter((_,i)=>(d+i*5)%3===0).slice(0,2).join(' · ');
   const colors=['#E11D48','#7C3AED','#0891B2','#D97706','#059669'];
   const luckyColor=colors[d%colors.length];
+  // If dayInfo provided, use its theme
+  const wxColor=dayInfo?.color||T.accent2;
+  const theme=dayInfo?.theme||'';
+  const tgdz=dayInfo?.tgdz||'';
+  const wx=dayInfo?.wx||'';
+  const keywords=dayInfo?.keywords||[];
   return(
-    <div id="share-card" style={{width:340,background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
-      <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · 今日运势</div>
-      <div style={{fontSize:14,fontWeight:600,opacity:.8}}>{today.getFullYear()}年{m}月{d}日</div>
+    <div id="share-card" style={{width:340,background:`linear-gradient(135deg,${wxColor},${wxColor}CC)`,borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
+      <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · {theme?'命理日历':'今日运势'}</div>
+      <div style={{fontSize:14,fontWeight:600,opacity:.8}}>{y}年{m}月{d}日</div>
       <div style={{textAlign:'center',margin:'20px 0'}}>
-        <div style={{fontSize:48,fontWeight:900,letterSpacing:4}}>{luck}</div>
-        <div style={{fontSize:12,opacity:.7,marginTop:4}}>{profile.name||'缘友'} 的今日运势</div>
+        {theme?<>
+          <div style={{fontSize:36,fontWeight:900,letterSpacing:6}}>{theme}</div>
+          <div style={{fontSize:13,opacity:.8,marginTop:6}}>{tgdz} · {wx}旺</div>
+        </>:<>
+          <div style={{fontSize:48,fontWeight:900,letterSpacing:4}}>{luck}</div>
+        </>}
+        <div style={{fontSize:12,opacity:.7,marginTop:6}}>{profile.name||'缘友'} 的{theme?'今日状态':'今日运势'}</div>
       </div>
-      <div style={{display:'flex',gap:12,marginBottom:16}}>
+      {keywords.length>0&&<div style={{display:'flex',gap:6,justifyContent:'center',flexWrap:'wrap',marginBottom:16}}>
+        {keywords.map(k=><span key={k} style={{padding:'4px 12px',borderRadius:10,background:'rgba(255,255,255,0.2)',fontSize:11}}>{k}</span>)}
+      </div>}
+      {!theme&&<div style={{display:'flex',gap:12,marginBottom:16}}>
         <div style={{flex:1,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 12px'}}>
           <div style={{fontSize:10,opacity:.6}}>宜</div>
           <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{yi}</div>
@@ -3695,7 +3711,7 @@ function FortuneShareCard({profile}){
           <div style={{fontSize:10,opacity:.6}}>忌</div>
           <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{ji}</div>
         </div>
-      </div>
+      </div>}
       <div style={{display:'flex',gap:12,marginBottom:16}}>
         <div style={{background:'rgba(255,255,255,0.15)',borderRadius:10,padding:'8px 14px',display:'flex',alignItems:'center',gap:6}}>
           <div style={{width:16,height:16,borderRadius:4,background:luckyColor}}/>
@@ -3704,14 +3720,14 @@ function FortuneShareCard({profile}){
         <div style={{background:'rgba(255,255,255,0.15)',borderRadius:10,padding:'8px 14px',fontSize:11}}>🔢 幸运数 {(d*3+7)%10}</div>
       </div>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
-        <span style={{fontSize:10}}>扫码查看详细运势</span>
+        <span style={{fontSize:10}}>长按保存分享给好友</span>
         <span style={{fontSize:10}}>缘合 yuanhe.app</span>
       </div>
     </div>
   );
 }
 
-function ShareModal({type,profile,structured,partner,score,compatibility,onClose}){
+function ShareModal({type,profile,structured,partner,score,compatibility,dayInfo,onClose}){
   const [saving,setSaving]=useState(false);
   const [saved,setSaved]=useState(false);
   const cardRef=useRef(null);
@@ -3737,7 +3753,7 @@ function ShareModal({type,profile,structured,partner,score,compatibility,onClose
         <div ref={cardRef}>
           {type==='personality'&&<PersonalityShareCard profile={profile} structured={structured}/>}
           {type==='match'&&<MatchShareCard profile={profile} partner={partner} score={score} compatibility={compatibility}/>}
-          {type==='fortune'&&<FortuneShareCard profile={profile}/>}
+          {type==='fortune'&&<FortuneShareCard profile={profile} dayInfo={dayInfo}/>}
         </div>
       </div>
       <div style={{display:'flex',gap:12}}>
