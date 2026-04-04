@@ -2582,29 +2582,30 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       }
     };
     return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:T.bg}}>
-      <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
-        <button onClick={()=>{ChatStore.markRead(activeConv.id);refreshConvs();setActiveId(null);setSearchMode(false)}} style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+      {/* Chat header */}
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+        <button onClick={()=>{ChatStore.markRead(activeConv.id);refreshConvs();setActiveId(null);setSearchMode(false)}} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
         <div onClick={()=>setShowProfile(true)} style={{display:'flex',alignItems:'center',gap:10,flex:1,cursor:'pointer'}}>
-          <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,position:'relative',flexShrink:0}}>
+          <div style={{width:38,height:38,borderRadius:19,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,position:'relative',flexShrink:0}}>
             {activeConv.user.gender==='female'?'👩':'👨'}
             <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:isOnline?'#34D399':'#D1D5DB',border:`2px solid ${T.card}`}}/>
           </div>
           <div>
             <div style={{fontSize:15,fontWeight:700,color:T.text}}>{activeConv.user.name}</div>
-            <div style={{fontSize:11,color:typing?T.accent2:isOnline?'#34D399':T.textThi}}>{typing?'正在输入…':getLastOnlineText(activeConv.user)} · {activeConv.user.sign}</div>
+            <div style={{fontSize:11,color:typing?T.accent2:isOnline?'#34D399':T.textThi}}>{typing?'正在输入…':isOnline?'在线':'离线'} · {activeConv.user.sign}</div>
           </div>
         </div>
-        <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:searchMode?'#F5F3FF':T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.accent2:T.textThi}}>🔍</button>
-        <button onClick={()=>setShowReport(true)} style={{width:32,height:32,borderRadius:16,border:`1px solid ${T.border}`,background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:T.textThi}}>⋯</button>
+        <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:'none',background:searchMode?`${T.accent2}10`:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.accent2:T.textThi}}>🔍</button>
+        <button onClick={()=>setShowReport(true)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:T.textThi}}>⋯</button>
       </div>
       {/* Search bar */}
-      {searchMode&&<div style={{padding:'8px 16px',background:T.bg,borderBottom:`1px solid ${T.border}`,display:'flex',gap:8,alignItems:'center'}}>
-        <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="搜索聊天记录…" autoFocus style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.accent2}40`,background:T.card,fontSize:13,outline:'none'}}/>
-        {searchQuery&&<button onClick={()=>setSearchQuery('')} style={{fontSize:12,color:T.textThi,background:'none',border:'none',cursor:'pointer'}}>清空</button>}
+      {searchMode&&<div style={{padding:'8px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,display:'flex',gap:8,alignItems:'center'}}>
+        <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="搜索聊天记录…" autoFocus style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.accent2}40`,background:T.bg,fontSize:13,outline:'none',color:T.text}}/>
+        {searchQuery&&<button onClick={()=>setSearchQuery('')} style={{fontSize:12,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>清空</button>}
       </div>}
       <div style={{flex:1,overflow:'auto',padding:'12px 16px'}}>
         <div style={{textAlign:'center',marginBottom:16}}>
-          <div style={{display:'inline-block',padding:'6px 16px',borderRadius:12,background:`${T.accent2}08`,fontSize:11,color:T.textSec}}>你们已匹配成功 💕 开始聊天吧</div>
+          <div style={{display:'inline-block',padding:'5px 14px',borderRadius:20,background:`${T.accent2}08`,fontSize:11,color:T.textThi}}>匹配成功 💕 开始聊天吧</div>
         </div>
         {msgs.length===0&&!typing&&<div style={{textAlign:'center',padding:'40px 20px',color:T.textThi}}>
           <div style={{fontSize:36,marginBottom:12}}>👋</div>
@@ -2613,13 +2614,13 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         </div>}
         {searchMode&&searchQuery&&<div style={{fontSize:11,color:T.textThi,marginBottom:8}}>🔍 搜索"{searchQuery}" — {msgs.filter(m=>!m.recalled&&m.text&&m.text.toLowerCase().includes(searchQuery.toLowerCase())).length}条结果</div>}
         {(searchMode&&searchQuery?msgs.filter(m=>!m.recalled&&m.text&&m.text.toLowerCase().includes(searchQuery.toLowerCase())):msgs).map((msg,idx)=>(
-          <div key={msg.id} className="anim-in" style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:10,position:'relative',group:'msg'}}>
-            <div style={{maxWidth:'75%'}}>
+          <div key={msg.id} className="anim-in" style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:12}}>
+            <div style={{maxWidth:'72%'}}>
               <div onClick={()=>{if(msg.role==='user'&&!msg.recalled){const now=Date.now();const msgTime=msg.ts||0;if(now-msgTime<120000){if(confirm('撤回这条消息？')){ChatStore.recallMessage(activeConv.id,msg.id);refreshConvs()}}else{navigator.clipboard?.writeText(msg.text);showToast('已复制')}}}}
                 style={{padding:msg.recalled?'6px 14px':msg.image?'4px':'10px 14px',borderRadius:msg.role==='user'?'18px 18px 4px 18px':'18px 18px 18px 4px',
                 background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.card,
-                color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:13,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
-                boxShadow:msg.recalled?'none':msg.role==='user'?`0 2px 8px ${T.accent2}20`:`0 1px 4px rgba(0,0,0,0.04)`,overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
+                color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:14,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
+                boxShadow:msg.recalled?'none':'0 1px 3px rgba(0,0,0,0.04)',overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
                 {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.voice?
                   <div onClick={()=>{const a=new Audio(msg.voice);a.play();showToast('播放中…')}} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',minWidth:80+Math.min((msg.voiceDur||3)*8,120)}}>
                     <span style={{fontSize:16}}>▶️</span>
@@ -2627,8 +2628,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
                     <span style={{fontSize:10,opacity:.6,flexShrink:0}}>{msg.voiceDur||0}″</span>
                   </div>
                 :msg.text}
-                {!msg.recalled&&msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
               </div>
+              {!msg.recalled&&msg.time&&<div style={{fontSize:10,color:T.textThi,marginTop:3,textAlign:msg.role==='user'?'right':'left',paddingLeft:msg.role==='user'?0:4,paddingRight:msg.role==='user'?4:0}}>{msg.time}</div>}
             </div>
           </div>
         ))}
@@ -2693,15 +2694,15 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <button onClick={stopRecording} style={{padding:'8px 18px',borderRadius:20,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:`0 2px 8px ${T.accent2}30`}}>发送</button>
       </div>}
       {/* Input bar */}
-      {!recording&&<div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:4,alignItems:'center'}}>
-        <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showQuick?`${T.accent2}10`:T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.accent2:T.textThi}}>{showQuick?'✕':'+'}</button>
-        <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:showEmoji?'#FEF3C7':T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
-        <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:`1px solid ${T.border}`,background:T.card,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
+      {!recording&&<div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:6,alignItems:'center'}}>
+        <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:'none',background:showQuick?`${T.accent2}10`:T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.accent2:T.textThi}}>{showQuick?'✕':'+'}</button>
+        <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:'none',background:showEmoji?'#FEF3C7':T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
+        <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:'none',background:T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
         <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
           onKeyDown={e=>{if(e.key==='Enter'&&chatInput.trim())sendMsg()}}
           onFocus={()=>{setShowQuick(false);setShowEmoji(false)}}
           placeholder="发送消息…" disabled={sending}
-          style={{flex:1,padding:'8px 12px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}/>
+          style={{flex:1,padding:'8px 14px',borderRadius:20,border:'none',background:T.bg,fontSize:13,outline:'none',color:T.text}}/>
         {chatInput.trim()?
           <button onClick={sendMsg} disabled={sending}
             style={{width:34,height:34,borderRadius:17,border:'none',
@@ -2710,7 +2711,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
               boxShadow:`0 2px 8px ${T.accent2}30`}}>↑</button>
           :<button onClick={startRecording} disabled={sending}
             style={{width:34,height:34,borderRadius:17,border:'none',
-              background:T.card,border:`1px solid ${T.border}`,
+              background:T.bg,
               color:T.textSec,fontSize:16,cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>🎤</button>
         }
       </div>}
@@ -2719,14 +2720,17 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       {/* Profile modal */}
       {showProfile&&profile&&<CardDetailModal user={activeConv.user} profile={profile} onClose={()=>setShowProfile(false)} goTo={()=>{}}/>}
       {showReport&&<div onClick={()=>setShowReport(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-        <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 30px',animation:'slideUp .3s ease'}}>
-          <div style={{width:32,height:4,borderRadius:2,background:T.border,margin:'0 auto 16px'}}/>
-          {[{l:'🔍 搜索聊天记录',a:()=>{setShowReport(false);setSearchMode(true)}},
-            {l:'👤 查看个人资料',a:()=>{setShowReport(false);setShowProfile(true)}},
-            {l:'🚫 拉黑此人',a:()=>{if(confirm('确定拉黑'+activeConv.user.name+'？')){blockUser(activeConv.user.id);setShowReport(false);setActiveId(null);refreshConvs()}}},
-            {l:'⚠️ 举报',a:()=>{setShowReport(false);setTimeout(()=>setShowReport('report'),100)}}
-          ].map(it=><button key={it.l} onClick={it.a} style={{display:'block',width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:it.l.includes('拉黑')||it.l.includes('举报')?T.primary:T.text,cursor:'pointer',textAlign:'left'}}>{it.l}</button>)}
-          <button onClick={()=>setShowReport(false)} style={{display:'block',width:'100%',padding:'14px',border:'none',background:'none',fontSize:14,color:T.textThi,cursor:'pointer',marginTop:4}}>取消</button>
+        <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'12px 16px 30px',animation:'slideUp .3s ease'}}>
+          <div style={{width:32,height:4,borderRadius:2,background:T.border,margin:'0 auto 12px'}}/>
+          {[{l:'搜索聊天记录',icon:'🔍',a:()=>{setShowReport(false);setSearchMode(true)}},
+            {l:'查看个人资料',icon:'👤',a:()=>{setShowReport(false);setShowProfile(true)}},
+            {l:'拉黑此人',icon:'🚫',danger:true,a:()=>{if(confirm('确定拉黑'+activeConv.user.name+'？')){blockUser(activeConv.user.id);setShowReport(false);setActiveId(null);refreshConvs()}}},
+            {l:'举报',icon:'⚠️',danger:true,a:()=>{setShowReport(false);setTimeout(()=>setShowReport('report'),100)}}
+          ].map(it=><button key={it.l} onClick={it.a} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:it.danger?T.primary:T.text,cursor:'pointer',textAlign:'left'}}>
+            <span style={{fontSize:16,width:24,textAlign:'center'}}>{it.icon}</span>
+            <span>{it.l}</span>
+          </button>)}
+          <button onClick={()=>setShowReport(false)} style={{display:'block',width:'100%',padding:'14px',border:'none',background:'none',fontSize:14,color:T.textThi,cursor:'pointer',marginTop:4,textAlign:'center'}}>取消</button>
         </div>
       </div>}
       {showReport==='report'&&<ReportModal target={activeConv.user.name} onClose={()=>setShowReport(false)}/>}
