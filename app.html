@@ -496,6 +496,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
       <div onClick={e=>{if(Math.abs(dx)<5){e.stopPropagation();onDetail&&onDetail()}}} style={{padding:'14px 18px 16px',cursor:'pointer'}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
           <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
+          <span style={{fontSize:12,color:user.gender==='female'?'#EC4899':'#3B82F6',fontWeight:600,marginLeft:6}}>{user.gender==='female'?'♀':'♂'}</span>
           <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:'nowrap',background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#059669':user.score>=65?'#7C3AED':'#D97706'}}>{typeTag}</span>
         </div>
         <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.6}}>{user.bio}</div>
@@ -561,6 +562,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
           <div style={{padding:'16px 20px'}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
               <span style={{fontSize:24,fontWeight:800,color:T.text}}>{user.name}</span>
+              <span style={{fontSize:14,color:user.gender==='female'?'#EC4899':'#3B82F6',fontWeight:600}}>{user.gender==='female'?'♀':'♂'}</span>
               <span style={{fontSize:16,color:T.textSec}}>{user.age}岁</span>
             </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
@@ -829,7 +831,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const getFilteredCands=(pref)=>{
     const {botRatio}=getBotConfig();
     const allUsers=[...USERS,...BOTS];
-    const filtered=pref==='all'?allUsers.filter(u=>u.gender!==profile.gender||true):allUsers.filter(u=>u.gender===pref);
+    const filtered=pref==='all'?allUsers:allUsers.filter(u=>u.gender===pref);
     const realCards=filtered.filter(u=>!u.isBot);
     if(botRatio<=0)return realCards;
     const botPool=filtered.filter(u=>u.isBot).sort(()=>Math.random()-0.5);
@@ -906,7 +908,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
         {/* Gender preference filter */}
         <div style={{display:'flex',borderRadius:10,border:`1px solid ${T.border}`,overflow:'hidden',background:T.card}}>
-          {[{v:profile.gender==='male'?'female':'male',l:'异性'},{v:'all',l:'全部'}].map(o=>
+          {[{v:'female',l:'女生'},{v:'male',l:'男生'},{v:'all',l:'全部'}].map(o=>
             <button key={o.v} onClick={()=>{if(genderPref!==o.v)switchPref(o.v)}} style={{padding:'5px 10px',border:'none',fontSize:10,fontWeight:genderPref===o.v?600:400,cursor:'pointer',background:genderPref===o.v?`${T.accent2}15`:'transparent',color:genderPref===o.v?T.accent2:T.textThi}}>{o.l}</button>
           )}
         </div>
@@ -2248,7 +2250,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
           <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
             <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{post.avatar}</div>
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:600,color:T.text}}>{post.author}</div>
+              <div style={{fontSize:13,fontWeight:600,color:T.text}}>{post.author} <span style={{fontSize:11,color:post.avatar==='👩'?'#EC4899':'#3B82F6'}}>{post.avatar==='👩'?'♀':'♂'}</span></div>
               <div style={{fontSize:10,color:T.textThi}}>{post.tag} · {post.time}</div>
             </div>
           </div>
