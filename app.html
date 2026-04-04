@@ -2144,6 +2144,8 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
 
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
   const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
+  const luckBg=['linear-gradient(135deg,#FFF5F5,#FEE2E2)','linear-gradient(135deg,#FFFBEB,#FEF3C7)','linear-gradient(135deg,#FAF5FF,#EDE9FE)','linear-gradient(135deg,#F0FDFA,#CCFBF1)','linear-gradient(135deg,#F9FAFB,#F3F4F6)','linear-gradient(135deg,#FFF1F2,#FECDD3)'][dayN%6];
+  const luckBorder=['#FECACA','#FCD34D','#DDD6FE','#99F6E4','#E5E7EB','#FDA4AF'][dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
     <div style={{padding:'14px 16px 0'}}>
       {/* Tab as title + mood in top right */}
@@ -2185,7 +2187,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
       {/* ===== 推荐 Tab ===== */}
       {discoverTab==='recommend'&&<>
       {/* Today's luck card */}
-      <div className="anim-in" style={{background:'linear-gradient(135deg,#FFF,#F8F5FF)',borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:'1px solid #DDD6FE'}}>
+      <div className="anim-in" style={{background:luckBg,borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:`1px solid ${luckBorder}`}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <div style={{fontSize:13,color:T.textThi}}>📅 今日 {today.getMonth()+1}月{today.getDate()}日</div>
