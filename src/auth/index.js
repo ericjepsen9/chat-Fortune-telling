@@ -245,6 +245,42 @@ function migrateLocalData(userId, localData) {
   return { success: true };
 }
 
+// ============ Divination History ============
+
+function saveDivination(userId, data) {
+  const user = users[userId];
+  if (!user) return null;
+  if (!user.divinations) user.divinations = [];
+  const entry = {
+    id: crypto.randomUUID(),
+    mode: data.mode,
+    question: (data.question || '').substring(0, 500),
+    response: (data.response || '').substring(0, 10000),
+    structured: data.structured || null,
+    engineData: data.engineData ? String(data.engineData).substring(0, 5000) : null,
+    depth: data.depth || 'expert',
+    createdAt: new Date().toISOString(),
+  };
+  user.divinations.unshift(entry);
+  // 最多保留100条
+  if (user.divinations.length > 100) user.divinations.length = 100;
+  saveUsers();
+  return { id: entry.id, createdAt: entry.createdAt };
+}
+
+function getDivinations(userId, mode) {
+  const user = users[userId];
+  if (!user || !user.divinations) return [];
+  let list = user.divinations;
+  if (mode) list = list.filter(d => d.mode === mode);
+  // 返回摘要列表(不含完整response)
+  return list.map(d => ({
+    id: d.id, mode: d.mode, question: d.question,
+    depth: d.depth, createdAt: d.createdAt,
+    preview: (d.response || '').substring(0, 100),
+  }));
+}
+
 module.exports = {
   sendCode,
   verifyCode,
@@ -253,4 +289,6 @@ module.exports = {
   getProfile,
   updateProfile,
   migrateLocalData,
+  saveDivination,
+  getDivinations,
 };

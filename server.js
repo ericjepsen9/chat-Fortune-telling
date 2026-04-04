@@ -269,7 +269,7 @@ app.use('/api/', apiLimiter);
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') { res.sendStatus(200); return; }
   next();
 });
@@ -317,6 +317,20 @@ app.post('/api/auth/migrate', auth.authMiddleware, (req, res) => {
   const result = auth.migrateLocalData(req.user.id, req.body);
   if (!result) return res.status(404).json({ error: '用户不存在' });
   res.json(result);
+});
+
+// 保存占卜结果
+app.post('/api/auth/divination', auth.authMiddleware, (req, res) => {
+  const { mode, question, response, structured, engineData, depth } = req.body;
+  const result = auth.saveDivination(req.user.id, { mode, question, response, structured, engineData, depth });
+  if (!result) return res.status(404).json({ error: '保存失败' });
+  res.json(result);
+});
+
+// 获取占卜历史
+app.get('/api/auth/divinations', auth.authMiddleware, (req, res) => {
+  const list = auth.getDivinations(req.user.id, req.query.mode);
+  res.json(list);
 });
 
 // ============ Routes ============

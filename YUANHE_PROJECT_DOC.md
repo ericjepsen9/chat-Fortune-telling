@@ -316,10 +316,10 @@ pm2 list
 | 技术选型(Node/Python, DB) | 1天 | ✅ Express+PostgreSQL(Session 15) |
 | 数据库设计(PostgreSQL/MongoDB) | 2天 | ✅ 14张表(Session 15) |
 | 服务器架构优化 | 1天 | ✅ Express迁移+helmet+rate-limit(Session 15) |
-| 用户注册/登录API | 3天 | ⬜ |
-| JWT认证中间件 | 1天 | ⬜ |
-| 用户资料CRUD | 2天 | ⬜ |
-| 占卜历史云端存储 | 2天 | ⬜ |
+| 用户注册/登录API | 3天 | ✅ 手机号+验证码+JWT(Session 15) |
+| JWT认证中间件 | 1天 | ✅ authMiddleware+optionalAuth(Session 15) |
+| 用户资料CRUD | 2天 | ✅ saveProfile自动同步服务器(Session 15) |
+| 占卜历史云端存储 | 2天 | ✅ /api/auth/divination(Session 15) |
 | 前端对接后端API | 3天 | ⬜ |
 
 ### Phase 3: 社交系统 (2-3周)

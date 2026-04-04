@@ -1608,6 +1608,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         flushUpdate(true);
         // Save to history
         try{const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');hist.unshift({mode:m,question:q,time:new Date().toLocaleString(),ts:Date.now()});if(hist.length>50)hist.length=50;localStorage.setItem('yuanhe_history',JSON.stringify(hist))}catch(e){}
+        // 同步到服务器
+        if(localStorage.getItem('yuanhe_token')){const ms_=modeStates[m];apiPost('/api/auth/divination',{mode:m,question:q,response:ms_?.result?.response||'',structured:ms_?.result?.structured,engineData:ms_?.result?.engineData}).catch(()=>{})}
         }catch(abortErr){
           if(abortErr.name==='AbortError'){
             if(fullText){flushUpdate(true)}
@@ -3955,6 +3957,13 @@ function App(){
     }catch(e){}
   };
 
+  // 统一的profile更新+同步
+  const saveProfile=useCallback((p)=>{
+    setProfile(p);
+    localStorage.setItem('yuanhe_profile',JSON.stringify(p));
+    if(authToken)apiPost('/api/auth/profile',p).catch(()=>{});
+  },[authToken]);
+
   // Bot proactive messages — bots initiate conversation after idle periods
   const BOT_PROACTIVE_PROMPTS=[
     '[系统：对方已经有一段时间没回复了。根据你的性格，主动发一条消息，可以分享你今天做了什么，或者问一个轻松的问题。]',
@@ -4012,13 +4021,13 @@ function App(){
     }}/>}
     {scr===S.ONBOARD&&<OnboardingScreen onDone={()=>{localStorage.setItem('yuanhe_onboarded','1');setScr(S.BIRTH)}}/>}
     {scr===S.BIRTH&&!profile&&!termsAccepted&&<TermsModal onAccept={()=>{localStorage.setItem('yuanhe_terms_accepted','1');setTermsAccepted(true)}}/>}
-    {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);apiPost('/api/auth/profile',p).catch(()=>{});setScr(S.HOME)}}/>}
+    {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{saveProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<div key="home" style={{height:'100%'}}><HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/></div>}
-    {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
+    {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={saveProfile}/></div>}
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
-    {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
+    {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={saveProfile}/></div>}
     {scr===S.MSGS&&<div key="msgs" style={{height:'100%'}}><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/></div>}
-    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm('确定退出登录？',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setAuthToken(null);setProfile(null);setScr(S.LOGIN)},{detail:'退出后本地数据将被清除'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
+    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm('确定退出登录？',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setAuthToken(null);setProfile(null);setScr(S.LOGIN)},{detail:'退出后本地数据将被清除'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={saveProfile} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
     {/* Global confirm dialog */}
