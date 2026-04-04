@@ -700,28 +700,62 @@ app.post('/api/divine', async (req, res) => {
   }
 });
 
+// ============ API: Messages (HTTP fallback for offline/history) ============
+
+app.get('/api/messages/:userId', auth.authMiddleware, (req, res) => {
+  const messages = auth.getMessages(req.user.id, req.params.userId, parseInt(req.query.limit) || 50, req.query.before);
+  res.json(messages);
+});
+
+// ============ API: Posts (缘友圈) ============
+
+app.post('/api/posts', auth.authMiddleware, (req, res) => {
+  const { content, tag } = req.body;
+  if (!content?.trim()) return res.status(400).json({ error: '内容不能为空' });
+  const post = auth.createPost(req.user.id, content.substring(0, 1000), tag);
+  res.json(post);
+});
+
+app.get('/api/posts', auth.optionalAuth, (req, res) => {
+  const posts = auth.getPosts(parseInt(req.query.limit) || 30, req.query.before);
+  res.json(posts);
+});
+
+app.post('/api/posts/:id/like', auth.authMiddleware, (req, res) => {
+  const result = auth.likePost(req.user.id, req.params.id);
+  res.json(result);
+});
+
+app.post('/api/posts/:id/comment', auth.authMiddleware, (req, res) => {
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ error: '评论不能为空' });
+  const result = auth.addComment(req.user.id, req.params.id, text.substring(0, 500));
+  res.json(result);
+});
+
+app.get('/api/posts/:id/comments', (req, res) => {
+  const comments = auth.getComments(req.params.id);
+  res.json(comments);
+});
+
 // ============ Start Server ============
 
-app.listen(PORT, () => {
+const wsModule = require('./src/websocket');
+const server = app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
-║         缘合 · 占术引擎测试服务器          ║
+║           缘合 YuanHe 服务器              ║
 ╠══════════════════════════════════════════╣
 ║                                          ║
-║  🌐 测试页面: http://localhost:${PORT}       ║
 ║  📱 缘合App:  http://localhost:${PORT}/app   ║
 ║  📊 系统监控: http://localhost:${PORT}/monitor║
+║  🔌 WebSocket: ws://localhost:${PORT}/ws     ║
 ║                                          ║
-║  🤖 LLM 地址: ${LLM_BASE_URL.padEnd(25)}║
-║  📦 模型:     ${LLM_MODEL.padEnd(25)}║
-║                                          ║
-║  📡 API 接口:                             ║
-║  GET  /api/health    - 健康检查           ║
-║  POST /api/calculate - 仅引擎计算         ║
-║  POST /api/divine    - 引擎+AI解读        ║
-║  POST /api/chat-followup - 轻量追问       ║
-║  POST /api/chat          - AI模拟聊天     ║
+║  🤖 LLM: ${LLM_MODEL.padEnd(30)}║
 ║                                          ║
 ╚══════════════════════════════════════════╝
 `);
 });
+
+// 启动 WebSocket
+wsModule.init(server, auth);

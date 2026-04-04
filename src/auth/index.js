@@ -281,7 +281,52 @@ function getDivinations(userId, mode) {
   }));
 }
 
+// ============ Messages ============
+
+// 消息存储: conversations are keyed by sorted pair of user IDs
+function convKey(a, b) { return [a, b].sort().join(':'); }
+
+function saveMessage(fromId, toId, message) {
+  const key = convKey(fromId, toId);
+  // 存在全局消息存储（而非单个用户下），避免重复
+  if (!global._yuanheMessages) global._yuanheMessages = {};
+  if (!global._yuanheMessages[key]) global._yuanheMessages[key] = [];
+  global._yuanheMessages[key].push(message);
+  // 限制每个会话最多500条
+  if (global._yuanheMessages[key].length > 500) {
+    global._yuanheMessages[key] = global._yuanheMessages[key].slice(-500);
+  }
+  // 持久化
+  try {
+    const msgFile = path.join(DATA_DIR, 'messages.json');
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
+  } catch (e) { console.error('Failed to save messages:', e.message); }
+}
+
+function getMessages(userIdA, userIdB, limit = 50, before) {
+  if (!global._yuanheMessages) {
+    // 尝试从文件加载
+    try {
+      const msgFile = path.join(DATA_DIR, 'messages.json');
+      if (fs.existsSync(msgFile)) {
+        global._yuanheMessages = JSON.parse(fs.readFileSync(msgFile, 'utf-8'));
+      } else {
+        global._yuanheMessages = {};
+      }
+    } catch (e) { global._yuanheMessages = {}; }
+  }
+  const key = convKey(userIdA, userIdB);
+  let msgs = global._yuanheMessages[key] || [];
+  if (before) {
+    const idx = msgs.findIndex(m => m.id === before);
+    if (idx > 0) msgs = msgs.slice(0, idx);
+  }
+  return msgs.slice(-limit);
+}
+
 module.exports = {
+  JWT_SECRET,
   sendCode,
   verifyCode,
   authMiddleware,
@@ -291,4 +336,99 @@ module.exports = {
   migrateLocalData,
   saveDivination,
   getDivinations,
+  saveMessage,
+  getMessages,
+  createPost,
+  getPosts,
+  likePost,
+  addComment,
+  getComments,
 };
+
+// ============ Posts (缘友圈) ============
+
+// 帖子存储
+const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
+let posts = [];
+try { if (fs.existsSync(POSTS_FILE)) posts = JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8')); } catch (e) {}
+function savePosts() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
+  } catch (e) {}
+}
+
+function createPost(userId, content, tag) {
+  const user = users[userId];
+  if (!user) return null;
+  const post = {
+    id: crypto.randomUUID(),
+    authorId: userId,
+    author: user.profile?.name || '缘友',
+    avatar: user.profile?.avatar || (user.profile?.gender === 'female' ? '👩' : '👨'),
+    content,
+    tag: tag || '',
+    likes: 0,
+    likedBy: [],
+    comments: [],
+    createdAt: new Date().toISOString(),
+  };
+  posts.unshift(post);
+  if (posts.length > 500) posts.length = 500;
+  savePosts();
+  return post;
+}
+
+function getPosts(limit, beforeId) {
+  let list = posts;
+  if (beforeId) {
+    const idx = list.findIndex(p => p.id === beforeId);
+    if (idx >= 0) list = list.slice(idx + 1);
+  }
+  return list.slice(0, limit).map(p => ({
+    ...p,
+    likedBy: undefined, // 不暴露点赞用户列表
+    likeCount: p.likedBy?.length || p.likes || 0,
+    commentCount: p.comments?.length || 0,
+  }));
+}
+
+function likePost(userId, postId) {
+  const post = posts.find(p => p.id === postId);
+  if (!post) return { error: '帖子不存在' };
+  if (!post.likedBy) post.likedBy = [];
+  const idx = post.likedBy.indexOf(userId);
+  if (idx >= 0) {
+    post.likedBy.splice(idx, 1); // 取消点赞
+    post.likes = post.likedBy.length;
+    savePosts();
+    return { liked: false, likes: post.likes };
+  }
+  post.likedBy.push(userId);
+  post.likes = post.likedBy.length;
+  savePosts();
+  return { liked: true, likes: post.likes };
+}
+
+function addComment(userId, postId, text) {
+  const post = posts.find(p => p.id === postId);
+  if (!post) return { error: '帖子不存在' };
+  const user = users[userId];
+  const comment = {
+    id: crypto.randomUUID(),
+    authorId: userId,
+    name: user?.profile?.name || '缘友',
+    text,
+    createdAt: new Date().toISOString(),
+  };
+  if (!post.comments) post.comments = [];
+  post.comments.push(comment);
+  savePosts();
+  return comment;
+}
+
+function getComments(postId) {
+  const post = posts.find(p => p.id === postId);
+  if (!post) return [];
+  return post.comments || [];
+}

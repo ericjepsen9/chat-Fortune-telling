@@ -94,6 +94,17 @@ server {
         proxy_buffering off;
     }
 
+    # WebSocket
+    location /ws {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 86400s;
+    }
+
     # SSE streaming
     location /api/divine-stream {
         proxy_pass http://127.0.0.1:3000;
