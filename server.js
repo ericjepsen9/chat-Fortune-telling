@@ -326,6 +326,36 @@ app.get('/api/admin/logs', admin.adminAuth, (req, res) => {
   res.json(admin.getAdminLogs(parseInt(req.query.limit) || 50));
 });
 
+// ============ Admin: Chat Management ============
+
+app.get('/api/admin/conversations', admin.adminAuth, (req, res) => {
+  const { search, page, limit } = req.query;
+  res.json(auth.adminListConversations({ search, page: parseInt(page) || 1, limit: parseInt(limit) || 20 }));
+});
+
+app.get('/api/admin/conversations/:key', admin.adminAuth, (req, res) => {
+  const data = auth.adminGetConversation(req.params.key, parseInt(req.query.limit) || 100);
+  res.json(data);
+});
+
+app.post('/api/admin/conversations/:key/delete-message', admin.adminAuth, (req, res) => {
+  const result = auth.adminDeleteMessage(req.params.key, req.body.messageId);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'delete_message', req.params.key, `删除消息: ${req.body.messageId}`);
+  res.json(result);
+});
+
+// 敏感词管理
+app.get('/api/admin/sensitive-words', admin.adminAuth, (req, res) => {
+  res.json(auth.getSensitiveWords());
+});
+
+app.post('/api/admin/sensitive-words', admin.adminAuth, (req, res) => {
+  const result = auth.setSensitiveWords(req.body.words || []);
+  admin.logAction(req.admin.id, 'update_sensitive_words', null, `更新敏感词: ${result.count}个`);
+  res.json(result);
+});
+
 // ============ Admin: User Management ============
 
 app.get('/api/admin/stats', admin.adminAuth, (req, res) => {

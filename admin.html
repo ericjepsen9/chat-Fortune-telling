@@ -320,6 +320,116 @@ function UsersPage(){
   </div>);
 }
 
+// ===== CHAT PAGE =====
+function ChatPage(){
+  const [data,setData]=useState({items:[],total:0});
+  const [search,setSearch]=useState('');
+  const [page,setPage]=useState(1);
+  const [activeConv,setActiveConv]=useState(null);
+  const [showSensitive,setShowSensitive]=useState(false);
+  const limit=20;
+
+  const load=useCallback(()=>{
+    apiGet(`/api/admin/conversations?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`).then(setData).catch(()=>{});
+  },[search,page]);
+  useEffect(()=>{load()},[load]);
+
+  const openConv=(key)=>{
+    apiGet('/api/admin/conversations/'+encodeURIComponent(key)).then(setActiveConv).catch(()=>{});
+  };
+  const deleteMsg=(key,msgId)=>{
+    if(!confirm('确定删除这条消息？'))return;
+    apiPost('/api/admin/conversations/'+encodeURIComponent(key)+'/delete-message',{messageId:msgId}).then(()=>{
+      openConv(key); // 刷新
+    });
+  };
+
+  const totalPages=Math.ceil((data.total||0)/limit);
+
+  return(<div className="container">
+    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>💬 聊天管理
+      <button className="btn-sm btn-ghost" style={{marginLeft:12,fontSize:12}} onClick={()=>setShowSensitive(true)}>🛡️ 敏感词管理</button>
+    </h2>
+
+    <div className="panel">
+      <div className="toolbar">
+        <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="搜索用户名…"/>
+        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>共 {data.total} 个会话</span>
+      </div>
+      <table><thead><tr><th>用户A</th><th>用户B</th><th>消息数</th><th>最后消息</th><th>时间</th><th>操作</th></tr></thead>
+      <tbody>{data.items?.map(c=>(
+        <tr key={c.key}>
+          <td style={{fontWeight:600}}>{c.nameA}</td>
+          <td style={{fontWeight:600}}>{c.nameB}</td>
+          <td>{c.messageCount}</td>
+          <td style={{fontSize:12,color:'#9CA3AF',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.lastMessage}</td>
+          <td style={{fontSize:11,color:'#6B7280'}}>{c.lastTime?.substring(0,16).replace('T',' ')}</td>
+          <td><button className="btn-sm btn-ghost" onClick={()=>openConv(c.key)}>查看</button></td>
+        </tr>
+      ))}</tbody></table>
+      {totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:12}}>
+        {page>1&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page-1)}>←</button>}
+        <span style={{fontSize:12,color:'#6B7280',padding:'6px 8px'}}>{page}/{totalPages}</span>
+        {page<totalPages&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page+1)}>→</button>}
+      </div>}
+    </div>
+
+    {/* 聊天记录弹窗 */}
+    {activeConv&&<div className="modal-bg" onClick={()=>setActiveConv(null)}><div className="modal" style={{width:520,maxHeight:'85vh'}} onClick={e=>e.stopPropagation()}>
+      <h3>💬 {activeConv.nameA} ↔ {activeConv.nameB} ({activeConv.messages?.length||0}条)</h3>
+      <div style={{maxHeight:'60vh',overflow:'auto',padding:'8px 0'}}>
+        {activeConv.messages?.map(m=>(
+          <div key={m.id} style={{display:'flex',gap:8,marginBottom:8,alignItems:'flex-start'}}>
+            <div style={{flex:1}}>
+              <div style={{display:'flex',alignItems:'center',gap:6}}>
+                <span style={{fontSize:12,fontWeight:600,color:'#A78BFA'}}>{m.fromName}</span>
+                <span style={{fontSize:10,color:'#4a4a5a'}}>{m.createdAt?.substring(11,16)}</span>
+                <span style={{fontSize:10,color:'#4a4a5a'}}>{m.createdAt?.substring(0,10)}</span>
+              </div>
+              <div style={{fontSize:13,color:'#e0e0e0',marginTop:2,lineHeight:1.6,wordBreak:'break-word'}}>{m.text}</div>
+              {m.msgType==='image'&&<div style={{fontSize:11,color:'#6B7280'}}>[图片消息]</div>}
+              {m.msgType==='voice'&&<div style={{fontSize:11,color:'#6B7280'}}>[语音 {m.voiceDuration}″]</div>}
+            </div>
+            <button className="btn-sm btn-danger" style={{fontSize:10,padding:'2px 8px',flexShrink:0}} onClick={()=>deleteMsg(activeConv.key,m.id)}>删除</button>
+          </div>
+        ))}
+        {(!activeConv.messages||activeConv.messages.length===0)&&<div style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无消息</div>}
+      </div>
+      <div className="actions"><button className="btn-sm btn-ghost" onClick={()=>setActiveConv(null)}>关闭</button></div>
+    </div></div>}
+
+    {/* 敏感词管理弹窗 */}
+    {showSensitive&&<SensitiveWordsModal onClose={()=>setShowSensitive(false)}/>}
+  </div>);
+}
+
+function SensitiveWordsModal({onClose}){
+  const [words,setWords]=useState([]);const [newWord,setNew]=useState('');const [loading,setLoading]=useState(true);
+  useEffect(()=>{apiGet('/api/admin/sensitive-words').then(w=>{setWords(w||[]);setLoading(false)}).catch(()=>setLoading(false))},[]);
+  const save=()=>{apiPost('/api/admin/sensitive-words',{words}).then(()=>{onClose()})};
+  const add=()=>{if(newWord.trim()&&!words.includes(newWord.trim().toLowerCase())){setWords([...words,newWord.trim().toLowerCase()]);setNew('')}};
+  const remove=(i)=>setWords(words.filter((_,j)=>j!==i));
+  return(<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <h3>🛡️ 敏感词管理 ({words.length}个)</h3>
+    {loading?<div>加载中…</div>:<>
+    <div style={{display:'flex',gap:6,marginBottom:12}}>
+      <input value={newWord} onChange={e=>setNew(e.target.value)} placeholder="输入敏感词…" onKeyDown={e=>e.key==='Enter'&&add()} style={{flex:1}}/>
+      <button className="btn-sm btn-primary" onClick={add}>添加</button>
+    </div>
+    <div style={{maxHeight:300,overflow:'auto',display:'flex',flexWrap:'wrap',gap:6}}>
+      {words.map((w,i)=><span key={i} style={{padding:'4px 10px',borderRadius:8,background:'#EF444420',color:'#EF4444',fontSize:12,display:'flex',alignItems:'center',gap:4}}>
+        {w} <button onClick={()=>remove(i)} style={{background:'none',border:'none',color:'#EF4444',cursor:'pointer',fontSize:14,padding:0}}>×</button>
+      </span>)}
+      {words.length===0&&<span style={{color:'#6B7280',fontSize:12}}>暂无敏感词</span>}
+    </div>
+    </>}
+    <div className="actions">
+      <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
+      <button className="btn-sm btn-primary" onClick={save}>保存</button>
+    </div>
+  </div></div>);
+}
+
 // ===== PLACEHOLDER PAGES =====
 function PlaceholderPage({title,icon}){
   return(<div className="container" style={{textAlign:'center',paddingTop:80}}>
@@ -359,7 +469,7 @@ function App(){
   const pages={
     dashboard:<DashboardPage/>,
     users:<UsersPage/>,
-    chat:<PlaceholderPage title="聊天管理" icon="💬"/>,
+    chat:<ChatPage/>,
     content:<PlaceholderPage title="内容审核" icon="📋"/>,
     llm:<PlaceholderPage title="LLM配置" icon="🤖"/>,
     logs:<LogsPage/>,

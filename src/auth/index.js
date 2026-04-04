@@ -511,7 +511,103 @@ module.exports = {
   adminBanUser,
   adminDeleteUser,
   adminGetStats,
+  // Admin chat management
+  adminListConversations,
+  adminGetConversation,
+  adminDeleteMessage,
+  // Sensitive words
+  getSensitiveWords,
+  setSensitiveWords,
+  checkSensitive,
 };
+
+// ============ Sensitive Words ============
+
+const SENSITIVE_FILE = path.join(DATA_DIR, 'sensitive-words.json');
+let sensitiveWords = [];
+try { if (fs.existsSync(SENSITIVE_FILE)) sensitiveWords = JSON.parse(fs.readFileSync(SENSITIVE_FILE, 'utf-8')); } catch (e) {}
+
+function getSensitiveWords() { return sensitiveWords; }
+function setSensitiveWords(words) {
+  sensitiveWords = words.filter(w => w.trim()).map(w => w.trim().toLowerCase());
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(SENSITIVE_FILE, JSON.stringify(sensitiveWords, null, 2));
+  } catch (e) {}
+  return { success: true, count: sensitiveWords.length };
+}
+function checkSensitive(text) {
+  if (!text || sensitiveWords.length === 0) return { hit: false };
+  const lower = text.toLowerCase();
+  const found = sensitiveWords.filter(w => lower.includes(w));
+  return { hit: found.length > 0, words: found };
+}
+
+// ============ Admin: Chat Management ============
+
+function _ensureMessagesLoaded() {
+  if (!global._yuanheMessages) {
+    try {
+      const msgFile = path.join(DATA_DIR, 'messages.json');
+      if (fs.existsSync(msgFile)) global._yuanheMessages = JSON.parse(fs.readFileSync(msgFile, 'utf-8'));
+      else global._yuanheMessages = {};
+    } catch (e) { global._yuanheMessages = {}; }
+  }
+}
+
+function adminListConversations({ search, page = 1, limit = 20 } = {}) {
+  _ensureMessagesLoaded();
+  let convs = Object.entries(global._yuanheMessages).map(([key, msgs]) => {
+    const [a, b] = key.split(':');
+    const userA = users[a]; const userB = users[b];
+    const lastMsg = msgs[msgs.length - 1];
+    return {
+      key, userA: a, userB: b,
+      nameA: userA?.profile?.name || userA?.phone || a.substring(0, 8),
+      nameB: userB?.profile?.name || userB?.phone || b.substring(0, 8),
+      messageCount: msgs.length,
+      lastMessage: lastMsg?.text?.substring(0, 50) || '',
+      lastTime: lastMsg?.createdAt || '',
+    };
+  });
+  // 按最后消息时间倒序
+  convs.sort((a, b) => (b.lastTime || '').localeCompare(a.lastTime || ''));
+  if (search) {
+    const s = search.toLowerCase();
+    convs = convs.filter(c => c.nameA.toLowerCase().includes(s) || c.nameB.toLowerCase().includes(s) || c.key.includes(s));
+  }
+  const total = convs.length;
+  return { total, page, limit, items: convs.slice((page - 1) * limit, page * limit) };
+}
+
+function adminGetConversation(convKey, limit = 100) {
+  _ensureMessagesLoaded();
+  const msgs = global._yuanheMessages[convKey] || [];
+  const [a, b] = convKey.split(':');
+  return {
+    key: convKey,
+    nameA: users[a]?.profile?.name || a.substring(0, 8),
+    nameB: users[b]?.profile?.name || b.substring(0, 8),
+    messages: msgs.slice(-limit).map(m => ({
+      ...m,
+      fromName: users[m.from]?.profile?.name || m.from?.substring(0, 8) || '?',
+    })),
+  };
+}
+
+function adminDeleteMessage(convKey, messageId) {
+  _ensureMessagesLoaded();
+  const msgs = global._yuanheMessages[convKey];
+  if (!msgs) return { error: '会话不存在' };
+  const idx = msgs.findIndex(m => m.id === messageId);
+  if (idx < 0) return { error: '消息不存在' };
+  msgs.splice(idx, 1);
+  try {
+    const msgFile = path.join(DATA_DIR, 'messages.json');
+    fs.writeFileSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
+  } catch (e) {}
+  return { success: true };
+}
 
 // ============ Admin: User Management ============
 
