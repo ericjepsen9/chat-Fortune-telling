@@ -1359,7 +1359,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const ms=getMS(mode);
   const isPair=['hehun','synastry','hepan'].includes(mode);
   const modeInfo=MODES.find(m=>m.id===mode)||MODES[0];
-  const mc=modeInfo.c;
+  const elColorMap={木:'#16A34A',火:'#DC2626',土:'#D97706',金:'#71717A',水:'#2563EB'};
+  const mc=(ms.result?.structured?.element&&elColorMap[ms.result.structured.element])||modeInfo.c;
 
   // Pair input
   const [p2,setP2]=useState({year:'1992',month:'3',day:'22',hour:'8',gender:profile.gender==='male'?'female':'male'});
