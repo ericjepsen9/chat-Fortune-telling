@@ -3345,25 +3345,31 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   {showAbout&&<AboutModal onClose={()=>setShowAbout(false)}/>}
   {showTerms&&<TermsModal onClose={()=>setShowTerms(false)}/>}
   {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
-  {/* My posts modal */}
-  {showMyPosts&&<div onClick={()=>setShowMyPosts(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease',maxHeight:'80vh',overflow:'auto'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-        <div style={{fontSize:16,fontWeight:700,color:T.text}}>我的动态</div>
-        <button onClick={()=>setShowMyPosts(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
-      </div>
+  {/* My posts page */}
+  {showMyPosts&&<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
+    <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,position:'sticky',top:0,zIndex:1}}>
+      <button onClick={()=>setShowMyPosts(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
+      <div style={{flex:1,fontSize:16,fontWeight:700,color:T.text}}>我的动态</div>
+      <button onClick={()=>{setShowMyPosts(false);goTo(S.DISCOVER)}} style={{fontSize:12,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>去发布</button>
+    </div>
+    <div style={{padding:'12px 16px 80px'}}>
       {(()=>{
         const posts=JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]');
-        if(posts.length===0)return <div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}>
-          <div style={{fontSize:28,marginBottom:8}}>✏️</div>
-          <div style={{fontSize:13}}>还没有发布过动态</div>
-          <button onClick={()=>{setShowMyPosts(false);goTo(S.DISCOVER)}} style={{marginTop:12,padding:'8px 20px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条</button>
+        if(posts.length===0)return <div style={{textAlign:'center',padding:'60px 20px',color:T.textThi}}>
+          <div style={{fontSize:48,marginBottom:12}}>✏️</div>
+          <div style={{fontSize:16,fontWeight:600,color:T.text}}>还没有发布过动态</div>
+          <div style={{fontSize:13,marginTop:8,lineHeight:1.7}}>在缘友圈分享你的想法和感悟</div>
+          <button onClick={()=>{setShowMyPosts(false);goTo(S.DISCOVER)}} style={{marginTop:16,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条</button>
         </div>;
-        return posts.map((p,i)=><div key={p.id||i} style={{padding:'14px 0',borderBottom:i<posts.length-1?`1px solid ${T.border}`:'none'}}>
-          <div style={{fontSize:14,color:T.text,lineHeight:1.7}}>{p.content}</div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
-            <span style={{fontSize:11,color:T.textThi}}>{p.time||'刚刚'}{p.likes>0?` · ❤️ ${p.likes}`:''}{p.comments>0?` · 💬 ${p.comments}`:''}</span>
-            <button onClick={()=>{const updated=posts.filter((_,j)=>j!==i);localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));setShowMyPosts(false);setTimeout(()=>setShowMyPosts(true),100);window.yuanheToast?.('已删除')}} style={{fontSize:10,color:T.primary,background:'none',border:'none',cursor:'pointer'}}>删除</button>
+        return posts.map((p,i)=><div key={p.id||i} style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:10}}>
+          <div style={{fontSize:14,color:T.text,lineHeight:1.8}}>{p.content}</div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:10,paddingTop:10,borderTop:`1px solid ${T.border}`}}>
+            <div style={{display:'flex',gap:12,fontSize:11,color:T.textThi}}>
+              <span>{p.time||'刚刚'}</span>
+              {p.likes>0&&<span>❤️ {p.likes}</span>}
+              {p.comments>0&&<span>💬 {p.comments}</span>}
+            </div>
+            <button onClick={()=>{window.yuanheConfirm('确定删除这条动态？',()=>{const updated=posts.filter((_,j)=>j!==i);localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));setShowMyPosts(false);setTimeout(()=>setShowMyPosts(true),100);window.yuanheToast?.('已删除')})}} style={{fontSize:11,color:T.primary,background:'none',border:'none',cursor:'pointer'}}>删除</button>
           </div>
         </div>);
       })()}
