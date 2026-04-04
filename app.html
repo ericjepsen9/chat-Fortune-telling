@@ -1227,7 +1227,19 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       <button onClick={()=>swipe('left')} style={{width:50,height:50,borderRadius:25,border:`2px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:T.shadow}}><Icons.x s={22} c={T.textThi}/></button>
       <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:T.primary,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 3px 12px ${T.primary}40`}}><Icons.heart s={22} c="#fff" fill="#fff"/></button>
     </div>}
-    {matchUser&&<MatchPopup user={matchUser} onChat={()=>{const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS)}} onClose={()=>setMatchUser(null)}/>}
+    {matchUser&&<MatchPopup user={matchUser} onChat={()=>{
+      if(matchUser.realUserId){
+        // 真实用户: 发送好友请求
+        apiPost('/api/friends/request',{toId:matchUser.realUserId,message:'我们匹配成功啦！'}).then(r=>{
+          if(r.success)window.yuanheToast?.('好友请求已发送 💌');
+          else if(r.error)window.yuanheToast?.(r.error);
+        }).catch(()=>{});
+        setMatchUser(null);
+      }else{
+        // Bot: 保持原有逻辑
+        const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS);
+      }
+    }} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
     {/* Fortune Wheel — fullscreen */}
     {showWheel&&<div style={{position:'fixed',inset:0,zIndex:250,background:'#0F0F1A',display:'flex',flexDirection:'column',overflow:'auto'}}>
@@ -2817,6 +2829,14 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
     return()=>{offMsg();offTyping();offRead()};
   },[activeId,refreshConvs]);
 
+  // 好友请求
+  const [pendingReqs,setPendingReqs]=useState([]);
+  useEffect(()=>{if(localStorage.getItem('yuanhe_token'))apiGet('/api/friends/pending').then(setPendingReqs).catch(()=>{})},[]);
+  useEffect(()=>{
+    const off=WsManager.on('friend_request',(data)=>{if(data.request)setPendingReqs(prev=>[data.request,...prev])});
+    return off;
+  },[]);
+
   const [showQuick,setShowQuick]=useState(false);
   const [showEmoji,setShowEmoji]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
@@ -3210,6 +3230,24 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
       </div>
     </div>
+
+    {/* Friend requests */}
+    {pendingReqs.length>0&&<div style={{padding:'0 16px',marginBottom:8}}>
+      <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:6}}>好友请求 ({pendingReqs.length})</div>
+      {pendingReqs.map(req=>(
+        <div key={req.id} style={{background:T.card,borderRadius:14,padding:'12px 14px',boxShadow:T.shadow,marginBottom:6,display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#FDE68A,#FCD34D)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{req.fromAvatar||'👤'}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:600,color:T.text}}>{req.fromName||'缘友'}</div>
+            <div style={{fontSize:11,color:T.textThi}}>{req.message||'想和你成为好友'}</div>
+          </div>
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={()=>{apiPost('/api/friends/respond',{requestId:req.id,accept:true}).then(r=>{if(r.success){setPendingReqs(p=>p.filter(x=>x.id!==req.id));window.yuanheToast?.('已接受 💕')}}).catch(()=>{})}} style={{padding:'6px 14px',borderRadius:10,border:'none',background:T.accent2,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>接受</button>
+            <button onClick={()=>{apiPost('/api/friends/respond',{requestId:req.id,accept:false}).then(()=>setPendingReqs(p=>p.filter(x=>x.id!==req.id))).catch(()=>{})}} style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:'none',color:T.textSec,fontSize:12,cursor:'pointer'}}>忽略</button>
+          </div>
+        </div>
+      ))}
+    </div>}
 
     {/* Conversation list */}
     {filteredConvs.length===0?

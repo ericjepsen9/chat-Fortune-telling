@@ -396,6 +396,84 @@ function getMatches(userId) {
   return matches;
 }
 
+// ============ Friend Requests ============
+
+const FRIENDS_FILE = path.join(DATA_DIR, 'friends.json');
+let friendData = { requests: [], accepted: [] };
+// requests: [{ id, from, to, message, status:'pending'|'accepted'|'rejected', createdAt }]
+// accepted: [{ userA, userB, createdAt }]
+try { if (fs.existsSync(FRIENDS_FILE)) friendData = JSON.parse(fs.readFileSync(FRIENDS_FILE, 'utf-8')); } catch (e) {}
+function saveFriends() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(FRIENDS_FILE, JSON.stringify(friendData, null, 2));
+  } catch (e) {}
+}
+
+function sendFriendRequest(fromId, toId, message) {
+  if (fromId === toId) return { error: '不能添加自己' };
+  // 已经是好友?
+  const pair = [fromId, toId].sort();
+  if (friendData.accepted.find(a => a.userA === pair[0] && a.userB === pair[1])) {
+    return { error: '已经是好友了' };
+  }
+  // 已有pending请求?
+  const existing = friendData.requests.find(r => r.from === fromId && r.to === toId && r.status === 'pending');
+  if (existing) return { error: '已发送过请求', id: existing.id };
+
+  const req = {
+    id: crypto.randomUUID(),
+    from: fromId,
+    to: toId,
+    message: (message || '').substring(0, 200),
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  friendData.requests.push(req);
+  saveFriends();
+
+  // 附加发送者信息
+  const fromUser = users[fromId];
+  return { success: true, request: { ...req, fromName: fromUser?.profile?.name, fromAvatar: fromUser?.profile?.avatar } };
+}
+
+function respondFriendRequest(requestId, userId, accept) {
+  const req = friendData.requests.find(r => r.id === requestId && r.to === userId && r.status === 'pending');
+  if (!req) return { error: '请求不存在或已处理' };
+
+  req.status = accept ? 'accepted' : 'rejected';
+  if (accept) {
+    const pair = [req.from, req.to].sort();
+    friendData.accepted.push({ userA: pair[0], userB: pair[1], createdAt: new Date().toISOString() });
+  }
+  saveFriends();
+  return { success: true, status: req.status, from: req.from, to: req.to };
+}
+
+function getPendingRequests(userId) {
+  return friendData.requests
+    .filter(r => r.to === userId && r.status === 'pending')
+    .map(r => {
+      const u = users[r.from];
+      return { ...r, fromName: u?.profile?.name || '缘友', fromAvatar: u?.profile?.avatar || '👤', fromGender: u?.profile?.gender };
+    });
+}
+
+function getFriends(userId) {
+  return friendData.accepted
+    .filter(a => a.userA === userId || a.userB === userId)
+    .map(a => {
+      const friendId = a.userA === userId ? a.userB : a.userA;
+      const u = users[friendId];
+      return { userId: friendId, name: u?.profile?.name || '缘友', avatar: u?.profile?.avatar, gender: u?.profile?.gender, since: a.createdAt };
+    });
+}
+
+function areFriends(userA, userB) {
+  const pair = [userA, userB].sort();
+  return !!friendData.accepted.find(a => a.userA === pair[0] && a.userB === pair[1]);
+}
+
 module.exports = {
   JWT_SECRET,
   sendCode,
@@ -417,6 +495,11 @@ module.exports = {
   getCandidates,
   recordSwipe,
   getMatches,
+  sendFriendRequest,
+  respondFriendRequest,
+  getPendingRequests,
+  getFriends,
+  areFriends,
 };
 
 // ============ Posts (缘友圈) ============

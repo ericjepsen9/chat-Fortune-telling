@@ -357,6 +357,39 @@ app.get('/api/matches', auth.authMiddleware, (req, res) => {
   res.json(matches);
 });
 
+// ============ Friend Requests ============
+
+app.post('/api/friends/request', auth.authMiddleware, (req, res) => {
+  const { toId, message } = req.body;
+  if (!toId) return res.status(400).json({ error: '缺少目标用户' });
+  const result = auth.sendFriendRequest(req.user.id, toId, message);
+  if (result.error) return res.status(400).json(result);
+  // 通过WebSocket通知对方
+  const wsModule = require('./src/websocket');
+  wsModule.sendToUser(toId, { type: 'friend_request', request: result.request });
+  res.json(result);
+});
+
+app.post('/api/friends/respond', auth.authMiddleware, (req, res) => {
+  const { requestId, accept } = req.body;
+  const result = auth.respondFriendRequest(requestId, req.user.id, accept);
+  if (result.error) return res.status(400).json(result);
+  // 通知发送方
+  if (result.status === 'accepted') {
+    const wsModule = require('./src/websocket');
+    wsModule.sendToUser(result.from, { type: 'friend_accepted', from: req.user.id });
+  }
+  res.json(result);
+});
+
+app.get('/api/friends/pending', auth.authMiddleware, (req, res) => {
+  res.json(auth.getPendingRequests(req.user.id));
+});
+
+app.get('/api/friends', auth.authMiddleware, (req, res) => {
+  res.json(auth.getFriends(req.user.id));
+});
+
 // ============ Routes ============
 
 // 系统监控API
