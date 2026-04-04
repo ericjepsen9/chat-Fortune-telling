@@ -3023,6 +3023,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showBlacklist,setShowBlacklist]=useState(false);
   const [showMyPosts,setShowMyPosts]=useState(false);
   const [generatingPersonality,setGeneratingPersonality]=useState(false);
+  const [showPersonality,setShowPersonality]=useState(false);
   const history=(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}})();
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
@@ -3103,7 +3104,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
                 <span style={{fontSize:15}}>{elEmoji[el]||'🔥'}</span>
                 <span style={{fontSize:13,fontWeight:700,color:T.text}}>我的性格</span>
               </div>
-              <button onClick={()=>goTo(S.AI,'bazi')} style={{fontSize:11,color:elColors[el],background:'none',border:'none',cursor:'pointer',fontWeight:500,opacity:.7}}>查看详情 ›</button>
+              <button onClick={()=>setShowPersonality(true)} style={{fontSize:11,color:elColors[el],background:'none',border:'none',cursor:'pointer',fontWeight:500,opacity:.7}}>查看详情 ›</button>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,padding:'12px 14px',background:'rgba(255,255,255,0.6)',borderRadius:12}}>
               <div style={{width:42,height:42,borderRadius:21,background:`${elColors[el]}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,border:`1.5px solid ${elColors[el]}18`}}>{elEmoji[el]||'🔥'}</div>
@@ -3353,6 +3354,59 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   {showAbout&&<AboutModal onClose={()=>setShowAbout(false)}/>}
   {showTerms&&<TermsModal onClose={()=>setShowTerms(false)}/>}
   {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
+  {/* Personality detail page */}
+  {showPersonality&&(()=>{
+    try{
+      const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');
+      const bz=saved.bazi?.result?.structured;
+      const resp=saved.bazi?.result?.response||'';
+      if(!bz)return null;
+      const elEmoji={木:'🌿',火:'🔥',土:'⛰️',金:'✨',水:'💧'};
+      const elDesc={木:'温润如木，内心柔软',火:'热情如火，充满活力',土:'沉稳如土，踏实可靠',金:'果敢如金，意志坚定',水:'灵动如水，善于变通'};
+      const elColors={木:'#16A34A',火:'#DC2626',土:'#D97706',金:'#71717A',水:'#2563EB'};
+      const elBg={木:'linear-gradient(135deg,#F0FDF4,#DCFCE7)',火:'linear-gradient(135deg,#FEF2F2,#FEE2E2)',土:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',金:'linear-gradient(135deg,#FAFAFA,#F4F4F5)',水:'linear-gradient(135deg,#EFF6FF,#DBEAFE)'};
+      const el=bz.element||'火';
+      const defaultTraits={木:['温和','有耐心','富同情心','固执'],火:['热情','有领导力','直觉强','急躁'],土:['稳重','踏实','包容','保守'],金:['果断','正义感','有原则','倔强'],水:['聪慧','灵活','善交际','多变']};
+      const traits=bz.personality?.length>0?bz.personality:(defaultTraits[el]||defaultTraits['火']);
+      const cleanResp=resp.replace(/[#*]/g,'').trim();
+      const paragraphs=cleanResp.split(/\n+/).filter(p=>p.trim().length>5);
+      return <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,position:'sticky',top:0,zIndex:1}}>
+          <button onClick={()=>setShowPersonality(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
+          <div style={{flex:1,fontSize:16,fontWeight:700,color:T.text}}>我的性格分析</div>
+        </div>
+        <div style={{padding:'16px 16px 80px'}}>
+          {/* Hero card */}
+          <div style={{background:elBg[el],borderRadius:16,padding:20,marginBottom:16,textAlign:'center'}}>
+            <div style={{fontSize:48,marginBottom:8}}>{elEmoji[el]}</div>
+            <div style={{fontSize:22,fontWeight:800,color:elColors[el]}}>{el}系性格</div>
+            <div style={{fontSize:14,color:T.textSec,marginTop:6}}>{elDesc[el]}</div>
+            <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap',marginTop:14}}>
+              {traits.slice(0,4).map(t=><span key={t} style={{padding:'5px 14px',borderRadius:20,fontSize:12,fontWeight:500,background:'rgba(255,255,255,0.7)',color:T.text}}>{t}</span>)}
+            </div>
+          </div>
+          {/* Analysis content */}
+          <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:10}}>详细分析</div>
+          <div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow}}>
+            {paragraphs.length>0?paragraphs.map((p,i)=><div key={i} style={{fontSize:14,color:T.text,lineHeight:1.8,marginBottom:i<paragraphs.length-1?14:0}}>{p.trim()}</div>)
+            :<div style={{fontSize:14,color:T.textSec,lineHeight:1.8}}>{cleanResp||'暂无详细分析'}</div>}
+          </div>
+          {/* Share/redo buttons */}
+          <div style={{display:'flex',gap:10,marginTop:16}}>
+            <button onClick={()=>{navigator.clipboard?.writeText(`我的性格: ${el}系 — ${elDesc[el]}\n性格标签: ${traits.join('、')}`);window.yuanheToast?.('已复制到剪贴板')}} style={{flex:1,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer'}}>📋 复制分享</button>
+            <button onClick={async()=>{
+              setShowPersonality(false);
+              setGeneratingPersonality(true);
+              try{const r=await apiPost('/api/divine',{mode:'bazi',question:'重新分析我的性格特点',profile,depth:'simple'});
+                if(r){const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');s.bazi={result:r,chatHistory:[]};localStorage.setItem('yuanhe_mode_results',JSON.stringify(s));window.yuanheToast?.('已重新生成 ✨')}}
+              catch(e){window.yuanheToast?.('生成失败')}
+              setGeneratingPersonality(false);
+            }} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:T.accent2,fontSize:13,color:'#fff',fontWeight:600,cursor:'pointer'}}>🔄 重新生成</button>
+          </div>
+        </div>
+      </div>;
+    }catch(e){return null}
+  })()}
   {/* My posts page */}
   {showMyPosts&&<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
     <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,position:'sticky',top:0,zIndex:1}}>
