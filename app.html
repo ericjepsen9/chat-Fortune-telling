@@ -2197,11 +2197,15 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
         </div>
       </div>
 
-      {/* Quick entry cards — unified accent2 tint */}
+      {/* Quick entry cards */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-        {[{icon:'☰',title:'八字排盘',desc:'深度命运分析',m:'bazi'},{icon:'✦',title:'塔罗指引',desc:'今日一牌',m:'tarot'},{icon:'❀',title:'梅花速断',desc:'快速问事吉凶',m:'meihua'},{icon:'💑',title:'合婚测试',desc:'看两人缘分',m:'hehun'}].map((it,i)=>
+        {[{icon:'🔯',title:'八字排盘',desc:'深度命运分析',m:'bazi',c:'#8B5CF6'},
+          {icon:'🃏',title:'塔罗指引',desc:'今日一牌',m:'tarot',c:'#0D9488'},
+          {icon:'🌸',title:'梅花速断',desc:'快速问事吉凶',m:'meihua',c:'#D97706'},
+          {icon:'💞',title:'合婚测试',desc:'看两人缘分',m:'hehun',c:'#DB2777'}
+        ].map((it,i)=>
           <button key={it.m} className="anim-in" onClick={()=>goTo(S.AI,it.m)} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'16px 14px',border:`1px solid ${T.border}`,cursor:'pointer',textAlign:'left',boxShadow:T.shadow}}>
-            <div style={{width:36,height:36,borderRadius:10,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,marginBottom:8}}>{it.icon}</div>
+            <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${it.c}15,${it.c}08)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,marginBottom:10}}>{it.icon}</div>
             <div style={{fontSize:13,fontWeight:600,color:T.text}}>{it.title}</div>
             <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div>
           </button>
