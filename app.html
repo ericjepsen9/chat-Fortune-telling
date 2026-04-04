@@ -765,10 +765,7 @@ function DailyStatusModal({profile,onClose}){
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
         <div style={{fontSize:15,fontWeight:700,color:T.text}}>命理日历</div>
-        <div style={{display:'flex',gap:6}}>
-          <button onClick={()=>{const text=`📅 ${selDateStr}\n${sel.tg}${sel.dz}日 · ${sel.wx}旺\n\n🎯 ${t.theme}\n\n📌 关键词: ${t.keywords.join('、')}\n💕 关系: ${t.relation[0]}\n✅ 行动: ${t.action[0]}\n\n—— 缘合 · 命理日历`;navigator.clipboard?.writeText(text);window.yuanheToast?.('已复制，可分享给好友')}} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>📤</button>
-          <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>今天</button>
-        </div>
+        <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>今天</button>
       </div>
 
       {/* Month navigation */}
@@ -819,6 +816,8 @@ function DailyStatusModal({profile,onClose}){
           </div>)}
         </div>
       ))}
+      {/* Share */}
+      <button onClick={()=>{const text=`📅 ${selDateStr}\n${sel.tg}${sel.dz}日 · ${sel.wx}旺\n\n🎯 ${t.theme}\n\n📌 关键词: ${t.keywords.join('、')}\n💕 关系: ${t.relation[0]}\n✅ 行动: ${t.action[0]}\n\n—— 缘合 · 命理日历`;navigator.clipboard?.writeText(text);window.yuanheToast?.('已复制，可分享给好友')}} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 分享今日运势</button>
     </div>
   </div>);
 }
