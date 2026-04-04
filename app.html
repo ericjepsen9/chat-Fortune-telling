@@ -2395,6 +2395,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   const [searchQuery,setSearchQuery]=useState('');
   const [searchMode,setSearchMode]=useState(false);
   const [showReport,setShowReport]=useState(false);
+  const [msgAction,setMsgAction]=useState(null); // {id,text,canRecall}
   const [msgSearch,setMsgSearch]=useState('');
   const [recording,setRecording]=useState(false);
   const [recordDuration,setRecordDuration]=useState(0);
@@ -2616,7 +2617,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         {(searchMode&&searchQuery?msgs.filter(m=>!m.recalled&&m.text&&m.text.toLowerCase().includes(searchQuery.toLowerCase())):msgs).map((msg,idx)=>(
           <div key={msg.id} className="anim-in" style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:12}}>
             <div style={{maxWidth:'72%'}}>
-              <div onClick={()=>{if(msg.role==='user'&&!msg.recalled){const now=Date.now();const msgTime=msg.ts||0;if(now-msgTime<120000){if(confirm('撤回这条消息？')){ChatStore.recallMessage(activeConv.id,msg.id);refreshConvs()}}else{navigator.clipboard?.writeText(msg.text);showToast('已复制')}}}}
+              <div onClick={()=>{if(msg.role==='user'&&!msg.recalled&&!msg.image&&!msg.voice){const canRecall=Date.now()-(msg.ts||0)<120000;setMsgAction({id:msg.id,text:msg.text,canRecall})}else if(msg.role!=='user'&&!msg.recalled&&msg.text){navigator.clipboard?.writeText(msg.text);showToast('已复制')}}}
                 style={{padding:msg.recalled?'6px 14px':msg.image?'4px':'10px 14px',borderRadius:msg.role==='user'?'18px 18px 4px 18px':'18px 18px 18px 4px',
                 background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.card,
                 color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:14,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
@@ -2714,6 +2715,19 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
               background:T.bg,
               color:T.textSec,fontSize:16,cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>🎤</button>
         }
+      </div>}
+      {/* Message action sheet */}
+      {msgAction&&<div onClick={()=>setMsgAction(null)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'12px 16px 30px',animation:'slideUp .3s ease'}}>
+          <div style={{width:32,height:4,borderRadius:2,background:T.border,margin:'0 auto 12px'}}/>
+          <button onClick={()=>{navigator.clipboard?.writeText(msgAction.text);showToast('已复制');setMsgAction(null)}} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:T.text,cursor:'pointer'}}>
+            <span style={{fontSize:16,width:24,textAlign:'center'}}>📋</span><span>复制</span>
+          </button>
+          {msgAction.canRecall&&<button onClick={()=>{ChatStore.recallMessage(activeConv.id,msgAction.id);refreshConvs();setMsgAction(null);showToast('已撤回')}} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:T.primary,cursor:'pointer'}}>
+            <span style={{fontSize:16,width:24,textAlign:'center'}}>↩️</span><span>撤回</span>
+          </button>}
+          <button onClick={()=>setMsgAction(null)} style={{display:'block',width:'100%',padding:'14px',border:'none',background:'none',fontSize:14,color:T.textThi,cursor:'pointer',marginTop:4,textAlign:'center'}}>取消</button>
+        </div>
       </div>}
       {/* Toast */}
       {toast&&<div style={{position:'fixed',top:'40%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.75)',color:'#fff',padding:'10px 24px',borderRadius:20,fontSize:13,zIndex:600,animation:'fadeIn .2s ease'}}>{toast}</div>}
