@@ -86,6 +86,7 @@ function onProviderError(name) {
 // 引入新的 AI 服务
 const aiService = require('./src/ai-service');
 const logger = require('./src/logger');
+const auth = require('./src/auth');
 
 // ============ LLM 调用 ============
 
@@ -280,6 +281,42 @@ app.use((req, res, next) => {
   const origEnd = res.end.bind(res);
   res.end = function(...args) { logger.logResponse(reqCtx, res.statusCode); return origEnd(...args); };
   next();
+});
+
+// ============ Auth Routes ============
+
+// 发送验证码
+app.post('/api/auth/send-code', async (req, res) => {
+  const { phone } = req.body;
+  const result = await auth.sendCode(phone);
+  res.status(result.code || 200).json(result);
+});
+
+// 验证码登录/注册
+app.post('/api/auth/verify', (req, res) => {
+  const { phone, code } = req.body;
+  const result = auth.verifyCode(phone, code);
+  res.status(result.code || 200).json(result);
+});
+
+// 获取当前用户信息
+app.get('/api/auth/me', auth.authMiddleware, (req, res) => {
+  const profile = auth.getProfile(req.user.id);
+  res.json(profile);
+});
+
+// 更新用户资料
+app.post('/api/auth/profile', auth.authMiddleware, (req, res) => {
+  const result = auth.updateProfile(req.user.id, req.body);
+  if (!result) return res.status(404).json({ error: '用户不存在' });
+  res.json(result);
+});
+
+// 迁移本地数据到服务器
+app.post('/api/auth/migrate', auth.authMiddleware, (req, res) => {
+  const result = auth.migrateLocalData(req.user.id, req.body);
+  if (!result) return res.status(404).json({ error: '用户不存在' });
+  res.json(result);
 });
 
 // ============ Routes ============

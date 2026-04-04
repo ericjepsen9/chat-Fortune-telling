@@ -130,7 +130,7 @@ function getThemeMode(){
   return 'light';
 }
 let T=THEMES[getThemeMode()];
-const S={SPLASH:0,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
+const S={SPLASH:0,LOGIN:2,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
 const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦁','🐸','🦄'];
 const GRADS=['linear-gradient(135deg,#F9E4E4,#F4D5DB)','linear-gradient(135deg,#D5F0ED,#D0E8EE)','linear-gradient(135deg,#E5DEF5,#DDD8F0)','linear-gradient(135deg,#F5E6D0,#F9E4E4)','linear-gradient(135deg,#D5ECDF,#D5F0ED)','linear-gradient(135deg,#F4D5DB,#F5E6D0)','linear-gradient(135deg,#D0E8EE,#E5DEF5)','linear-gradient(135deg,#F0E4C8,#F5E6D0)','linear-gradient(135deg,#DDD8F0,#F9E4E4)','linear-gradient(135deg,#D5F0ED,#D5ECDF)','linear-gradient(135deg,#F9E4E4,#E5DEF5)','linear-gradient(135deg,#F5E6D0,#D5F0ED)'];
@@ -198,8 +198,9 @@ const BOTS=[
 // Global error handlers
 window.addEventListener('unhandledrejection',e=>{console.error('Unhandled rejection:',e.reason);e.preventDefault();if(window.yuanheToast)window.yuanheToast('网络异常，请稍后重试')});
 
-async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
-async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
+function authHeaders(){const t=localStorage.getItem('yuanhe_token');return t?{'Authorization':'Bearer '+t}:{}}
+async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
+async function apiGet(p){const r=await fetch(p,{headers:authHeaders()});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 
 // ===== CHAT DATA LAYER =====
 const ChatStore={
@@ -476,6 +477,108 @@ function BirthScreen({onSubmit}){
       </div>
     </div>
   </div>}
+  </div>);
+}
+
+// ===== LOGIN SCREEN (手机号+验证码) =====
+function LoginScreen({onLogin}){
+  const [phone,setPhone]=useState('');
+  const [code,setCode]=useState('');
+  const [step,setStep]=useState('phone'); // 'phone' | 'code'
+  const [sending,setSending]=useState(false);
+  const [verifying,setVerifying]=useState(false);
+  const [err,setErr]=useState('');
+  const [countdown,setCountdown]=useState(0);
+  const codeRef=useRef(null);
+
+  // 倒计时
+  useEffect(()=>{if(countdown<=0)return;const t=setTimeout(()=>setCountdown(countdown-1),1000);return()=>clearTimeout(t)},[countdown]);
+
+  const sendCode=async()=>{
+    setErr('');setSending(true);
+    try{
+      const r=await apiPost('/api/auth/send-code',{phone});
+      if(r.error){setErr(r.error);setSending(false);return}
+      setStep('code');setCountdown(60);setSending(false);
+      setTimeout(()=>codeRef.current?.focus(),300);
+    }catch(e){setErr('网络错误，请重试');setSending(false)}
+  };
+
+  const verify=async()=>{
+    setErr('');setVerifying(true);
+    try{
+      const r=await apiPost('/api/auth/verify',{phone,code});
+      if(r.error){setErr(r.error);setVerifying(false);return}
+      // 保存token
+      localStorage.setItem('yuanhe_token',r.token);
+      onLogin({token:r.token,isNew:r.isNew,user:r.user});
+    }catch(e){setErr('网络错误，请重试');setVerifying(false)}
+  };
+
+  const phoneValid=/^1[3-9]\d{9}$/.test(phone);
+
+  return(<div style={{height:'100%',overflow:'auto',background:T.bg}}>
+    <div style={{padding:'80px 24px 40px',maxWidth:360,margin:'0 auto'}}>
+      {/* Logo */}
+      <div className="anim-in" style={{textAlign:'center',marginBottom:48}}>
+        <div style={{fontSize:48,marginBottom:12}}>🔮</div>
+        <div className="serif" style={{fontSize:28,fontWeight:700,color:T.text}}>缘合</div>
+        <div style={{fontSize:13,color:T.textSec,marginTop:8}}>命理契合 · 缘分天成</div>
+      </div>
+
+      {step==='phone'&&<div className="anim-in">
+        <div style={{fontSize:15,fontWeight:600,color:T.text,marginBottom:16}}>手机号登录</div>
+        <div style={{position:'relative',marginBottom:16}}>
+          <span style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textSec}}>+86</span>
+          <input
+            type="tel" maxLength={11} value={phone}
+            onChange={e=>setPhone(e.target.value.replace(/\D/g,''))}
+            placeholder="请输入手机号"
+            style={{width:'100%',padding:'14px 14px 14px 52px',borderRadius:14,border:`1.5px solid ${T.border}`,background:T.card,fontSize:15,color:T.text,outline:'none'}}
+          />
+        </div>
+        {err&&<div style={{fontSize:12,color:'#EF4444',marginBottom:12}}>{err}</div>}
+        <button onClick={sendCode} disabled={!phoneValid||sending}
+          style={{width:'100%',padding:'15px',borderRadius:14,border:'none',background:phoneValid?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.border,color:phoneValid?'#fff':T.textThi,fontSize:15,fontWeight:600,cursor:phoneValid?'pointer':'default'}}>
+          {sending?'发送中…':'获取验证码'}
+        </button>
+        <div style={{fontSize:11,color:T.textThi,textAlign:'center',marginTop:20,lineHeight:1.6}}>
+          登录即表示同意《用户协议》和《隐私政策》
+        </div>
+      </div>}
+
+      {step==='code'&&<div className="anim-in">
+        <button onClick={()=>{setStep('phone');setCode('');setErr('')}} style={{background:'none',border:'none',fontSize:13,color:T.textSec,cursor:'pointer',marginBottom:16}}>← 返回修改</button>
+        <div style={{fontSize:15,fontWeight:600,color:T.text,marginBottom:6}}>输入验证码</div>
+        <div style={{fontSize:13,color:T.textSec,marginBottom:20}}>已发送到 {phone.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2')}</div>
+        {/* 6-digit code input */}
+        <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:20}}>
+          {[0,1,2,3,4,5].map(i=>(
+            <div key={i} style={{width:44,height:52,borderRadius:12,border:`2px solid ${code.length===i?T.accent2:code[i]?T.accent2+'60':T.border}`,background:T.card,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:700,color:T.text,transition:'border .2s'}}>
+              {code[i]||''}
+            </div>
+          ))}
+        </div>
+        <input ref={codeRef} type="tel" maxLength={6} value={code} autoFocus
+          onChange={e=>{const v=e.target.value.replace(/\D/g,'');setCode(v);if(v.length===6){setErr('');setTimeout(()=>verify(),200)}}}
+          onKeyDown={e=>{if(e.key==='Enter'&&code.length===6)verify()}}
+          style={{position:'fixed',top:-100,opacity:0}}
+        />
+        {/* Tap anywhere on code area to focus hidden input */}
+        <div onClick={()=>codeRef.current?.focus()} style={{position:'absolute',top:0,left:0,right:0,bottom:'40%',zIndex:1}}/>
+        {err&&<div style={{fontSize:12,color:'#EF4444',marginBottom:12,textAlign:'center'}}>{err}</div>}
+        <button onClick={verify} disabled={code.length!==6||verifying}
+          style={{width:'100%',padding:'15px',borderRadius:14,border:'none',background:code.length===6?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.border,color:code.length===6?'#fff':T.textThi,fontSize:15,fontWeight:600,cursor:code.length===6?'pointer':'default'}}>
+          {verifying?'验证中…':'登录'}
+        </button>
+        <div style={{textAlign:'center',marginTop:16}}>
+          <button onClick={()=>{if(countdown<=0)sendCode()}} disabled={countdown>0}
+            style={{background:'none',border:'none',fontSize:13,color:countdown>0?T.textThi:T.accent2,cursor:countdown>0?'default':'pointer'}}>
+            {countdown>0?`重新发送(${countdown}s)`:'重新发送验证码'}
+          </button>
+        </div>
+      </div>}
+    </div>
   </div>);
 }
 
@@ -3821,6 +3924,7 @@ function TabBar({active,onTap}){
 // ===== APP =====
 function App(){
   const [scr,setScr]=useState(S.SPLASH);
+  const [authToken,setAuthToken]=useState(()=>localStorage.getItem('yuanhe_token')||null);
   const [profile,setProfile]=useState(()=>{try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));return p&&p.year?p:null}catch(e){return null}});
   const [aiMode,setAiMode]=useState(null);
   const [convs,setConvs]=useState(()=>ChatStore.getAll());
@@ -3888,16 +3992,33 @@ function App(){
   },[profile]);
   const showTabs=[S.HOME,S.DISCOVER,S.AI,S.MSGS,S.ME].includes(scr)&&!chatActive;
   return(<div style={{maxWidth:480,margin:'0 auto',height:'100dvh',position:'relative',overflow:'hidden',background:T.bg,boxShadow:'0 0 40px rgba(0,0,0,0.08)'}}>
-    {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:onboarded?S.BIRTH:S.ONBOARD)}/>}
+    {scr===S.SPLASH&&<Splash onDone={()=>{
+      if(authToken&&profile)setScr(S.HOME);
+      else if(authToken&&!profile)setScr(onboarded?S.BIRTH:S.ONBOARD);
+      else setScr(S.LOGIN);
+    }}/>}
+    {scr===S.LOGIN&&<LoginScreen onLogin={({token,isNew,user})=>{
+      setAuthToken(token);
+      if(user.profile&&user.profile.year){
+        // 老用户，服务器有profile
+        setProfile(user.profile);localStorage.setItem('yuanhe_profile',JSON.stringify(user.profile));setScr(S.HOME);
+      }else if(!isNew&&profile){
+        // 老用户但服务器没profile，本地有→迁移
+        apiPost('/api/auth/profile',profile).catch(()=>{});setScr(S.HOME);
+      }else{
+        // 新用户→引导流程
+        setScr(onboarded?S.BIRTH:S.ONBOARD);
+      }
+    }}/>}
     {scr===S.ONBOARD&&<OnboardingScreen onDone={()=>{localStorage.setItem('yuanhe_onboarded','1');setScr(S.BIRTH)}}/>}
     {scr===S.BIRTH&&!profile&&!termsAccepted&&<TermsModal onAccept={()=>{localStorage.setItem('yuanhe_terms_accepted','1');setTermsAccepted(true)}}/>}
-    {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
+    {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);apiPost('/api/auth/profile',p).catch(()=>{});setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<div key="home" style={{height:'100%'}}><HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/></div>}
     {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
     {scr===S.MSGS&&<div key="msgs" style={{height:'100%'}}><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/></div>}
-    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm('确定退出登录？',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setProfile(null);setScr(S.BIRTH)},{detail:'退出后本地数据将被清除'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
+    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm('确定退出登录？',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setAuthToken(null);setProfile(null);setScr(S.LOGIN)},{detail:'退出后本地数据将被清除'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
     {/* Global confirm dialog */}
