@@ -333,6 +333,30 @@ app.get('/api/auth/divinations', auth.authMiddleware, (req, res) => {
   res.json(list);
 });
 
+// ============ Matching ============
+
+// 获取候选用户
+app.get('/api/candidates', auth.authMiddleware, (req, res) => {
+  const candidates = auth.getCandidates(req.user.id, req.query.gender, parseInt(req.query.limit) || 20);
+  res.json(candidates);
+});
+
+// 记录滑动
+app.post('/api/swipe', auth.authMiddleware, (req, res) => {
+  const { targetId, direction } = req.body;
+  if (!targetId || !['left', 'right'].includes(direction)) {
+    return res.status(400).json({ error: '参数错误' });
+  }
+  const result = auth.recordSwipe(req.user.id, targetId, direction);
+  res.json(result);
+});
+
+// 获取匹配列表
+app.get('/api/matches', auth.authMiddleware, (req, res) => {
+  const matches = auth.getMatches(req.user.id);
+  res.json(matches);
+});
+
 // ============ Routes ============
 
 // 系统监控API

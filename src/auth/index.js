@@ -325,6 +325,77 @@ function getMessages(userIdA, userIdB, limit = 50, before) {
   return msgs.slice(-limit);
 }
 
+// ============ Matching ============
+
+// 滑动记录: { `${userId}:${targetId}`: 'left'|'right' }
+const SWIPES_FILE = path.join(DATA_DIR, 'swipes.json');
+let swipes = {};
+try { if (fs.existsSync(SWIPES_FILE)) swipes = JSON.parse(fs.readFileSync(SWIPES_FILE, 'utf-8')); } catch (e) {}
+function saveSwipes() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(SWIPES_FILE, JSON.stringify(swipes));
+  } catch (e) {}
+}
+
+// 获取候选用户(排除已滑动、黑名单、自己)
+function getCandidates(userId, genderPref, limit = 20) {
+  const me = users[userId];
+  if (!me) return [];
+
+  return Object.values(users).filter(u => {
+    if (u.id === userId) return false;           // 排除自己
+    if (!u.profile || !u.profile.year) return false; // 未完成注册
+    if (genderPref && genderPref !== 'all' && u.profile.gender !== genderPref) return false;
+    if (swipes[`${userId}:${u.id}`]) return false; // 已滑动过
+    return true;
+  }).slice(0, limit).map(u => ({
+    id: u.id,
+    realUserId: u.id,
+    name: u.profile.name || '缘友',
+    age: u.profile.birth_year ? (new Date().getFullYear() - u.profile.birth_year) : null,
+    bio: u.profile.bio || '',
+    gender: u.profile.gender,
+    city: u.profile.city || '',
+    avatar: u.profile.avatar || (u.profile.gender === 'female' ? '👩' : '👨'),
+    sign: '', // 可由前端计算
+    tags: [],
+    year: u.profile.year || u.profile.birth_year,
+    month: u.profile.month || u.profile.birth_month,
+    day: u.profile.day || u.profile.birth_day,
+    hour: u.profile.hour || u.profile.birth_hour || -1,
+    isBot: false,
+  }));
+}
+
+// 记录滑动
+function recordSwipe(userId, targetId, direction) {
+  swipes[`${userId}:${targetId}`] = direction;
+  saveSwipes();
+
+  // 检测双向匹配
+  if (direction === 'right' && swipes[`${targetId}:${userId}`] === 'right') {
+    return { matched: true, targetId };
+  }
+  return { matched: false };
+}
+
+// 获取匹配列表(双方都right)
+function getMatches(userId) {
+  const matches = [];
+  for (const [key, dir] of Object.entries(swipes)) {
+    if (dir !== 'right') continue;
+    const [from, to] = key.split(':');
+    if (from !== userId) continue;
+    // 检查对方也right了
+    if (swipes[`${to}:${from}`] === 'right') {
+      const u = users[to];
+      if (u && u.profile) matches.push({ userId: to, name: u.profile.name, avatar: u.profile.avatar, gender: u.profile.gender });
+    }
+  }
+  return matches;
+}
+
 module.exports = {
   JWT_SECRET,
   sendCode,
@@ -343,6 +414,9 @@ module.exports = {
   likePost,
   addComment,
   getComments,
+  getCandidates,
+  recordSwipe,
+  getMatches,
 };
 
 // ============ Posts (缘友圈) ============

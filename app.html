@@ -1102,42 +1102,56 @@ function DailyStatusModal({profile,onClose}){
 
 function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [genderPref,setGenderPref]=useState(()=>localStorage.getItem('yuanhe_gender_pref')||(profile.gender==='male'?'female':'male'));
-  const getFilteredCands=(pref)=>{
-    const {botRatio}=getBotConfig();
-    const allUsers=[...USERS,...BOTS];
-    const filtered=pref==='all'?allUsers:allUsers.filter(u=>u.gender===pref);
-    const realCards=filtered.filter(u=>!u.isBot);
-    if(botRatio<=0)return realCards;
-    const botPool=filtered.filter(u=>u.isBot).sort(()=>Math.random()-0.5);
-    const botCount=Math.round(realCards.length*(botRatio/(1-botRatio)));
-    return[...realCards,...botPool.slice(0,Math.min(botCount,botPool.length))];
+  const getFilteredBots=(pref)=>{
+    const allBots=[...USERS,...BOTS];
+    const filtered=pref==='all'?allBots:allBots.filter(u=>u.gender===pref);
+    return filtered.sort(()=>Math.random()-0.5);
   };
-  const [cards,setCards]=useState(()=>getFilteredCands(genderPref).sort(()=>Math.random()-0.5));
+  const [cards,setCards]=useState(()=>getFilteredBots(genderPref));
   const [matchUser,setMatchUser]=useState(null);
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
-  const [lastSwiped,setLastSwiped]=useState(null); // for undo
+  const [lastSwiped,setLastSwiped]=useState(null);
   const [showWheel,setShowWheel]=useState(false);
 
   const [guideHidden,setGuideHidden]=useState(()=>!!localStorage.getItem('yuanhe_swipe_guided'));
   const showGuide=!guideHidden&&swiped===0;
-  const switchPref=(p)=>{setGenderPref(p);localStorage.setItem('yuanhe_gender_pref',p);
-    const newCards=getFilteredCands(p).sort(()=>Math.random()-0.5);setCards(newCards);setSwiped(0);setLastSwiped(null);
-    apiPost('/api/batch-match',{profile,candidates:newCards}).then(results=>{
-      if(results?.length>0)setCards(results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5));
-    }).catch(()=>{});
-  };
-  // Fetch real match scores
-  useEffect(()=>{
-    const cands=getFilteredCands(genderPref);
-    apiPost('/api/batch-match',{profile,candidates:cands}).then(results=>{
-      if(results&&results.length>0){
-        const scored=results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5);
-        setCards(scored);
+
+  // 加载候选: 真实用户(API) + Bot, 计算匹配分数
+  const loadCandidates=async(pref)=>{
+    let bots=getFilteredBots(pref);
+    let realUsers=[];
+    // 尝试从服务器获取真实用户
+    if(localStorage.getItem('yuanhe_token')){
+      try{realUsers=await apiGet('/api/candidates?gender='+(pref||'')+'&limit=20')}catch(e){}
+    }
+    const allCands=[...realUsers,...bots];
+    // 批量计算匹配分数
+    try{
+      const results=await apiPost('/api/batch-match',{profile,candidates:allCands});
+      if(results?.length>0){
+        setCards(results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5));
+        return;
       }
-    }).catch(()=>{});
-  },[]);
-  const swipe=(dir)=>{haptic('light');const top=cards[cards.length-1];if(!top)return;setLastSwiped(top);if(dir==='right'&&top.score>=65){haptic('success');setTimeout(()=>setMatchUser(top),300)}setCards(c=>c.slice(0,-1));setSwiped(s=>s+1);if(!localStorage.getItem('yuanhe_swipe_guided'))localStorage.setItem('yuanhe_swipe_guided','1')};
+    }catch(e){}
+    setCards(allCands.sort(()=>Math.random()-0.5));
+  };
+
+  const switchPref=(p)=>{setGenderPref(p);localStorage.setItem('yuanhe_gender_pref',p);setSwiped(0);setLastSwiped(null);loadCandidates(p)};
+  useEffect(()=>{loadCandidates(genderPref)},[]);
+  const swipe=(dir)=>{
+    haptic('light');const top=cards[cards.length-1];if(!top)return;
+    setLastSwiped(top);setCards(c=>c.slice(0,-1));setSwiped(s=>s+1);
+    if(!localStorage.getItem('yuanhe_swipe_guided'))localStorage.setItem('yuanhe_swipe_guided','1');
+    // 记录滑动到服务器(真实用户)
+    if(top.realUserId&&localStorage.getItem('yuanhe_token')){
+      apiPost('/api/swipe',{targetId:top.realUserId,direction:dir}).then(r=>{
+        if(r?.matched){haptic('success');setTimeout(()=>setMatchUser(top),300)}
+      }).catch(()=>{});
+    }
+    // Bot匹配: 保持原有逻辑
+    if((top.isBot||!top.realUserId)&&dir==='right'&&top.score>=65){haptic('success');setTimeout(()=>setMatchUser(top),300)}
+  };
   const undoSwipe=()=>{if(!lastSwiped)return;setCards(c=>[...c,lastSwiped]);setLastSwiped(null);setSwiped(s=>Math.max(0,s-1))};
   // 五行 energy data from profile
   const wxLabels=['金','木','水','火','土'];
