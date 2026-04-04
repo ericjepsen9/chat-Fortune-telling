@@ -3109,7 +3109,14 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           </div>;
         }
       }catch(e){}
-      return <div style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}bb)`,borderRadius:14,padding:'16px',marginBottom:12,color:'#fff',position:'relative',overflow:'hidden'}}>
+      return <div onClick={async()=>{
+            if(generatingPersonality)return;
+            setGeneratingPersonality(true);
+            try{const r=await apiPost('/api/divine',{mode:'bazi',question:'分析我的性格特点',profile,depth:'simple'});
+              if(r){const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');saved.bazi={result:r,chatHistory:[]};localStorage.setItem('yuanhe_mode_results',JSON.stringify(saved));window.yuanheToast?.('已生成 ✨')}}
+            catch(e){window.yuanheToast?.('生成失败')}
+            setGeneratingPersonality(false);
+          }} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}bb)`,borderRadius:14,padding:'16px',marginBottom:12,color:'#fff',position:'relative',overflow:'hidden',cursor:'pointer'}}>
         <div style={{position:'absolute',right:-10,top:-10,fontSize:64,opacity:.1}}>🔮</div>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div>
@@ -3117,18 +3124,12 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
               <span style={{fontSize:18}}>🔮</span>
               <span style={{fontSize:15,fontWeight:700}}>我的性格</span>
             </div>
-            <div style={{fontSize:12,opacity:.8}}>一键生成你的专属性格卡片</div>
+            <div style={{fontSize:12,opacity:.8}}>点击生成你的专属性格卡片</div>
           </div>
           {generatingPersonality?<div style={{fontSize:11,opacity:.8}}>
             <div style={{display:'inline-block',width:12,height:12,border:'2px solid rgba(255,255,255,0.5)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 1s linear infinite',verticalAlign:'middle',marginRight:4}}/>分析中…
           </div>
-          :<button onClick={async(e)=>{e.stopPropagation();
-            setGeneratingPersonality(true);
-            try{const r=await apiPost('/api/divine',{mode:'bazi',question:'分析我的性格特点',profile,depth:'simple'});
-              if(r){const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');saved.bazi={result:r,chatHistory:[]};localStorage.setItem('yuanhe_mode_results',JSON.stringify(saved));window.yuanheToast?.('已生成 ✨')}}
-            catch(e){window.yuanheToast?.('生成失败')}
-            setGeneratingPersonality(false);
-          }} style={{padding:'8px 16px',borderRadius:10,border:'1.5px solid rgba(255,255,255,0.4)',background:'rgba(255,255,255,0.15)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',flexShrink:0}}>一键生成</button>}
+          :<div style={{padding:'8px 16px',borderRadius:10,border:'1.5px solid rgba(255,255,255,0.4)',background:'rgba(255,255,255,0.15)',fontSize:12,fontWeight:600}}>一键生成</div>}
         </div>
       </div>;
     })()}
