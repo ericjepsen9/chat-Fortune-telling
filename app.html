@@ -2883,7 +2883,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
 // ===== PRIVACY SETTINGS MODAL =====
 // ===== TERMS & PRIVACY (用户协议) =====
 function TermsModal({onAccept,onClose}){
-  return(<div onClick={onClose} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+  return(<div onClick={onClose||undefined} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
     <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:20,padding:'24px 20px',maxWidth:360,width:'100%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
       <div style={{fontSize:18,fontWeight:700,color:T.text,textAlign:'center',marginBottom:16}}>用户协议与隐私政策</div>
       <div style={{flex:1,overflow:'auto',fontSize:12,color:T.textSec,lineHeight:1.8,marginBottom:16}}>
@@ -3780,6 +3780,7 @@ function App(){
   T=THEMES[themeMode];
   useEffect(()=>{document.body.style.background=T.bg;document.body.className=themeMode==='dark'?'dark':''},[themeMode]);
   const toggleTheme=()=>{const next=themeMode==='light'?'dark':'light';localStorage.setItem('yuanhe_theme',next);setThemeMode(next);T=THEMES[next]};
+  const [termsAccepted,setTermsAccepted]=useState(()=>!!localStorage.getItem('yuanhe_terms_accepted'));
   const onboarded=!!localStorage.getItem('yuanhe_onboarded');
   const goTo=(s,m)=>{setScr(s);if(m)setAiMode(m)};
   const addConv=(user)=>{const c=ChatStore.create(user,profile);setConvs(ChatStore.getAll());return c};
@@ -3837,7 +3838,7 @@ function App(){
   return(<div style={{maxWidth:480,margin:'0 auto',height:'100dvh',position:'relative',overflow:'hidden',background:T.bg,boxShadow:'0 0 40px rgba(0,0,0,0.08)'}}>
     {scr===S.SPLASH&&<Splash onDone={()=>setScr(profile?S.HOME:onboarded?S.BIRTH:S.ONBOARD)}/>}
     {scr===S.ONBOARD&&<OnboardingScreen onDone={()=>{localStorage.setItem('yuanhe_onboarded','1');setScr(S.BIRTH)}}/>}
-    {scr===S.BIRTH&&!profile&&!localStorage.getItem('yuanhe_terms_accepted')&&<TermsModal onAccept={()=>{localStorage.setItem('yuanhe_terms_accepted','1');window.location.reload()}}/>}
+    {scr===S.BIRTH&&!profile&&!termsAccepted&&<TermsModal onAccept={()=>{localStorage.setItem('yuanhe_terms_accepted','1');setTermsAccepted(true)}}/>}
     {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{setProfile(p);setScr(S.HOME)}}/>}
     {scr===S.HOME&&profile&&<div key="home" style={{height:'100%'}}><HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/></div>}
     {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}}/></div>}
