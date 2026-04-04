@@ -2738,7 +2738,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           <div style={{width:32,height:4,borderRadius:2,background:T.border,margin:'0 auto 12px'}}/>
           {[{l:'搜索聊天记录',icon:'🔍',a:()=>{setShowReport(false);setSearchMode(true)}},
             {l:'查看个人资料',icon:'👤',a:()=>{setShowReport(false);setShowProfile(true)}},
-            {l:'拉黑此人',icon:'🚫',danger:true,a:()=>{if(confirm('确定拉黑'+activeConv.user.name+'？')){blockUser(activeConv.user.id);setShowReport(false);setActiveId(null);refreshConvs()}}},
+            {l:'拉黑此人',icon:'🚫',danger:true,a:()=>{window.yuanheConfirm('确定拉黑'+activeConv.user.name+'？',()=>{blockUser(activeConv.user.id);setShowReport(false);setActiveId(null);refreshConvs()})}},
             {l:'举报',icon:'⚠️',danger:true,a:()=>{setShowReport(false);setTimeout(()=>setShowReport('report'),100)}}
           ].map(it=><button key={it.l} onClick={it.a} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:it.danger?T.primary:T.text,cursor:'pointer',textAlign:'left'}}>
             <span style={{fontSize:16,width:24,textAlign:'center'}}>{it.icon}</span>
@@ -3187,7 +3187,7 @@ function ProfileEditModal({profile,onSave,onClose}){
   const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦄'];
   const uploadPhoto=()=>{
     const input=document.createElement('input');input.type='file';input.accept='image/*';
-    input.onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>2*1024*1024){alert('图片不能超过2MB');return}
+    input.onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>2*1024*1024){window.yuanheToast?.('图片不能超过2MB');return}
       const reader=new FileReader();reader.onload=ev=>{setAvatar(ev.target.result);setShowAvatarPick(false)};reader.readAsDataURL(file)};
     input.click();
   };
@@ -3247,16 +3247,18 @@ function DataManagementModal({profile,onClose,onLogout}){
     link.click();
   };
   const deleteItem=(key,label)=>{
-    if(!confirm(`确定删除${label}？此操作不可恢复。`))return;
-    localStorage.removeItem(key);
-    if(key==='yuanhe_profile'){onLogout();onClose();return}
-    onClose();setTimeout(()=>location.reload(),100);
+    window.yuanheConfirm(`确定删除${label}？`,()=>{
+      localStorage.removeItem(key);
+      if(key==='yuanhe_profile'){onLogout();onClose();return}
+      onClose();setTimeout(()=>location.reload(),100);
+    },{detail:'此操作不可恢复'});
   };
   const deleteAll=()=>{
-    if(!confirm('⚠️ 确定删除所有数据并注销账号？\n\n这将清除:\n• 出生信息\n• 所有占卜报告\n• 聊天记录\n• 所有设置\n\n此操作不可恢复。'))return;
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));
-    keys.forEach(k=>localStorage.removeItem(k));
-    onLogout();onClose();
+    window.yuanheConfirm('确定删除所有数据并注销账号？',()=>{
+      const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));
+      keys.forEach(k=>localStorage.removeItem(k));
+      onLogout();onClose();
+    },{detail:'将清除出生信息、占卜报告、聊天记录和所有设置，此操作不可恢复。'});
   };
   return(
     <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
@@ -3463,6 +3465,10 @@ function App(){
   // Global toast — accessible from anywhere
   const toast=(msg)=>{setGlobalToast(msg);setTimeout(()=>setGlobalToast(''),2500)};
   window.yuanheToast=toast;
+  // Global confirm dialog — replaces native confirm()
+  const [confirmDlg,setConfirmDlg]=useState(null); // {msg,detail,onOk,danger}
+  window.yuanheConfirm=(msg,onOk,opts={})=>{setConfirmDlg({msg,onOk,detail:opts.detail||'',danger:opts.danger!==false})};
+  window.yuanheAlert=(msg)=>{setConfirmDlg({msg,onOk:null,detail:'',danger:false})};
   // Auto-greet: AI sends first message after match
   const autoGreet=async(conv)=>{
     try{
@@ -3520,6 +3526,19 @@ function App(){
     {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{localStorage.removeItem('yuanhe_profile');localStorage.removeItem('yuanhe_mode_results');setProfile(null);setScr(S.BIRTH)}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={p=>{setProfile(p);localStorage.setItem('yuanhe_profile',JSON.stringify(p))}} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
+    {/* Global confirm dialog */}
+    {confirmDlg&&<div onClick={()=>setConfirmDlg(null)} style={{position:'fixed',inset:0,zIndex:9998,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:20,padding:'24px 20px 16px',width:'100%',maxWidth:300,textAlign:'center',animation:'scaleIn .2s ease',boxShadow:'0 8px 32px rgba(0,0,0,0.15)'}}>
+        <div style={{fontSize:15,fontWeight:600,color:T.text,lineHeight:1.6,marginBottom:confirmDlg.detail?8:20}}>{confirmDlg.msg}</div>
+        {confirmDlg.detail&&<div style={{fontSize:12,color:T.textThi,lineHeight:1.6,marginBottom:20}}>{confirmDlg.detail}</div>}
+        <div style={{display:'flex',gap:10}}>
+          {confirmDlg.onOk?<>
+            <button onClick={()=>setConfirmDlg(null)} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:T.bg,fontSize:14,color:T.textSec,cursor:'pointer',fontWeight:500}}>取消</button>
+            <button onClick={()=>{confirmDlg.onOk();setConfirmDlg(null)}} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:confirmDlg.danger?T.primary:T.accent2,fontSize:14,color:'#fff',cursor:'pointer',fontWeight:600}}>确定</button>
+          </>:<button onClick={()=>setConfirmDlg(null)} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:T.accent2,fontSize:14,color:'#fff',cursor:'pointer',fontWeight:600}}>知道了</button>}
+        </div>
+      </div>
+    </div>}
   </div>);
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
