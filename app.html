@@ -2168,7 +2168,6 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
             <span style={{fontSize:16}}>{curMood>=0?MOODS[curMood].emoji:'💭'}</span>
             <span style={{fontSize:10,color:curMood>=0?MOODS[curMood].color:T.textThi,fontWeight:500}}>{curMood>=0?MOODS[curMood].label:'打卡'}</span>
           </button>
-          {/* Mood dropdown */}
           {showMoodPicker&&curMood<0&&<div style={{position:'absolute',top:'100%',right:0,marginTop:6,background:T.card,borderRadius:14,padding:'10px',boxShadow:T.shadowLg,border:`1px solid ${T.border}`,zIndex:20,width:200}}>
             <div style={{fontSize:12,fontWeight:600,color:T.text,marginBottom:8}}>今天心情如何？</div>
             <div style={{display:'flex',justifyContent:'space-between',gap:4}}>
@@ -2180,48 +2179,47 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
           </div>}
         </div>
       </div>
-      {/* Search bar */}
-      <div style={{position:'relative'}}>
-        <input value={discoverSearch||''} onChange={e=>setDiscoverSearch(e.target.value)} placeholder="搜索占术、星座、话题…"
-          style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.accent2}40`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
-        <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
-      </div>
     </div>
-    <div style={{padding:'12px 16px'}}>
+    <div style={{padding:'0 16px 12px'}}>
       {/* ===== 推荐 Tab ===== */}
       {discoverTab==='recommend'&&<>
       {/* Today's luck card */}
-      <div className="anim-in" onClick={()=>setShowDaily(true)} style={{background:luckBg,borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:`1px solid ${luckBorder}`,cursor:'pointer'}}>
+      <div className="anim-in" onClick={()=>setShowDaily(true)} style={{background:luckBg,borderRadius:14,padding:'16px',boxShadow:T.shadow,marginBottom:12,border:`1px solid ${luckBorder}`,cursor:'pointer'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
-            <div style={{fontSize:13,color:T.textThi}}>📅 今日 {today.getMonth()+1}月{today.getDate()}日</div>
-            <div style={{fontSize:22,fontWeight:700,color:luckColor,marginTop:4}}>{todayLuck}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:4}}>宜：学习、冥想 · 忌：冲动决策</div>
+            <div style={{fontSize:12,color:T.textThi}}>📅 今日 {today.getMonth()+1}月{today.getDate()}日</div>
+            <div style={{fontSize:20,fontWeight:700,color:luckColor,marginTop:3}}>{todayLuck}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:3}}>宜：学习、冥想 · 忌：冲动决策</div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:6}}>
-            <button onClick={()=>setShowDaily(true)} style={{padding:0,border:'none',background:'none',color:T.accent2,fontSize:12,fontWeight:400,cursor:'pointer'}}>详细运势 →</button>
-            <button onClick={()=>setShowShare(true)} style={{padding:'6px 18px',borderRadius:12,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:11,cursor:'pointer'}}>📤 分享运势</button>
-          </div>
+          <span style={{fontSize:11,color:T.textThi}}>详细运势 ›</span>
         </div>
       </div>
 
-      {/* Quick entry cards */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-        {[{icon:'☰',title:'八字排盘',desc:'深度命运分析',c:'#8B5CF6',m:'bazi'},{icon:'✦',title:'塔罗指引',desc:'今日一牌',c:'#0D9488',m:'tarot'},{icon:'❀',title:'梅花速断',desc:'快速问事吉凶',c:'#D97706',m:'meihua'},{icon:'💑',title:'合婚测试',desc:'看两人缘分',c:'#DB2777',m:'hehun'}].map((it,i)=>
-          <button key={it.m} className="anim-in" onClick={()=>goTo(S.AI,it.m)} style={{animationDelay:i*0.06+'s',background:`linear-gradient(135deg,${it.c}08,${it.c}03)`,borderRadius:16,padding:'18px 14px',border:`1px solid ${it.c}20`,cursor:'pointer',textAlign:'left'}}>
-            <div style={{fontSize:24,marginBottom:8}}>{it.icon}</div>
-            <div style={{fontSize:14,fontWeight:600,color:it.c}}>{it.title}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:3}}>{it.desc}</div>
+      {/* Quick entry cards — unified accent2 tint */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+        {[{icon:'☰',title:'八字排盘',desc:'深度命运分析',m:'bazi'},{icon:'✦',title:'塔罗指引',desc:'今日一牌',m:'tarot'},{icon:'❀',title:'梅花速断',desc:'快速问事吉凶',m:'meihua'},{icon:'💑',title:'合婚测试',desc:'看两人缘分',m:'hehun'}].map((it,i)=>
+          <button key={it.m} className="anim-in" onClick={()=>goTo(S.AI,it.m)} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'16px 14px',border:`1px solid ${T.border}`,cursor:'pointer',textAlign:'left',boxShadow:T.shadow}}>
+            <div style={{width:36,height:36,borderRadius:10,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,marginBottom:8}}>{it.icon}</div>
+            <div style={{fontSize:13,fontWeight:600,color:T.text}}>{it.title}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div>
           </button>
         )}
       </div>
 
-      {/* Feature list */}
-      <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:10}}>更多功能</div>
-      {[{icon:'📅',title:'命理日历',desc:'每日五行运势·关键词·建议',a:()=>setShowDaily(true)},{icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},{icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},{icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},profile.hour===-1?{icon:'🔮',title:'AI测时辰',desc:'30秒推算你的出生时辰',a:()=>setShowHourAssistant(true)}:null].filter(Boolean).map((it,i)=>
-        <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'14px 16px',boxShadow:T.shadow,marginBottom:8,display:'flex',alignItems:'center',gap:12,cursor:it.a?'pointer':'default',opacity:it.a?1:.5}}>
-          <span style={{fontSize:22}}>{it.icon}</span><div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{it.desc}</div></div><span style={{color:T.textThi,fontSize:12}}>›</span>
-        </div>)}
+      {/* Feature list — settings style */}
+      <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,overflow:'hidden',marginBottom:12}}>
+        {[{icon:'📅',title:'命理日历',desc:'每日五行运势·关键词·建议',a:()=>setShowDaily(true)},
+          {icon:'★',title:'星座运势',desc:'太阳月亮上升全解',a:()=>goTo(S.AI,'astrology')},
+          {icon:'◎',title:'印度占星',desc:'吠陀占星深度分析',a:()=>goTo(S.AI,'vedic')},
+          {icon:'💫',title:'星座配对',desc:'双人星盘化学反应',a:()=>goTo(S.AI,'synastry')},
+          profile.hour===-1?{icon:'🔮',title:'AI测时辰',desc:'30秒推算你的出生时辰',a:()=>setShowHourAssistant(true)}:null
+        ].filter(Boolean).map((it,i,arr)=>
+          <div key={it.title} className="anim-in" onClick={it.a} style={{animationDelay:i*0.04+'s',padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:i<arr.length-1?`1px solid ${T.border}`:'none'}}>
+            <div style={{width:30,height:30,borderRadius:8,background:`${T.accent2}08`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500,color:T.text}}>{it.title}</div><div style={{fontSize:11,color:T.textThi,marginTop:1}}>{it.desc}</div></div>
+            <span style={{color:T.textThi,fontSize:10}}>›</span>
+          </div>)}
+      </div>
 
       </>}
       {/* ===== 缘友圈 Tab ===== */}
