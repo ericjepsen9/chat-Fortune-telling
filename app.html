@@ -876,8 +876,8 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     {/* Header matching prototype: 五行轮盘 + title + action buttons */}
     <div style={{padding:'10px 16px 6px',flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div style={{display:'flex',alignItems:'center',gap:10}}>
-        {/* 五行 Energy Ring (donut style) */}
-        <div style={{position:'relative',width:48,height:48}}>
+        {/* 五行 Energy Ring — clickable to open wheel */}
+        <div onClick={()=>setShowWheel(true)} style={{position:'relative',width:48,height:48,cursor:'pointer'}}>
           <svg width={48} height={48} viewBox="0 0 48 48">
             {(()=>{
               let startAngle=-90;
@@ -910,11 +910,6 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
             <button key={o.v} onClick={()=>{if(genderPref!==o.v)switchPref(o.v)}} style={{padding:'5px 10px',border:'none',fontSize:10,fontWeight:genderPref===o.v?600:400,cursor:'pointer',background:genderPref===o.v?`${T.accent2}15`:'transparent',color:genderPref===o.v?T.accent2:T.textThi}}>{o.l}</button>
           )}
         </div>
-        <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
-        <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:0,position:'relative'}}>
-          <div style={{fontSize:7,fontWeight:700,color:T.primary,lineHeight:1,marginTop:3}}>{(new Date().getMonth()+1)+'月'}</div>
-          <div style={{fontSize:14,fontWeight:800,color:T.text,lineHeight:1}}>{new Date().getDate()}</div>
-        </button>
       </div>
     </div>
     {/* Card area */}
@@ -2199,7 +2194,13 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
       <div className="anim-in" onClick={()=>setShowDaily(true)} style={{background:luckBg,borderRadius:14,padding:'16px',boxShadow:T.shadow,marginBottom:12,border:`1px solid ${luckBorder}`,cursor:'pointer'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
-            <div style={{fontSize:12,color:T.textThi}}>📅 今日 {today.getMonth()+1}月{today.getDate()}日</div>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <div style={{width:28,height:28,borderRadius:6,border:`1px solid ${luckColor}30`,background:T.card,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <div style={{fontSize:6,fontWeight:700,color:luckColor,lineHeight:1}}>{today.getMonth()+1}月</div>
+                <div style={{fontSize:12,fontWeight:800,color:T.text,lineHeight:1}}>{today.getDate()}</div>
+              </div>
+              <span style={{fontSize:12,color:T.textThi}}>今日 {today.getMonth()+1}月{today.getDate()}日</span>
+            </div>
             <div style={{fontSize:20,fontWeight:700,color:luckColor,marginTop:3}}>{todayLuck}</div>
             <div style={{fontSize:11,color:T.textThi,marginTop:3}}>宜：学习、冥想 · 忌：冲动决策</div>
           </div>
