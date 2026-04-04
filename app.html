@@ -198,6 +198,153 @@ const BOTS=[
 // Global error handlers
 window.addEventListener('unhandledrejection',e=>{console.error('Unhandled rejection:',e.reason);e.preventDefault();if(window.yuanheToast)window.yuanheToast('网络异常，请稍后重试')});
 
+// ===== WEBSOCKET MANAGER =====
+const WsManager = {
+  ws: null,
+  url: null,
+  token: null,
+  authed: false,
+  reconnectTimer: null,
+  heartbeatTimer: null,
+  reconnectDelay: 1000,   // 初始重连延迟1秒
+  maxReconnectDelay: 30000,
+  listeners: {},          // { eventType: Set<callback> }
+  onlineUsers: new Set(),
+
+  // 连接
+  connect(token) {
+    if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) return;
+    this.token = token;
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    this.url = `${proto}//${location.host}/ws`;
+    try {
+      this.ws = new WebSocket(this.url);
+    } catch (e) { console.error('WS connect error:', e); return; }
+
+    this.ws.onopen = () => {
+      console.log('🔌 WS connected');
+      this.reconnectDelay = 1000; // 重置重连延迟
+      // 发送认证
+      this._send({ type: 'auth', token: 'Bearer ' + this.token });
+      // 启动心跳
+      this._startHeartbeat();
+    };
+
+    this.ws.onmessage = (e) => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch (err) { return; }
+      this._handleMessage(msg);
+    };
+
+    this.ws.onclose = (e) => {
+      console.log('🔌 WS closed:', e.code);
+      this.authed = false;
+      this._stopHeartbeat();
+      // 自动重连(非主动关闭)
+      if (this.token && e.code !== 4000) {
+        this._scheduleReconnect();
+      }
+    };
+
+    this.ws.onerror = () => {}; // onclose会触发重连
+  },
+
+  // 断开(主动)
+  disconnect() {
+    this.token = null;
+    this.authed = false;
+    this.onlineUsers.clear();
+    this._stopHeartbeat();
+    clearTimeout(this.reconnectTimer);
+    if (this.ws) {
+      this.ws.close(4000, 'logout'); // 4000=主动关闭，不重连
+      this.ws = null;
+    }
+  },
+
+  // 发送消息
+  send(data) {
+    this._send(data);
+  },
+
+  // 监听事件
+  on(type, cb) {
+    if (!this.listeners[type]) this.listeners[type] = new Set();
+    this.listeners[type].add(cb);
+    return () => this.listeners[type]?.delete(cb); // 返回取消函数
+  },
+
+  // 是否在线
+  isOnline(userId) {
+    return this.onlineUsers.has(userId);
+  },
+
+  // 是否已连接且认证
+  get connected() {
+    return this.authed && this.ws?.readyState === 1;
+  },
+
+  // === 内部方法 ===
+
+  _send(data) {
+    if (this.ws?.readyState === 1) {
+      this.ws.send(JSON.stringify(data));
+    }
+  },
+
+  _handleMessage(msg) {
+    switch (msg.type) {
+      case 'auth_ok':
+        this.authed = true;
+        this.onlineUsers = new Set(msg.online || []);
+        console.log('🔌 WS authed, online:', this.onlineUsers.size);
+        break;
+      case 'auth_fail':
+        console.warn('WS auth fail:', msg.error);
+        this.disconnect();
+        break;
+      case 'online':
+        if (msg.online) this.onlineUsers.add(msg.userId);
+        else this.onlineUsers.delete(msg.userId);
+        break;
+      case 'pong':
+        break;
+    }
+    // 触发所有该类型的监听器
+    this._emit(msg.type, msg);
+  },
+
+  _emit(type, data) {
+    const cbs = this.listeners[type];
+    if (cbs) cbs.forEach(cb => { try { cb(data); } catch (e) { console.error('WS listener error:', e); } });
+    // 也触发通配符监听
+    const allCbs = this.listeners['*'];
+    if (allCbs) allCbs.forEach(cb => { try { cb(data); } catch (e) {} });
+  },
+
+  _startHeartbeat() {
+    this._stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      this._send({ type: 'ping' });
+    }, 25000); // 25秒ping一次(服务器30秒超时)
+  },
+
+  _stopHeartbeat() {
+    if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
+  },
+
+  _scheduleReconnect() {
+    clearTimeout(this.reconnectTimer);
+    console.log(`🔌 WS reconnecting in ${this.reconnectDelay/1000}s...`);
+    this.reconnectTimer = setTimeout(() => {
+      this.connect(this.token);
+    }, this.reconnectDelay);
+    // 指数退避，最大30秒
+    this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
+  },
+};
+window.WsManager = WsManager; // 全局可访问
+
 function authHeaders(){const t=localStorage.getItem('yuanhe_token');return t?{'Authorization':'Bearer '+t}:{}}
 async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 async function apiGet(p){const r=await fetch(p,{headers:authHeaders()});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
@@ -3938,6 +4085,13 @@ function App(){
   T=THEMES[themeMode];
   useEffect(()=>{const s=document.body.style;s.background=T.bg;s.color=T.text;document.body.className=themeMode==='dark'?'dark':'';const r=document.documentElement.style;r.setProperty('--yuanhe-bg',T.bg);r.setProperty('--yuanhe-card',T.card);r.setProperty('--yuanhe-text',T.text);r.setProperty('--yuanhe-textSec',T.textSec);r.setProperty('--yuanhe-border',T.border)},[themeMode]);
   const toggleTheme=()=>{const next=themeMode==='light'?'dark':'light';localStorage.setItem('yuanhe_theme',next);setThemeMode(next);T=THEMES[next]};
+  // WebSocket: 登录后自动连接，退出时断开
+  useEffect(()=>{
+    if(authToken){WsManager.connect(authToken)}
+    else{WsManager.disconnect()}
+    return()=>WsManager.disconnect();
+  },[authToken]);
+
   const [termsAccepted,setTermsAccepted]=useState(()=>!!localStorage.getItem('yuanhe_terms_accepted'));
   const onboarded=!!localStorage.getItem('yuanhe_onboarded');
   const goTo=(s,m)=>{setScr(s);if(m)setAiMode(m)};
