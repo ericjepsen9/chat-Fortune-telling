@@ -137,12 +137,15 @@ function ChangePasswordModal({forced,onDone,onClose}){
 
 // ===== DASHBOARD (placeholder for Step B) =====
 function DashboardPage(){
-  const [stats,setStats]=useState(null);
-  useEffect(()=>{apiGet('/api/stats').then(setStats).catch(()=>{})},[]);
+  const [stats,setStats]=useState(null);const [uStats,setUStats]=useState(null);
+  useEffect(()=>{apiGet('/api/stats').then(setStats).catch(()=>{});apiGet('/api/admin/stats').then(setUStats).catch(()=>{})},[]);
   if(!stats)return <div className="container"><div className="panel">加载中…</div></div>;
   return(<div className="container">
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>📊 系统概览</h2>
     <div className="stats-grid">
+      {uStats&&<><div className="stat-card"><div className="label">总用户</div><div className="value">{uStats.totalUsers}</div><div className="sub">今日活跃 {uStats.activeToday} · 新增 {uStats.newToday}</div></div>
+      <div className="stat-card"><div className="label">占卜总数</div><div className="value">{uStats.totalDivinations}</div></div>
+      <div className="stat-card"><div className="label">帖子总数</div><div className="value">{uStats.totalPosts}</div></div></>}
       <div className="stat-card"><div className="label">运行时间</div><div className="value" style={{fontSize:18}}>{stats.uptime}</div></div>
       <div className="stat-card"><div className="label">总请求</div><div className="value">{stats.requests?.total||0}</div><div className="sub">成功率 {stats.requests?.successRate||'—'}</div></div>
       <div className="stat-card"><div className="label">LLM调用</div><div className="value">{stats.llm?.calls||0}</div><div className="sub">失败 {stats.llm?.error||0} · 超时 {stats.llm?.timeout||0}</div></div>
@@ -185,6 +188,138 @@ function LogsPage(){
   </div>);
 }
 
+// ===== USERS PAGE =====
+function UsersPage(){
+  const [data,setData]=useState({items:[],total:0});
+  const [search,setSearch]=useState('');
+  const [gender,setGender]=useState('all');
+  const [page,setPage]=useState(1);
+  const [stats,setStats]=useState(null);
+  const [detail,setDetail]=useState(null);
+  const [banModal,setBanModal]=useState(null);
+  const [editModal,setEditModal]=useState(null);
+  const limit=15;
+
+  const load=useCallback(()=>{
+    apiGet(`/api/admin/users?search=${encodeURIComponent(search)}&gender=${gender}&page=${page}&limit=${limit}`).then(setData).catch(()=>{});
+  },[search,gender,page]);
+
+  useEffect(()=>{load()},[load]);
+  useEffect(()=>{apiGet('/api/admin/stats').then(setStats).catch(()=>{})},[]);
+
+  const totalPages=Math.ceil((data.total||0)/limit);
+
+  return(<div className="container">
+    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>👥 用户管理</h2>
+
+    {stats&&<div className="stats-grid">
+      <div className="stat-card"><div className="label">总用户</div><div className="value">{stats.totalUsers}</div></div>
+      <div className="stat-card"><div className="label">今日活跃</div><div className="value">{stats.activeToday}</div></div>
+      <div className="stat-card"><div className="label">今日新增</div><div className="value">{stats.newToday}</div></div>
+      <div className="stat-card"><div className="label">已封禁</div><div className="value" style={{color:'#EF4444'}}>{stats.banned}</div></div>
+      <div className="stat-card"><div className="label">男/女</div><div className="value" style={{fontSize:16}}>{stats.genderSplit?.male||0} / {stats.genderSplit?.female||0}</div></div>
+      <div className="stat-card"><div className="label">占卜总数</div><div className="value">{stats.totalDivinations}</div></div>
+    </div>}
+
+    <div className="panel">
+      <div className="toolbar">
+        <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="搜索手机号/昵称/ID…"/>
+        <select value={gender} onChange={e=>{setGender(e.target.value);setPage(1)}} style={{padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:13}}>
+          <option value="all">全部性别</option><option value="male">男</option><option value="female">女</option>
+        </select>
+        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>共 {data.total} 条</span>
+      </div>
+
+      <table><thead><tr><th></th><th>昵称</th><th>手机号</th><th>性别</th><th>城市</th><th>占卜</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead>
+      <tbody>{data.items?.map(u=>(
+        <tr key={u.id}>
+          <td style={{fontSize:20}}>{u.avatar||(u.gender==='female'?'👩':'👨')}</td>
+          <td style={{fontWeight:600,cursor:'pointer',color:'#A78BFA'}} onClick={()=>apiGet('/api/admin/users/'+u.id).then(setDetail)}>{u.name}</td>
+          <td style={{fontSize:12,color:'#6B7280'}}>{u.phone||'—'}</td>
+          <td>{u.gender==='female'?<span style={{color:'#EC4899'}}>♀</span>:<span style={{color:'#3B82F6'}}>♂</span>}</td>
+          <td style={{fontSize:12}}>{u.city||'—'}</td>
+          <td>{u.divinationCount}</td>
+          <td>{u.banned?<span className="badge badge-err">封禁</span>:<span className="badge badge-ok">正常</span>}</td>
+          <td style={{fontSize:11,color:'#6B7280'}}>{u.createdAt?.substring(0,10)}</td>
+          <td>
+            <button className="btn-sm btn-ghost" style={{marginRight:4}} onClick={()=>setEditModal(u)}>编辑</button>
+            {u.banned
+              ?<button className="btn-sm btn-primary" onClick={()=>{apiPost('/api/admin/users/'+u.id+'/ban',{ban:false}).then(()=>load())}}>解封</button>
+              :<button className="btn-sm btn-danger" onClick={()=>setBanModal(u)}>封禁</button>
+            }
+          </td>
+        </tr>
+      ))}</tbody></table>
+
+      {totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:12}}>
+        {page>1&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page-1)}>← 上一页</button>}
+        <span style={{fontSize:12,color:'#6B7280',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
+        {page<totalPages&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page+1)}>下一页 →</button>}
+      </div>}
+    </div>
+
+    {/* 用户详情弹窗 */}
+    {detail&&<div className="modal-bg" onClick={()=>setDetail(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
+      <h3>👤 {detail.profile?.name||'用户详情'}</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:13}}>
+        <div><span style={{color:'#6B7280'}}>ID:</span> <span style={{fontSize:11}}>{detail.id?.substring(0,8)}…</span></div>
+        <div><span style={{color:'#6B7280'}}>手机:</span> {detail.phone||'—'}</div>
+        <div><span style={{color:'#6B7280'}}>性别:</span> {detail.profile?.gender==='female'?'女':'男'}</div>
+        <div><span style={{color:'#6B7280'}}>城市:</span> {detail.profile?.city||'—'}</div>
+        <div><span style={{color:'#6B7280'}}>生辰:</span> {detail.profile?.year}年{detail.profile?.month}月{detail.profile?.day}日 {detail.profile?.hour}时</div>
+        <div><span style={{color:'#6B7280'}}>注册:</span> {detail.createdAt?.substring(0,10)}</div>
+        <div><span style={{color:'#6B7280'}}>最后活跃:</span> {detail.lastActiveAt?.substring(0,16).replace('T',' ')}</div>
+        <div><span style={{color:'#6B7280'}}>占卜次数:</span> {detail.divinationCount} · 帖子 {detail.postCount}</div>
+      </div>
+      {detail.profile?.bio&&<div style={{marginTop:10,padding:10,background:'#0f0f1a',borderRadius:8,fontSize:12,color:'#9CA3AF'}}>{detail.profile.bio}</div>}
+      {detail.banned&&<div style={{marginTop:10,padding:10,background:'#EF444420',borderRadius:8,fontSize:12,color:'#EF4444'}}>⛔ 已封禁: {detail.banReason} {detail.banUntil?`(至${detail.banUntil.substring(0,10)})`:' (永久)'}</div>}
+      {detail.divinations?.length>0&&<div style={{marginTop:12}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#6B7280',marginBottom:6}}>最近占卜</div>
+        {detail.divinations.map(d=><div key={d.id} style={{fontSize:11,color:'#9CA3AF',padding:'4px 0',borderBottom:'1px solid #1f1f30'}}>
+          <span className="badge badge-purple">{d.mode}</span> {d.question||'全面分析'} <span style={{color:'#4a4a5a'}}>{d.createdAt?.substring(0,10)}</span>
+        </div>)}
+      </div>}
+      <div className="actions"><button className="btn-sm btn-ghost" onClick={()=>setDetail(null)}>关闭</button></div>
+    </div></div>}
+
+    {/* 封禁弹窗 */}
+    {banModal&&(()=>{
+      const [reason,setR]=useState('');const [days,setD]=useState('');
+      const doBan=async()=>{
+        await apiPost('/api/admin/users/'+banModal.id+'/ban',{ban:true,reason:reason||'违规',days:days?parseInt(days):0});
+        setBanModal(null);load();
+      };
+      return<div className="modal-bg" onClick={()=>setBanModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
+        <h3>⛔ 封禁 {banModal.name}</h3>
+        <label>封禁理由</label><input value={reason} onChange={e=>setR(e.target.value)} placeholder="违规内容/行为描述"/>
+        <label>封禁天数 (0=永久)</label><input type="number" value={days} onChange={e=>setD(e.target.value)} placeholder="0"/>
+        <div className="actions">
+          <button className="btn-sm btn-ghost" onClick={()=>setBanModal(null)}>取消</button>
+          <button className="btn-sm btn-danger" onClick={doBan}>确认封禁</button>
+        </div>
+      </div></div>;
+    })()}
+
+    {/* 编辑弹窗 */}
+    {editModal&&(()=>{
+      const [name,setN]=useState(editModal.name||'');const [city,setC]=useState(editModal.city||'');
+      const doEdit=async()=>{
+        await apiPost('/api/admin/users/'+editModal.id+'/update',{name,city});
+        setEditModal(null);load();
+      };
+      return<div className="modal-bg" onClick={()=>setEditModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
+        <h3>✏️ 编辑 {editModal.name}</h3>
+        <label>昵称</label><input value={name} onChange={e=>setN(e.target.value)}/>
+        <label>城市</label><input value={city} onChange={e=>setC(e.target.value)}/>
+        <div className="actions">
+          <button className="btn-sm btn-ghost" onClick={()=>setEditModal(null)}>取消</button>
+          <button className="btn-sm btn-primary" onClick={doEdit}>保存</button>
+        </div>
+      </div></div>;
+    })()}
+  </div>);
+}
+
 // ===== PLACEHOLDER PAGES =====
 function PlaceholderPage({title,icon}){
   return(<div className="container" style={{textAlign:'center',paddingTop:80}}>
@@ -223,7 +358,7 @@ function App(){
 
   const pages={
     dashboard:<DashboardPage/>,
-    users:<PlaceholderPage title="用户管理" icon="👥"/>,
+    users:<UsersPage/>,
     chat:<PlaceholderPage title="聊天管理" icon="💬"/>,
     content:<PlaceholderPage title="内容审核" icon="📋"/>,
     llm:<PlaceholderPage title="LLM配置" icon="🤖"/>,

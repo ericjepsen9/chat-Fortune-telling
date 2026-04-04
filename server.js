@@ -326,6 +326,44 @@ app.get('/api/admin/logs', admin.adminAuth, (req, res) => {
   res.json(admin.getAdminLogs(parseInt(req.query.limit) || 50));
 });
 
+// ============ Admin: User Management ============
+
+app.get('/api/admin/stats', admin.adminAuth, (req, res) => {
+  res.json(auth.adminGetStats());
+});
+
+app.get('/api/admin/users', admin.adminAuth, (req, res) => {
+  const { search, gender, page, limit } = req.query;
+  res.json(auth.adminListUsers({ search, gender, page: parseInt(page) || 1, limit: parseInt(limit) || 20 }));
+});
+
+app.get('/api/admin/users/:id', admin.adminAuth, (req, res) => {
+  const user = auth.adminGetUser(req.params.id);
+  if (!user) return res.status(404).json({ error: '用户不存在' });
+  res.json(user);
+});
+
+app.post('/api/admin/users/:id/update', admin.adminAuth, (req, res) => {
+  const result = auth.adminUpdateUser(req.params.id, req.body);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'update_user', req.params.id, `编辑用户: ${JSON.stringify(req.body).substring(0, 100)}`);
+  res.json(result);
+});
+
+app.post('/api/admin/users/:id/ban', admin.adminAuth, (req, res) => {
+  const result = auth.adminBanUser(req.params.id, req.body);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, req.body.ban ? 'ban_user' : 'unban_user', req.params.id, req.body.ban ? `封禁: ${req.body.reason || '违规'} ${req.body.days ? req.body.days + '天' : '永久'}` : '解封');
+  res.json(result);
+});
+
+app.post('/api/admin/users/:id/delete', admin.adminAuth, admin.superOnly, (req, res) => {
+  const result = auth.adminDeleteUser(req.params.id);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'delete_user', req.params.id, '删除用户(软删除)');
+  res.json(result);
+});
+
 // ============ Auth Routes ============
 
 // 发送验证码

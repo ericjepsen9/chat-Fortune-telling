@@ -504,7 +504,134 @@ module.exports = {
   getPendingRequests,
   getFriends,
   areFriends,
+  // Admin user management
+  adminListUsers,
+  adminGetUser,
+  adminUpdateUser,
+  adminBanUser,
+  adminDeleteUser,
+  adminGetStats,
 };
+
+// ============ Admin: User Management ============
+
+function adminListUsers({ search, gender, page = 1, limit = 20 } = {}) {
+  let list = Object.values(users);
+
+  // 搜索 (手机号/昵称/ID)
+  if (search) {
+    const s = search.toLowerCase();
+    list = list.filter(u =>
+      u.phone?.includes(s) ||
+      u.id?.includes(s) ||
+      u.profile?.name?.toLowerCase().includes(s)
+    );
+  }
+  // 性别筛选
+  if (gender && gender !== 'all') {
+    list = list.filter(u => u.profile?.gender === gender);
+  }
+
+  // 按注册时间倒序
+  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const total = list.length;
+  const start = (page - 1) * limit;
+  const items = list.slice(start, start + limit).map(u => ({
+    id: u.id,
+    phone: u.phone,
+    name: u.profile?.name || '—',
+    gender: u.profile?.gender || '—',
+    city: u.profile?.city || '—',
+    avatar: u.profile?.avatar || '',
+    year: u.profile?.year,
+    banned: u.banned || false,
+    banReason: u.banReason || '',
+    banUntil: u.banUntil || null,
+    createdAt: u.createdAt,
+    lastActiveAt: u.lastActiveAt,
+    divinationCount: u.divinations?.length || 0,
+  }));
+
+  return { total, page, limit, items };
+}
+
+function adminGetUser(userId) {
+  const u = users[userId];
+  if (!u) return null;
+  return {
+    id: u.id,
+    phone: u.phone,
+    profile: u.profile,
+    banned: u.banned || false,
+    banReason: u.banReason || '',
+    banUntil: u.banUntil || null,
+    deleted: u.deleted || false,
+    createdAt: u.createdAt,
+    lastActiveAt: u.lastActiveAt,
+    divinationCount: u.divinations?.length || 0,
+    divinations: (u.divinations || []).slice(0, 10).map(d => ({
+      id: d.id, mode: d.mode, question: d.question,
+      createdAt: d.createdAt, preview: (d.response || '').substring(0, 80),
+    })),
+    postCount: (posts || []).filter(p => p.authorId === userId).length,
+  };
+}
+
+function adminUpdateUser(userId, data) {
+  const u = users[userId];
+  if (!u) return { error: '用户不存在' };
+  if (data.name !== undefined) { if (!u.profile) u.profile = {}; u.profile.name = data.name; }
+  if (data.bio !== undefined) { if (!u.profile) u.profile = {}; u.profile.bio = data.bio; }
+  if (data.city !== undefined) { if (!u.profile) u.profile = {}; u.profile.city = data.city; }
+  saveUsers();
+  return { success: true };
+}
+
+function adminBanUser(userId, { ban, reason, days }) {
+  const u = users[userId];
+  if (!u) return { error: '用户不存在' };
+  if (ban) {
+    u.banned = true;
+    u.banReason = reason || '违规';
+    u.banUntil = days ? new Date(Date.now() + days * 86400000).toISOString() : null; // null=永久
+  } else {
+    u.banned = false;
+    u.banReason = '';
+    u.banUntil = null;
+  }
+  saveUsers();
+  return { success: true, banned: u.banned };
+}
+
+function adminDeleteUser(userId) {
+  const u = users[userId];
+  if (!u) return { error: '用户不存在' };
+  u.deleted = true;
+  u.banned = true;
+  u.banReason = '账号已删除';
+  saveUsers();
+  return { success: true };
+}
+
+function adminGetStats() {
+  const allUsers = Object.values(users);
+  const now = Date.now();
+  const today = new Date().toDateString();
+  return {
+    totalUsers: allUsers.length,
+    activeToday: allUsers.filter(u => u.lastActiveAt && new Date(u.lastActiveAt).toDateString() === today).length,
+    newToday: allUsers.filter(u => new Date(u.createdAt).toDateString() === today).length,
+    banned: allUsers.filter(u => u.banned).length,
+    withProfile: allUsers.filter(u => u.profile?.year).length,
+    totalDivinations: allUsers.reduce((s, u) => s + (u.divinations?.length || 0), 0),
+    totalPosts: (posts || []).length,
+    genderSplit: {
+      male: allUsers.filter(u => u.profile?.gender === 'male').length,
+      female: allUsers.filter(u => u.profile?.gender === 'female').length,
+    },
+  };
+}
 
 // ============ Posts (缘友圈) ============
 
