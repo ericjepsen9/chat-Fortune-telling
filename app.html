@@ -2386,7 +2386,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   const [chatInput,setChatInput]=useState('');
   const [sending,setSending]=useState(false);
   const [typing,setTyping]=useState(false);
-  const [readStatus,setReadStatus]=useState('');
+  
   const [showQuick,setShowQuick]=useState(false);
   const [showEmoji,setShowEmoji]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
@@ -2539,11 +2539,9 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
     // Bot behavior simulation
     const isBot=activeConv.user.isBot;
     if(isBot){
-      // Phase 1: "已发送" → delay → "已读"
       setReadStatus('已发送');
       const readDelay=2000+Math.random()*5000; // 2-7s before "read"
       await new Promise(r=>setTimeout(r,readDelay));
-      setReadStatus('已读');
       // Phase 2: delay before typing (thinking time)
       const thinkDelay=1000+Math.random()*3000; // 1-4s think
       await new Promise(r=>setTimeout(r,thinkDelay));
@@ -2631,7 +2629,6 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
                 :msg.text}
                 {!msg.recalled&&msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
               </div>
-              {msg.role==='user'&&idx===msgs.length-1&&readStatus&&!msg.recalled&&<div style={{fontSize:9,color:readStatus==='已读'?T.accent2:T.textThi,textAlign:'right',marginTop:2,paddingRight:4}}>{readStatus}</div>}
             </div>
           </div>
         ))}
@@ -2773,7 +2770,6 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0,position:'relative'}}>
             {conv.user.gender==='female'?'👩':'👨'}
             <div style={{position:'absolute',bottom:0,right:0,width:10,height:10,borderRadius:5,background:convOnline?'#22C55E':'#D1D5DB',border:`2px solid ${T.card}`}}/>
-            {conv.unread>0&&<div style={{position:'absolute',top:-2,right:-2,minWidth:16,height:16,borderRadius:8,background:'#EF4444',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',border:`2px solid ${T.card}`}}>{conv.unread}</div>}
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -2783,7 +2779,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
               </div>
               <span style={{fontSize:10,color:T.textThi}}>{timeAgo}</span>
             </div>
-            <div style={{fontSize:12,color:conv.unread>0?T.text:T.textThi,fontWeight:conv.unread>0?500:400,marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{conv.lastMessage||'匹配成功！打个招呼吧 👋'}</div>
+            <div style={{fontSize:12,color:T.textThi,fontWeight:400,marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{conv.lastMessage||'匹配成功！打个招呼吧 👋'}</div>
           </div>
         </div>);
       })}</div>
@@ -3416,7 +3412,7 @@ function ShareModal({type,profile,structured,partner,score,compatibility,onClose
 // ===== TAB BAR =====
 function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
-  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息",badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
+  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息"},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
   return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:60,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 4px 0',zIndex:100}}>
     {tabs.map(tab=>{const act=active===tab.id;
       if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}DD)`,border:'none',borderRadius:22,width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:`0 3px 12px ${T.accent2}40`,marginTop:-14}}><Icons.sparkles s={20} c="#fff"/></button>;
