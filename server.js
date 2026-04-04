@@ -356,6 +356,54 @@ app.post('/api/admin/sensitive-words', admin.adminAuth, (req, res) => {
   res.json(result);
 });
 
+// ============ Admin: Content Review ============
+
+app.get('/api/admin/posts', admin.adminAuth, (req, res) => {
+  res.json(auth.adminListPosts({ search: req.query.search, page: parseInt(req.query.page) || 1, limit: parseInt(req.query.limit) || 20 }));
+});
+
+app.post('/api/admin/posts/:id/delete', admin.adminAuth, (req, res) => {
+  const result = auth.adminDeletePost(req.params.id);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'delete_post', req.params.id, '删除帖子');
+  res.json(result);
+});
+
+app.post('/api/admin/posts/:id/pin', admin.adminAuth, (req, res) => {
+  const result = auth.adminPinPost(req.params.id, req.body.pinned !== false);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'pin_post', req.params.id, req.body.pinned !== false ? '置顶帖子' : '取消置顶');
+  res.json(result);
+});
+
+// 举报
+app.post('/api/report', auth.optionalAuth, (req, res) => {
+  const userId = req.user?.id || 'anonymous';
+  const result = auth.submitReport(userId, req.body);
+  res.json(result);
+});
+
+app.get('/api/admin/reports', admin.adminAuth, (req, res) => {
+  res.json(auth.adminListReports({ status: req.query.status, page: parseInt(req.query.page) || 1 }));
+});
+
+app.post('/api/admin/reports/:id/resolve', admin.adminAuth, (req, res) => {
+  const result = auth.adminResolveReport(req.params.id, req.body);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'resolve_report', req.params.id, `处理举报: ${req.body.status} - ${req.body.resolution || ''}`);
+  res.json(result);
+});
+
+// ============ Admin: LLM Config ============
+
+app.get('/api/admin/llm-config', admin.adminAuth, (req, res) => {
+  res.json({
+    providers: LLM_PROVIDERS.map(p => ({ name: p.name, url: p.url, model: p.model })),
+    activeProvider: activeProvider,
+    providerErrors,
+  });
+});
+
 // ============ Admin: User Management ============
 
 app.get('/api/admin/stats', admin.adminAuth, (req, res) => {

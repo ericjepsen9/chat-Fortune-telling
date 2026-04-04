@@ -519,6 +519,13 @@ module.exports = {
   getSensitiveWords,
   setSensitiveWords,
   checkSensitive,
+  // Admin content
+  adminListPosts,
+  adminDeletePost,
+  adminPinPost,
+  adminListReports,
+  adminResolveReport,
+  submitReport,
 };
 
 // ============ Sensitive Words ============
@@ -815,4 +822,87 @@ function getComments(postId) {
   const post = posts.find(p => p.id === postId);
   if (!post) return [];
   return post.comments || [];
+}
+
+// ============ Admin: Content Management ============
+
+function adminListPosts({ search, page = 1, limit = 20 } = {}) {
+  let list = posts;
+  if (search) {
+    const s = search.toLowerCase();
+    list = list.filter(p => p.content?.toLowerCase().includes(s) || p.author?.toLowerCase().includes(s));
+  }
+  const total = list.length;
+  return {
+    total, page, limit,
+    items: list.slice((page - 1) * limit, page * limit).map(p => ({
+      ...p, likedBy: undefined,
+      likeCount: p.likedBy?.length || p.likes || 0,
+      commentCount: p.comments?.length || 0,
+    })),
+  };
+}
+
+function adminDeletePost(postId) {
+  const idx = posts.findIndex(p => p.id === postId);
+  if (idx < 0) return { error: '帖子不存在' };
+  posts[idx].deleted_at = new Date().toISOString();
+  posts.splice(idx, 1);
+  savePosts();
+  return { success: true };
+}
+
+function adminPinPost(postId, pinned) {
+  const post = posts.find(p => p.id === postId);
+  if (!post) return { error: '帖子不存在' };
+  post.pinned = pinned;
+  if (pinned) { posts.splice(posts.indexOf(post), 1); posts.unshift(post); }
+  savePosts();
+  return { success: true };
+}
+
+// ============ Reports (举报) ============
+
+const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
+let reports = [];
+try { if (fs.existsSync(REPORTS_FILE)) reports = JSON.parse(fs.readFileSync(REPORTS_FILE, 'utf-8')); } catch (e) {}
+function saveReports() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
+  } catch (e) {}
+}
+
+function submitReport(reporterId, { targetType, targetId, reason }) {
+  const report = {
+    id: crypto.randomUUID(),
+    reporterId,
+    reporterName: users[reporterId]?.profile?.name || '匿名',
+    targetType, // 'user','post','message'
+    targetId,
+    reason: (reason || '').substring(0, 500),
+    status: 'pending', // pending/resolved/dismissed
+    resolution: '',
+    createdAt: new Date().toISOString(),
+  };
+  reports.unshift(report);
+  saveReports();
+  return { success: true, id: report.id };
+}
+
+function adminListReports({ status, page = 1, limit = 20 } = {}) {
+  let list = reports;
+  if (status && status !== 'all') list = list.filter(r => r.status === status);
+  const total = list.length;
+  return { total, page, limit, items: list.slice((page - 1) * limit, page * limit) };
+}
+
+function adminResolveReport(reportId, { status, resolution }) {
+  const report = reports.find(r => r.id === reportId);
+  if (!report) return { error: '举报不存在' };
+  report.status = status; // 'resolved' or 'dismissed'
+  report.resolution = resolution || '';
+  report.resolvedAt = new Date().toISOString();
+  saveReports();
+  return { success: true };
 }
