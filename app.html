@@ -3018,6 +3018,8 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showDevStats,setShowDevStats]=useState(false);
   const [showAvatarPicker,setShowAvatarPicker]=useState(false);
   const [showBlacklist,setShowBlacklist]=useState(false);
+  const [showMyPosts,setShowMyPosts]=useState(false);
+  const [generatingPersonality,setGeneratingPersonality]=useState(false);
   const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
@@ -3112,8 +3114,19 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       return <div style={{background:T.card,borderRadius:14,padding:16,marginBottom:12,boxShadow:T.shadow,textAlign:'center'}}>
         <div style={{fontSize:36,marginBottom:8}}>🔮</div>
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:4}}>我的性格</div>
-        <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>完成一次八字占卜即可生成你的性格卡片</div>
-        <button onClick={()=>goTo(S.AI,'bazi')} style={{padding:'8px 20px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>去生成 ›</button>
+        <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>基于八字分析生成你的专属性格卡片</div>
+        {generatingPersonality?<div style={{padding:'8px',color:T.accent2,fontSize:12}}>
+          <div style={{display:'inline-block',width:14,height:14,border:`2px solid ${T.accent2}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',verticalAlign:'middle',marginRight:6}}/>
+          正在生成你的性格分析…
+        </div>
+        :<button onClick={async()=>{
+          setGeneratingPersonality(true);
+          try{
+            const r=await apiPost('/api/divine',{mode:'bazi',question:'分析我的性格特点',profile,depth:'simple'});
+            if(r){const saved=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');saved.bazi={result:r,chatHistory:[]};localStorage.setItem('yuanhe_mode_results',JSON.stringify(saved));window.yuanheToast?.('性格卡片已生成 ✨')}
+          }catch(e){window.yuanheToast?.('生成失败，请稍后再试')}
+          setGeneratingPersonality(false);
+        }} style={{padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>一键生成性格卡片</button>}
       </div>;
     })()}
 
@@ -3183,7 +3196,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       return <div style={{marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
           <div style={{fontSize:14,fontWeight:700,color:T.text}}>我的动态</div>
-          <button onClick={()=>goTo(S.DISCOVER)} style={{fontSize:11,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>全部 {posts.length} 条 ›</button>
+          <button onClick={()=>setShowMyPosts(true)} style={{fontSize:11,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>全部 {posts.length} 条 ›</button>
         </div>
         <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,overflow:'hidden'}}>
           {posts.slice(0,3).map((p,i,arr)=><div key={p.id||i} style={{padding:'12px 16px',borderBottom:i<Math.min(arr.length,3)-1?`1px solid ${T.border}`:'none'}}>
@@ -3332,6 +3345,30 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   {showAbout&&<AboutModal onClose={()=>setShowAbout(false)}/>}
   {showTerms&&<TermsModal onClose={()=>setShowTerms(false)}/>}
   {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
+  {/* My posts modal */}
+  {showMyPosts&&<div onClick={()=>setShowMyPosts(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease',maxHeight:'80vh',overflow:'auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,color:T.text}}>我的动态</div>
+        <button onClick={()=>setShowMyPosts(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
+      </div>
+      {(()=>{
+        const posts=JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]');
+        if(posts.length===0)return <div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}>
+          <div style={{fontSize:28,marginBottom:8}}>✏️</div>
+          <div style={{fontSize:13}}>还没有发布过动态</div>
+          <button onClick={()=>{setShowMyPosts(false);goTo(S.DISCOVER)}} style={{marginTop:12,padding:'8px 20px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条</button>
+        </div>;
+        return posts.map((p,i)=><div key={p.id||i} style={{padding:'14px 0',borderBottom:i<posts.length-1?`1px solid ${T.border}`:'none'}}>
+          <div style={{fontSize:14,color:T.text,lineHeight:1.7}}>{p.content}</div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
+            <span style={{fontSize:11,color:T.textThi}}>{p.time||'刚刚'}{p.likes>0?` · ❤️ ${p.likes}`:''}{p.comments>0?` · 💬 ${p.comments}`:''}</span>
+            <button onClick={()=>{const updated=posts.filter((_,j)=>j!==i);localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));setShowMyPosts(false);setTimeout(()=>setShowMyPosts(true),100);window.yuanheToast?.('已删除')}} style={{fontSize:10,color:T.primary,background:'none',border:'none',cursor:'pointer'}}>删除</button>
+          </div>
+        </div>);
+      })()}
+    </div>
+  </div>}
   {/* Avatar picker */}
   {showAvatarPicker&&<div onClick={()=>setShowAvatarPicker(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
     <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
