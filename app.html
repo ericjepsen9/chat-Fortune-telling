@@ -759,6 +759,10 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
           <div style={{width:6,height:6,borderRadius:3,background:isOnline?'#34D399':'#9CA3AF'}}/>
           <span style={{fontSize:10,color:'#fff',fontWeight:500}}>{isOnline?'在线':'离线'}</span>
         </div>
+        {/* "TA喜欢你" badge */}
+        {user.likedMe&&<div style={{position:'absolute',top:38,left:10,padding:'4px 10px',borderRadius:12,background:'linear-gradient(135deg,#EC4899,#F472B6)',boxShadow:'0 2px 8px rgba(236,72,153,0.3)'}}>
+          <span style={{fontSize:10,color:'#fff',fontWeight:600}}>💕 TA喜欢你</span>
+        </div>}
         {/* Score badge */}
         <div style={{position:'absolute',top:10,right:10,padding:'6px 12px',borderRadius:14,background:'rgba(255,255,255,0.95)',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
           <div style={{color:T.accent2,fontWeight:800,fontSize:16,lineHeight:1}}>{user.score}%</div>
@@ -1228,17 +1232,8 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:T.primary,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 3px 12px ${T.primary}40`}}><Icons.heart s={22} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{
-      if(matchUser.realUserId){
-        // 真实用户: 发送好友请求
-        apiPost('/api/friends/request',{toId:matchUser.realUserId,message:'我们匹配成功啦！'}).then(r=>{
-          if(r.success)window.yuanheToast?.('好友请求已发送 💌');
-          else if(r.error)window.yuanheToast?.(r.error);
-        }).catch(()=>{});
-        setMatchUser(null);
-      }else{
-        // Bot: 保持原有逻辑
-        const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS);
-      }
+      // 统一逻辑: 自动创建会话+开始聊天(真实用户和Bot都一样)
+      const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS);
     }} onClose={()=>setMatchUser(null)}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
     {/* Fortune Wheel — fullscreen */}

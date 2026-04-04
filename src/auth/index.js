@@ -343,7 +343,7 @@ function getCandidates(userId, genderPref, limit = 20) {
   const me = users[userId];
   if (!me) return [];
 
-  return Object.values(users).filter(u => {
+  const result = Object.values(users).filter(u => {
     if (u.id === userId) return false;           // 排除自己
     if (!u.profile || !u.profile.year) return false; // 未完成注册
     if (genderPref && genderPref !== 'all' && u.profile.gender !== genderPref) return false;
@@ -365,7 +365,11 @@ function getCandidates(userId, genderPref, limit = 20) {
     day: u.profile.day || u.profile.birth_day,
     hour: u.profile.hour || u.profile.birth_hour || -1,
     isBot: false,
+    likedMe: swipes[`${u.id}:${userId}`] === 'right', // 对方已喜欢我
   }));
+  // 优先显示喜欢我的人
+  result.sort((a, b) => (b.likedMe ? 1 : 0) - (a.likedMe ? 1 : 0));
+  return result;
 }
 
 // 记录滑动
