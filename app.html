@@ -1470,6 +1470,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         }
         if(updateTimer)clearInterval(updateTimer);
         flushUpdate(true);
+        // Save to history
+        try{const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');hist.unshift({mode:m,question:q,time:new Date().toLocaleString(),ts:Date.now()});if(hist.length>50)hist.length=50;localStorage.setItem('yuanhe_history',JSON.stringify(hist))}catch(e){}
         }catch(abortErr){
           if(abortErr.name==='AbortError'){
             if(fullText){flushUpdate(true)}
@@ -2612,7 +2614,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
     // Bot behavior simulation
     const isBot=activeConv.user.isBot;
     if(isBot){
-      setReadStatus('已发送');
+      
       const readDelay=2000+Math.random()*5000; // 2-7s before "read"
       await new Promise(r=>setTimeout(r,readDelay));
       // Phase 2: delay before typing (thinking time)
@@ -2633,7 +2635,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       const r=await apiPost('/api/chat',{partner:activeConv.user,message:text,history:(freshConv?.messages||[]).slice(-10)});
       ChatStore.addMessage(activeConv.id,{role:'ai',text:r.reply||'😊'});
     }catch(e){ChatStore.addMessage(activeConv.id,{role:'ai',text:'[网络不稳定，请重试]'})}
-    setTyping(false);setSending(false);setReadStatus('');
+    setTyping(false);setSending(false);
     refreshConvs();scrollBottom();
   };
 
@@ -3021,7 +3023,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showBlacklist,setShowBlacklist]=useState(false);
   const [showMyPosts,setShowMyPosts]=useState(false);
   const [generatingPersonality,setGeneratingPersonality]=useState(false);
-  const [history]=useState(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}});
+  const history=(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}})();
   const resultCount=Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length;
   const privacyLevel=localStorage.getItem('yuanhe_privacy')||'standard';
   const privacyLabel={standard:'标准',open:'开放',private:'保守'}[privacyLevel]||'标准';
@@ -3134,13 +3136,13 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
 
     {/* 2. 今日任务 */}
     {(()=>{
-      const todayStr=new Date().toLocaleDateString();
-      const hasTodayDivine=history.length>0&&history.some(h=>h.time&&h.time.includes(todayStr));
+      const todayStart=new Date();todayStart.setHours(0,0,0,0);const todayTs=todayStart.getTime();
+      const hasTodayDivine=history.some(h=>(h.ts&&h.ts>=todayTs)||(h.time&&h.time.includes(new Date().toLocaleDateString())));
       const hasTodayMood=!!localStorage.getItem('yuanhe_mood_'+new Date().toDateString());
-      const hasTodayChat=(()=>{const convs=ChatStore.getAll();return convs.some(c=>(c.messages||[]).some(m=>m.role==='user'&&m.ts&&(Date.now()-m.ts)<86400000))})();
+      const hasTodayChat=(()=>{const convs=ChatStore.getAll();return convs.some(c=>(c.messages||[]).some(m=>m.role==='user'&&m.ts&&m.ts>=todayTs))})();
       const tasks=[
         {l:'完成一次占卜',icon:'🔮',done:hasTodayDivine,a:()=>goTo(S.AI)},
-        {l:'心情打卡',icon:'💭',done:hasTodayMood,a:()=>window._yuanheDiscoverTab='community';goTo(S.DISCOVER)},
+        {l:'心情打卡',icon:'💭',done:hasTodayMood,a:()=>{window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}},
         {l:'和匹配对象聊天',icon:'💬',done:hasTodayChat,a:()=>goTo(S.MSGS)}
       ];
       const doneCount=tasks.filter(t=>t.done).length;
