@@ -2190,7 +2190,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
       {/* ===== 推荐 Tab ===== */}
       {discoverTab==='recommend'&&<>
       {/* Today's luck card */}
-      <div className="anim-in" style={{background:luckBg,borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:`1px solid ${luckBorder}`}}>
+      <div className="anim-in" onClick={()=>setShowDaily(true)} style={{background:luckBg,borderRadius:18,padding:'18px',boxShadow:T.shadow,marginBottom:14,border:`1px solid ${luckBorder}`,cursor:'pointer'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <div style={{fontSize:13,color:T.textThi}}>📅 今日 {today.getMonth()+1}月{today.getDate()}日</div>
@@ -3098,7 +3098,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           const traits=bz.personality?.length>0?bz.personality:(defaultTraits[el]||defaultTraits['火']);
           const resp=saved.bazi?.result?.response||'';
           const desc=resp.replace(/[#*\n]/g,' ').trim().substring(0,50);
-          return <div style={{background:elBg[el]||elBg['火'],borderRadius:14,padding:16,marginBottom:12,boxShadow:T.shadow,borderLeft:`3px solid ${elColors[el]}30`}}>
+          return <div onClick={()=>setShowPersonality(true)} style={{background:elBg[el]||elBg['火'],borderRadius:14,padding:16,marginBottom:12,boxShadow:T.shadow,borderLeft:`3px solid ${elColors[el]}30`,cursor:'pointer'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
               <div style={{display:'flex',alignItems:'center',gap:6}}>
                 <span style={{fontSize:15}}>{elEmoji[el]||'🔥'}</span>
