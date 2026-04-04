@@ -70,7 +70,27 @@ body.dark input::placeholder,body.dark textarea::placeholder{color:var(--yuanhe-
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script type="text/babel">
-const {useState,useEffect,useRef,useCallback}=React;
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
+
+// ===== ERROR BOUNDARY =====
+class ErrorBoundary extends React.Component{
+  constructor(props){super(props);this.state={hasError:false,error:null}}
+  static getDerivedStateFromError(error){return{hasError:true,error}}
+  componentDidCatch(error,info){console.error('ErrorBoundary caught:',error,info)}
+  render(){
+    if(this.state.hasError){
+      const T_=THEMES[getThemeMode()];
+      return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:T_.bg,color:T_.text,padding:40,textAlign:'center'}},
+        React.createElement('div',{style:{fontSize:48,marginBottom:16}},'⚠️'),
+        React.createElement('div',{style:{fontSize:18,fontWeight:700,marginBottom:8}},'出了点问题'),
+        React.createElement('div',{style:{fontSize:13,color:T_.textSec,marginBottom:20,lineHeight:1.6}},(this.state.error?.message||'').substring(0,100)||'应用遇到了未知错误'),
+        React.createElement('button',{onClick:()=>{this.setState({hasError:false,error:null})},style:{padding:'12px 28px',borderRadius:14,border:'none',background:T_.accent2,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}},'重新加载'),
+        React.createElement('button',{onClick:()=>{localStorage.clear();window.location.reload()},style:{marginTop:10,padding:'10px 24px',borderRadius:14,border:`1px solid ${T_.border}`,background:'none',color:T_.textSec,fontSize:12,cursor:'pointer'}},'清除数据并重启')
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ===== SVG ICONS (MIT License, commercially usable) =====
 const I=({d,size=20,color='currentColor',sw=2})=>React.createElement('svg',{width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:color,strokeWidth:sw,strokeLinecap:'round',strokeLinejoin:'round'},Array.isArray(d)?d.map((p,i)=>React.createElement('path',{key:i,d:p})):React.createElement('path',{d}));
@@ -112,6 +132,7 @@ function getThemeMode(){
 let T=THEMES[getThemeMode()];
 const S={SPLASH:0,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
+const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦁','🐸','🦄'];
 const GRADS=['linear-gradient(135deg,#F9E4E4,#F4D5DB)','linear-gradient(135deg,#D5F0ED,#D0E8EE)','linear-gradient(135deg,#E5DEF5,#DDD8F0)','linear-gradient(135deg,#F5E6D0,#F9E4E4)','linear-gradient(135deg,#D5ECDF,#D5F0ED)','linear-gradient(135deg,#F4D5DB,#F5E6D0)','linear-gradient(135deg,#D0E8EE,#E5DEF5)','linear-gradient(135deg,#F0E4C8,#F5E6D0)','linear-gradient(135deg,#DDD8F0,#F9E4E4)','linear-gradient(135deg,#D5F0ED,#D5ECDF)','linear-gradient(135deg,#F9E4E4,#E5DEF5)','linear-gradient(135deg,#F5E6D0,#D5F0ED)'];
 const USERS=[
   {id:1,name:'林雨薇',age:31,bio:'喜欢旅行和音乐 ✈️',year:1994,month:3,day:15,hour:8,gender:'female',score:92,dist:'1km',sign:'双鱼座',tags:['旅行','音乐','瑜伽']},
@@ -173,6 +194,9 @@ const BOTS=[
   {id:210,name:'霍言泽',age:29,bio:'创业中·连续失败连续开始 🔥',year:1996,month:6,day:8,hour:13,gender:'male',dist:'7km',sign:'双子座',tags:['创业','健身','读书'],isBot:true,
     chatStyle:'乐观能量满满，爱分享创业故事，说话直接有冲劲，很励志'},
 ];
+
+// Global error handlers
+window.addEventListener('unhandledrejection',e=>{console.error('Unhandled rejection:',e.reason);e.preventDefault();if(window.yuanheToast)window.yuanheToast('网络异常，请稍后重试')});
 
 async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
@@ -2139,6 +2163,8 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
   const [posts_,setPosts]=useState(posts);
   // Use posts_ for rendering with likes state
   useEffect(()=>setPosts([...userPosts,...BOT_POSTS]),[userPosts]);
+  // Memoize localStorage reads for posts (comments + likes)
+  const postCache=useMemo(()=>{const c={};posts_.forEach(p=>{c[p.id]={cmts:JSON.parse(localStorage.getItem('yuanhe_comments_'+p.id)||'[]'),liked:!!localStorage.getItem('yuanhe_post_like_'+p.id)}});return c},[posts_]);
 
   const addPost=(content)=>{
     const newPost={id:'up_'+Date.now(),avatar:profile.gender==='female'?'👩':'👨',author:profile.name||'缘友',tag:'缘友',time:'刚刚',content,likes:0,comments:0,isUser:true};
@@ -2260,15 +2286,15 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
           </div>
           <div style={{fontSize:13,color:T.text,lineHeight:1.7,marginBottom:10}}>{post.content}</div>
           {/* Post comments */}
-          {(()=>{const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+post.id)||'[]');return cmts.length>0?<div style={{background:T.bg,borderRadius:10,padding:'8px 10px',marginBottom:8}}>
+          {(()=>{const cmts=postCache[post.id]?.cmts||[];return cmts.length>0?<div style={{background:T.bg,borderRadius:10,padding:'8px 10px',marginBottom:8}}>
             {cmts.slice(-3).map((c,j)=><div key={j} style={{fontSize:11,color:T.textSec,lineHeight:1.6,padding:'2px 0'}}><span style={{fontWeight:600,color:T.text}}>{c.name}</span>：{c.text}</div>)}
             {cmts.length>3&&<div style={{fontSize:10,color:T.textThi}}>共{cmts.length}条评论</div>}
           </div>:null})()}
           <div style={{display:'flex',gap:12,alignItems:'center'}}>
-            <button onClick={()=>{const key='yuanhe_post_like_'+post.id;const liked=localStorage.getItem(key);if(!liked){localStorage.setItem(key,'1');post.likes++;setPosts([...posts_])}}} style={{background:'none',border:'none',fontSize:12,color:localStorage.getItem('yuanhe_post_like_'+post.id)?T.primary:T.textThi,cursor:'pointer'}}>
-              {localStorage.getItem('yuanhe_post_like_'+post.id)?'❤️':'🤍'} {post.likes}
+            <button onClick={()=>{const key='yuanhe_post_like_'+post.id;if(!postCache[post.id]?.liked){localStorage.setItem(key,'1');post.likes++;setPosts([...posts_])}}} style={{background:'none',border:'none',fontSize:12,color:postCache[post.id]?.liked?T.primary:T.textThi,cursor:'pointer'}}>
+              {postCache[post.id]?.liked?'❤️':'🤍'} {post.likes}
             </button>
-            <button onClick={()=>{setCommentPost(post);setCommentText('')}} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer'}}>💬 {(JSON.parse(localStorage.getItem('yuanhe_comments_'+post.id)||'[]')).length||(post.comments||0)}</button>
+            <button onClick={()=>{setCommentPost(post);setCommentText('')}} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer'}}>💬 {(postCache[post.id]?.cmts||[]).length||(post.comments||0)}</button>
             <button onClick={()=>setReportTarget(post.id)} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer',marginLeft:'auto'}}>⋯</button>
           </div>
         </div>
@@ -2714,7 +2740,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
                 background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.card,
                 color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:14,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
                 boxShadow:msg.recalled?'none':'0 1px 3px rgba(0,0,0,0.04)',overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
-                {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.voice?
+                {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} loading="lazy" style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.voice?
                   <div onClick={()=>{const a=new Audio(msg.voice);a.play();showToast('播放中…')}} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',minWidth:80+Math.min((msg.voiceDur||3)*8,120)}}>
                     <span style={{fontSize:16}}>▶️</span>
                     <div style={{flex:1,display:'flex',gap:2,alignItems:'center'}}>{[...Array(Math.max(4,Math.min(msg.voiceDur||3,14)))].map((_,i)=>{const h=4+((i*7+3)%12);return <div key={i} style={{width:3,height:h,borderRadius:2,background:msg.role==='user'?'rgba(255,255,255,0.5)':`${T.accent2}40`}}/>})}</div>
@@ -3048,7 +3074,6 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const privacyLabel={standard:'标准',open:'开放',private:'保守'}[privacyLevel]||'标准';
   const favCount=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_fav_')).length;
   const currentAvatar=profile.avatar||(profile.gender==='female'?'👩':'👨');
-  const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦁','🐸','🦄'];
   const changeAvatar=(a)=>{onUpdateProfile({...profile,avatar:a});setShowAvatarPicker(false)};
   const uploadPhoto=()=>{
     const input=document.createElement('input');input.type='file';input.accept='image/*';
@@ -3519,7 +3544,6 @@ function ProfileEditModal({profile,onSave,onClose}){
   const [f,sF]=useState({name:profile.name||'',bio:profile.bio||'',city:profile.city||''});
   const [avatar,setAvatar]=useState(profile.avatar||(profile.gender==='female'?'👩':'👨'));
   const [showAvatarPick,setShowAvatarPick]=useState(false);
-  const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦄'];
   const uploadPhoto=()=>{
     const input=document.createElement('input');input.type='file';input.accept='image/*';
     input.onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>2*1024*1024){window.yuanheToast?.('图片不能超过2MB');return}
@@ -3891,7 +3915,7 @@ function App(){
     </div>}
   </div>);
 }
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
 </script>
 </body>
 </html>
