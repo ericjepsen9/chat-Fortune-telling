@@ -340,26 +340,47 @@ function OnboardingScreen({onDone}){
   );
 }
 
+// ===== WHEEL PICKER =====
+function WheelPicker({items,value,onChange,label}){
+  const ref=useRef(null);const itemH=40;const visibleCount=5;
+  const idx=items.findIndex(i=>String(i.v)===String(value));
+  useEffect(()=>{if(ref.current&&idx>=0)ref.current.scrollTop=idx*itemH},[]);
+  const onScroll=()=>{if(!ref.current)return;const i=Math.round(ref.current.scrollTop/itemH);if(i>=0&&i<items.length&&String(items[i].v)!==String(value))onChange(String(items[i].v))};
+  return(<div style={{flex:1,position:'relative',height:itemH*visibleCount}}>
+    {label&&<div style={{position:'absolute',top:-20,left:0,right:0,textAlign:'center',fontSize:11,color:T.textThi}}>{label}</div>}
+    <div style={{position:'absolute',top:itemH*2,left:0,right:0,height:itemH,borderRadius:10,background:`${T.accent2}08`,border:`1px solid ${T.accent2}20`,zIndex:0}}/>
+    <div style={{position:'absolute',top:0,left:0,right:0,height:itemH*2,background:`linear-gradient(to bottom,${T.card},${T.card}00)`,zIndex:1,pointerEvents:'none'}}/>
+    <div style={{position:'absolute',bottom:0,left:0,right:0,height:itemH*2,background:`linear-gradient(to top,${T.card},${T.card}00)`,zIndex:1,pointerEvents:'none'}}/>
+    <div ref={ref} onScroll={onScroll} style={{height:'100%',overflow:'auto',scrollSnapType:'y mandatory',WebkitOverflowScrolling:'touch',position:'relative',zIndex:0}}>
+      <div style={{height:itemH*2}}/>
+      {items.map(it=>{const sel=String(it.v)===String(value);return(
+        <div key={it.v} style={{height:itemH,display:'flex',alignItems:'center',justifyContent:'center',scrollSnapAlign:'start',fontSize:sel?18:14,fontWeight:sel?700:400,color:sel?T.text:T.textThi,transition:'all .15s'}}>{it.l}</div>
+      )})}
+      <div style={{height:itemH*2}}/>
+    </div>
+  </div>);
+}
+
 function BirthScreen({onSubmit}){
   const [f,sF]=useState(()=>{
     try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));
       if(p&&p.year)return{year:String(p.year),month:String(p.month),day:String(p.day),hour:p.hour>=0?String(p.hour):'',gender:p.gender||'female',name:p.name||'',bio:p.bio||'',city:p.city||''};
     }catch(e){}
-    return{year:'',month:'',day:'',hour:'',gender:'female',name:'',bio:'',city:''};
+    return{year:'1995',month:'6',day:'15',hour:'',gender:'female',name:'',bio:'',city:''};
   });
   const [err,setErr]=useState('');
+  const [showDatePicker,setShowDatePicker]=useState(false);
+  const [showHourPicker,setShowHourPicker]=useState(false);
+  const [tempDate,setTempDate]=useState({year:f.year||'1995',month:f.month||'6',day:f.day||'15'});
+  const [tempHour,setTempHour]=useState(f.hour||'12');
   const [lunar,sL]=useState(null);
   useEffect(()=>{if(f.year&&f.month&&f.day&&f.hour)apiGet(`/api/lunar?year=${f.year}&month=${f.month}&day=${f.day}&hour=${f.hour}`).then(sL).catch(()=>sL(null));else sL(null)},[f.year,f.month,f.day,f.hour]);
   const validate=()=>{
     const y=+f.year,m=+f.month,d=+f.day,h=+f.hour;
-    if(!f.year||!f.month||!f.day)return'请填写完整的出生年月日';
-    if(y<1900||y>2030)return'年份请输入1900-2030';
-    if(m<1||m>12)return'月份请输入1-12';
-    if(d<1||d>31)return'日期请输入1-31';
-    if(f.hour!==''&&(h<0||h>23))return'时辰请输入0-23（24小时制）';
-    // COPPA: must be ≥13 years old
-    const today=new Date();
-    const birth=new Date(y,m-1,d);
+    if(!f.year||!f.month||!f.day)return'请选择出生日期';
+    if(y<1900||y>2030)return'年份超出范围';
+    if(f.hour!==''&&(h<0||h>23))return'时辰请输入0-23';
+    const today=new Date();const birth=new Date(y,m-1,d);
     const age=Math.floor((today-birth)/(365.25*24*60*60*1000));
     if(age<13)return'根据相关法规，本应用仅向13岁及以上用户提供服务。';
     return'';
@@ -369,22 +390,69 @@ function BirthScreen({onSubmit}){
     const p={year:+f.year,month:+f.month,day:+f.day,hour:f.hour!==''?+f.hour:-1,gender:f.gender,name:f.name||'缘友',bio:f.bio||'',city:f.city||''};
     localStorage.setItem('yuanhe_profile',JSON.stringify(p));onSubmit(p);
   };
-  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:15,background:T.card,outline:'none'};
+  const is={width:'100%',padding:'12px 14px',border:`1.5px solid ${T.borderDark}`,borderRadius:12,fontSize:15,background:T.card,outline:'none',boxSizing:'border-box',color:T.text};
   const filled=f.year&&f.month&&f.day;
+  const years=[];for(let y=2012;y>=1940;y--)years.push({v:String(y),l:y+'年'});
+  const months=[];for(let m=1;m<=12;m++)months.push({v:String(m),l:m+'月'});
+  const days=[];for(let d=1;d<=31;d++)days.push({v:String(d),l:d+'日'});
+  const hours=[];for(let h=0;h<=23;h++)hours.push({v:String(h),l:h+'时 ('+['子','丑','丑','寅','寅','卯','卯','辰','辰','巳','巳','午','午','未','未','申','申','酉','酉','戌','戌','亥','亥','子'][h]+')'});
   return(<div style={{height:'100%',overflow:'auto',background:T.bg}}><div style={{padding:'60px 24px 100px'}}>
     <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>你的生辰</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>请输入公历出生信息</div></div>
     {lunar&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FF6B6B10,#8B5CF610)',padding:'14px 16px',borderRadius:14,marginBottom:24,textAlign:'center'}}><div style={{fontSize:13,color:T.primary,fontWeight:500}}>{lunar.lunarFull}</div><div style={{fontSize:12,color:T.textSec,marginTop:4}}>{lunar.ganzhi}</div></div>}
     <div style={{marginBottom:16}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="输入昵称（可选）" style={is}/></div>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10,marginBottom:8}}>
-      {[['年*','year','1996'],['月*','month','8'],['日*','day','15'],['时辰','hour','14']].map(([l,k,ph])=><div key={k}><label style={{fontSize:12,color:k==='hour'?T.textThi:T.textSec,marginBottom:4,display:'block'}}>{l}</label><input type="number" value={f[k]} onChange={e=>{sF({...f,[k]:e.target.value});setErr('')}} placeholder={ph} style={{...is,padding:'10px 8px',textAlign:'center',borderColor:err&&!f[k]&&k!=='hour'?'#EF4444':T.borderDark}}/></div>)}
+    {/* Date picker trigger */}
+    <div style={{marginBottom:12}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>出生日期 *</label>
+      <button onClick={()=>{setTempDate({year:f.year||'1995',month:f.month||'6',day:f.day||'15'});setShowDatePicker(true)}} style={{...is,textAlign:'left',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{color:f.year?T.text:T.textThi}}>{f.year?`${f.year}年${f.month}月${f.day}日`:'点击选择'}</span>
+        <span style={{color:T.textThi}}>▼</span>
+      </button>
     </div>
-    <div style={{fontSize:11,color:T.textThi,marginBottom:16}}>* 年月日为必填 · 时辰留空也可使用（部分功能精度降低）</div>
+    {/* Hour picker trigger */}
+    <div style={{marginBottom:12}}><label style={{fontSize:13,color:T.textThi,marginBottom:6,display:'block'}}>出生时辰（选填）</label>
+      <button onClick={()=>{setTempHour(f.hour||'12');setShowHourPicker(true)}} style={{...is,textAlign:'left',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{color:f.hour?T.text:T.textThi}}>{f.hour?`${f.hour}时`:'点击选择（可跳过）'}</span>
+        <span style={{color:T.textThi}}>▼</span>
+      </button>
+    </div>
+    <div style={{fontSize:11,color:T.textThi,marginBottom:16}}>* 出生日期为必填 · 时辰选填（部分功能精度降低）</div>
     {err&&<div style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:13,color:'#EF4444',fontWeight:500}}>{err}</div>}
     <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>性别</label><div style={{display:'flex',gap:12}}>
-      {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:'#fff',color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
+      {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:T.card,color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
     </div></div>
     <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#FF6B6B,#FF8A9B)':'#ccc',boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>开启我的命运之旅 ✦</button>
-  </div></div>);
+  </div>
+  {/* Date Picker Modal */}
+  {showDatePicker&&<div onClick={()=>setShowDatePicker(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 30px',animation:'slideUp .3s ease'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,color:T.text}}>出生日期</div>
+        <button onClick={()=>setShowDatePicker(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
+      </div>
+      <div style={{display:'flex',gap:4}}>
+        <WheelPicker items={years} value={tempDate.year} onChange={v=>setTempDate({...tempDate,year:v})}/>
+        <WheelPicker items={months} value={tempDate.month} onChange={v=>setTempDate({...tempDate,month:v})}/>
+        <WheelPicker items={days} value={tempDate.day} onChange={v=>setTempDate({...tempDate,day:v})}/>
+      </div>
+      <button onClick={()=>{sF({...f,...tempDate});setShowDatePicker(false);setErr('')}} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:T.accent2,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',marginTop:16}}>确认</button>
+    </div>
+  </div>}
+  {/* Hour Picker Modal */}
+  {showHourPicker&&<div onClick={()=>setShowHourPicker(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 30px',animation:'slideUp .3s ease'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,color:T.text}}>出生时辰</div>
+        <button onClick={()=>setShowHourPicker(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
+      </div>
+      <div style={{display:'flex',justifyContent:'center'}}>
+        <div style={{width:200}}><WheelPicker items={hours} value={tempHour} onChange={v=>setTempHour(v)}/></div>
+      </div>
+      <div style={{display:'flex',gap:10,marginTop:16}}>
+        <button onClick={()=>{sF({...f,hour:''});setShowHourPicker(false)}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:T.bg,color:T.textSec,fontSize:14,fontWeight:500,cursor:'pointer'}}>跳过</button>
+        <button onClick={()=>{sF({...f,hour:tempHour});setShowHourPicker(false);setErr('')}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:T.accent2,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>确认</button>
+      </div>
+    </div>
+  </div>}
+  </div>);
 }
 
 // ===== SWIPE CARD (prototype style: white card + photo/info split) =====
@@ -769,7 +837,8 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [lastSwiped,setLastSwiped]=useState(null); // for undo
   const [showWheel,setShowWheel]=useState(false);
   const [showDaily,setShowDaily]=useState(false);
-  const showGuide=!localStorage.getItem('yuanhe_swipe_guided')&&swiped===0;
+  const [guideHidden,setGuideHidden]=useState(()=>!!localStorage.getItem('yuanhe_swipe_guided'));
+  const showGuide=!guideHidden&&swiped===0;
   // Fetch real match scores
   useEffect(()=>{
     const tg=profile.gender==='male'?'female':'male';
@@ -844,7 +913,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       </div>)
       :cards.map((u,i)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===cards.length-1} onDetail={()=>setDetailUser(u)}/>)}
       {/* First-time swipe guide */}
-      {showGuide&&cards.length>0&&<div onClick={()=>localStorage.setItem('yuanhe_swipe_guided','1')} style={{position:'absolute',inset:0,borderRadius:20,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,cursor:'pointer'}}>
+      {showGuide&&cards.length>0&&<div onClick={()=>{localStorage.setItem('yuanhe_swipe_guided','1');setGuideHidden(true)}} style={{position:'absolute',inset:0,borderRadius:20,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,cursor:'pointer'}}>
         <div style={{textAlign:'center',color:'#fff'}}>
           <div style={{display:'flex',justifyContent:'center',gap:40,marginBottom:16}}>
             <div><div style={{fontSize:28}}>👈</div><div style={{fontSize:12,marginTop:4}}>左滑无缘</div></div>
