@@ -8,7 +8,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body,#root{height:100%;overflow:hidden}
-body{font-family:'Noto Sans SC',sans-serif;background:#FAFAF7;color:#1A1A2E;-webkit-tap-highlight-color:transparent;
+body{font-family:'Noto Sans SC',sans-serif;background:var(--yuanhe-bg,#FAFAF7);color:var(--yuanhe-text,#1A1A2E);-webkit-tap-highlight-color:transparent;
   padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 ::-webkit-scrollbar{display:none}
 .serif{font-family:'Noto Serif SC',serif}
@@ -53,13 +53,13 @@ button{transition:transform 0.1s,opacity 0.15s}
 .markdown li{margin:4px 0;line-height:1.6;font-size:inherit}
 .markdown strong{font-weight:600;font-size:inherit}
 .markdown *{max-width:100%;word-break:break-word}
-.markdown strong{color:#1A1A2E;font-weight:600}
-.markdown hr{border:none;border-top:1px solid #F0F0EC;margin:16px 0}
+.markdown strong{color:var(--yuanhe-text,#1A1A2E);font-weight:600}
+.markdown hr{border:none;border-top:1px solid var(--yuanhe-border,#F0F0EC);margin:16px 0}
 /* Dark mode overrides */
-body.dark .markdown strong{color:#E5E7EB}
-body.dark .markdown hr{border-color:#2D2D3F}
-body.dark input,body.dark textarea{background:#1A1A2E !important;color:#E5E7EB !important;border-color:#2D2D3F !important}
-body.dark input::placeholder,body.dark textarea::placeholder{color:#6B7280 !important}
+body.dark .markdown strong{color:var(--yuanhe-text,#E5E7EB)}
+body.dark .markdown hr{border-color:var(--yuanhe-border,#2D2D3F)}
+body.dark input,body.dark textarea{background:var(--yuanhe-card,#1A1A2E) !important;color:var(--yuanhe-text,#E5E7EB) !important;border-color:var(--yuanhe-border,#2D2D3F) !important}
+body.dark input::placeholder,body.dark textarea::placeholder{color:var(--yuanhe-textSec,#6B7280) !important}
 </style>
 </head>
 <body>
@@ -269,7 +269,7 @@ function usePullRefresh(onRefresh){
 
 function EmptyState({icon,title,desc,action,actionLabel}){
   return(<div style={{textAlign:'center',padding:'40px 20px',color:T.textThi}}>
-    <div style={{width:72,height:72,borderRadius:36,background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',fontSize:28}}>{icon||'📭'}</div>
+    <div style={{width:72,height:72,borderRadius:36,background:T.isDark?T.border:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',fontSize:28}}>{icon||'📭'}</div>
     <div style={{fontSize:15,fontWeight:600,color:T.text}}>{title||'暂无内容'}</div>
     {desc&&<div style={{fontSize:12,marginTop:6,lineHeight:1.6,color:T.textThi}}>{desc}</div>}
     {action&&<button onClick={action} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>{actionLabel||'去看看'}</button>}
@@ -286,7 +286,7 @@ function ErrorState({error,onRetry}){
   </div>);
 }
 function Skeleton({width,height,radius,style}){
-  return<div style={{width:width||'100%',height:height||16,borderRadius:radius||8,background:T.isDark?'#2D2D3F':'#E5E7EB',animation:'pulse 1.5s infinite',...(style||{})}}/>
+  return<div style={{width:width||'100%',height:height||16,borderRadius:radius||8,background:T.isDark?T.border:T.border,animation:'pulse 1.5s infinite',...(style||{})}}/>
 }
 function SkeletonCard(){
   return<div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:10}}>
@@ -415,7 +415,7 @@ function BirthScreen({onSubmit}){
       </button>
     </div>
     <div style={{fontSize:11,color:T.textThi,marginBottom:16}}>* 出生日期为必填 · 时辰选填（部分功能精度降低）</div>
-    {err&&<div style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:13,color:'#EF4444',fontWeight:500}}>{err}</div>}
+    {err&&<div style={{background:T.isDark?'#EF444415':'#FEF2F2',border:`1px solid ${T.isDark?'#EF444440':'#FECACA'}`,borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:13,color:'#EF4444',fontWeight:500}}>{err}</div>}
     <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>性别</label><div style={{display:'flex',gap:12}}>
       {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:T.card,color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
     </div></div>
@@ -625,7 +625,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
                     <span style={{fontSize:13,fontWeight:600}}>{d.icon} {d.name}</span>
                     <span style={{fontSize:13,fontWeight:700,color:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444'}}>{d.score}分</span>
                   </div>
-                  <div style={{height:8,background:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
+                  <div style={{height:8,background:T.isDark?T.border:'#F3F4F6',borderRadius:4,overflow:'hidden'}}>
                     <div style={{height:'100%',background:d.score>=80?'#22C55E':d.score>=60?'#F59E0B':'#EF4444',borderRadius:4,width:d.score+'%',transition:'width .6s ease'}}/>
                   </div>
                   {d.desc&&<div style={{fontSize:11,color:T.textThi,marginTop:3}}>{d.desc.substring(0,50)}</div>}
@@ -650,7 +650,7 @@ function CardDetailModal({user,profile,onClose,goTo}){
                       <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:3}}>
                         <span style={{color:WX_COLORS[wx],fontWeight:600}}>{wx}</span><span style={{fontWeight:600}}>{val}</span>
                       </div>
-                      <div style={{height:10,background:'#F3F4F6',borderRadius:5,overflow:'hidden'}}>
+                      <div style={{height:10,background:T.isDark?T.border:'#F3F4F6',borderRadius:5,overflow:'hidden'}}>
                         <div style={{height:'100%',background:WX_COLORS[wx],borderRadius:5,width:Math.min(val*25,100)+'%',transition:'width .5s ease'}}/>
                       </div>
                     </div>
@@ -1012,11 +1012,11 @@ function FourPillarsCard({structured,mc}){
         {pillars.map(p=>{
           const tg=p.gz?.[0],dz=p.gz?.[1];
           const tgWx=WX_MAP[tg]||'',dzWx=WX_MAP[dz]||'';
-          return <div key={p.name} style={{textAlign:'center',padding:'8px 4px',borderRadius:10,background:'#F9FAFB',border:`1px solid ${p.name==='日柱'?mc+'30':'#E5E7EB'}`}}>
-            <div style={{fontSize:10,color:'#9CA3AF',marginBottom:4}}>{p.name}</div>
-            <div style={{fontSize:20,fontWeight:700,color:WX_C[tgWx]||'#333',lineHeight:1.2}}>{tg||'—'}</div>
-            <div style={{fontSize:20,fontWeight:700,color:WX_C[dzWx]||'#333',lineHeight:1.2,marginTop:2}}>{dz||'—'}</div>
-            {p.ny&&<div style={{fontSize:9,color:'#9CA3AF',marginTop:4}}>{p.ny}</div>}
+          return <div key={p.name} style={{textAlign:'center',padding:'8px 4px',borderRadius:10,background:T.isDark?T.bg:'#F9FAFB',border:`1px solid ${p.name==='日柱'?mc+'30':T.border}`}}>
+            <div style={{fontSize:10,color:T.textThi,marginBottom:4}}>{p.name}</div>
+            <div style={{fontSize:20,fontWeight:700,color:WX_C[tgWx]||T.text,lineHeight:1.2}}>{tg||'—'}</div>
+            <div style={{fontSize:20,fontWeight:700,color:WX_C[dzWx]||T.text,lineHeight:1.2,marginTop:2}}>{dz||'—'}</div>
+            {p.ny&&<div style={{fontSize:9,color:T.textThi,marginTop:4}}>{p.ny}</div>}
           </div>})}
       </div>
       {/* Info row */}
@@ -1046,10 +1046,10 @@ function WuxingBar({data,height=6}){
       {Object.entries(data).map(([wx,val])=>(
         <div key={wx} style={{display:'flex',alignItems:'center',gap:6}}>
           <span style={{width:14,fontSize:11,fontWeight:600,color:WX_C[wx]}}>{wx}</span>
-          <div style={{flex:1,height,background:'#F3F4F6',borderRadius:height/2,overflow:'hidden'}}>
+          <div style={{flex:1,height,background:T.isDark?T.border:'#F3F4F6',borderRadius:height/2,overflow:'hidden'}}>
             <div style={{height:'100%',background:WX_C[wx],borderRadius:height/2,width:Math.round(val/max*100)+'%',transition:'width .6s ease'}}/>
           </div>
-          <span style={{width:24,fontSize:10,color:'#9CA3AF',textAlign:'right'}}>{val.toFixed?val.toFixed(1):val}</span>
+          <span style={{width:24,fontSize:10,color:T.textThi,textAlign:'right'}}>{val.toFixed?val.toFixed(1):val}</span>
         </div>
       ))}
     </div>
@@ -1097,7 +1097,7 @@ function PersonalityCards({cards,mc}){
               </div>
             ))}
           </div>
-          <div style={{fontSize:12,color:T.textThi,lineHeight:1.6,padding:'10px 12px',borderRadius:10,background:'#F9FAFB'}}>{c.desc}</div>
+          <div style={{fontSize:12,color:T.textThi,lineHeight:1.6,padding:'10px 12px',borderRadius:10,background:T.isDark?T.bg:'#F9FAFB'}}>{c.desc}</div>
         </div>
       </div>;
     })()}
@@ -1250,24 +1250,24 @@ function HourAssistantModal({profile,onResult,onClose}){
         {!result&&!loading&&<>
           {/* Question */}
           <div style={{marginBottom:12}}>
-            <div style={{fontSize:16,fontWeight:700,color:'#1F2937',marginBottom:4}}>{q.title}</div>
-            {q.sub&&<div style={{fontSize:12,color:'#6B7280'}}>{q.sub}</div>}
+            <div style={{fontSize:16,fontWeight:700,color:T.text,marginBottom:4}}>{q.title}</div>
+            {q.sub&&<div style={{fontSize:12,color:T.textSec}}>{q.sub}</div>}
           </div>
           {/* Options */}
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {q.opts.map(o=>{
               const selected=answers[q.key]===o.v;
-              return <button key={o.v} onClick={()=>pick(q.key,o.v)} style={{padding:'14px 16px',borderRadius:14,border:selected?'2px solid #D97706':'1.5px solid #E5E7EB',background:selected?'#FFF8EB':'#fff',cursor:'pointer',textAlign:'left',transition:'all .2s',transform:selected?'scale(1.02)':'none'}}>
-                <div style={{fontSize:14,fontWeight:600,color:selected?'#D97706':'#374151'}}>{o.l}</div>
-                {o.d&&<div style={{fontSize:11,color:'#6B7280',marginTop:2}}>{o.d}</div>}
+              return <button key={o.v} onClick={()=>pick(q.key,o.v)} style={{padding:'14px 16px',borderRadius:14,border:selected?'2px solid #D97706':`1.5px solid ${T.border}`,background:selected?(T.isDark?'#D9770615':'#FFF8EB'):T.card,cursor:'pointer',textAlign:'left',transition:'all .2s',transform:selected?'scale(1.02)':'none'}}>
+                <div style={{fontSize:14,fontWeight:600,color:selected?'#D97706':T.text}}>{o.l}</div>
+                {o.d&&<div style={{fontSize:11,color:T.textSec,marginTop:2}}>{o.d}</div>}
               </button>;
             })}
           </div>
           {/* Back */}
-          {step>0&&<button onClick={()=>setStep(step-1)} style={{marginTop:12,background:'none',border:'none',fontSize:13,color:'#6B7280',cursor:'pointer'}}>← 上一题</button>}
+          {step>0&&<button onClick={()=>setStep(step-1)} style={{marginTop:12,background:'none',border:'none',fontSize:13,color:T.textSec,cursor:'pointer'}}>← 上一题</button>}
           {/* Steps indicator */}
           <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:16}}>
-            {questions.map((_,i)=><div key={i} style={{width:i===step?20:8,height:8,borderRadius:4,background:i<step?'#D97706':i===step?'#F59E0B':'#E5E7EB',transition:'all .3s'}}/>)}
+            {questions.map((_,i)=><div key={i} style={{width:i===step?20:8,height:8,borderRadius:4,background:i<step?'#D97706':i===step?'#F59E0B':T.border,transition:'all .3s'}}/>)}
           </div>
         </>}
 
@@ -1279,33 +1279,33 @@ function HourAssistantModal({profile,onResult,onClose}){
             <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>🔮</div>
           </div>
           <div style={{fontSize:15,fontWeight:600,color:'#D97706'}}>AI正在分析你的时辰…</div>
-          <div style={{fontSize:12,color:'#6B7280',marginTop:6}}>综合五维特征匹配12个候选时辰</div>
+          <div style={{fontSize:12,color:T.textSec,marginTop:6}}>综合五维特征匹配12个候选时辰</div>
         </div>}
 
         {/* Result */}
         {result&&!result.error&&<div>
           <div style={{textAlign:'center',marginBottom:16}}>
             <div style={{fontSize:48,marginBottom:8}}>{result.level==='high'?'🎯':result.level==='medium'?'🔮':'🤔'}</div>
-            <div style={{fontSize:16,fontWeight:700,color:'#1F2937'}}>{result.message}</div>
+            <div style={{fontSize:16,fontWeight:700,color:T.text}}>{result.message}</div>
           </div>
           {/* Top 3 results */}
           <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
             {result.ranking.map((r,i)=>(
-              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:14,border:i===0?'2px solid #D97706':'1.5px solid #E5E7EB',background:i===0?'#FFF8EB':'#fff'}}>
-                <div style={{width:36,height:36,borderRadius:18,background:i===0?'#D97706':i===1?'#F59E0B':'#E5E7EB',display:'flex',alignItems:'center',justifyContent:'center',color:i<2?'#fff':'#666',fontSize:14,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderRadius:14,border:i===0?'2px solid #D97706':`1.5px solid ${T.border}`,background:i===0?(T.isDark?'#D9770615':'#FFF8EB'):T.card}}>
+                <div style={{width:36,height:36,borderRadius:18,background:i===0?'#D97706':i===1?'#F59E0B':T.border,display:'flex',alignItems:'center',justifyContent:'center',color:i<2?'#fff':T.textSec,fontSize:14,fontWeight:700,flexShrink:0}}>{i+1}</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:700,color:i===0?'#D97706':'#374151'}}>{r.label}（{r.range}点）</div>
-                  <div style={{fontSize:11,color:'#6B7280',marginTop:2}}>{r.reason}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:i===0?'#D97706':T.text}}>{r.label}（{r.range}点）</div>
+                  <div style={{fontSize:11,color:T.textSec,marginTop:2}}>{r.reason}</div>
                 </div>
-                <div style={{fontSize:14,fontWeight:700,color:i===0?'#D97706':'#6B7280'}}>{r.score}分</div>
+                <div style={{fontSize:14,fontWeight:700,color:i===0?'#D97706':T.textSec}}>{r.score}分</div>
               </div>
             ))}
           </div>
-          <div style={{fontSize:11,color:'#6B7280',textAlign:'center',marginBottom:16}}>置信度 {result.confidence}% · 基于排行+性格+转折+体型+精力五维匹配</div>
+          <div style={{fontSize:11,color:T.textSec,textAlign:'center',marginBottom:16}}>置信度 {result.confidence}% · 基于排行+性格+转折+体型+精力五维匹配</div>
           {/* Actions */}
           <div style={{display:'flex',gap:10}}>
             <button onClick={()=>{onResult(result.bestHour);onClose()}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}>✓ 采用{result.bestLabel}</button>
-            <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'14px 20px',borderRadius:14,border:'1.5px solid #E5E7EB',background:T.card,fontSize:14,color:'#6B7280',cursor:'pointer'}}>重测</button>
+            <button onClick={()=>{setResult(null);setStep(0);setAnswers({})}} style={{padding:'14px 20px',borderRadius:14,border:`1.5px solid ${T.border}`,background:T.card,fontSize:14,color:T.textSec,cursor:'pointer'}}>重测</button>
           </div>
         </div>}
 
@@ -1747,7 +1747,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       </div>}
 
       {/* Error */}
-      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?'#F5F3FF':'#FEF2F2',border:ms.error.startsWith('🔮')?'1px solid #C4B5FD':'1px solid #FECACA',borderRadius:14,padding:16,position:'relative'}}>
+      {ms.error&&<div className="anim-in" style={{background:ms.error.startsWith('🔮')?(T.isDark?T.accent2+'15':'#F5F3FF'):(T.isDark?'#EF444415':'#FEF2F2'),border:ms.error.startsWith('🔮')?`1px solid ${T.isDark?T.accent2+'40':'#C4B5FD'}`:`1px solid ${T.isDark?'#EF444440':'#FECACA'}`,borderRadius:14,padding:16,position:'relative'}}>
         <button onClick={()=>setMS(mode,{error:null})} style={{position:'absolute',top:8,right:8,background:'none',border:'none',fontSize:16,cursor:'pointer',opacity:.4,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444'}}>✕</button>
         <div style={{fontSize:13,fontWeight:500,color:ms.error.startsWith('🔮')?'#6D28D9':'#EF4444',lineHeight:1.8,whiteSpace:'pre-line',paddingRight:20}}>{ms.error}</div>
         {!ms.error.startsWith('🔮')&&<button onClick={()=>divine(mode,false)} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:12,cursor:'pointer',marginTop:8}}>🔄 重试</button>}
@@ -2155,8 +2155,12 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
 
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
   const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
-  const luckBg=['linear-gradient(135deg,#FFF5F5,#FEE2E2)','linear-gradient(135deg,#FFFBEB,#FEF3C7)','linear-gradient(135deg,#FAF5FF,#EDE9FE)','linear-gradient(135deg,#F0FDFA,#CCFBF1)','linear-gradient(135deg,#F9FAFB,#F3F4F6)','linear-gradient(135deg,#FFF1F2,#FECDD3)'][dayN%6];
-  const luckBorder=['#FECACA','#FCD34D','#DDD6FE','#99F6E4','#E5E7EB','#FDA4AF'][dayN%6];
+  const luckBgLight=['linear-gradient(135deg,#FFF5F5,#FEE2E2)','linear-gradient(135deg,#FFFBEB,#FEF3C7)','linear-gradient(135deg,#FAF5FF,#EDE9FE)','linear-gradient(135deg,#F0FDFA,#CCFBF1)','linear-gradient(135deg,#F9FAFB,#F3F4F6)','linear-gradient(135deg,#FFF1F2,#FECDD3)'];
+  const luckBgDark=['linear-gradient(135deg,#DC262615,#DC262625)','linear-gradient(135deg,#F59E0B15,#F59E0B25)','linear-gradient(135deg,#8B5CF615,#8B5CF625)','linear-gradient(135deg,#0D948815,#0D948825)','linear-gradient(135deg,#6B728015,#6B728025)','linear-gradient(135deg,#EF444415,#EF444425)'];
+  const luckBg=(T.isDark?luckBgDark:luckBgLight)[dayN%6];
+  const luckBorderLight=['#FECACA','#FCD34D','#DDD6FE','#99F6E4','#E5E7EB','#FDA4AF'];
+  const luckBorderDark=['#DC262640','#F59E0B40','#8B5CF640','#0D948840','#6B728040','#EF444440'];
+  const luckBorder=(T.isDark?luckBorderDark:luckBorderLight)[dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
     <div style={{padding:'14px 16px 0'}}>
       {/* Tab as title + mood in top right */}
@@ -2364,31 +2368,31 @@ function IcebreakerCard({type,data,onAction,done}){
   };
 
   if(type==='topic'){
-    return(<div style={{background:'linear-gradient(135deg,#F5F3FF,#DDD6FE)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #C4B5FD'}}>
+    return(<div style={{background:T.isDark?`linear-gradient(135deg,${T.accent2}15,${T.accent2}25)`:'linear-gradient(135deg,#F5F3FF,#DDD6FE)',borderRadius:16,padding:16,marginBottom:10,border:`1px solid ${T.isDark?T.accent2+'40':'#C4B5FD'}`}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <span style={{fontSize:14}}>💬</span>
-        <span style={{fontSize:11,fontWeight:600,color:'#7C3AED'}}>破冰话题</span>
+        <span style={{fontSize:11,fontWeight:600,color:T.accent2}}>破冰话题</span>
       </div>
-      <div style={{fontSize:14,fontWeight:600,color:'#1F2937',lineHeight:1.6,marginBottom:12}}>{data}</div>
+      <div style={{fontSize:14,fontWeight:600,color:T.text,lineHeight:1.6,marginBottom:12}}>{data}</div>
       {!done&&<button onClick={()=>onAction&&onAction(data)} style={{padding:'8px 20px',borderRadius:20,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>聊这个话题 →</button>}
     </div>);
   }
 
   if(type==='compat'){
-    return(<div style={{background:'linear-gradient(135deg,#FDF2F8,#FCE7F3)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #FBCFE8'}}>
+    return(<div style={{background:T.isDark?'linear-gradient(135deg,#DB277715,#DB277725)':'linear-gradient(135deg,#FDF2F8,#FCE7F3)',borderRadius:16,padding:16,marginBottom:10,border:`1px solid ${T.isDark?'#DB277740':'#FBCFE8'}`}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <span style={{fontSize:14}}>🎯</span>
         <span style={{fontSize:11,fontWeight:600,color:'#DB2777'}}>默契测试</span>
       </div>
-      <div style={{fontSize:14,fontWeight:600,color:'#1F2937',marginBottom:12}}>{data.q}</div>
+      <div style={{fontSize:14,fontWeight:600,color:T.text,marginBottom:12}}>{data.q}</div>
       <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
         {data.opts.map(opt=>{
           const isPicked=picked===opt;const isAi=aiPick===opt;
           const match=revealed&&picked===aiPick;
           return <button key={opt} onClick={()=>handlePick(opt)} disabled={!!picked}
-            style={{padding:'8px 14px',borderRadius:12,border:isPicked?'2px solid #DB2777':isAi&&revealed?'2px solid #F59E0B':'1.5px solid #FBCFE8',
-              background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#FDE68A,#FCD34D)':isPicked?'#FCE7F3':isAi&&revealed?'#FEF3C7':'#fff',
-              fontSize:12,fontWeight:isPicked||isAi?700:500,color:'#1F2937',cursor:picked?'default':'pointer',position:'relative'}}>
+            style={{padding:'8px 14px',borderRadius:12,border:isPicked?'2px solid #DB2777':isAi&&revealed?'2px solid #F59E0B':`1.5px solid ${T.isDark?'#DB277730':' #FBCFE8'}`,
+              background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#FDE68A,#FCD34D)':isPicked?(T.isDark?'#DB277720':'#FCE7F3'):isAi&&revealed?(T.isDark?'#F59E0B20':'#FEF3C7'):T.card,
+              fontSize:12,fontWeight:isPicked||isAi?700:500,color:T.text,cursor:picked?'default':'pointer',position:'relative'}}>
             {opt}
             {isPicked&&!revealed&&<span style={{marginLeft:4,fontSize:10}}>✓</span>}
             {revealed&&isPicked&&<span style={{marginLeft:4,fontSize:10}}>你</span>}
@@ -2404,7 +2408,7 @@ function IcebreakerCard({type,data,onAction,done}){
   }
 
   if(type==='choose'){
-    return(<div style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #FDE68A'}}>
+    return(<div style={{background:T.isDark?'linear-gradient(135deg,#D9770615,#D9770625)':'linear-gradient(135deg,#FFFBEB,#FEF3C7)',borderRadius:16,padding:16,marginBottom:10,border:`1px solid ${T.isDark?'#D9770640':'#FDE68A'}`}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <span style={{fontSize:14}}>⚡</span>
         <span style={{fontSize:11,fontWeight:600,color:'#D97706'}}>二选一</span>
@@ -2413,9 +2417,9 @@ function IcebreakerCard({type,data,onAction,done}){
         {[data.a,data.b].map(choice=>{
           const isPicked=picked===choice;const isAi=aiPick===choice;
           return <button key={choice} onClick={()=>handleChoose(choice)} disabled={!!picked}
-            style={{flex:1,padding:'14px 8px',borderRadius:14,border:isPicked?'2px solid #D97706':'1.5px solid #FDE68A',
-              background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#BBF7D0,#86EFAC)':isPicked?'#FEF3C7':'#fff',
-              fontSize:14,fontWeight:600,color:'#1F2937',cursor:picked?'default':'pointer',textAlign:'center'}}>
+            style={{flex:1,padding:'14px 8px',borderRadius:14,border:isPicked?'2px solid #D97706':`1.5px solid ${T.isDark?'#D9770630':'#FDE68A'}`,
+              background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#BBF7D0,#86EFAC)':isPicked?(T.isDark?'#D9770620':'#FEF3C7'):T.card,
+              fontSize:14,fontWeight:600,color:T.text,cursor:picked?'default':'pointer',textAlign:'center'}}>
             {choice}
             {revealed&&isPicked&&<div style={{fontSize:9,color:'#D97706',marginTop:4}}>你选的</div>}
             {revealed&&isAi&&!isPicked&&<div style={{fontSize:9,color:'#D97706',marginTop:4}}>TA选的</div>}
@@ -2429,12 +2433,12 @@ function IcebreakerCard({type,data,onAction,done}){
   }
 
   if(type==='daily'){
-    return(<div style={{background:'linear-gradient(135deg,#ECFDF5,#D1FAE5)',borderRadius:16,padding:16,marginBottom:10,border:'1px solid #A7F3D0'}}>
+    return(<div style={{background:T.isDark?'linear-gradient(135deg,#05966915,#05966925)':'linear-gradient(135deg,#ECFDF5,#D1FAE5)',borderRadius:16,padding:16,marginBottom:10,border:`1px solid ${T.isDark?'#05966940':'#A7F3D0'}`}}>
       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
         <span style={{fontSize:14}}>✨</span>
         <span style={{fontSize:11,fontWeight:600,color:'#059669'}}>今日缘分任务</span>
       </div>
-      <div style={{fontSize:14,fontWeight:600,color:'#1F2937',lineHeight:1.6}}>{data}</div>
+      <div style={{fontSize:14,fontWeight:600,color:T.text,lineHeight:1.6}}>{data}</div>
       {!done&&<button onClick={()=>onAction&&onAction(data)} style={{marginTop:10,padding:'8px 20px',borderRadius:20,border:'none',background:'linear-gradient(135deg,#10B981,#059669)',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>完成任务 ✓</button>}
     </div>);
   }
@@ -2988,19 +2992,19 @@ function PrivacySettingsModal({onClose}){
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>信息展示级别</div>
         <div style={{fontSize:11,color:T.textThi,marginBottom:12}}>控制其他用户能看到你的哪些信息</div>
         {levels.map(l=>(
-          <button key={l.id} onClick={()=>setLevel(l.id)} style={{width:'100%',padding:'14px',borderRadius:14,border:level===l.id?'2px solid #8B5CF6':`1.5px solid ${T.border}`,background:level===l.id?'#F5F3FF':'#fff',marginBottom:8,cursor:'pointer',textAlign:'left'}}>
+          <button key={l.id} onClick={()=>setLevel(l.id)} style={{width:'100%',padding:'14px',borderRadius:14,border:level===l.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:level===l.id?(T.isDark?T.accent2+'15':'#F5F3FF'):T.card,marginBottom:8,cursor:'pointer',textAlign:'left'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:20}}>{l.icon}</span>
               <div style={{flex:1}}>
-                <div style={{fontSize:14,fontWeight:600,color:level===l.id?'#8B5CF6':T.text}}>{l.name}</div>
+                <div style={{fontSize:14,fontWeight:600,color:level===l.id?T.accent2:T.text}}>{l.name}</div>
                 <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{l.desc}</div>
               </div>
-              <div style={{width:20,height:20,borderRadius:10,border:level===l.id?'none':'2px solid #D1D5DB',background:level===l.id?'#8B5CF6':'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:20,height:20,borderRadius:10,border:level===l.id?'none':`2px solid ${T.border}`,background:level===l.id?T.accent2:T.card,display:'flex',alignItems:'center',justifyContent:'center'}}>
                 {level===l.id&&<div style={{width:8,height:8,borderRadius:4,background:'#fff'}}/>}
               </div>
             </div>
             <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:8}}>
-              {l.items.map(it=><span key={it} style={{padding:'2px 8px',borderRadius:6,background:level===l.id?'#DDD6FE':'#F3F4F6',fontSize:10,color:level===l.id?'#7C3AED':'#6B7280'}}>{it}</span>)}
+              {l.items.map(it=><span key={it} style={{padding:'2px 8px',borderRadius:6,background:level===l.id?(T.isDark?T.accent2+'20':'#DDD6FE'):(T.isDark?T.border:'#F3F4F6'),fontSize:10,color:level===l.id?T.accent2:T.textSec}}>{it}</span>)}
             </div>
           </button>
         ))}
@@ -3008,14 +3012,14 @@ function PrivacySettingsModal({onClose}){
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:16,marginBottom:8}}>匹配分数显示</div>
         <div style={{display:'flex',gap:8,marginBottom:16}}>
           {[{id:'grade',l:'只显示等级'},{id:'percent',l:'显示百分比'},{id:'hide',l:'不显示'}].map(o=>
-            <button key={o.id} onClick={()=>setScorePref(o.id)} style={{flex:1,padding:'10px',borderRadius:10,border:scorePref===o.id?'2px solid #8B5CF6':`1.5px solid ${T.border}`,background:scorePref===o.id?'#F5F3FF':'#fff',fontSize:12,fontWeight:scorePref===o.id?600:400,color:scorePref===o.id?'#8B5CF6':T.textSec,cursor:'pointer'}}>{o.l}</button>
+            <button key={o.id} onClick={()=>setScorePref(o.id)} style={{flex:1,padding:'10px',borderRadius:10,border:scorePref===o.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:scorePref===o.id?(T.isDark?T.accent2+'15':'#F5F3FF'):T.card,fontSize:12,fontWeight:scorePref===o.id?600:400,color:scorePref===o.id?T.accent2:T.textSec,cursor:'pointer'}}>{o.l}</button>
           )}
         </div>
 
         <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>距离显示</div>
         <div style={{display:'flex',gap:8,marginBottom:20}}>
           {[{id:'fuzzy',l:'模糊(<5km)'},{id:'precise',l:'较精确(1.2km)'},{id:'city',l:'只显示同城'},{id:'hide',l:'不显示'}].map(o=>
-            <button key={o.id} onClick={()=>setDistPref(o.id)} style={{flex:1,padding:'8px 4px',borderRadius:10,border:distPref===o.id?'2px solid #8B5CF6':`1.5px solid ${T.border}`,background:distPref===o.id?'#F5F3FF':'#fff',fontSize:10,fontWeight:distPref===o.id?600:400,color:distPref===o.id?'#8B5CF6':T.textSec,cursor:'pointer'}}>{o.l}</button>
+            <button key={o.id} onClick={()=>setDistPref(o.id)} style={{flex:1,padding:'8px 4px',borderRadius:10,border:distPref===o.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:distPref===o.id?(T.isDark?T.accent2+'15':'#F5F3FF'):T.card,fontSize:10,fontWeight:distPref===o.id?600:400,color:distPref===o.id?T.accent2:T.textSec,cursor:'pointer'}}>{o.l}</button>
           )}
         </div>
 
@@ -3598,14 +3602,14 @@ function DataManagementModal({profile,onClose,onLogout}){
           <div style={{fontSize:18,fontWeight:700}}>📊 我的数据</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
-        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:'${T.bg}',borderRadius:10}}>以下是缘合存储在你设备上的所有数据。数据仅保存在本地，不上传到服务器。</div>
+        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:T.bg,borderRadius:10}}>以下是缘合存储在你设备上的所有数据。数据仅保存在本地，不上传到服务器。</div>
         {dataItems.map(d=><div key={d.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,marginBottom:8}}>
           <span style={{fontSize:18}}>{d.icon}</span>
           <div style={{flex:1}}>
             <div style={{fontSize:13,fontWeight:600}}>{d.label}</div>
             <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{d.desc}</div>
           </div>
-          <button onClick={()=>deleteItem(d.key,d.label)} style={{padding:'4px 10px',borderRadius:8,border:`1px solid #FECACA`,background:'#FEF2F2',fontSize:10,color:'#EF4444',cursor:'pointer'}}>删除</button>
+          <button onClick={()=>deleteItem(d.key,d.label)} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${T.isDark?'#EF444440':'#FECACA'}`,background:T.isDark?'#EF444415':'#FEF2F2',fontSize:10,color:'#EF4444',cursor:'pointer'}}>删除</button>
         </div>)}
         <div style={{display:'flex',gap:8,marginTop:16}}>
           <button onClick={exportData} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 导出全部数据 (JSON)</button>
@@ -3802,7 +3806,7 @@ function App(){
   const [themeMode,setThemeMode]=useState(getThemeMode);
   // Apply theme globally
   T=THEMES[themeMode];
-  useEffect(()=>{document.body.style.background=T.bg;document.body.className=themeMode==='dark'?'dark':''},[themeMode]);
+  useEffect(()=>{const s=document.body.style;s.background=T.bg;s.color=T.text;document.body.className=themeMode==='dark'?'dark':'';const r=document.documentElement.style;r.setProperty('--yuanhe-bg',T.bg);r.setProperty('--yuanhe-card',T.card);r.setProperty('--yuanhe-text',T.text);r.setProperty('--yuanhe-textSec',T.textSec);r.setProperty('--yuanhe-border',T.border)},[themeMode]);
   const toggleTheme=()=>{const next=themeMode==='light'?'dark':'light';localStorage.setItem('yuanhe_theme',next);setThemeMode(next);T=THEMES[next]};
   const [termsAccepted,setTermsAccepted]=useState(()=>!!localStorage.getItem('yuanhe_terms_accepted'));
   const onboarded=!!localStorage.getItem('yuanhe_onboarded');
