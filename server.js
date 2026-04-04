@@ -15,6 +15,8 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 // Anonymous LLM headers — no user-identifying info
 function anonLLMHeaders(bodyLen, apiKey) {
@@ -247,7 +249,20 @@ const app = express();
 
 // Middleware
 app.use(compression());
+app.use(helmet({
+  contentSecurityPolicy: false, // app.html loads CDN scripts (React, Babel, marked)
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(express.json({ limit: '1mb' }));
+
+// Rate limiting — protect LLM endpoints from abuse
+const apiLimiter = rateLimit({ windowMs: 60*1000, max: 30, message: { error: '请求太频繁，请稍后再试' } });
+const llmLimiter = rateLimit({ windowMs: 60*1000, max: 10, message: { error: 'AI请求太频繁，请稍后再试' } });
+app.use('/api/divine', llmLimiter);
+app.use('/api/divine-stream', llmLimiter);
+app.use('/api/chat', llmLimiter);
+app.use('/api/chat-followup', llmLimiter);
+app.use('/api/', apiLimiter);
 
 // CORS
 app.use((req, res, next) => {

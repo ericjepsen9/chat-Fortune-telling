@@ -3,6 +3,8 @@
     "astronomia": "^4.2.0",
     "compression": "^1.7.4",
     "express": "^4.21.0",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
     "lunar-javascript": "^1.7.7"
   }
 }
