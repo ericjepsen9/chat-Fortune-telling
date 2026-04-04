@@ -825,16 +825,18 @@ function DailyStatusModal({profile,onClose}){
 }
 
 function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
-  const [cards,setCards]=useState(()=>{
-    const tg=profile.gender==='male'?'female':'male';
+  const [genderPref,setGenderPref]=useState(()=>localStorage.getItem('yuanhe_gender_pref')||(profile.gender==='male'?'female':'male'));
+  const getFilteredCands=(pref)=>{
     const {botRatio}=getBotConfig();
-    const realCards=USERS.filter(u=>u.gender===tg);
-    if(botRatio<=0)return realCards.sort(()=>Math.random()-0.5);
-    const botPool=BOTS.filter(u=>u.gender===tg).sort(()=>Math.random()-0.5);
+    const allUsers=[...USERS,...BOTS];
+    const filtered=pref==='all'?allUsers.filter(u=>u.gender!==profile.gender||true):allUsers.filter(u=>u.gender===pref);
+    const realCards=filtered.filter(u=>!u.isBot);
+    if(botRatio<=0)return realCards;
+    const botPool=filtered.filter(u=>u.isBot).sort(()=>Math.random()-0.5);
     const botCount=Math.round(realCards.length*(botRatio/(1-botRatio)));
-    const selectedBots=botPool.slice(0,Math.min(botCount,botPool.length));
-    return[...realCards,...selectedBots].sort(()=>Math.random()-0.5);
-  });
+    return[...realCards,...botPool.slice(0,Math.min(botCount,botPool.length))];
+  };
+  const [cards,setCards]=useState(()=>getFilteredCands(genderPref).sort(()=>Math.random()-0.5));
   const [matchUser,setMatchUser]=useState(null);
   const [detailUser,setDetailUser]=useState(null);
   const [swiped,setSwiped]=useState(0);
@@ -843,14 +845,15 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [showDaily,setShowDaily]=useState(false);
   const [guideHidden,setGuideHidden]=useState(()=>!!localStorage.getItem('yuanhe_swipe_guided'));
   const showGuide=!guideHidden&&swiped===0;
+  const switchPref=(p)=>{setGenderPref(p);localStorage.setItem('yuanhe_gender_pref',p);
+    const newCards=getFilteredCands(p).sort(()=>Math.random()-0.5);setCards(newCards);setSwiped(0);setLastSwiped(null);
+    apiPost('/api/batch-match',{profile,candidates:newCards}).then(results=>{
+      if(results?.length>0)setCards(results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5));
+    }).catch(()=>{});
+  };
   // Fetch real match scores
   useEffect(()=>{
-    const tg=profile.gender==='male'?'female':'male';
-    const {botRatio}=getBotConfig();
-    const realCands=USERS.filter(u=>u.gender===tg);
-    const botPool=BOTS.filter(u=>u.gender===tg).sort(()=>Math.random()-0.5);
-    const botCount=botRatio>0?Math.round(realCands.length*(botRatio/(1-botRatio))):0;
-    const cands=[...realCands,...botPool.slice(0,Math.min(botCount,botPool.length))];
+    const cands=getFilteredCands(genderPref);
     apiPost('/api/batch-match',{profile,candidates:cands}).then(results=>{
       if(results&&results.length>0){
         const scored=results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort(()=>Math.random()-0.5);
@@ -901,7 +904,12 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
         </div>
       </div>
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-        <div style={{padding:'6px 10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,display:'flex',alignItems:'center',gap:4,fontSize:12,color:T.gold,fontWeight:700}}>★ {swiped||0}</div>
+        {/* Gender preference filter */}
+        <div style={{display:'flex',borderRadius:10,border:`1px solid ${T.border}`,overflow:'hidden',background:T.card}}>
+          {[{v:profile.gender==='male'?'female':'male',l:'异性'},{v:'all',l:'全部'}].map(o=>
+            <button key={o.v} onClick={()=>{if(genderPref!==o.v)switchPref(o.v)}} style={{padding:'5px 10px',border:'none',fontSize:10,fontWeight:genderPref===o.v?600:400,cursor:'pointer',background:genderPref===o.v?`${T.accent2}15`:'transparent',color:genderPref===o.v?T.accent2:T.textThi}}>{o.l}</button>
+          )}
+        </div>
         <button onClick={()=>setShowWheel(true)} style={{width:34,height:34,borderRadius:10,border:'none',background:'#1E1146',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:14,color:'#A78BFA'}}>✦</span></button>
         <button onClick={()=>setShowDaily(true)} style={{width:34,height:34,borderRadius:10,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:0,position:'relative'}}>
           <div style={{fontSize:7,fontWeight:700,color:T.primary,lineHeight:1,marginTop:3}}>{(new Date().getMonth()+1)+'月'}</div>
@@ -1940,7 +1948,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
 // ===== DISCOVER =====
 function FortuneWheel({profile,goTo,addConv,setOpenConvId,autoGreet,onClose}){
-  const tg=profile.gender==='male'?'female':'male';
+  const genderPref=localStorage.getItem('yuanhe_gender_pref')||(profile.gender==='male'?'female':'male');
   const [pool,setPool]=useState([]);
   const [spinning,setSpinning]=useState(false);
   const [result,setResult]=useState(null);
@@ -1952,7 +1960,7 @@ function FortuneWheel({profile,goTo,addConv,setOpenConvId,autoGreet,onClose}){
 
   // Fetch scores and sort by match score descending, take top 8
   useEffect(()=>{
-    const cands=[...USERS,...BOTS].filter(u=>u.gender===tg);
+    const cands=[...USERS,...BOTS].filter(u=>genderPref==='all'||u.gender===genderPref);
     apiPost('/api/batch-match',{profile,candidates:cands}).then(results=>{
       const scored=results.map(r=>({...r,score:r.matchResult?.score||r.score})).sort((a,b)=>b.score-a.score).slice(0,8);
       setPool(scored);setLoading(false);
