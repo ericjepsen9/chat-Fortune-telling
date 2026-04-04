@@ -12,8 +12,9 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
 const crypto = require('crypto');
+const express = require('express');
+const compression = require('compression');
 
 // Anonymous LLM headers — no user-identifying info
 function anonLLMHeaders(bodyLen, apiKey) {
@@ -192,11 +193,10 @@ async function handleDivination(mode, profile, question, displayMode, ctxOptions
   return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response: finalResponse, structured };
 }
 
-// ============ HTTP 服务器 ============
+// ============ 监控面板 HTML ============
 
 logger.info('SYSTEM', '服务器启动', { model: LLM_MODEL, baseUrl: LLM_BASE_URL, port: PORT });
 
-// 监控面板HTML
 const MONITOR_HTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>缘合 · 系统监控</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;background:#0a0a0f;color:#e0e0e0;padding:20px}
 h1{color:#4ECDC4;margin-bottom:20px;font-size:20px}h2{color:#FFB347;margin:16px 0 8px;font-size:15px}
@@ -241,193 +241,160 @@ function card(label,value,cls){return '<div class="card '+(cls||'')+'"><div clas
 load();setInterval(load,10000);
 </script></body></html>`;
 
+// ============ Express App Setup ============
 
-const server = http.createServer(async (req, res) => {
-  const parsedUrl = url.parse(req.url, true);
+const app = express();
 
-  // CORS
+// Middleware
+app.use(compression());
+app.use(express.json({ limit: '1mb' }));
+
+// CORS
+app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
+  if (req.method === 'OPTIONS') { res.sendStatus(200); return; }
+  next();
+});
 
-  // 请求日志
+// Request/response logging
+app.use((req, res, next) => {
+  const parsedUrl = require('url').parse(req.url, true);
   const reqCtx = logger.logRequest(req, parsedUrl);
   const origEnd = res.end.bind(res);
   res.end = function(...args) { logger.logResponse(reqCtx, res.statusCode); return origEnd(...args); };
+  next();
+});
 
-  // 系统监控API
-  if (parsedUrl.pathname === '/api/stats') {
-    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(logger.getStats(), null, 2));
-    return;
+// ============ Routes ============
+
+// 系统监控API
+app.get('/api/stats', (req, res) => {
+  res.type('application/json; charset=utf-8').json(logger.getStats());
+});
+
+// 监控面板
+app.get('/monitor', (req, res) => {
+  res.type('text/html; charset=utf-8').send(MONITOR_HTML);
+});
+
+// 静态文件：测试页面
+app.get(['/', '/index.html'], (req, res) => {
+  const html = fs.readFileSync(path.join(__dirname, 'test-page.html'), 'utf-8');
+  res.type('text/html; charset=utf-8').send(html);
+});
+
+// 缘合App（测试版）
+app.get('/app', (req, res) => {
+  const html = fs.readFileSync(path.join(__dirname, 'app.html'), 'utf-8');
+  res.set({
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  }).send(html);
+});
+
+// API：健康检查
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    llm: { baseUrl: LLM_BASE_URL, model: LLM_MODEL },
+    engines: ['bazi', 'astrology', 'tarot', 'meihua', 'vedic'],
+  });
+});
+
+// API：塔罗牌组（前端用于展示选牌界面）
+app.get('/api/tarot/deck', (req, res) => {
+  const tarotDeck = require('./src/engines/tarot').DECK;
+  res.type('application/json; charset=utf-8').json(tarotDeck.map(c => ({ id: c.id, zh: c.zh, en: c.en, type: c.type })));
+});
+
+// API：公历→农历转换
+app.get('/api/lunar', (req, res) => {
+  const params = req.query || {};
+  try {
+    const { Solar } = require('lunar-javascript');
+    const y = parseInt(params.year) || 2000, m = parseInt(params.month) || 1, d = parseInt(params.day) || 1, h = parseInt(params.hour) || 12;
+    const solar = Solar.fromYmdHms(y, m, d, h, 0, 0);
+    const lunar = solar.getLunar();
+    const ec = lunar.getEightChar();
+    res.type('application/json; charset=utf-8').json({
+      solar: `${y}年${m}月${d}日`,
+      lunar: `${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
+      lunarFull: `农历${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()} ${lunar.getYearShengXiao()}年`,
+      ganzhi: `${ec.getYear()} ${ec.getMonth()} ${ec.getDay()} ${ec.getTime()}`,
+      shengxiao: lunar.getYearShengXiao(),
+      yearGanzhi: ec.getYear(),
+    });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
+});
 
-  // 监控面板
-  if (parsedUrl.pathname === '/monitor') {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(MONITOR_HTML);
-    return;
+// API：匹配评分
+app.post('/api/match', (req, res) => {
+  try {
+    const { profileA, profileB } = req.body;
+    const matching = require('./src/engines/matching');
+    const result = matching.quickMatch(profileA, profileB);
+    res.type('application/json; charset=utf-8').json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
+});
 
-  // 静态文件：测试页面
-  if (parsedUrl.pathname === '/' || parsedUrl.pathname === '/index.html') {
-    const html = fs.readFileSync(path.join(__dirname, 'test-page.html'), 'utf-8');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(html);
-    return;
+// API：批量匹配（首页卡片）
+app.post('/api/batch-match', (req, res) => {
+  try {
+    const { profile, candidates } = req.body;
+    const matching = require('./src/engines/matching');
+    const results = matching.batchMatch(profile, candidates);
+    res.type('application/json; charset=utf-8').json(results);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
+});
 
-  // 缘合App（测试版）
-  if (parsedUrl.pathname === '/app') {
-    const html = fs.readFileSync(path.join(__dirname, 'app.html'), 'utf-8');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
-    res.end(html);
-    return;
+// API：今日运势
+app.post('/api/fortune', (req, res) => {
+  try {
+    const profile = req.body;
+    const matching = require('./src/engines/matching');
+    const result = matching.todayFortune(profile);
+    res.type('application/json; charset=utf-8').json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
+});
 
-  // API：健康检查
-  if (parsedUrl.pathname === '/api/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      status: 'ok',
-      llm: { baseUrl: LLM_BASE_URL, model: LLM_MODEL },
-      engines: ['bazi', 'astrology', 'tarot', 'meihua', 'vedic'],
-    }));
-    return;
+// API：时辰校正
+app.post('/api/hour-correct', (req, res) => {
+  try {
+    const { year, month, day, gender, answers } = req.body;
+    const hourCorrection = require('./src/engines/hour-correction');
+    const result = hourCorrection.correctHour(parseInt(year), parseInt(month), parseInt(day), gender, answers);
+    res.type('application/json; charset=utf-8').json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
+});
 
-  // API：塔罗牌组（前端用于展示选牌界面）
-  if (parsedUrl.pathname === '/api/tarot/deck') {
-    const tarotDeck = require('./src/engines/tarot').DECK;
-    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(tarotDeck.map(c => ({ id: c.id, zh: c.zh, en: c.en, type: c.type }))));
-    return;
-  }
-
-  // API：公历→农历转换
-  if (parsedUrl.pathname === '/api/lunar') {
-    const params = parsedUrl.query || {};
-    try {
-      const { Solar } = require('lunar-javascript');
-      const y = parseInt(params.year) || 2000, m = parseInt(params.month) || 1, d = parseInt(params.day) || 1, h = parseInt(params.hour) || 12;
-      const solar = Solar.fromYmdHms(y, m, d, h, 0, 0);
-      const lunar = solar.getLunar();
-      const ec = lunar.getEightChar();
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({
-        solar: `${y}年${m}月${d}日`,
-        lunar: `${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
-        lunarFull: `农历${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()} ${lunar.getYearShengXiao()}年`,
-        ganzhi: `${ec.getYear()} ${ec.getMonth()} ${ec.getDay()} ${ec.getTime()}`,
-        shengxiao: lunar.getYearShengXiao(),
-        yearGanzhi: ec.getYear(),
-      }));
-    } catch (e) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: e.message }));
+// API：轻量追问（聊天气泡，非完整报告）
+app.post('/api/chat-followup', async (req, res) => {
+  try {
+    const { mode, year, month, day, hour, gender, question, reportSummary, recentChat } = req.body;
+    if (!question || !question.trim()) {
+      return res.status(400).json({ error: '请输入问题' });
     }
-    return;
-  }
-
-  // API：仅计算引擎（不调 LLM）
-  // API：匹配评分
-  if (parsedUrl.pathname === '/api/match' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const { profileA, profileB } = JSON.parse(body);
-        const matching = require('./src/engines/matching');
-        const result = matching.quickMatch(profileA, profileB);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify(result));
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
-  // API：批量匹配（首页卡片）
-  if (parsedUrl.pathname === '/api/batch-match' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const { profile, candidates } = JSON.parse(body);
-        const matching = require('./src/engines/matching');
-        const results = matching.batchMatch(profile, candidates);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify(results));
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
-  // API：今日运势
-  if (parsedUrl.pathname === '/api/fortune' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const profile = JSON.parse(body);
-        const matching = require('./src/engines/matching');
-        const result = matching.todayFortune(profile);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify(result));
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
-  // API：时辰校正
-  if (parsedUrl.pathname === '/api/hour-correct' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const { year, month, day, gender, answers } = JSON.parse(body);
-        const hourCorrection = require('./src/engines/hour-correction');
-        const result = hourCorrection.correctHour(parseInt(year), parseInt(month), parseInt(day), gender, answers);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify(result));
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
-  // API：轻量追问（聊天气泡，非完整报告）
-  if (parsedUrl.pathname === '/api/chat-followup' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', async () => {
-      try {
-        const { mode, year, month, day, hour, gender, question, reportSummary, recentChat } = JSON.parse(body);
-        if (!question || !question.trim()) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: '请输入问题' }));
-          return;
-        }
-        // Safety check — only block truly dangerous content, skip relevance check for follow-ups
-        const safety = aiService.buildRequest(mode, {year,month,day,hour,gender}, question, {});
-        if (safety.blocked && safety.safetyLevel === 'blocked') {
-          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({ blocked: true, reason: safety.reason }));
-          return;
-        }
-        // Build lightweight prompt
-        const systemPrompt = `你是一位精通${mode==='bazi'?'八字命理':mode==='astrology'?'星座运势':mode==='tarot'?'塔罗牌':mode==='meihua'?'梅花易数':'命理'}的专家。
+    // Safety check — only block truly dangerous content, skip relevance check for follow-ups
+    const safety = aiService.buildRequest(mode, {year,month,day,hour,gender}, question, {});
+    if (safety.blocked && safety.safetyLevel === 'blocked') {
+      return res.type('application/json; charset=utf-8').json({ blocked: true, reason: safety.reason });
+    }
+    // Build lightweight prompt
+    const systemPrompt = `你是一位精通${mode==='bazi'?'八字命理':mode==='astrology'?'星座运势':mode==='tarot'?'塔罗牌':mode==='meihua'?'梅花易数':'命理'}的专家。
 用户已经做过一次完整分析，现在在追问具体问题。
 
 之前分析的核心摘要：
@@ -439,42 +406,33 @@ ${(reportSummary || '').substring(0, 500)}
 - 1-3段文字，简洁有力
 - 结合命理术语但通俗易懂
 - 最后给一句实用建议`;
-        // Include recent chat for context
-        let userMsg = question;
-        if (recentChat && recentChat.length > 0) {
-          const chatCtx = recentChat.slice(-6).map(c => `${c.role==='user'?'用户':'AI'}：${c.text.substring(0,100)}`).join('\n');
-          userMsg = `最近的对话：\n${chatCtx}\n\n当前追问：${question}`;
-        }
-        const response = await callLLM(systemPrompt, userMsg, mode, 1500);
-        const cleanResp = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ response: cleanResp }));
-      } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
+    // Include recent chat for context
+    let userMsg = question;
+    if (recentChat && recentChat.length > 0) {
+      const chatCtx = recentChat.slice(-6).map(c => `${c.role==='user'?'用户':'AI'}：${c.text.substring(0,100)}`).join('\n');
+      userMsg = `最近的对话：\n${chatCtx}\n\n当前追问：${question}`;
+    }
+    const response = await callLLM(systemPrompt, userMsg, mode, 1500);
+    const cleanResp = response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    res.type('application/json; charset=utf-8').json({ response: cleanResp });
+  } catch (e) {
+    res.status(500).type('application/json; charset=utf-8').json({ error: e.message });
   }
+});
 
-  // API：AI模拟聊天（LLM扮演匹配对象）
-  if (parsedUrl.pathname === '/api/chat' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', async () => {
-      try {
-        const { partner, userProfile, message, history } = JSON.parse(body);
-        if (!message || !message.trim()) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: '请输入消息' }));
-          return;
-        }
+// API：AI模拟聊天（LLM扮演匹配对象）
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { partner, userProfile, message, history } = req.body;
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: '请输入消息' });
+    }
 
-        // Build character prompt from partner's profile
-        const p = partner;
-        const traits = p.tags ? p.tags.join('、') : '';
-        const styleHint = p.chatStyle ? `\n\n你的说话风格：${p.chatStyle}` : '';
-        const systemPrompt = `你现在扮演一个真实的人在社交App上和刚匹配的对象聊天。
+    // Build character prompt from partner's profile
+    const p = partner;
+    const traits = p.tags ? p.tags.join('、') : '';
+    const styleHint = p.chatStyle ? `\n\n你的说话风格：${p.chatStyle}` : '';
+    const systemPrompt = `你现在扮演一个真实的人在社交App上和刚匹配的对象聊天。
 
 你的人设：
 - 姓名：${p.name}
@@ -495,217 +453,190 @@ ${(reportSummary || '').substring(0, 500)}
 8. 语气要符合你的人设风格，不要千篇一律
 9. 绝对不要说"作为AI"、"我是一个语言模型"等任何暴露身份的话`;
 
-        // Build messages with history
-        const messages = [{ role: 'system', content: systemPrompt }];
-        // Add recent history (last 10 messages)
-        const recentHistory = (history || []).slice(-10);
-        for (const h of recentHistory) {
-          messages.push({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text });
-        }
-        // Add current message
-        messages.push({ role: 'user', content: message });
+    // Build messages with history
+    const messages = [{ role: 'system', content: systemPrompt }];
+    // Add recent history (last 10 messages)
+    const recentHistory = (history || []).slice(-10);
+    for (const h of recentHistory) {
+      messages.push({ role: h.role === 'user' ? 'user' : 'assistant', content: h.text });
+    }
+    // Add current message
+    messages.push({ role: 'user', content: message });
 
-        // Call LLM with low max_tokens for short replies
-        const chatProvider = getProvider();
-        const apiUrl = `${chatProvider.url}/chat/completions`;
-        const llmBody = JSON.stringify({
-          model: chatProvider.model,
-          messages,
-          max_tokens: 200,
-          temperature: 0.8,
-          stream: false,
-        });
-
-        const parsed = new URL(apiUrl);
-        const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
-          hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-          headers: anonLLMHeaders(Buffer.byteLength(llmBody), chatProvider.key),
-        }, (llmRes) => {
-          let data = '';
-          llmRes.on('data', chunk => data += chunk);
-          llmRes.on('end', () => {
-            try {
-              const json = JSON.parse(data);
-              let reply = json.choices?.[0]?.message?.content || '';
-              reply = reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-              // Strip quotes if the model wraps response in quotes
-              reply = reply.replace(/^["「]|["」]$/g, '').trim();
-              res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-              res.end(JSON.stringify({ reply }));
-            } catch (e) {
-              res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-              res.end(JSON.stringify({ error: 'AI回复解析失败' }));
-            }
-          });
-        });
-        llmReq.on('error', (e) => {
-          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({ error: e.message }));
-        });
-        llmReq.write(llmBody);
-        llmReq.end();
-      } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
+    // Call LLM with low max_tokens for short replies
+    const chatProvider = getProvider();
+    const apiUrl = `${chatProvider.url}/chat/completions`;
+    const llmBody = JSON.stringify({
+      model: chatProvider.model,
+      messages,
+      max_tokens: 200,
+      temperature: 0.8,
+      stream: false,
     });
-    return;
-  }
 
-  if (parsedUrl.pathname === '/api/calculate' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const { mode, year, month, day, hour, gender, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB } = JSON.parse(body);
-        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
-        const data = calculateEngine(mode, profile, displayMode || 'simple', { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB });
-        const structured = require('./src/ai-service').extractStructured(mode, profile);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ mode, displayMode: displayMode || 'simple', engineData: data, structured }));
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-
-  // API：流式计算 + AI 解读（SSE）
-  if (parsedUrl.pathname === '/api/divine-stream' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', async () => {
-      try {
-        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox } = JSON.parse(body);
-        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
-        const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
-
-        const buildReq = aiService.buildRequest(mode, profile, question || '', { displayMode: displayMode || 'simple', ...ctxOptions });
-        if (buildReq.blocked) {
-          res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-          res.write(`data: ${JSON.stringify({type:'error',error:buildReq.reason})}\n\n`);
-          res.write('data: [DONE]\n\n');
-          res.end();
-          return;
+    const parsed = new URL(apiUrl);
+    const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
+      hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
+      headers: anonLLMHeaders(Buffer.byteLength(llmBody), chatProvider.key),
+    }, (llmRes) => {
+      let data = '';
+      llmRes.on('data', chunk => data += chunk);
+      llmRes.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          let reply = json.choices?.[0]?.message?.content || '';
+          reply = reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+          // Strip quotes if the model wraps response in quotes
+          reply = reply.replace(/^["「]|["」]$/g, '').trim();
+          res.type('application/json; charset=utf-8').json({ reply });
+        } catch (e) {
+          res.status(500).type('application/json; charset=utf-8').json({ error: 'AI回复解析失败' });
         }
+      });
+    });
+    llmReq.on('error', (e) => {
+      res.status(500).type('application/json; charset=utf-8').json({ error: e.message });
+    });
+    llmReq.write(llmBody);
+    llmReq.end();
+  } catch (e) {
+    res.status(500).type('application/json; charset=utf-8').json({ error: e.message });
+  }
+});
 
-        // SSE headers
-        res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+// API：仅计算引擎（不调 LLM）
+app.post('/api/calculate', (req, res) => {
+  try {
+    const { mode, year, month, day, hour, gender, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB } = req.body;
+    const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
+    const data = calculateEngine(mode, profile, displayMode || 'simple', { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB });
+    const structured = require('./src/ai-service').extractStructured(mode, profile);
+    res.type('application/json; charset=utf-8').json({ mode, displayMode: displayMode || 'simple', engineData: data, structured });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
 
-        // 1. Send engine data + structured immediately
-        const structured = aiService.extractStructured(mode, profile);
-        res.write(`data: ${JSON.stringify({type:'init',engineData:buildReq.engineData,structured,mode})}\n\n`);
+// API：流式计算 + AI 解读（SSE）
+app.post('/api/divine-stream', async (req, res) => {
+  try {
+    const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox } = req.body;
+    const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
+    const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
 
-        // 2. Stream LLM response
-        const streamProvider = getProvider();
-        const apiUrl = `${streamProvider.url}/chat/completions`;
-        const llmBody = JSON.stringify({
-          model: streamProvider.model,
-          messages: [
-            { role: 'system', content: buildReq.systemPrompt },
-            { role: 'user', content: buildReq.userMessage },
-          ],
-          max_tokens: 6144, temperature: 0.5, stream: true,
-        });
+    const buildReq = aiService.buildRequest(mode, profile, question || '', { displayMode: displayMode || 'simple', ...ctxOptions });
+    if (buildReq.blocked) {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+      res.write(`data: ${JSON.stringify({type:'error',error:buildReq.reason})}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+      return;
+    }
 
-        const parsed = new URL(apiUrl);
-        const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
-          hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
-          headers: anonLLMHeaders(Buffer.byteLength(llmBody), streamProvider.key),
-        }, (llmRes) => {
-          let buf = '';
-          llmRes.on('data', (chunk) => {
-            buf += chunk.toString();
-            const lines = buf.split('\n');
-            buf = lines.pop(); // keep incomplete line
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data: ')) continue;
-              const data = trimmed.slice(6);
-              if (data === '[DONE]') {
-                // Append disclaimer as final chunk
-                res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.DIVINATION_DISCLAIMER||''})}\n\n`);
-                res.write(`data: [DONE]\n\n`);
-                res.end();
-                return;
-              }
-              try {
-                const json = JSON.parse(data);
-                const delta = json.choices?.[0]?.delta?.content;
-                if (delta) {
-                  // Strip <think> tags in real-time
-                  res.write(`data: ${JSON.stringify({type:'chunk',text:delta})}\n\n`);
-                }
-              } catch(e) {} // skip malformed
-            }
-          });
-          llmRes.on('end', () => {
-            // Process remaining buffer
-            if (buf.trim()) {
-              const trimmed = buf.trim();
-              if (trimmed.startsWith('data: ') && trimmed.slice(6) !== '[DONE]') {
-                try {
-                  const json = JSON.parse(trimmed.slice(6));
-                  const delta = json.choices?.[0]?.delta?.content;
-                  if (delta) res.write(`data: ${JSON.stringify({type:'chunk',text:delta})}\n\n`);
-                } catch(e) {}
-              }
-            }
+    // SSE headers — disable compression for streaming
+    res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no' });
+
+    // 1. Send engine data + structured immediately
+    const structured = aiService.extractStructured(mode, profile);
+    res.write(`data: ${JSON.stringify({type:'init',engineData:buildReq.engineData,structured,mode})}\n\n`);
+
+    // 2. Stream LLM response
+    const streamProvider = getProvider();
+    const streamApiUrl = `${streamProvider.url}/chat/completions`;
+    const llmBody = JSON.stringify({
+      model: streamProvider.model,
+      messages: [
+        { role: 'system', content: buildReq.systemPrompt },
+        { role: 'user', content: buildReq.userMessage },
+      ],
+      max_tokens: 6144, temperature: 0.5, stream: true,
+    });
+
+    const parsed = new URL(streamApiUrl);
+    const llmReq = (parsed.protocol === 'https:' ? require('https') : http).request({
+      hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
+      headers: anonLLMHeaders(Buffer.byteLength(llmBody), streamProvider.key),
+    }, (llmRes) => {
+      let buf = '';
+      llmRes.on('data', (chunk) => {
+        buf += chunk.toString();
+        const lines = buf.split('\n');
+        buf = lines.pop(); // keep incomplete line
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+          const data = trimmed.slice(6);
+          if (data === '[DONE]') {
+            // Append disclaimer as final chunk
             res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.DIVINATION_DISCLAIMER||''})}\n\n`);
             res.write(`data: [DONE]\n\n`);
             res.end();
-          });
-        });
-        llmReq.on('error', (e) => {
-          res.write(`data: ${JSON.stringify({type:'error',error:e.message})}\n\n`);
-          res.write('data: [DONE]\n\n');
-          res.end();
-        });
-        llmReq.write(llmBody);
-        llmReq.end();
-      } catch (e) {
-        res.writeHead(200, { 'Content-Type': 'text/event-stream' });
-        res.write(`data: ${JSON.stringify({type:'error',error:e.message})}\n\n`);
-        res.write('data: [DONE]\n\n');
-        res.end();
-      }
-    });
-    return;
-  }
-
-  // API：计算 + AI 解读
-  if (parsedUrl.pathname === '/api/divine' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', async () => {
-      try {
-        const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, context } = JSON.parse(body);
-        const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
-        const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
-        // 追问上下文：把之前的分析摘要拼入问题
-        let fullQuestion = question || '';
-        if (context && context.trim()) {
-          fullQuestion = `[追问上下文] 之前的分析摘要：\n${context.substring(0, 800)}\n\n[当前追问] ${fullQuestion}`;
+            return;
+          }
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) {
+              // Strip <think> tags in real-time
+              res.write(`data: ${JSON.stringify({type:'chunk',text:delta})}\n\n`);
+            }
+          } catch(e) {} // skip malformed
         }
-        // 空问题或默认问题 → 全面分析；有具体问题 → 聚焦分析
-        const result = await handleDivination(mode, profile, fullQuestion, displayMode || 'simple', ctxOptions);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify(result));
-      } catch (e) {
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
+      });
+      llmRes.on('end', () => {
+        // Process remaining buffer
+        if (buf.trim()) {
+          const trimmed = buf.trim();
+          if (trimmed.startsWith('data: ') && trimmed.slice(6) !== '[DONE]') {
+            try {
+              const json = JSON.parse(trimmed.slice(6));
+              const delta = json.choices?.[0]?.delta?.content;
+              if (delta) res.write(`data: ${JSON.stringify({type:'chunk',text:delta})}\n\n`);
+            } catch(e) {}
+          }
+        }
+        res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.DIVINATION_DISCLAIMER||''})}\n\n`);
+        res.write(`data: [DONE]\n\n`);
+        res.end();
+      });
     });
-    return;
+    llmReq.on('error', (e) => {
+      res.write(`data: ${JSON.stringify({type:'error',error:e.message})}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+    });
+    llmReq.write(llmBody);
+    llmReq.end();
+  } catch (e) {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+    res.write(`data: ${JSON.stringify({type:'error',error:e.message})}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
   }
-
-  // 404
-  res.writeHead(404);
-  res.end('Not Found');
 });
 
-server.listen(PORT, () => {
+// API：计算 + AI 解读
+app.post('/api/divine', async (req, res) => {
+  try {
+    const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, context } = req.body;
+    const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
+    const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
+    // 追问上下文：把之前的分析摘要拼入问题
+    let fullQuestion = question || '';
+    if (context && context.trim()) {
+      fullQuestion = `[追问上下文] 之前的分析摘要：\n${context.substring(0, 800)}\n\n[当前追问] ${fullQuestion}`;
+    }
+    // 空问题或默认问题 → 全面分析；有具体问题 → 聚焦分析
+    const result = await handleDivination(mode, profile, fullQuestion, displayMode || 'simple', ctxOptions);
+    res.type('application/json; charset=utf-8').json(result);
+  } catch (e) {
+    res.status(500).type('application/json; charset=utf-8').json({ error: e.message });
+  }
+});
+
+// ============ Start Server ============
+
+app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════╗
 ║         缘合 · 占术引擎测试服务器          ║
