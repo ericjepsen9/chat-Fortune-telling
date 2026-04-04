@@ -2418,11 +2418,15 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
   // Memoize localStorage reads for posts (comments + likes)
   const postCache=useMemo(()=>{const c={};posts_.forEach(p=>{c[p.id]={cmts:JSON.parse(localStorage.getItem('yuanhe_comments_'+p.id)||'[]'),liked:!!localStorage.getItem('yuanhe_post_like_'+p.id)}});return c},[posts_]);
 
-  const addPost=(content)=>{
-    const newPost={id:'up_'+Date.now(),avatar:profile.gender==='female'?'👩':'👨',author:profile.name||'缘友',tag:'缘友',time:'刚刚',content,likes:0,comments:0,isUser:true};
+  const addPost=async(content)=>{
+    const newPost={id:'up_'+Date.now(),avatar:profile.avatar||(profile.gender==='female'?'👩':'👨'),author:profile.name||'缘友',tag:'缘友',time:'刚刚',content,likes:0,comments:0,isUser:true};
     const updated=[newPost,...userPosts];
     setUserPosts(updated);
     localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));
+    // 同步到服务器
+    if(localStorage.getItem('yuanhe_token')){
+      try{const r=await apiPost('/api/posts',{content,tag:'缘友'});if(r.id)newPost.serverId=r.id}catch(e){}
+    }
   };
   // Mood state (inline in header)
   const MOODS=[{emoji:'😄',label:'开心',color:'#22C55E'},{emoji:'😊',label:'不错',color:'#3B82F6'},{emoji:'😐',label:'一般',color:'#F59E0B'},{emoji:'😔',label:'低落',color:'#8B5CF6'},{emoji:'😢',label:'难过',color:'#EF4444'}];
@@ -2543,7 +2547,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
             {cmts.length>3&&<div style={{fontSize:10,color:T.textThi}}>共{cmts.length}条评论</div>}
           </div>:null})()}
           <div style={{display:'flex',gap:12,alignItems:'center'}}>
-            <button onClick={()=>{const key='yuanhe_post_like_'+post.id;if(!postCache[post.id]?.liked){localStorage.setItem(key,'1');post.likes++;setPosts([...posts_])}}} style={{background:'none',border:'none',fontSize:12,color:postCache[post.id]?.liked?T.primary:T.textThi,cursor:'pointer'}}>
+            <button onClick={()=>{const key='yuanhe_post_like_'+post.id;const wasLiked=postCache[post.id]?.liked;if(!wasLiked){localStorage.setItem(key,'1');post.likes++;setPosts([...posts_])}else{localStorage.removeItem(key);post.likes=Math.max(0,post.likes-1);setPosts([...posts_])};if(post.serverId&&localStorage.getItem('yuanhe_token'))apiPost('/api/posts/'+post.serverId+'/like',{}).catch(()=>{})}} style={{background:'none',border:'none',fontSize:12,color:postCache[post.id]?.liked?T.primary:T.textThi,cursor:'pointer'}}>
               {postCache[post.id]?.liked?'❤️':'🤍'} {post.likes}
             </button>
             <button onClick={()=>{setCommentPost(post);setCommentText('')}} style={{background:'none',border:'none',fontSize:12,color:T.textThi,cursor:'pointer'}}>💬 {(postCache[post.id]?.cmts||[]).length||(post.comments||0)}</button>
@@ -2559,9 +2563,13 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
       <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'16px 16px 24px',animation:'slideUp .3s ease'}}>
         <div style={{fontSize:14,fontWeight:600,color:T.text,marginBottom:10}}>评论 {commentPost.author} 的动态</div>
         <div style={{display:'flex',gap:8}}>
+          {(()=>{
+            const submitComment=()=>{if(!commentText.trim())return;const t=commentText.trim();const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:t,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));if(commentPost.serverId&&localStorage.getItem('yuanhe_token'))apiPost('/api/posts/'+commentPost.serverId+'/comment',{text:t}).catch(()=>{});setCommentPost(null);setPosts([...posts_])};
+            return<>
           <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="写评论…" autoFocus style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}
-            onKeyDown={e=>{if(e.key==='Enter'&&commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}}/>
-          <button onClick={()=>{if(commentText.trim()){const cmts=JSON.parse(localStorage.getItem('yuanhe_comments_'+commentPost.id)||'[]');cmts.push({name:profile.name||'缘友',text:commentText.trim(),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('yuanhe_comments_'+commentPost.id,JSON.stringify(cmts));setCommentPost(null)}}} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.accent2:T.border,color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button>
+            onKeyDown={e=>{if(e.key==='Enter')submitComment()}}/>
+          <button onClick={submitComment} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.accent2:T.border,color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button></>;
+          })()}
         </div>
         <button onClick={()=>setCommentPost(null)} style={{width:'100%',padding:'10px',background:'none',border:'none',color:T.textThi,fontSize:12,cursor:'pointer',marginTop:6}}>取消</button>
       </div>
@@ -2790,9 +2798,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       setTimeout(()=>setWsTypingFrom(f=>f===data.from?null:f),3000);
     });
 
-    const offRead=WsManager.on('read',(data)=>{
-      // 对方已读 — 可以后续显示已读状态
-    });
+    const offRead=WsManager.on('read',()=>{});  // 保留占位，暂不处理
 
     return()=>{offMsg();offTyping();offRead()};
   },[activeId,refreshConvs]);
@@ -2947,14 +2953,8 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   // Notify App when entering/leaving chat detail
   useEffect(()=>{setChatActive(!!activeId);return()=>setChatActive(false)},[activeId]);
   useEffect(()=>{if(openConvId){setActiveId(openConvId);setOpenConvId(null)}},[openConvId]);
-  // 打开会话时: 标记已读 + 通知对方
-  useEffect(()=>{
-    if(!activeConv)return;
-    ChatStore.markRead(activeConv.id);refreshConvs();
-    if(activeConv.user.realUserId&&WsManager.connected){
-      WsManager.send({type:'read',conversationWith:activeConv.user.realUserId});
-    }
-  },[activeId]);
+  // 打开会话时标记本地已读
+  useEffect(()=>{if(activeConv){ChatStore.markRead(activeConv.id);refreshConvs()}},[activeId]);
 
   const sendMsg=async()=>{
     if(!chatInput.trim()||sending||!activeConv)return;
