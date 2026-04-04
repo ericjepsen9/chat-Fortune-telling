@@ -1,12 +1,12 @@
 /**
- * 缘合 — 本地测试服务器
- * 连接5种占术引擎 + Cherry Studio 本地 LLM
- * 
+ * 缘合 YuanHe — 服务器
+ * 命理引擎 + MiniMax LLM + 前端服务
+ *
  * 启动方式：
  *   1. npm install （首次）
- *   2. 修改 .env 文件填入你的 Cherry Studio 配置
- *   3. node test-server.js
- *   4. 浏览器打开 http://localhost:3000
+ *   2. 配置 .env 文件
+ *   3. node server.js
+ *   4. 浏览器打开 http://localhost:3000/app
  */
 
 const http = require('http');

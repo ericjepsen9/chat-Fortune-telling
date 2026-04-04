@@ -174,8 +174,8 @@ const BOTS=[
     chatStyle:'乐观能量满满，爱分享创业故事，说话直接有冲劲，很励志'},
 ];
 
-async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node test-server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
-async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node test-server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
+async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
+async function apiGet(p){const r=await fetch(p);const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 
 // ===== CHAT DATA LAYER =====
 const ChatStore={

@@ -59,7 +59,7 @@ EOF
 # 7. PM2 启动
 echo "🚀 启动应用..."
 pm2 delete yuanhe 2>/dev/null || true
-pm2 start test-server.js --name yuanhe
+pm2 start server.js --name yuanhe
 pm2 save
 
 # 8. PM2 开机自启
