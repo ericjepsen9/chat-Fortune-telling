@@ -2364,8 +2364,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {!ms.result._streaming&&(()=>{
                 const fbKey='yuanhe_fb_'+mode+'_'+Date.now().toString(36).slice(0,6);
                 const existingFb=localStorage.getItem('yuanhe_fb_'+mode);
-                if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'4px 0',marginBottom:8}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
-                return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'6px 0',marginBottom:8}}>
+                if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'8px 0',marginBottom:16}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
+                return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'10px 0',marginBottom:16,borderTop:`1px solid ${T.border}`,marginTop:8}}>
                   <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
                   <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👍 准</button>
                   <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👎 不准</button>
