@@ -3258,9 +3258,9 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
     <div style={{padding:'14px 16px 0'}}>
       <div style={{fontSize:24,fontWeight:800,color:T.text,marginBottom:14}}>消息</div>
       {/* Search */}
-      <div style={{position:'relative'}}>
+      <div style={{position:'relative',marginBottom:12}}>
         <input value={msgSearch||''} onChange={e=>setMsgSearch(e.target.value)} placeholder="搜索聊天记录…"
-          style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.accent2}40`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
+          style={{width:'100%',padding:'10px 14px 10px 36px',borderRadius:12,border:`1.5px solid ${T.border}`,background:T.card,color:T.text,fontSize:13,outline:'none',boxSizing:'border-box'}}/>
         <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textThi}}>🔍</span>
       </div>
     </div>
