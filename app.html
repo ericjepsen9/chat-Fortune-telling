@@ -1499,7 +1499,7 @@ const MODES=[
   {id:'hepan',label:'综合合盘',icon:'❤',c:'#E11D48',cat:'pair'},
 ];
 const MODE_FULL={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星',hehun:'八字合婚',synastry:'星座配对',hepan:'综合合盘'};
-const MODE_INTRO={bazi:'以出生年月日时推算天干地支，解读一生命运走向',astrology:'基于太阳、月亮、上升星座的西方占星分析',tarot:'通过塔罗牌阵获取直觉指引与方向建议',meihua:'以数字或时间快速起卦，判断事件吉凶',vedic:'印度吠陀占星系统，恒星黄道深度分析',hehun:'两人八字全面配合度分析',synastry:'双人星盘交叉相位化学反应',hepan:'中西命理综合配对评分'};
+const MODE_INTRO={bazi:'以出生年月日时推算天干地支，解读一生命运走向',astrology:'基于太阳、月亮、上升星座的西方占星分析',tarot:'通过塔罗牌阵获取直觉指引与方向建议',meihua:'以数字或时间快速起卦，判断事件吉凶',vedic:'印度吠陀占星系统，恒星黄道深度分析',hehun:'八字合婚 · 需要双方完整出生年月日时\n从天干合冲、日主关系、十神互见等维度分析婚姻匹配',synastry:'星座配对 · 只需要对方月日\n分析太阳星座间的化学反应和相处模式',hepan:'综合合盘 · 需要双方完整出生年月日时\n融合八字+星座多维度评分，全面评估缘分'};
 const QUICK_QS={
   bazi:['桃花运详解','当前大运分析','今年运势','适合创业吗','贵人方位','事业方向'],
   astrology:['本月星座运势','水逆影响','感情运势','适合什么工作','幸运色和数字'],
@@ -2127,16 +2127,22 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
         {/* Pair */}
         {isPair&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FDF2F8,#FCE7F3)',border:'1px solid #DB277730',borderRadius:16,padding:14,marginBottom:14}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
             <span style={{fontSize:14,fontWeight:700,color:'#DB2777'}}>💑 对方出生信息</span>
             <div style={{display:'flex',gap:4}}>{[{v:'female',l:'♀'},{v:'male',l:'♂'}].map(g=><button key={g.v} onClick={()=>setP2({...p2,gender:g.v})} style={{width:28,height:28,borderRadius:14,border:'none',cursor:'pointer',fontSize:12,background:p2.gender===g.v?'#DB2777':'#f0e0f5',color:p2.gender===g.v?'#fff':'#999'}}>{g.l}</button>)}</div>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6}}>
-            {[['年','year'],['月','month'],['日','day'],['时','hour']].map(([l,k])=><div key={k} style={{textAlign:'center'}}>
+          <div style={{fontSize:10,color:'#DB2777',opacity:.6,marginBottom:8}}>
+            {mode==='synastry'?'只需月日即可分析星座配对':'需要完整出生年月日时'}
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:mode==='synastry'?'1fr 1fr':'1fr 1fr 1fr 1fr',gap:6}}>
+            {(mode==='synastry'?[['月','month'],['日','day']]:[['年','year'],['月','month'],['日','day'],['时','hour']]).map(([l,k])=><div key={k} style={{textAlign:'center'}}>
               <div style={{fontSize:10,color:'#DB2777',marginBottom:3,fontWeight:600}}>{l}</div>
               <input type="number" value={p2[k]} onChange={e=>setP2({...p2,[k]:e.target.value})} style={{width:'100%',padding:'7px 4px',border:'1.5px solid #F9A8D4',borderRadius:8,fontSize:13,textAlign:'center',background:T.card,outline:'none'}}/>
             </div>)}
           </div>
+          {mode==='synastry'&&<div style={{marginTop:8,display:'flex',alignItems:'center',gap:6}}>
+            {(()=>{const z=getZodiac(parseInt(p2.month)||1,parseInt(p2.day)||1);return<span style={{padding:'3px 10px',borderRadius:8,background:'#DB277715',fontSize:11,color:'#DB2777',fontWeight:600}}>{z.symbol} {z.name}</span>})()}
+          </div>}
         </div>}
       </>}
 
@@ -2370,6 +2376,11 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
               boxShadow:(!followUpQ.trim()||chatLoading)?'none':`0 2px 8px ${mc}40`}}>{chatLoading?'…':'↑'}</button>
         </div>
+        {/* 重新分析按钮 */}
+        {!['meihua','tarot'].includes(mode)&&<button onClick={()=>{
+          const q=ms.q;setMS(mode,{result:null,error:null,chatHistory:[],q:q||''});
+          try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s[mode];localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
+        }} style={{width:'100%',padding:'8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer',marginTop:8}}>🔄 清除报告 · 重新分析</button>}
       </>}
     </div>
 
