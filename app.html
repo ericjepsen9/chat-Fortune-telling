@@ -1546,7 +1546,7 @@ const QUICK_QS={
   bazi:['桃花运详解','当前大运分析','今年运势','适合创业吗','贵人方位','事业方向'],
   astrology:['本月星座运势','水逆影响','感情运势','适合什么工作','幸运色和数字'],
   tarot:['今天适合做什么','感情指引','事业抉择','近期需要注意什么'],
-  meihua:['这件事能成吗','吉凶走向分析','什么时候合适','成功概率多大'],
+  meihua:['这件事能成吗','什么时候合适','成功概率多大'],
   vedic:['当前大运周期','事业方向','婚姻时机','财运走势','前世业力'],
   hehun:['适合在一起吗','婚后相处','财务观念','子女缘分','需要磨合的地方'],
   synastry:['化学反应如何','相处建议','容易吵架吗','谁更主动','长远发展'],
@@ -2139,7 +2139,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="例：这次考试能通过吗？" style={{width:'100%',padding:'10px 12px',border:'2px solid #FCD34D',borderRadius:10,fontSize:13,background:T.card,outline:'none',marginBottom:10,boxSizing:'border-box'}}/>
           {/* Example questions */}
           <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
-            {['这件事能成吗','和ta有缘分吗','这个项目值得投资吗','吉凶走向分析'].map(ex=>(
+            {['这件事能成吗','和ta有缘分吗','这个项目值得投资吗','该不该做这件事'].map(ex=>(
               <button key={ex} onClick={()=>setMS(mode,{q:ex})} style={{padding:'3px 8px',borderRadius:6,border:`1px solid ${ms.q===ex?'#D97706':'#FCD34D'}`,background:ms.q===ex?'#FEF3C7':'#fff',color:'#92400E',fontSize:10,cursor:'pointer'}}>{ex}</button>
             ))}
           </div>
