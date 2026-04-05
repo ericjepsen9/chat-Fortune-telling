@@ -2240,13 +2240,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           const expanded=reportExpanded;
           return(<div>
 
-            {/* Expanded report (full cards) */}
-            {expanded&&<>
-              {/* Collapse button */}
-              <div onClick={()=>setReportExpanded(false)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'6px',marginBottom:8,cursor:'pointer',color:mc,fontSize:11,fontWeight:600}}>
-                ▴ 收起报告
-              </div>
-              {/* Report Header with Radar */}
+            {/* Report Header — always visible */}
               <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                   <div style={{flex:1}}>
@@ -2278,6 +2272,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                   }
                 </div>
               </div>
+            {/* Expand/Collapse toggle */}
+            {hasChat&&<div onClick={()=>setReportExpanded(!expanded)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'6px',marginBottom:4,cursor:'pointer',color:mc,fontSize:11,fontWeight:600}}>
+              {expanded?'▴ 收起报告':'▾ 展开报告'}
+            </div>}
+            {/* Expanded detail cards */}
+            {expanded&&<>
               {/* 星座特征卡片 */}
               {mode==='astrology'&&(()=>{const zd=getZodiac(profile.month,profile.day);const tr=ZODIAC_TRAITS[zd.name];if(!tr)return null;return(
                 <div style={{background:T.card,borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
@@ -2322,25 +2322,25 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
                 <span style={{fontSize:12}}>AI正在生成分析…</span>
               </div>}
-              {/* Actions - only after streaming complete */}
-              {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
-                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
-                <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
-                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
-                <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
-              </div>}
-              {/* Feedback */}
-              {!ms.result._streaming&&(()=>{
-                const fbKey='yuanhe_fb_'+mode;
-                const existingFb=localStorage.getItem(fbKey);
-                if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'8px 0',marginBottom:16}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
-                return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'10px 0',marginBottom:16,borderTop:`1px solid ${T.border}`,marginTop:8}}>
-                  <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
-                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👍 准</button>
-                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👎 不准</button>
-                </div>;
-              })()}
             </>}
+            {/* Actions - always visible */}
+            {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
+              <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+              <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
+              {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
+              <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
+            </div>}
+            {/* Feedback */}
+            {!ms.result._streaming&&(()=>{
+              const fbKey='yuanhe_fb_'+mode;
+              const existingFb=localStorage.getItem(fbKey);
+              if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'8px 0',marginBottom:16}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
+              return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'10px 0',marginBottom:16,borderTop:`1px solid ${T.border}`,marginTop:8}}>
+                <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
+                <button onClick={()=>{localStorage.setItem(fbKey,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👍 准</button>
+                <button onClick={()=>{localStorage.setItem(fbKey,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👎 不准</button>
+              </div>;
+            })()}
 
             {/* Chat History (follow-up bubbles) */}
             {chatHistory.length>0&&<div style={{marginBottom:10}}>
