@@ -2467,11 +2467,15 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
               boxShadow:(!followUpQ.trim()||chatLoading)?'none':`0 2px 8px ${mc}40`}}>{chatLoading?'…':'↑'}</button>
         </div>
-        {/* 重新分析按钮 */}
-        {!['meihua','tarot'].includes(mode)&&<button onClick={()=>{
-          const q=ms.q;setMS(mode,{result:null,error:null,chatHistory:[],q:q||''});
+        {/* 重新分析/起卦/抽牌按钮 — 所有模式统一在底部显示 */}
+        <button onClick={()=>{
+          setMS(mode,{result:null,error:null,chatHistory:[],q:mode==='meihua'?'':ms.q||''});
+          if(mode==='meihua'){setMhNum1('');setMhNum2('')}
+          if(mode==='tarot'){setTarotCards([])}
           try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s[mode];localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
-        }} style={{width:'100%',padding:'8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer',marginTop:8}}>🔄 清除报告 · 重新分析</button>}
+        }} style={{width:'100%',padding:'8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer',marginTop:8}}>
+          {mode==='meihua'?'🔄 重新起卦 · 新问题':mode==='tarot'?'🔄 重新抽牌 · 新解读':'🔄 清除报告 · 重新分析'}
+        </button>
       </>}
     </div>
 
