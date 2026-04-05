@@ -493,6 +493,8 @@ function areFriends(userA, userB) {
 
 module.exports = {
   JWT_SECRET,
+  _users: users,
+  _saveUsers: saveUsers,
   sendCode,
   verifyCode,
   authMiddleware,

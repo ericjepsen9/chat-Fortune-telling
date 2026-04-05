@@ -394,6 +394,53 @@ app.post('/api/admin/reports/:id/resolve', admin.adminAuth, (req, res) => {
   res.json(result);
 });
 
+// ============ Admin: VIP & Revenue ============
+
+const vipManager = require('./src/vip-manager');
+
+// VIP等级定义
+app.get('/api/admin/vip-tiers', admin.adminAuth, (req, res) => {
+  res.json(vipManager.VIP_TIERS);
+});
+
+// 赠送VIP
+app.post('/api/admin/vip/grant', admin.adminAuth, (req, res) => {
+  const { userId, tier, days } = req.body;
+  const users = require('./src/auth');
+  const result = vipManager.grantVip(users._users || {}, userId, tier, parseInt(days) || 30, req.admin.username);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'grant_vip', userId, `赠送${result.order?.tierName} ${days||'永久'}天`);
+  // 保存用户数据
+  users._saveUsers && users._saveUsers();
+  res.json(result);
+});
+
+// 撤销VIP
+app.post('/api/admin/vip/revoke', admin.adminAuth, (req, res) => {
+  const users = require('./src/auth');
+  const result = vipManager.revokeVip(users._users || {}, req.body.userId);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'revoke_vip', req.body.userId, '撤销VIP');
+  users._saveUsers && users._saveUsers();
+  res.json(result);
+});
+
+// 订单列表
+app.get('/api/admin/orders', admin.adminAuth, (req, res) => {
+  res.json(vipManager.getOrders({ page: parseInt(req.query.page) || 1, status: req.query.status }));
+});
+
+// 收入统计
+app.get('/api/admin/revenue', admin.adminAuth, (req, res) => {
+  res.json(vipManager.getRevenueStats());
+});
+
+// 不活跃用户
+app.get('/api/admin/inactive-users', admin.adminAuth, (req, res) => {
+  const users = require('./src/auth');
+  res.json(vipManager.getInactiveUsers(users._users || {}, parseInt(req.query.days) || 7, parseInt(req.query.limit) || 50));
+});
+
 // ============ Admin: System Config ============
 
 const configManager = require('./src/config-manager');
