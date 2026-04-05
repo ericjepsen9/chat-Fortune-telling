@@ -466,13 +466,10 @@ app.get('/api/status', (req, res) => {
 // AI输出质量抽查 — 最近N条占卜结果
 app.get('/api/admin/ai-samples', admin.adminAuth, (req, res) => {
   const limit = parseInt(req.query.limit) || 20;
-  const allUsers = Object.values(require('./src/auth').adminListUsers({ limit: 100 }).items || []);
-  // 收集所有用户的最近占卜
   const samples = [];
-  const users = require('./src/auth');
-  const userList = users.adminListUsers({ limit: 200 });
+  const userList = auth.adminListUsers({ limit: 200 });
   (userList.items || []).forEach(u => {
-    const detail = users.adminGetUser(u.id);
+    const detail = auth.adminGetUser(u.id);
     if (detail?.divinations) {
       detail.divinations.forEach(d => {
         samples.push({ userId: u.id, userName: u.name, ...d });

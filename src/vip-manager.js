@@ -42,6 +42,7 @@ function getUserVip(user) {
 function grantVip(users, userId, tier, days, grantedBy) {
   const user = users[userId];
   if (!user) return { error: '用户不存在' };
+  if (days < 0) return { error: '天数不能为负数' };
   if (!VIP_TIERS[tier]) return { error: '无效等级' };
 
   const expiresAt = days > 0 ? new Date(Date.now() + days * 86400000).toISOString() : null; // null=永久

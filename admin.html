@@ -289,6 +289,83 @@ function LogsPage(){
   </div>);
 }
 
+// ===== MODALS =====
+function BanModal({user,onClose,onDone}){
+  const [reason,setReason]=useState('');const [days,setDays]=useState('');
+  const doBan=async()=>{
+    const r=await apiPost('/api/admin/users/'+user.id+'/ban',{ban:true,reason:reason||'违规',days:days?parseInt(days):0});
+    if(!r.error)onDone();
+  };
+  return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <h3>⛔ 封禁 {user.name}</h3>
+    <label>封禁理由</label><input value={reason} onChange={e=>setReason(e.target.value)} placeholder="违规内容/行为描述"/>
+    <label>封禁天数 (0=永久)</label><input type="number" value={days} onChange={e=>setDays(e.target.value)} placeholder="0"/>
+    <div className="actions">
+      <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
+      <button className="btn-sm btn-danger" onClick={doBan}>确认封禁</button>
+    </div>
+  </div></div>);
+}
+function EditModal({user,onClose,onDone}){
+  const [name,setName]=useState(user.name||'');const [city,setCity]=useState(user.city||'');
+  const doEdit=async()=>{
+    const r=await apiPost('/api/admin/users/'+user.id+'/update',{name,city});
+    if(!r.error)onDone();
+  };
+  return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <h3>✏️ 编辑 {user.name}</h3>
+    <label>昵称</label><input value={name} onChange={e=>setName(e.target.value)}/>
+    <label>城市</label><input value={city} onChange={e=>setCity(e.target.value)}/>
+    <div className="actions">
+      <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
+      <button className="btn-sm btn-primary" onClick={doEdit}>保存</button>
+    </div>
+  </div></div>);
+}
+
+function CreateAdminModal({onClose,onDone}){
+  const [u,setU]=useState('');const [n,setN]=useState('');const [r,setR]=useState('operator');const [pw,setPw]=useState('');
+  const create=async()=>{
+    if(!u.trim()){showToast('用户名不能为空','error');return}
+    const res=await apiPost('/api/admin/create',{username:u,name:n||u,role:r,password:pw||undefined});
+    if(res.success){showToast('创建成功','success');onDone()}
+  };
+  return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <h3>新建管理员</h3>
+    <label>用户名 *</label><input value={u} onChange={e=>setU(e.target.value)}/>
+    <label>名称</label><input value={n} onChange={e=>setN(e.target.value)} placeholder="可选"/>
+    <label>角色</label>
+    <select value={r} onChange={e=>setR(e.target.value)}><option value="operator">运营</option><option value="support">客服</option><option value="superadmin">超级管理员</option></select>
+    <label>初始密码</label><input value={pw} onChange={e=>setPw(e.target.value)} placeholder="留空则为changeme"/>
+    <div style={{fontSize:10,color:'#6B7280',marginTop:4}}>首次登录将强制修改密码</div>
+    <div className="actions">
+      <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
+      <button className="btn-sm btn-primary" onClick={create}>创建</button>
+    </div>
+  </div></div>);
+}
+function GrantVipModal({data,onClose,onDone}){
+  const [tier,setTier]=useState(data.tier||'basic');const [days,setDays]=useState(data.days||'30');const [uid,setUid]=useState(data.userId||'');
+  const doGrant=async()=>{
+    if(!uid.trim()){showToast('请输入用户ID','error');return}
+    const r=await apiPost('/api/admin/vip/grant',{userId:uid,tier,days:parseInt(days)||30});
+    if(r.success){showToast(`已赠送${r.order?.tierName}`,'success');onDone()}
+  };
+  return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <h3>💎 赠送VIP</h3>
+    {data.userName&&<div style={{fontSize:13,color:'#A78BFA',marginBottom:8}}>赠送给: {data.userName}</div>}
+    {!data.userId&&<><label>用户ID</label><input value={uid} onChange={e=>setUid(e.target.value)} placeholder="输入用户ID"/></>}
+    <label>VIP等级</label>
+    <select value={tier} onChange={e=>setTier(e.target.value)}><option value="basic">缘合会员 (Lv.1)</option><option value="premium">缘合至尊 (Lv.2)</option></select>
+    <label>天数 (0=永久)</label>
+    <input type="number" value={days} onChange={e=>setDays(e.target.value)} placeholder="30"/>
+    <div className="actions">
+      <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
+      <button className="btn-sm btn-primary" onClick={doGrant}>确认赠送</button>
+    </div>
+  </div></div>);
+}
+
 // ===== USERS PAGE =====
 function UsersPage(){
   const [data,setData]=useState({items:[],total:0});
@@ -338,7 +415,7 @@ function UsersPage(){
       <tbody>{data.items?.map(u=>(
         <tr key={u.id}>
           <td style={{fontSize:20}}>{u.avatar||(u.gender==='female'?'👩':'👨')}</td>
-          <td style={{fontWeight:600,cursor:'pointer',color:'#A78BFA'}} onClick={()=>apiGet('/api/admin/users/'+u.id).then(setDetail)}>{u.name}</td>
+          <td style={{fontWeight:600,cursor:'pointer',color:'#A78BFA'}} onClick={()=>apiGet('/api/admin/users/'+u.id).then(d=>{if(d&&!d.error)setDetail(d)})}>{u.name}</td>
           <td style={{fontSize:12,color:'#6B7280'}}>{u.phone||'—'}</td>
           <td>{u.gender==='female'?<span style={{color:'#EC4899'}}>♀</span>:<span style={{color:'#3B82F6'}}>♂</span>}</td>
           <td style={{fontSize:12}}>{u.city||'—'}</td>
@@ -387,40 +464,10 @@ function UsersPage(){
     </div></div>}
 
     {/* 封禁弹窗 */}
-    {banModal&&(()=>{
-      const [reason,setR]=useState('');const [days,setD]=useState('');
-      const doBan=async()=>{
-        await apiPost('/api/admin/users/'+banModal.id+'/ban',{ban:true,reason:reason||'违规',days:days?parseInt(days):0});
-        setBanModal(null);load();
-      };
-      return<div className="modal-bg" onClick={()=>setBanModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
-        <h3>⛔ 封禁 {banModal.name}</h3>
-        <label>封禁理由</label><input value={reason} onChange={e=>setR(e.target.value)} placeholder="违规内容/行为描述"/>
-        <label>封禁天数 (0=永久)</label><input type="number" value={days} onChange={e=>setD(e.target.value)} placeholder="0"/>
-        <div className="actions">
-          <button className="btn-sm btn-ghost" onClick={()=>setBanModal(null)}>取消</button>
-          <button className="btn-sm btn-danger" onClick={doBan}>确认封禁</button>
-        </div>
-      </div></div>;
-    })()}
+    {banModal&&<BanModal user={banModal} onClose={()=>setBanModal(null)} onDone={()=>{setBanModal(null);showToast('已封禁','success');load()}}/>}
 
     {/* 编辑弹窗 */}
-    {editModal&&(()=>{
-      const [name,setN]=useState(editModal.name||'');const [city,setC]=useState(editModal.city||'');
-      const doEdit=async()=>{
-        await apiPost('/api/admin/users/'+editModal.id+'/update',{name,city});
-        setEditModal(null);load();
-      };
-      return<div className="modal-bg" onClick={()=>setEditModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
-        <h3>✏️ 编辑 {editModal.name}</h3>
-        <label>昵称</label><input value={name} onChange={e=>setN(e.target.value)}/>
-        <label>城市</label><input value={city} onChange={e=>setC(e.target.value)}/>
-        <div className="actions">
-          <button className="btn-sm btn-ghost" onClick={()=>setEditModal(null)}>取消</button>
-          <button className="btn-sm btn-primary" onClick={doEdit}>保存</button>
-        </div>
-      </div></div>;
-    })()}
+    {editModal&&<EditModal user={editModal} onClose={()=>setEditModal(null)} onDone={()=>{setEditModal(null);showToast('已保存','success');load()}}/>}
   </div>);
 }
 
@@ -827,27 +874,7 @@ function VipPage(){
     </div>}
 
     {/* 赠送VIP弹窗 */}
-    {grantModal&&(()=>{
-      const [tier,setTier]=useState(grantModal.tier);const [days,setDays]=useState(grantModal.days);const [uid,setUid]=useState(grantModal.userId);
-      const doGrant=async()=>{
-        if(!uid.trim()){showToast('请输入用户ID','error');return}
-        const r=await apiPost('/api/admin/vip/grant',{userId:uid,tier,days:parseInt(days)||30});
-        if(r.success){showToast(`已赠送${r.order?.tierName}给${grantModal.userName||uid}`,'success');setGrantModal(null);apiGet('/api/admin/orders?limit=20').then(d=>{if(d.items)setOrders(d)});apiGet('/api/admin/revenue').then(setRevenue)}
-      };
-      return<div className="modal-bg" onClick={()=>setGrantModal(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
-        <h3>💎 赠送VIP</h3>
-        {grantModal.userName&&<div style={{fontSize:13,color:'#A78BFA',marginBottom:8}}>赠送给: {grantModal.userName}</div>}
-        {!grantModal.userId&&<><label>用户ID</label><input value={uid} onChange={e=>setUid(e.target.value)} placeholder="输入用户ID"/></>}
-        <label>VIP等级</label>
-        <select value={tier} onChange={e=>setTier(e.target.value)}><option value="basic">缘合会员 (Lv.1)</option><option value="premium">缘合至尊 (Lv.2)</option></select>
-        <label>天数 (0=永久)</label>
-        <input type="number" value={days} onChange={e=>setDays(e.target.value)} placeholder="30"/>
-        <div className="actions">
-          <button className="btn-sm btn-ghost" onClick={()=>setGrantModal(null)}>取消</button>
-          <button className="btn-sm btn-primary" onClick={doGrant}>确认赠送</button>
-        </div>
-      </div></div>;
-    })()}
+    {grantModal&&<GrantVipModal data={grantModal} onClose={()=>setGrantModal(null)} onDone={()=>{setGrantModal(null);apiGet('/api/admin/orders?limit=20').then(d=>{if(d.items)setOrders(d)});apiGet('/api/admin/revenue').then(setRevenue)}}/>}
   </div>);
 }
 
@@ -872,27 +899,7 @@ function AdminsPage({role}){
         <td style={{fontSize:11,color:'#6B7280'}}>{a.createdAt?.substring(0,10)}</td>
       </tr>
     ))}</tbody></table></div>
-    {showCreate&&(()=>{
-      const [u,setU]=useState('');const [n,setN]=useState('');const [r,setR]=useState('operator');const [pw,setPw]=useState('');
-      const create=async()=>{
-        if(!u.trim()){showToast('用户名不能为空','error');return}
-        const res=await apiPost('/api/admin/create',{username:u,name:n||u,role:r,password:pw||undefined});
-        if(res.success){showToast('创建成功','success');setShowCreate(false);apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)})}
-      };
-      return<div className="modal-bg" onClick={()=>setShowCreate(false)}><div className="modal" onClick={e=>e.stopPropagation()}>
-        <h3>新建管理员</h3>
-        <label>用户名 *</label><input value={u} onChange={e=>setU(e.target.value)}/>
-        <label>名称</label><input value={n} onChange={e=>setN(e.target.value)} placeholder="可选"/>
-        <label>角色</label>
-        <select value={r} onChange={e=>setR(e.target.value)}><option value="operator">运营</option><option value="support">客服</option><option value="superadmin">超级管理员</option></select>
-        <label>初始密码</label><input value={pw} onChange={e=>setPw(e.target.value)} placeholder="留空则为changeme"/>
-        <div style={{fontSize:10,color:'#6B7280',marginTop:4}}>首次登录将强制修改密码</div>
-        <div className="actions">
-          <button className="btn-sm btn-ghost" onClick={()=>setShowCreate(false)}>取消</button>
-          <button className="btn-sm btn-primary" onClick={create}>创建</button>
-        </div>
-      </div></div>;
-    })()}
+    {showCreate&&<CreateAdminModal onClose={()=>setShowCreate(false)} onDone={()=>{setShowCreate(false);apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)})}}/>}
   </div>);
 }
 
@@ -910,14 +917,17 @@ function App(){
   const [page,setPage]=useState('dashboard');
   const [showChangePw,setShowChangePw]=useState(false);
 
-  // 自动验证token
+  // 自动验证token并获取完整信息
   useEffect(()=>{
     const t=getToken();if(!t)return;
-    // 简单解析JWT payload (不验证签名，服务端会验证)
     try{
       const payload=JSON.parse(atob(t.split('.')[1]));
       if(payload.type==='admin'&&payload.aid){
-        setAdminUser({id:payload.aid,role:payload.role});
+        setAdminUser({id:payload.aid,role:payload.role,name:'管理员',username:'admin'});
+        // 从服务器获取完整信息
+        apiGet('/api/admin/list').then(list=>{
+          if(Array.isArray(list)){const me=list.find(a=>a.id===payload.aid);if(me)setAdminUser(prev=>({...prev,...me}))}
+        });
       }
     }catch(e){localStorage.removeItem('yuanhe_admin_token')}
   },[]);
