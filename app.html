@@ -2028,7 +2028,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       })()}
     </div>
 
-    <div style={{padding:'4px 16px 180px'}}>
+    <div style={{padding:'4px 16px 220px'}}>
       {/* MODE GRID — with icons */}
       <div style={{display:'flex',gap:6,marginBottom:14}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
@@ -2378,15 +2378,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               </div>}
               <div ref={chatEndRef}/>
             </div>}
-            {/* 重新分析按钮 — 始终显示在报告/追问区域最底部 */}
-            <button onClick={()=>{
-              setMS(mode,{result:null,error:null,chatHistory:[],q:mode==='meihua'?'':ms.q||''});
-              if(mode==='meihua'){setMhNum1('');setMhNum2('')}
-              if(mode==='tarot'){setTarotCards([])}
-              try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s[mode];localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
-            }} style={{width:'100%',padding:'10px',borderRadius:10,border:`1.5px solid ${T.border}`,marginTop:16,marginBottom:8,fontSize:12,fontWeight:500,cursor:'pointer',background:T.card,color:T.textSec}}>
-              {mode==='meihua'?'🔄 重新起卦 · 新问题':mode==='tarot'?'🔄 重新抽牌 · 新解读':'🔄 清除报告 · 重新分析'}
-            </button>
           </div>);
         })()}
 
