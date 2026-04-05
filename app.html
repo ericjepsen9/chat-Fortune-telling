@@ -3951,7 +3951,8 @@ function DataManagementModal({profile,onClose,onLogout}){
     window.yuanheConfirm(`确定删除${label}？`,()=>{
       localStorage.removeItem(key);
       if(key==='yuanhe_profile'){onLogout();onClose();return}
-      onClose();setTimeout(()=>location.reload(),100);
+      window.yuanheToast?.(`${label}已删除`);
+      onClose();
     },{detail:'此操作不可恢复'});
   };
   const deleteAll=()=>{
