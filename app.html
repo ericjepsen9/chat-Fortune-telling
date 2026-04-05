@@ -1156,14 +1156,14 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [lastSwiped,setLastSwiped]=useState(null);
   const [showWheel,setShowWheel]=useState(false);
 
-  // 转盘自动弹出: 每天最多2次, 首次进入首页时自动弹出
+  // 转盘自动弹出: 每天有剩余次数时，首次进入首页弹出一次
   useEffect(()=>{
+    if(window._yuanheWheelShown)return; // 本次session已弹过
     const wheelKey='yuanhe_wheel_'+new Date().toDateString();
     const used=parseInt(localStorage.getItem(wheelKey)||'0');
-    const shownKey='yuanhe_wheel_shown_'+new Date().toDateString();
-    const shownToday=parseInt(localStorage.getItem(shownKey)||'0');
-    if(used<2&&shownToday<2){
-      const timer=setTimeout(()=>{setShowWheel(true);localStorage.setItem(shownKey,String(shownToday+1))},1500);
+    if(used<2){
+      window._yuanheWheelShown=true;
+      const timer=setTimeout(()=>setShowWheel(true),1500);
       return()=>clearTimeout(timer);
     }
   },[]);
