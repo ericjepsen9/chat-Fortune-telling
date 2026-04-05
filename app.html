@@ -1985,14 +1985,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   return(<div ref={scrollRef} onScroll={e=>{setScrolledPastModes(e.target.scrollTop>160)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER — matches Discover style === */}
-    <div style={{padding:'10px 16px 6px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
-      {/* Category tabs as title — like Discover */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:scrolledPastModes?8:2}}>
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
+    <div style={{padding:'8px 16px 4px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
+      {/* Category tabs as title */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:scrolledPastModes?6:0}}>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
           {[{k:'single',l:'个人模式'},{k:'pair',l:'配对分析'}].map(c=>{
             const active=isPair?(c.k==='pair'):(c.k==='single');
             return <button key={c.k} onClick={()=>trySetMode(MODES.find(m=>m.cat===c.k).id)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
-              <span style={{fontSize:active?24:18,fontWeight:active?800:500,color:active?T.text:T.textThi,transition:'all .2s'}}>{c.l}</span>
+              <span style={{fontSize:active?20:15,fontWeight:active?800:500,color:active?T.text:T.textThi,transition:'all .2s'}}>{c.l}</span>
               {active&&<div style={{position:'absolute',bottom:-4,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:T.accent2}}/>}
             </button>;
           })}
