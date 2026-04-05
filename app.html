@@ -1097,10 +1097,48 @@ function DailyStatusModal({profile,onClose}){
           </div>)}
         </div>
       ))}
+      {/* 本周小结 */}
+      {(()=>{
+        const history=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');
+        const allConvs=ChatStore.getAll();
+        const weekStart=new Date(now);weekStart.setDate(now.getDate()-now.getDay());weekStart.setHours(0,0,0,0);
+        const weekHistory=history.filter(h=>{try{const d=new Date(h.time);return d>=weekStart}catch(e){return false}});
+        const weekModes={};weekHistory.forEach(h=>{weekModes[h.mode]=(weekModes[h.mode]||0)+1});
+        const topMode=Object.entries(weekModes).sort((a,b)=>b[1]-a[1])[0];
+        const weekMoods=[];for(let i=0;i<7;i++){const d=new Date(weekStart.getTime()+i*86400000);const m=localStorage.getItem('yuanhe_mood_'+d.toDateString());if(m!==null)weekMoods.push(parseInt(m))}
+        const MOOD_E=['😄','😊','😐','😔','😢'];
+        const MODE_F={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗占卜',meihua:'梅花易数',vedic:'印度占星',hehun:'合婚分析',synastry:'星座配对',hepan:'合盘分析'};
+        const weekMsgs=allConvs.reduce((s,c)=>{const msgs=(c.messages||[]).filter(m=>m.role==='user'&&m.ts&&m.ts>=weekStart.getTime());return s+msgs.length},0);
+        const bestMatch=allConvs.length>0?[...allConvs].sort((a,b)=>(b.user.score||0)-(a.user.score||0))[0]:null;
+        if(weekHistory.length===0&&weekMoods.length===0&&allConvs.length===0)return null;
+        return<div style={{background:`${T.accent2}06`,borderRadius:14,padding:14,border:`1px solid ${T.accent2}20`,marginBottom:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <div style={{fontSize:14,fontWeight:700,color:T.text}}>📊 本周小结</div>
+            <button onClick={()=>setShowShare({type:'weekly'})} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.accent2}40`,background:'none',fontSize:11,color:T.accent2,cursor:'pointer',fontWeight:500}}>📤 分享</button>
+          </div>
+          {weekHistory.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+            <span style={{fontSize:14}}>🔮</span>
+            <span style={{fontSize:12,color:T.text}}>占卜 <b>{weekHistory.length}</b> 次{topMode?` · ${MODE_F[topMode[0]]||topMode[0]}为主`:''}</span>
+          </div>}
+          {weekMoods.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+            <span style={{fontSize:14}}>💭</span>
+            <div style={{fontSize:12,color:T.text,display:'flex',alignItems:'center',gap:2}}>心情 {weekMoods.map((m,i)=><span key={i}>{MOOD_E[m]}</span>)}</div>
+          </div>}
+          {allConvs.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+            <span style={{fontSize:14}}>💬</span>
+            <span style={{fontSize:12,color:T.text}}>匹配 <b>{allConvs.length}</b> 人{weekMsgs>0?` · ${weekMsgs} 条消息`:''}</span>
+          </div>}
+          {bestMatch&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0'}}>
+            <span style={{fontSize:14}}>💕</span>
+            <span style={{fontSize:12,color:T.text}}>最佳匹配 <b>{bestMatch.user.name}</b> {bestMatch.user.score}%</span>
+          </div>}
+        </div>;
+      })()}
+
       {/* Share */}
       <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 分享今日运势</button>
     </div>
-    {showShare&&<ShareModal type="fortune" profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:t.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:t.color,keywords:t.keywords}} onClose={()=>setShowShare(false)}/>}
+    {showShare&&<ShareModal type={showShare.type==='weekly'?'fortune':'fortune'} profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:t.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:t.color,keywords:t.keywords}} onClose={()=>setShowShare(false)}/>}
   </div>);
 }
 
@@ -3272,6 +3310,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
             </div>
             <div style={{fontSize:12,color:T.textThi,fontWeight:400,marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{conv.lastMessage||'匹配成功！打个招呼吧 👋'}</div>
           </div>
+          {(conv.unread||0)>0&&<div style={{minWidth:20,height:20,borderRadius:10,background:T.primary,color:'#fff',fontSize:10,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 5px',flexShrink:0}}>{conv.unread>99?'99+':conv.unread}</div>}
         </div>);
       })}</div>
     }
@@ -3564,11 +3603,34 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>;
     })()}
 
+    {/* 3. 我的动态 (after tasks) */}
+    {(()=>{
+      const posts=JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]');
+      if(posts.length===0)return <div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:12,textAlign:'center'}}>
+        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:6}}>我的动态</div>
+        <div style={{fontSize:12,color:T.textThi,marginBottom:10}}>还没有发布过动态</div>
+        <button onClick={()=>{window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}} style={{padding:'8px 20px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条 ›</button>
+      </div>;
+      return <div style={{marginBottom:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <div style={{fontSize:14,fontWeight:700,color:T.text}}>我的动态</div>
+          <button onClick={()=>setShowMyPosts(true)} style={{fontSize:11,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>全部 {posts.length} 条 ›</button>
+        </div>
+        <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,overflow:'hidden'}}>
+          {posts.slice(0,3).map((p,i,arr)=><div key={p.id||i} style={{padding:'12px 16px',borderBottom:i<Math.min(arr.length,3)-1?`1px solid ${T.border}`:'none'}}>
+            <div style={{fontSize:13,color:T.text,lineHeight:1.6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.content}</div>
+            <div style={{fontSize:10,color:T.textThi,marginTop:4}}>{p.time||'刚刚'}{p.likes>0?` · ❤️ ${p.likes}`:''}</div>
+          </div>)}
+        </div>
+      </div>;
+    })()}
+
     {/* Settings group + blacklist */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
       {[{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',ic:'#F59E0B',a:onEdit},
         {icon:'🔐',label:'隐私设置',desc:privacyLabel,ic:'#3B82F6',a:()=>setShowPrivacy(true)},
         {icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色':'浅色',ic:'#8B5CF6',a:toggleTheme},
+        {icon:'💕',label:'匹配历史',desc:ChatStore.getAll().length+'次匹配',ic:'#EC4899',a:()=>goTo(S.MSGS)},
         {icon:'🚫',label:'黑名单',desc:(JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')).length+'人',ic:'#EF4444',a:()=>setShowBlacklist(true)},
         {icon:'📊',label:'我的数据',desc:'查看·导出·删除',ic:'#0D9488',a:()=>setShowDataMgmt(true)}].map((it,i,arr)=>
         <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:i<arr.length-1?`1px solid ${T.border}`:'none'}}>
@@ -3594,133 +3656,10 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>
     </div>
 
-    {/* 3. 我的动态 */}
-    {(()=>{
-      const posts=JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]');
-      if(posts.length===0)return <div style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:12,textAlign:'center'}}>
-        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:6}}>我的动态</div>
-        <div style={{fontSize:12,color:T.textThi,marginBottom:10}}>还没有发布过动态</div>
-        <button onClick={()=>{window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}} style={{padding:'8px 20px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条 ›</button>
-      </div>;
-      return <div style={{marginBottom:12}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-          <div style={{fontSize:14,fontWeight:700,color:T.text}}>我的动态</div>
-          <button onClick={()=>setShowMyPosts(true)} style={{fontSize:11,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>全部 {posts.length} 条 ›</button>
-        </div>
-        <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,overflow:'hidden'}}>
-          {posts.slice(0,3).map((p,i,arr)=><div key={p.id||i} style={{padding:'12px 16px',borderBottom:i<Math.min(arr.length,3)-1?`1px solid ${T.border}`:'none'}}>
-            <div style={{fontSize:13,color:T.text,lineHeight:1.6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.content}</div>
-            <div style={{fontSize:10,color:T.textThi,marginTop:4}}>{p.time||'刚刚'}{p.likes>0?` · ❤️ ${p.likes}`:''}</div>
-          </div>)}
-        </div>
-      </div>;
-    })()}
 
-    {/* 4. 周报/月报 */}
-    {(()=>{
-      const allConvs=ChatStore.getAll();
-      const now=new Date();
-      const weekStart=new Date(now);weekStart.setDate(now.getDate()-now.getDay());weekStart.setHours(0,0,0,0);
-      const weekHistory=history.filter(h=>{try{const d=new Date(h.time);return d>=weekStart}catch(e){return false}});
-      const weekModes={};weekHistory.forEach(h=>{weekModes[h.mode]=(weekModes[h.mode]||0)+1});
-      const topMode=Object.entries(weekModes).sort((a,b)=>b[1]-a[1])[0];
-      const weekMoods=[];for(let i=0;i<7;i++){const d=new Date(weekStart.getTime()+i*86400000);const m=localStorage.getItem('yuanhe_mood_'+d.toDateString());if(m!==null)weekMoods.push(parseInt(m))}
-      const MOOD_E=['😄','😊','😐','😔','😢'];
-      const weekMsgs=allConvs.reduce((s,c)=>{const msgs=(c.messages||[]).filter(m=>m.role==='user'&&m.ts&&m.ts>=weekStart.getTime());return s+msgs.length},0);
-      const bestMatch=allConvs.length>0?[...allConvs].sort((a,b)=>(b.user.score||0)-(a.user.score||0))[0]:null;
-      const dayLucks=[];for(let i=0;i<7;i++){const dn=new Date(weekStart.getTime()+i*86400000).getDate();const luck=['大吉','吉','中吉','小吉','平','小凶'][dn%6];dayLucks.push({day:['日','一','二','三','四','五','六'][i],luck})}
-      const bestDay=dayLucks.find(d=>d.luck==='大吉')||dayLucks.find(d=>d.luck==='吉')||dayLucks.find(d=>d.luck==='中吉');
-      if(weekHistory.length===0&&weekMoods.length===0&&allConvs.length===0)return null;
-      return <div style={{marginBottom:12}}>
-        <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:8}}>本周小结</div>
-        <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
-          {weekHistory.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-            <div style={{width:28,height:28,borderRadius:8,background:`${T.accent2}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>🔮</div>
-            <span style={{fontSize:12,color:T.text}}>占卜 <b>{weekHistory.length}</b> 次{topMode?` · ${MODE_FULL[topMode[0]]||topMode[0]}为主`:''}</span>
-          </div>}
-          {weekMoods.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-            <div style={{width:28,height:28,borderRadius:8,background:`${T.accent2}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>💭</div>
-            <div style={{fontSize:12,color:T.text,display:'flex',alignItems:'center',gap:2}}>心情 {weekMoods.map((m,i)=><span key={i}>{MOOD_E[m]}</span>)}</div>
-          </div>}
-          {allConvs.length>0&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-            <div style={{width:28,height:28,borderRadius:8,background:`${T.accent2}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>💬</div>
-            <span style={{fontSize:12,color:T.text}}>匹配 <b>{allConvs.length}</b> 人{weekMsgs>0?` · 本周 ${weekMsgs} 条消息`:''}</span>
-          </div>}
-          {bestMatch&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-            <div style={{width:28,height:28,borderRadius:8,background:`${T.primary}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>💕</div>
-            <span style={{fontSize:12,color:T.text}}>最佳匹配 <b>{bestMatch.user.name}</b> {bestMatch.user.score}%</span>
-          </div>}
-          {bestDay&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-            <div style={{width:28,height:28,borderRadius:8,background:`${T.gold}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>📅</div>
-            <span style={{fontSize:12,color:T.text}}>最佳运势日 周{bestDay.day}（{bestDay.luck}）</span>
-          </div>}
-        </div>
-      </div>;
-    })()}
 
-    {/* Recent history */}
-    {history.length>0&&<>
-      <div style={{fontSize:14,fontWeight:700,color:T.text,marginTop:12,marginBottom:8}}>最近记录</div>
-      <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,overflow:'hidden'}}>
-        {history.slice(0,5).map((h,i,arr)=>
-          <div key={i} style={{padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:i<Math.min(arr.length,5)-1?`1px solid ${T.border}`:'none'}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:500,color:T.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{MODE_FULL[h.mode]||h.mode}</div>
-              <div style={{fontSize:11,color:T.textThi,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h.question}</div>
-            </div>
-            <div style={{fontSize:10,color:T.textThi,flexShrink:0,marginLeft:10}}>{h.time}</div>
-          </div>
-        )}
-      </div>
-    </>}
+    {/* Match History - as list item in settings */}
 
-    {/* Divination Stats */}
-    {history.length>0&&(()=>{
-      const modeCounts={};
-      history.forEach(h=>{modeCounts[h.mode]=(modeCounts[h.mode]||0)+1});
-      const sorted=Object.entries(modeCounts).sort((a,b)=>b[1]-a[1]);
-      const maxCount=sorted[0]?sorted[0][1]:1;
-      const modeColors={bazi:'#8B5CF6',astrology:'#3B82F6',tarot:'#0D9488',meihua:'#D97706',hehun:'#EC4899',vedic:'#F59E0B',synastry:'#6366F1'};
-      return<div style={{marginTop:16}}>
-        <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:8}}>占卜偏好</div>
-        <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
-          {sorted.map(([mode,count])=>(
-            <div key={mode} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-              <div style={{width:60,fontSize:11,color:T.textSec,flexShrink:0}}>{MODE_FULL[mode]||mode}</div>
-              <div style={{flex:1,height:8,background:T.border,borderRadius:4,overflow:'hidden'}}>
-                <div style={{height:'100%',background:modeColors[mode]||T.primary,borderRadius:4,width:Math.round(count/maxCount*100)+'%',transition:'width .5s'}}/>
-              </div>
-              <div style={{fontSize:11,fontWeight:600,color:modeColors[mode]||T.primary,width:24,textAlign:'right'}}>{count}</div>
-            </div>
-          ))}
-        </div>
-      </div>;
-    })()}
-
-    {/* Match History */}
-    {(()=>{
-      const allConvs=ChatStore.getAll();
-      if(allConvs.length===0)return null;
-      return<div style={{marginTop:16}}>
-        <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:8}}>匹配历史</div>
-        <div style={{background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
-          {allConvs.slice(0,6).map((conv,i)=>(
-            <div key={conv.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:i<Math.min(allConvs.length,6)-1?`1px solid ${T.border}`:'none'}}>
-              <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{conv.user.gender==='female'?'👩':'👨'}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:600,color:T.text}}>{conv.user.name}</div>
-                <div style={{fontSize:10,color:T.textThi,marginTop:1}}>{conv.user.sign} · {(conv.messages||[]).length}条消息</div>
-              </div>
-              <div style={{textAlign:'right',flexShrink:0}}>
-                <div style={{fontSize:14,fontWeight:700,color:T.accent2}}>{conv.user.score||'?'}%</div>
-                <div style={{fontSize:9,color:T.textThi}}>{conv.createdAt?new Date(conv.createdAt).toLocaleDateString([],{month:'numeric',day:'numeric'}):''}</div>
-              </div>
-            </div>
-          ))}
-          {allConvs.length>6&&<div style={{fontSize:11,color:T.textThi,textAlign:'center',marginTop:8}}>共{allConvs.length}次匹配</div>}
-        </div>
-      </div>;
-    })()}
 
     {/* Dev/Admin stats - toggle */}
     {(()=>{
@@ -4167,7 +4106,7 @@ function ShareModal({type,profile,structured,partner,score,compatibility,dayInfo
 // ===== TAB BAR =====
 function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
-  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息"},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
+  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息",badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
   return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:60,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 4px 0',zIndex:100}}>
     {tabs.map(tab=>{const act=active===tab.id;
       if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}DD)`,border:'none',borderRadius:22,width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:`0 3px 12px ${T.accent2}40`,marginTop:-14}}><Icons.sparkles s={20} c="#fff"/></button>;
