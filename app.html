@@ -2102,6 +2102,28 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>
       }
 
+      {/* 有报告时的模式信息条(在CONFIG块外面) */}
+      {mode==='tarot'&&ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:12,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
+        <div style={{fontSize:24}}>🎴</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,fontWeight:700,color:'#0D9488'}}>当前牌阵 · {({single:'单张',threeCard:'三张',relationship:'四张'})[tarotSpread]||'三张'}</div>
+          <div style={{fontSize:10,color:'#0D9488',opacity:.7,marginTop:2}}>基于当前牌面继续追问，可深入解读</div>
+        </div>
+        <button onClick={()=>{setMS('tarot',{result:null,error:null,chatHistory:[],q:''});setTarotCards([]);setTarotPool(shuffleTarot());
+          try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s.tarot;localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
+        }} style={{padding:'6px 14px',borderRadius:10,border:'1.5px solid #0D9488',background:'rgba(255,255,255,0.7)',fontSize:11,color:'#0D9488',fontWeight:600,cursor:'pointer',flexShrink:0}}>🔄 重新抽牌</button>
+      </div>}
+      {mode==='meihua'&&ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:12,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
+        <div style={{fontSize:24}}>🎴</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,fontWeight:700,color:'#D97706'}}>当前卦象 · {ms.q||'梅花易数'}</div>
+          <div style={{fontSize:10,color:'#92400E',marginTop:2}}>基于当前卦象继续追问，可从不同角度解读</div>
+        </div>
+        <button onClick={()=>{setMS('meihua',{result:null,error:null,chatHistory:[],q:''});setMhNum1('');setMhNum2('');
+          try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s.meihua;localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
+        }} style={{padding:'6px 14px',borderRadius:10,border:'1.5px solid #D97706',background:'rgba(255,255,255,0.7)',fontSize:11,color:'#D97706',fontWeight:600,cursor:'pointer',flexShrink:0}}>🔄 重新起卦</button>
+      </div>}
+
       {/* CONFIG PANELS (hide when loading/result for current mode) */}
       {!ms.loading&&!ms.result&&<>
         {/* Tarot */}
@@ -2111,17 +2133,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             <div style={{fontSize:11,color:'#0D9488',opacity:.7,marginTop:2}}>{tarotCards.length>0?`已选${tarotCards.length}张`:'不选牌将随机抽取'}</div>
           </div>
           <button onClick={()=>setShowTarotModal(true)} style={{padding:'10px 16px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',flexShrink:0}}>{tarotCards.length>0?'重选':'选牌'}</button>
-        </div>}
-        {/* Tarot: 有报告时显示当前牌阵+重新抽牌 */}
-        {mode==='tarot'&&ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:12,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
-          <div style={{fontSize:24}}>🎴</div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#0D9488'}}>当前牌阵 · {({single:'单张',threeCard:'三张',relationship:'四张'})[tarotSpread]||'三张'}</div>
-            <div style={{fontSize:10,color:'#0D9488',opacity:.7,marginTop:2}}>基于当前牌面继续追问，可深入解读</div>
-          </div>
-          <button onClick={()=>{setMS('tarot',{result:null,error:null,chatHistory:[],q:''});setTarotCards([]);setTarotPool(shuffleTarot());
-            try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s.tarot;localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
-          }} style={{padding:'6px 14px',borderRadius:10,border:'1.5px solid #0D9488',background:'rgba(255,255,255,0.7)',fontSize:11,color:'#0D9488',fontWeight:600,cursor:'pointer',flexShrink:0}}>🔄 重新抽牌</button>
         </div>}
 
         {/* Meihua — question first, then hexagram */}
@@ -2152,17 +2163,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{alignSelf:'center',background:'none',border:'none',fontSize:16,color:'#D97706',cursor:'pointer',opacity:.4}}>✕</button>}
           </div>
           <div style={{fontSize:10,color:'#92400E',opacity:.6,marginTop:8}}>不输入卦数将自动起卦</div>
-        </div>}
-        {/* Meihua: 有报告时显示当前卦象+重新起卦按钮 */}
-        {mode==='meihua'&&ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:12,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
-          <div style={{fontSize:24}}>🎴</div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#D97706'}}>当前卦象 · {ms.q||'梅花易数'}</div>
-            <div style={{fontSize:10,color:'#92400E',marginTop:2}}>基于当前卦象继续追问，可从不同角度解读</div>
-          </div>
-          <button onClick={()=>{setMS('meihua',{result:null,error:null,chatHistory:[],q:''});setMhNum1('');setMhNum2('');
-            try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s.meihua;localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
-          }} style={{padding:'6px 14px',borderRadius:10,border:'1.5px solid #D97706',background:'rgba(255,255,255,0.7)',fontSize:11,color:'#D97706',fontWeight:600,cursor:'pointer',flexShrink:0}}>🔄 重新起卦</button>
         </div>}
 
         {/* Pair */}
