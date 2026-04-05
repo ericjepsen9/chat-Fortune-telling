@@ -1774,7 +1774,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     const handler=(e)=>{if(e.detail?.key==='yuanhe_mode_results'){setModeStates({})}};
     window.addEventListener('yuanhe-data-deleted',handler);
     // 也定期检查(兜底)
-    const check=setInterval(()=>{if(!localStorage.getItem('yuanhe_mode_results')&&Object.keys(modeStates).length>0)setModeStates({})},2000);
+    const check=setInterval(()=>{if(!localStorage.getItem('yuanhe_mode_results')&&Object.keys(modeStates).length>0)setModeStates({})},5000);
     return()=>{window.removeEventListener('yuanhe-data-deleted',handler);clearInterval(check)};
   },[modeStates]);
 
@@ -1814,7 +1814,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   // Tarot
   const [tarotCards,setTarotCards]=useState([]);
   const [tarotSpread,setTarotSpread]=useState('threeCard');
-  const tarotPool=useState(()=>{const a=[];for(let i=0;i<78;i++)a.push(i);return a.sort(()=>Math.random()-0.5)})[0];
+  const shuffleTarot=()=>{const a=[];for(let i=0;i<78;i++)a.push(i);return a.sort(()=>Math.random()-0.5)};
+  const [tarotPool,setTarotPool]=useState(shuffleTarot);
   // Meihua
   const [mhNum1,setMhNum1]=useState('');
   const [mhNum2,setMhNum2]=useState('');
@@ -1911,10 +1912,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 // Scroll to report when it first appears
                 if(m===mode)setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth'}),300);
                 // Start periodic updates every 300ms
-                updateTimer=setInterval(flushUpdate,300);
+                updateTimer=setInterval(flushUpdate,500);
               }
               else if(ev.type==='chunk'){fullText+=ev.text}
-              else if(ev.type==='error'){setMS(m,{error:ev.error,loading:false});if(updateTimer)clearInterval(updateTimer);return}
+              else if(ev.type==='error'){setMS(m,{error:ev.error,loading:false});if(updateTimer)clearInterval(updateTimer);clearTimeout(timeout);return}
             }catch(e){}
           }
         }
@@ -1935,7 +1936,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     stopTimer(m);
   };
 
-  const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
+  const md=t=>{try{return{__html:marked.parse(t)}}catch(e){console.warn('markdown parse error:',e);return{__html:t.replace(/\n/g,'<br>')}}};
   const SECTION_ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
   const SECTION_COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
   const parseSections=(resp,isStreaming)=>{
@@ -1961,7 +1962,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     setFollowUpQ('');
     try{
       const reportSummary=ms.result?.response?.substring(0,500)||'';
-      const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:latestChat.slice(-6)};
+      const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:ch.slice(-6),hourUnknown:profile.hour===-1};
       if(ms.result?.engineData){
         const label={bazi:'八字数据',astrology:'星盘数据',tarot:'牌面数据',meihua:'卦象数据',vedic:'星宿数据',hehun:'合婚数据',synastry:'配对数据',hepan:'合盘数据'}[mode]||'分析数据';
         body.reportSummary=`[${label}]\n${ms.result.engineData.substring(0,800)}\n\n[分析摘要]\n${reportSummary}`;
@@ -2118,7 +2119,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             <div style={{fontSize:13,fontWeight:700,color:'#0D9488'}}>当前牌阵 · {({single:'单张',threeCard:'三张',relationship:'四张'})[tarotSpread]||'三张'}</div>
             <div style={{fontSize:10,color:'#0D9488',opacity:.7,marginTop:2}}>基于当前牌面继续追问，可深入解读</div>
           </div>
-          <button onClick={()=>{setMS('tarot',{result:null,error:null,chatHistory:[],q:''});setTarotCards([]);
+          <button onClick={()=>{setMS('tarot',{result:null,error:null,chatHistory:[],q:''});setTarotCards([]);setTarotPool(shuffleTarot());
             try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s.tarot;localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
           }} style={{padding:'6px 14px',borderRadius:10,border:'1.5px solid #0D9488',background:'rgba(255,255,255,0.7)',fontSize:11,color:'#0D9488',fontWeight:600,cursor:'pointer',flexShrink:0}}>🔄 重新抽牌</button>
         </div>}
@@ -2144,7 +2145,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {[['上卦',mhNum1,setMhNum1],['下卦',mhNum2,setMhNum2]].map(([l,v,s])=>(
                 <div key={l} style={{flex:1}}>
                   <div style={{fontSize:10,color:'#D97706',marginBottom:2,fontWeight:600}}>{l}</div>
-                  <input type="number" value={v} onChange={e=>s(e.target.value)} placeholder="自动" style={{width:'100%',padding:'7px 4px',border:'1.5px solid #FCD34D',borderRadius:8,fontSize:14,textAlign:'center',background:T.card,outline:'none',fontWeight:700,color:'#D97706'}}/>
+                  <input type="number" min="1" max="999" value={v} onChange={e=>{const val=e.target.value;if(val===''||(/^\d+$/.test(val)&&parseInt(val)>=0))s(val)}} placeholder="自动" style={{width:'100%',padding:'7px 4px',border:'1.5px solid #FCD34D',borderRadius:8,fontSize:14,textAlign:'center',background:T.card,outline:'none',fontWeight:700,color:'#D97706'}}/>
                 </div>
               ))}
             </div>
@@ -2241,10 +2242,10 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
             {/* Expanded report (full cards) */}
             {expanded&&<>
-              {/* Collapse button when has chat */}
-              {hasChat&&<div onClick={()=>setReportExpanded(false)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'6px',marginBottom:8,cursor:'pointer',color:mc,fontSize:11,fontWeight:600}}>
+              {/* Collapse button */}
+              <div onClick={()=>setReportExpanded(false)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'6px',marginBottom:8,cursor:'pointer',color:mc,fontSize:11,fontWeight:600}}>
                 ▴ 收起报告
-              </div>}
+              </div>
               {/* Report Header with Radar */}
               <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
@@ -2330,8 +2331,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               </div>}
               {/* Feedback */}
               {!ms.result._streaming&&(()=>{
-                const fbKey='yuanhe_fb_'+mode+'_'+Date.now().toString(36).slice(0,6);
-                const existingFb=localStorage.getItem('yuanhe_fb_'+mode);
+                const fbKey='yuanhe_fb_'+mode;
+                const existingFb=localStorage.getItem(fbKey);
                 if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'8px 0',marginBottom:16}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
                 return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'10px 0',marginBottom:16,borderTop:`1px solid ${T.border}`,marginTop:8}}>
                   <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
@@ -2403,7 +2404,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           background:(mode==='meihua'&&!ms.q.trim())?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
           boxShadow:(mode==='meihua'&&!ms.q.trim())?'none':`0 4px 16px ${mc}40`,transition:'all .3s',
         }}>
-          {mode==='meihua'&&!ms.q.trim()?'❀ 请先输入要占的问题':`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI预测`}
+          {mode==='meihua'&&!ms.q.trim()?'❀ 请在上方输入问题后点此预测':`🔮 ${modeInfo.icon} ${MODE_FULL[mode]} · AI预测`}
         </button>
         <div style={{textAlign:'center',marginTop:3}}>
           <button onClick={()=>divine(mode,true)} style={{background:'none',border:'none',fontSize:11,color:T.textThi,cursor:'pointer'}}>⚡ 仅引擎（秒出）</button>
@@ -2422,7 +2423,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             if(resp.includes('大运')&&!asked.some(a=>a.includes('大运')))dynamic.push('当前大运分析');
             if(resp.includes('创业')&&!asked.some(a=>a.includes('创业')))dynamic.push('适合创业吗');
             if(resp.includes('贵人')&&!asked.some(a=>a.includes('贵人')))dynamic.push('贵人方位');
-            const chips=[...dynamic,...base].slice(0,5);
+            const chips=[...dynamic.slice(0,2),...base].slice(0,5);
             return chips.map(qq=>(
               <button key={qq} onClick={()=>followUp(qq)} disabled={chatLoading||chatCooldown} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${mc}25`,background:`${mc}06`,color:mc,fontSize:10,fontWeight:500,cursor:chatLoading||chatCooldown?'default':'pointer',opacity:chatCooldown?0.5:1,flexShrink:0,whiteSpace:'nowrap'}}>{qq}</button>
             ));
@@ -2448,7 +2449,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     {/* === LOADING TOAST (shows when bg mode is loading) === */}
-    {loadingMode&&loadingMode!==mode&&<div style={{position:'fixed',top:100,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.8)',color:'#fff',borderRadius:16,padding:'10px 20px',zIndex:200,display:'flex',alignItems:'center',gap:8,fontSize:13,boxShadow:'0 4px 20px rgba(0,0,0,0.3)',animation:'fadeIn .3s ease'}}>
+    {loadingMode&&loadingMode!==mode&&!getMS(loadingMode).error&&<div style={{position:'fixed',top:100,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.8)',color:'#fff',borderRadius:16,padding:'10px 20px',zIndex:200,display:'flex',alignItems:'center',gap:8,fontSize:13,boxShadow:'0 4px 20px rgba(0,0,0,0.3)',animation:'fadeIn .3s ease'}}>
       <div style={{animation:'pulse 1.5s infinite'}}>🔮</div>
       <span>{loadingModeInfo?.label||loadingMode} 解读中… {getMS(loadingMode).elapsed}s</span>
       <button onClick={()=>setMode(loadingMode)} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:8,padding:'4px 10px',color:'#fff',fontSize:11,cursor:'pointer',marginLeft:4}}>查看</button>
@@ -3911,7 +3912,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         else if(line.trim()&&!line.startsWith('#')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'性格概述',icon:'🧠',lines:[]});cur?.lines.push(line)}
       });
       sections=sections.filter(s=>s.lines.some(l=>l.trim()));
-      const md=t=>{try{return{__html:marked.parse(t)}}catch(e){return{__html:t.replace(/\n/g,'<br>')}}};
+      const md=t=>{try{return{__html:marked.parse(t)}}catch(e){console.warn('markdown parse error:',e);return{__html:t.replace(/\n/g,'<br>')}}};
       return <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
         <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,position:'sticky',top:0,zIndex:1}}>
           <button onClick={()=>setShowPersonality(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
