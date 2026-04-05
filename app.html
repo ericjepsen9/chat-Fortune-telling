@@ -1950,30 +1950,38 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
   const followUp=async(q)=>{
     if(!q.trim()||chatLoading)return;
-    const ch=getMS(mode).chatHistory||[];
-    if(ch.length>=20){window.yuanheToast?.('本次会话已达上限，请点击重新提问');return}
-    setReportExpanded(false); // auto-collapse report
-    // Add user message immediately
-    const newChat=[...ch,{role:'user',text:q,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}];
+    // 使用函数式更新确保读到最新chatHistory
+    let latestChat=[];
+    setModeStates(prev=>{
+      const cur=prev[mode]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:[]};
+      latestChat=[...(cur.chatHistory||[])];
+      return prev; // 不修改，只读取
+    });
+    if(latestChat.length>=20){window.yuanheToast?.('本次会话已达上限，请点击重新提问');return}
+    setReportExpanded(false);
+    const userMsg={role:'user',text:q,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+    const newChat=[...latestChat,userMsg];
     setMS(mode,{chatHistory:newChat});
     setFollowUpQ('');
     setChatLoading(true);
     try{
       const reportSummary=ms.result?.response?.substring(0,500)||'';
-      const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:ch.slice(-6)};
-      // 所有模式: 追问时带上引擎数据(提升AI回答质量)
+      const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:latestChat.slice(-6)};
       if(ms.result?.engineData){
         const label={bazi:'八字数据',astrology:'星盘数据',tarot:'牌面数据',meihua:'卦象数据',vedic:'星宿数据',hehun:'合婚数据',synastry:'配对数据',hepan:'合盘数据'}[mode]||'分析数据';
         body.reportSummary=`[${label}]\n${ms.result.engineData.substring(0,800)}\n\n[分析摘要]\n${reportSummary}`;
       }
-      // 配对模式: 追问带上对方生辰
       if(['hehun','synastry','hepan'].includes(mode)){body.profileB=p2}
       const r=await apiPost('/api/chat-followup',body);
       const aiTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      if(r.blocked){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.reason,time:aiTime}]});}
-      else if(r.error){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ '+r.error,time:aiTime}]});}
-      else{setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.response,time:aiTime}]});}
-    }catch(e){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:'⚠️ 网络错误，请重试',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]});}
+      // AI回复时再次从最新状态追加，避免覆盖
+      setModeStates(prev=>{
+        const cur=prev[mode]||{chatHistory:[]};
+        const currentChat=[...(cur.chatHistory||[])];
+        const aiMsg={role:'ai',text:r.blocked?r.reason:r.error?'⚠️ '+r.error:r.response,time:aiTime};
+        return{...prev,[mode]:{...cur,chatHistory:[...currentChat,aiMsg]}};
+      });
+    }catch(e){setModeStates(prev=>{const cur=prev[mode]||{chatHistory:[]};return{...prev,[mode]:{...cur,chatHistory:[...(cur.chatHistory||[]),{role:'ai',text:'⚠️ 网络错误，请重试',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]}}});}
     setChatLoading(false);
     setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),300);
   };
