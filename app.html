@@ -1901,6 +1901,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     try{
       const reportSummary=ms.result?.response?.substring(0,500)||'';
       const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:ch.slice(-6)};
+      // 梅花易数: 追问时带上卦象数据(一卦多断)
+      if(mode==='meihua'&&ms.result?.engineData){body.reportSummary=`[卦象数据]\n${ms.result.engineData.substring(0,800)}\n\n[分析摘要]\n${reportSummary}`}
       const r=await apiPost('/api/chat-followup',body);
       const aiTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       if(r.blocked){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.reason,time:aiTime}]});}
@@ -2052,7 +2054,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>}
 
         {/* Meihua — question first, then hexagram */}
-        {mode==='meihua'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:14,marginBottom:14}}>
+        {mode==='meihua'&&!ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:14,marginBottom:14}}>
           <div style={{fontSize:14,fontWeight:700,color:'#D97706',marginBottom:4}}>❀ 梅花易数 · 一事一占</div>
           <div style={{fontSize:11,color:'#92400E',lineHeight:1.5,marginBottom:10}}>心中想着一件事，输入问题后起卦</div>
           {/* Question input */}
@@ -2078,6 +2080,18 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             </div>
             {(mhNum1||mhNum2)&&<button onClick={()=>{setMhNum1('');setMhNum2('')}} style={{alignSelf:'center',background:'none',border:'none',fontSize:16,color:'#D97706',cursor:'pointer',opacity:.4}}>✕</button>}
           </div>
+          <div style={{fontSize:10,color:'#92400E',opacity:.6,marginTop:8}}>不输入卦数将自动起卦</div>
+        </div>}
+        {/* Meihua: 有报告时显示当前卦象+重新起卦按钮 */}
+        {mode==='meihua'&&ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FFFBEB,#FEF3C7)',border:'1px solid #D9770630',borderRadius:16,padding:12,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
+          <div style={{fontSize:24}}>🎴</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#D97706'}}>当前卦象 · {ms.q||'梅花易数'}</div>
+            <div style={{fontSize:10,color:'#92400E',marginTop:2}}>基于当前卦象继续追问，可从不同角度解读</div>
+          </div>
+          <button onClick={()=>{setMS('meihua',{result:null,error:null,chatHistory:[],q:''});setMhNum1('');setMhNum2('');
+            try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s.meihua;localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
+          }} style={{padding:'6px 14px',borderRadius:10,border:'1.5px solid #D97706',background:'rgba(255,255,255,0.7)',fontSize:11,color:'#D97706',fontWeight:600,cursor:'pointer',flexShrink:0}}>🔄 重新起卦</button>
         </div>}
 
         {/* Pair */}
