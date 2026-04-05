@@ -1903,6 +1903,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:ch.slice(-6)};
       // 梅花易数: 追问时带上卦象数据(一卦多断)
       if(mode==='meihua'&&ms.result?.engineData){body.reportSummary=`[卦象数据]\n${ms.result.engineData.substring(0,800)}\n\n[分析摘要]\n${reportSummary}`}
+      // 塔罗牌: 追问时带上牌面数据
+      if(mode==='tarot'&&ms.result?.engineData){body.reportSummary=`[牌面数据]\n${ms.result.engineData.substring(0,800)}\n\n[分析摘要]\n${reportSummary}`}
       const r=await apiPost('/api/chat-followup',body);
       const aiTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       if(r.blocked){setMS(mode,{chatHistory:[...newChat,{role:'ai',text:r.reason,time:aiTime}]});}
@@ -2045,12 +2047,23 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       {/* CONFIG PANELS (hide when loading/result for current mode) */}
       {!ms.loading&&!ms.result&&<>
         {/* Tarot */}
-        {mode==='tarot'&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:14,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        {mode==='tarot'&&!ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:14,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div>
             <div style={{fontSize:14,fontWeight:700,color:'#0D9488'}}>🎴 塔罗选牌</div>
-            <div style={{fontSize:11,color:'#0D9488',opacity:.7,marginTop:2}}>{tarotCards.length>0?`已选${tarotCards.length}张`:'点击选牌或直接提交随机'}</div>
+            <div style={{fontSize:11,color:'#0D9488',opacity:.7,marginTop:2}}>{tarotCards.length>0?`已选${tarotCards.length}张`:'不选牌将随机抽取'}</div>
           </div>
           <button onClick={()=>setShowTarotModal(true)} style={{padding:'10px 16px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',flexShrink:0}}>{tarotCards.length>0?'重选':'选牌'}</button>
+        </div>}
+        {/* Tarot: 有报告时显示当前牌阵+重新抽牌 */}
+        {mode==='tarot'&&ms.result&&<div className="anim-in" style={{background:'linear-gradient(135deg,#F0FDF9,#CCFBF1)',border:'1px solid #0D948830',borderRadius:16,padding:12,marginBottom:14,display:'flex',alignItems:'center',gap:12}}>
+          <div style={{fontSize:24}}>🎴</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#0D9488'}}>当前牌阵 · {({single:'单张',threeCard:'三张',relationship:'四张'})[tarotSpread]||'三张'}</div>
+            <div style={{fontSize:10,color:'#0D9488',opacity:.7,marginTop:2}}>基于当前牌面继续追问，可深入解读</div>
+          </div>
+          <button onClick={()=>{setMS('tarot',{result:null,error:null,chatHistory:[],q:''});setTarotCards([]);
+            try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s.tarot;localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
+          }} style={{padding:'6px 14px',borderRadius:10,border:'1.5px solid #0D9488',background:'rgba(255,255,255,0.7)',fontSize:11,color:'#0D9488',fontWeight:600,cursor:'pointer',flexShrink:0}}>🔄 重新抽牌</button>
         </div>}
 
         {/* Meihua — question first, then hexagram */}
