@@ -1985,9 +1985,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   return(<div ref={scrollRef} onScroll={e=>{setScrolledPastModes(e.target.scrollTop>160)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER — matches Discover style === */}
-    <div style={{padding:'14px 16px 8px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
+    <div style={{padding:'10px 16px 6px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
       {/* Category tabs as title — like Discover */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:scrolledPastModes?8:2}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           {[{k:'single',l:'个人模式'},{k:'pair',l:'配对分析'}].map(c=>{
             const active=isPair?(c.k==='pair'):(c.k==='single');
@@ -2028,7 +2028,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       })()}
     </div>
 
-    <div style={{padding:'12px 16px 180px'}}>
+    <div style={{padding:'4px 16px 180px'}}>
       {/* MODE GRID — with icons */}
       <div style={{display:'flex',gap:6,marginBottom:14}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
