@@ -1710,6 +1710,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const getMS=(m)=>modeStates[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:[]};
   const setMS=(m,patch)=>setModeStates(prev=>{const cur=prev[m]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:[]};return{...prev,[m]:{...cur,...patch}}});
 
+  // 监听数据删除事件，重置报告状态
+  useEffect(()=>{
+    const handler=(e)=>{if(e.detail?.key==='yuanhe_mode_results')setModeStates({})};
+    window.addEventListener('yuanhe-data-deleted',handler);
+    return()=>window.removeEventListener('yuanhe-data-deleted',handler);
+  },[]);
+
   // Active loading mode (for toast)
   const loadingMode=Object.keys(modeStates).find(k=>modeStates[k]?.loading);
   const loadingModeInfo=loadingMode?MODES.find(m=>m.id===loadingMode):null;
@@ -3992,6 +3999,8 @@ function DataManagementModal({profile,onClose,onLogout}){
     window.yuanheConfirm(`确定删除${label}？`,()=>{
       localStorage.removeItem(key);
       if(key==='yuanhe_profile'){onLogout();onClose();return}
+      // 通知其他组件数据已变化
+      window.dispatchEvent(new CustomEvent('yuanhe-data-deleted',{detail:{key}}));
       window.yuanheToast?.(`${label}已删除`);
       onClose();
     },{detail:'此操作不可恢复'});
