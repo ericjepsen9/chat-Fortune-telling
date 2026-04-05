@@ -2347,7 +2347,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {/* Four Pillars */}
               {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
               {/* All report cards — progressive animation for new results */}
-              {sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={content.length>300}/>})}
+              {sections.map((sec,i)=>{const content=sec.lines.join('\n').trim();if(!content)return null;return <ReportCard key={i} title={sec.title} icon={sec.icon} color={SECTION_COLORS[i%SECTION_COLORS.length]} content={content} index={i} md={md} isLong={sections.length>3&&content.length>300}/>})}
               {/* Streaming indicator */}
               {ms.result._streaming&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'12px 16px',color:mc}}>
                 <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
