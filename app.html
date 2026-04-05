@@ -345,6 +345,13 @@ const WsManager = {
 };
 window.WsManager = WsManager; // 全局可访问
 
+// 星座计算
+function getZodiac(month,day){
+  const z=[['摩羯','♑',1,20],['水瓶','♒',2,19],['双鱼','♓',3,20],['白羊','♈',4,20],['金牛','♉',5,21],['双子','♊',6,21],['巨蟹','♋',7,22],['狮子','♌',8,23],['处女','♍',9,23],['天秤','♎',10,23],['天蝎','♏',11,22],['射手','♐',12,22],['摩羯','♑',12,31]];
+  for(let i=0;i<z.length;i++){if(month<z[i][2]||(month===z[i][2]&&day<=z[i][3]))return{name:z[i][0]+'座',symbol:z[i][1]}}
+  return{name:'摩羯座',symbol:'♑'};
+}
+
 function authHeaders(){const t=localStorage.getItem('yuanhe_token');return t?{'Authorization':'Bearer '+t}:{}}
 async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(b)});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
 async function apiGet(p){const r=await fetch(p,{headers:authHeaders()});const t=await r.text();try{return JSON.parse(t)}catch(e){if(t.includes('<!DOCTYPE'))throw new Error('服务器未启动或需要重启。请运行: node server.js');throw new Error('服务器返回异常: '+t.substring(0,80))}}
@@ -1493,7 +1500,16 @@ const MODES=[
 ];
 const MODE_FULL={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星',hehun:'八字合婚',synastry:'星座配对',hepan:'综合合盘'};
 const MODE_INTRO={bazi:'以出生年月日时推算天干地支，解读一生命运走向',astrology:'基于太阳、月亮、上升星座的西方占星分析',tarot:'通过塔罗牌阵获取直觉指引与方向建议',meihua:'以数字或时间快速起卦，判断事件吉凶',vedic:'印度吠陀占星系统，恒星黄道深度分析',hehun:'两人八字全面配合度分析',synastry:'双人星盘交叉相位化学反应',hepan:'中西命理综合配对评分'};
-const QUICK_QS={bazi:['今年运势','事业方向','感情运','财运分析','健康注意'],astrology:['本月运势','感情运','适合什么工作'],tarot:['今天适合做什么','感情指引','事业抉择'],meihua:['这件事能成吗','近期运势'],vedic:['当前大运','事业方向'],hehun:['适合在一起吗','婚姻分析'],synastry:['化学反应','相处建议'],hepan:['综合匹配度','长远建议']};
+const QUICK_QS={
+  bazi:['桃花运详解','当前大运分析','今年运势','适合创业吗','贵人方位','事业方向'],
+  astrology:['本月星座运势','水逆影响','感情运势','适合什么工作','幸运色和数字'],
+  tarot:['今天适合做什么','感情指引','事业抉择','近期需要注意什么'],
+  meihua:['这件事能成吗','近期运气如何','什么时候合适','成功概率多大'],
+  vedic:['当前大运周期','事业方向','婚姻时机','财运走势','前世业力'],
+  hehun:['适合在一起吗','婚后相处','财务观念','子女缘分','需要磨合的地方'],
+  synastry:['化学反应如何','相处建议','容易吵架吗','谁更主动','长远发展'],
+  hepan:['综合匹配度','感情走向','适合结婚吗','互补还是冲突','长远建议'],
+};
 const LOAD_MSGS=['排盘计算中…','分析命局格局…','推演大运流年…','AI撰写解读…','即将完成…'];
 
 // Tarot Modal
@@ -1790,7 +1806,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     if(needsBirth&&(!profile.year||!profile.month||!profile.day)){
       setMS(m,{error:'请先完善出生年月日信息（在"我的"页面可修改）'});return;
     }
-    if(needsBirth&&profile.hour===-1&&!hourSkipped){
+    // 时辰: 八字/印度/合婚/合盘强制要求，星座/星座配对选填
+    const needsHourStrict=['bazi','vedic','hehun','hepan'].includes(m);
+    if(needsHourStrict&&profile.hour===-1&&!hourSkipped){
       setMS(m,{error:'请先补充出生时辰，或选择"不知道时辰"继续'});return;
     }
     const q = questionOverride !== undefined ? questionOverride : (engineOnly?'':getMS(m).q);
@@ -1995,7 +2013,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
       {/* HOUR COMPLETION PROMPT (when hour=-1 and not skipped) */}
       {profile.hour===-1&&!hourSkipped&&!ms.loading&&!ms.result&&(()=>{
-        const needsHour=['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode);
+        const needsHour=['bazi','vedic','hehun','hepan'].includes(mode);
         if(!needsHour)return null;
         return(<div className="anim-in" style={{background:'linear-gradient(135deg,#FFF8EB,#FEF3C7)',border:'1.5px solid #FCD34D',borderRadius:18,padding:16,marginBottom:14}}>
           <div style={{fontSize:15,fontWeight:700,color:'#D97706',marginBottom:4}}>⏰ 补充出生时辰</div>
@@ -2206,8 +2224,15 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:10,opacity:.6}}>命理报告</div>
+                    <div style={{fontSize:10,opacity:.6}}>{mode==='astrology'||mode==='synastry'?'星座分析':'命理报告'}</div>
                     <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div>
+                    {/* 星座: 显示星座符号+名称 */}
+                    {(mode==='astrology'||mode==='synastry')&&(()=>{const zd=getZodiac(profile.month,profile.day);return<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+                      <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{zd.symbol} {zd.name}</span>
+                      {profile.hour>=0&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>含上升星座</span>}
+                      {profile.hour===-1&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.15)',fontSize:10}}>太阳星座</span>}
+                    </div>})()}
+                    {/* 八字: 日主+身强弱 */}
                     {ms.result.structured?.dayMaster&&<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>日主 {ms.result.structured.dayMaster}{ms.result.structured.element}</span>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.strength}</span>
