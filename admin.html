@@ -211,7 +211,6 @@ function DashboardPage(){
       <div className="stat-card"><div className="label">引擎调用</div><div className="value">{stats.engine?.calls||0}</div><div className="sub">错误 {stats.engine?.errors||0}</div></div>
       <div className="stat-card"><div className="label">内存</div><div className="value" style={{fontSize:16}}>{stats.memory?.heap||'—'} / {stats.memory?.rss||'—'}</div></div>
     </div>
-    <div className="panel">
     {/* 趋势图 */}
     <div className="panel">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
@@ -260,7 +259,7 @@ function DashboardPage(){
       <table><thead><tr><th>端点</th><th>请求数</th><th>成功</th><th>失败</th><th>平均耗时</th></tr></thead>
       <tbody>{Object.entries(stats.api||{}).map(([ep,s])=>{
         const avg=s.count?Math.round(s.totalTime/s.count):0;
-        return<tr key={ep}><td>{ep}</td><td>{s.count}</td><td><span className="badge badge-ok">{s.success}</span></td><td>{s.error?<span className="badge badge-err">{s.error}</span>:'—'}</td><td>{avg}ms</td></tr>;
+        return (<tr key={ep}><td>{ep}</td><td>{s.count}</td><td><span className="badge badge-ok">{s.success}</span></td><td>{s.error?<span className="badge badge-err">{s.error}</span>:'—'}</td><td>{avg}ms</td></tr>);
       })}</tbody></table>
     </div>
     <div className="panel">
