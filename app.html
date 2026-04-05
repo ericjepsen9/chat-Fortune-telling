@@ -1989,7 +1989,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   return(<div ref={scrollRef} onScroll={e=>{setScrolledPastModes(e.target.scrollTop>160)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER — matches Discover style === */}
-    <div style={{padding:'14px 16px 0',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
+    <div style={{padding:'14px 16px 8px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
       {/* Category tabs as title — like Discover */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
