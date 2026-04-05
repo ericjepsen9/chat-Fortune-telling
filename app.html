@@ -1983,7 +1983,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
   const P={bg:T.bg,accent:T.accent2,accentLight:'#DDD6FE',accentDark:'#7C3AED'};
 
-  return(<div ref={scrollRef} onScroll={e=>{setScrolledPastModes(e.target.scrollTop>160)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
+  return(<div ref={scrollRef} onScroll={e=>{const t=e.target.scrollTop;if(!scrolledPastModes&&t>200)setScrolledPastModes(true);else if(scrolledPastModes&&t<120)setScrolledPastModes(false)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER — matches Discover style === */}
     <div style={{padding:'12px 16px 8px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:`1px solid ${T.border}`}}>
       {/* Category tabs as title */}
