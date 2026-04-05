@@ -169,7 +169,7 @@ function ChangePasswordModal({forced,onDone,onClose}){
 function TrendChart({data}){
   const canvasRef=useRef(null);const chartRef=useRef(null);
   useEffect(()=>{
-    if(!data||!canvasRef.current)return;
+    if(!data||!canvasRef.current||typeof Chart==='undefined')return;
     if(chartRef.current)chartRef.current.destroy();
     chartRef.current=new Chart(canvasRef.current,{
       type:'line',
