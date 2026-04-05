@@ -2357,7 +2357,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
                 <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
-                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,response:ms.result.response?.substring(0,200),time:new Date().toLocaleString()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
+                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
                 <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
               </div>}
               {/* Feedback */}
@@ -3692,6 +3692,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showBlacklist,setShowBlacklist]=useState(false);
   const [showMyPosts,setShowMyPosts]=useState(false);
   const [showMatchHistory,setShowMatchHistory]=useState(false);
+  const [showFavorites,setShowFavorites]=useState(false);
   const [generatingPersonality,setGeneratingPersonality]=useState(false);
   const [showPersonality,setShowPersonality]=useState(false);
   const history=(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}})();
@@ -3736,7 +3737,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>
       {/* Stats row */}
       <div style={{display:'flex',gap:0,marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
-        {[{n:resultCount,l:'报告',c:T.accent2,a:()=>goTo(S.AI)},{n:history.length,l:'记录',c:T.accent4,a:()=>goTo(S.AI)},{n:favCount,l:'收藏',c:T.gold,a:()=>goTo(S.AI)}].map(s=>
+        {[{n:resultCount,l:'报告',c:T.accent2,a:()=>goTo(S.AI)},{n:history.length,l:'记录',c:T.accent4,a:()=>goTo(S.AI)},{n:favCount,l:'收藏',c:T.gold,a:()=>setShowFavorites(true)}].map(s=>
           <div key={s.l} onClick={s.a} style={{textAlign:'center',flex:1,cursor:'pointer'}}>
             <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
             <div style={{fontSize:10,color:T.textThi,marginTop:2}}>{s.l}</div>
@@ -3993,6 +3994,40 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     }catch(e){return null}
   })()}
   {/* My posts page */}
+  {/* 收藏列表弹窗 */}
+  {showFavorites&&<div onClick={()=>setShowFavorites(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'80vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:18,fontWeight:700}}>⭐ 我的收藏</div>
+        <button onClick={()=>setShowFavorites(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+      </div>
+      {(()=>{
+        const MODE_F={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星',hehun:'合婚分析',synastry:'星座配对',hepan:'合盘分析'};
+        const MODE_IC={bazi:'☰',astrology:'★',tarot:'✦',meihua:'❀',vedic:'◎',hehun:'💑',synastry:'💫',hepan:'🔗'};
+        const favs=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_fav_')).map(k=>{
+          try{const v=JSON.parse(localStorage.getItem(k));return{key:k,mode:k.replace('yuanhe_fav_',''),...v}}catch(e){return null}
+        }).filter(Boolean).sort((a,b)=>(b.ts||0)-(a.ts||0));
+        if(favs.length===0)return<div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}>
+          <div style={{fontSize:28,marginBottom:8}}>⭐</div><div style={{fontSize:13}}>还没有收藏报告</div>
+          <div style={{fontSize:11,color:T.textThi,marginTop:6}}>在占卜报告中点击 ☆ 即可收藏</div>
+        </div>;
+        return favs.map(f=>(
+          <div key={f.key} style={{background:T.bg,borderRadius:14,padding:14,marginBottom:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+              <div style={{width:36,height:36,borderRadius:10,background:`${T.gold}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{MODE_IC[f.mode]||'🔮'}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:600,color:T.text}}>{MODE_F[f.mode]||f.mode}</div>
+                <div style={{fontSize:10,color:T.textThi}}>{f.time||''}{f.question?` · "${f.question.substring(0,20)}"`:''}</div>
+              </div>
+              <button onClick={()=>{localStorage.removeItem(f.key);setShowFavorites(false);setTimeout(()=>setShowFavorites(true),50);window.yuanheToast?.('已取消收藏')}} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:10,color:T.textThi,cursor:'pointer'}}>取消</button>
+            </div>
+            <div style={{fontSize:12,color:T.textSec,lineHeight:1.7,maxHeight:120,overflow:'hidden'}}>{(f.response||'').substring(0,200)}{(f.response||'').length>200?'…':''}</div>
+            <button onClick={()=>{setShowFavorites(false);goTo(S.AI,f.mode)}} style={{marginTop:8,padding:'6px 16px',borderRadius:8,border:'none',background:`${T.gold}15`,color:T.gold,fontSize:11,fontWeight:600,cursor:'pointer'}}>查看完整报告 →</button>
+          </div>
+        ));
+      })()}
+    </div>
+  </div>}
   {/* 匹配历史弹窗 */}
   {showMatchHistory&&<div onClick={()=>setShowMatchHistory(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
     <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'75vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
