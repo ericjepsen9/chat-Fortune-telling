@@ -1712,10 +1712,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   // 监听数据删除事件，重置报告状态
   useEffect(()=>{
-    const handler=(e)=>{if(e.detail?.key==='yuanhe_mode_results')setModeStates({})};
+    const handler=(e)=>{if(e.detail?.key==='yuanhe_mode_results'){setModeStates({})}};
     window.addEventListener('yuanhe-data-deleted',handler);
-    return()=>window.removeEventListener('yuanhe-data-deleted',handler);
-  },[]);
+    // 也定期检查(兜底)
+    const check=setInterval(()=>{if(!localStorage.getItem('yuanhe_mode_results')&&Object.keys(modeStates).length>0)setModeStates({})},2000);
+    return()=>{window.removeEventListener('yuanhe-data-deleted',handler);clearInterval(check)};
+  },[modeStates]);
 
   // Active loading mode (for toast)
   const loadingMode=Object.keys(modeStates).find(k=>modeStates[k]?.loading);
