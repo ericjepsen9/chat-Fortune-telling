@@ -1165,7 +1165,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     let realUsers=[];
     // 尝试从服务器获取真实用户
     if(localStorage.getItem('yuanhe_token')){
-      try{realUsers=await apiGet('/api/candidates?gender='+(pref||'')+'&limit=20')}catch(e){}
+      try{const r=await apiGet('/api/candidates?gender='+(pref||'')+'&limit=20');if(Array.isArray(r))realUsers=r}catch(e){}
     }
     const allCands=[...realUsers,...bots];
     // 批量计算匹配分数
@@ -2865,7 +2865,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
 
   // 好友请求
   const [pendingReqs,setPendingReqs]=useState([]);
-  useEffect(()=>{if(localStorage.getItem('yuanhe_token'))apiGet('/api/friends/pending').then(setPendingReqs).catch(()=>{})},[]);
+  useEffect(()=>{if(localStorage.getItem('yuanhe_token'))apiGet('/api/friends/pending').then(r=>{if(Array.isArray(r))setPendingReqs(r)}).catch(()=>{})},[]);
   useEffect(()=>{
     const off=WsManager.on('friend_request',(data)=>{if(data.request)setPendingReqs(prev=>[data.request,...prev])});
     return off;
@@ -4216,7 +4216,7 @@ function App(){
         try{
           // 黑名单: 服务器→本地
           const bl=await apiGet('/api/auth/blacklist');
-          if(bl&&bl.length>0)localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl));
+          if(Array.isArray(bl)&&bl.length>0)localStorage.setItem('yuanhe_blacklist',JSON.stringify(bl));
           else{const local=JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]');if(local.length>0)apiPost('/api/auth/blacklist',{blacklist:local}).catch(()=>{})}
           // 收藏: 服务器→本地
           const fav=await apiGet('/api/auth/favorites');
