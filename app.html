@@ -2027,7 +2027,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </div>;
       })()}
       {/* MODE GRID — inside sticky header */}
-      {!scrolledPastModes&&<div style={{display:'flex',gap:6,marginBottom:4,justifyContent:isPair?'center':'flex-start'}}>
+      {!scrolledPastModes&&<div style={{display:'flex',gap:isPair?12:6,marginBottom:4,justifyContent:isPair?'center':'flex-start'}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
           const hasResult=!!getMS(m.id).result;
           const isLoading=!!getMS(m.id).loading;
