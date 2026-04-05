@@ -859,8 +859,8 @@ function MatchPopup({user,onChat,onClose}){
       <div style={{fontSize:14,color:T.textSec,marginTop:10}}>你和 <b style={{color:T.text}}>{user.name}</b> 命理契合</div>
       <div style={{margin:'16px auto'}}><ScoreRing score={user.score} size={88} stroke={5}/></div>
       <div style={{fontSize:12,color:T.textThi,marginBottom:20}}>{user.score>=80?'天作之合，千万别错过！':user.score>=65?'有缘有份，值得深入了解':'命理相合，试试聊聊？'}</div>
-      <button onClick={onChat} style={{width:'100%',padding:'14px',borderRadius:16,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:16,fontWeight:700,cursor:'pointer',boxShadow:`0 4px 16px ${T.accent2}30`,marginBottom:10}}>💬 打个招呼</button>
-      <button onClick={onClose} style={{width:'100%',padding:'12px',borderRadius:16,border:'none',background:'transparent',color:T.textThi,fontSize:14,cursor:'pointer'}}>继续看看</button>
+      <button onClick={onChat} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer',boxShadow:`0 4px 16px ${T.accent2}30`,marginBottom:10}}>💬 打个招呼</button>
+      <button onClick={onClose} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'transparent',color:T.textThi,fontSize:14,cursor:'pointer'}}>继续看看</button>
     </div>
   </div>);
 }
@@ -1029,8 +1029,8 @@ function CardDetailModal({user,profile,onClose,goTo,addConv,autoGreet}){
         {/* Bottom action */}
         <div style={{position:'sticky',bottom:0,padding:'12px 16px 20px',background:T.bg}}>
           {addConv?<div style={{display:'flex',gap:10,marginBottom:8}}>
-            <button onClick={onClose} style={{flex:1,padding:'14px',borderRadius:28,border:`1.5px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:14,fontWeight:500,cursor:'pointer'}}>✕ 跳过</button>
-            <button onClick={()=>{const c=addConv(user);if(autoGreet)autoGreet(c);window.yuanheToast?.(`已和${user.name}匹配，可在消息页聊天 💬`);onClose()}} style={{flex:1,padding:'14px',borderRadius:28,border:'none',background:'linear-gradient(135deg,#EC4899,#DB2777)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 14px rgba(236,72,153,0.3)'}}>💕 喜欢</button>
+            <button onClick={onClose} style={{flex:1,padding:'14px',borderRadius:14,border:`1.5px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:14,fontWeight:500,cursor:'pointer'}}>✕ 跳过</button>
+            <button onClick={()=>{const c=addConv(user);if(autoGreet)autoGreet(c);window.yuanheToast?.(`已和${user.name}匹配，可在消息页聊天 💬`);onClose()}} style={{flex:1,padding:'14px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#EC4899,#DB2777)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 14px rgba(236,72,153,0.3)'}}>💕 喜欢</button>
           </div>:<button onClick={onClose} style={{width:'100%',padding:'14px',borderRadius:28,border:`1.5px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:14,fontWeight:500,cursor:'pointer',marginBottom:8}}>返回</button>}
           <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'10px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:12,cursor:'pointer'}}>📤 分享匹配卡</button>
         </div>
@@ -2743,7 +2743,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
         </div>
       </div>
     </div>
-    <div style={{padding:'0 16px 12px'}}>
+    <div style={{padding:'0 16px 20px'}}>
       {/* ===== 推荐 Tab ===== */}
       {discoverTab==='recommend'&&<>
       {/* Today's luck card */}
