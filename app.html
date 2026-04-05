@@ -3554,8 +3554,8 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>
       {/* Stats row */}
       <div style={{display:'flex',gap:0,marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
-        {[{n:resultCount,l:'报告',c:T.accent2},{n:history.length,l:'记录',c:T.accent4},{n:favCount,l:'收藏',c:T.gold}].map(s=>
-          <div key={s.l} style={{textAlign:'center',flex:1,cursor:'pointer'}}>
+        {[{n:resultCount,l:'报告',c:T.accent2,a:()=>goTo(S.AI)},{n:history.length,l:'记录',c:T.accent4,a:()=>goTo(S.AI)},{n:favCount,l:'收藏',c:T.gold,a:()=>goTo(S.AI)}].map(s=>
+          <div key={s.l} onClick={s.a} style={{textAlign:'center',flex:1,cursor:'pointer'}}>
             <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.n}</div>
             <div style={{fontSize:10,color:T.textThi,marginTop:2}}>{s.l}</div>
           </div>
@@ -3686,12 +3686,13 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
 
     {/* Info + logout group */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
-      {[{icon:'📜',label:'用户协议',ic:'#6B7280',a:()=>setShowTerms(true)},
-        {icon:'ℹ️',label:'关于缘合',ic:'#9CA3AF',a:()=>setShowAbout(true)}].map((it,i,arr)=>
+      {[{icon:'📜',label:'用户协议',desc:'',ic:'#6B7280',a:()=>setShowTerms(true)},
+        {icon:'ℹ️',label:'关于缘合',desc:'v0.9.0',ic:'#9CA3AF',a:()=>setShowAbout(true)}].map((it,i,arr)=>
         <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:`1px solid ${T.border}`}}>
           <div style={{width:30,height:30,borderRadius:8,background:`${it.ic}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
           <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{it.label}</div></div>
-          <span style={{color:T.textThi,fontSize:10}}>›</span>
+          {it.desc&&<span style={{fontSize:12,color:T.textThi}}>{it.desc}</span>}
+          <span style={{color:T.textThi,fontSize:10,marginLeft:4}}>›</span>
         </div>)}
       <div onClick={onLogout} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
         <div style={{width:30,height:30,borderRadius:8,background:'#EF444412',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🚪</div>
@@ -3728,7 +3729,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>;
     })()}
 
-    <div style={{textAlign:'center',padding:'20px 0 8px',fontSize:10,color:T.textThi}}>缘合 YuanHe v0.8.0</div>
+    <div style={{textAlign:'center',padding:'20px 0 8px',fontSize:10,color:T.textThi}}>缘合 YuanHe v0.9.0</div>
   </div>
   {showPrivacy&&<PrivacySettingsModal onClose={()=>setShowPrivacy(false)}/>}
   {showDataMgmt&&<DataManagementModal profile={profile} onClose={()=>setShowDataMgmt(false)} onLogout={onLogout}/>}
