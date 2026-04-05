@@ -1505,8 +1505,8 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
     setTimeout(()=>{setCards(c=>[...c,cid]);setFlipping(null)},300);
   };
   return(
-    <div style={{position:'fixed',inset:0,zIndex:300,background:'rgba(0,0,0,0.75)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:'linear-gradient(180deg,#1E1146,#2D1B69)',borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'88vh',overflow:'auto',padding:'20px 16px 28px',animation:'slideUp .3s ease'}}>
+    <div style={{position:'fixed',inset:0,zIndex:300,background:'linear-gradient(180deg,#1E1146,#2D1B69)',display:'flex',flexDirection:'column',overflow:'auto'}}>
+      <div style={{width:'100%',maxWidth:480,margin:'0 auto',flex:1,overflow:'auto',padding:'20px 16px 28px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
           <div style={{fontSize:17,fontWeight:700,color:'#E9D5FF'}}>🎴 选择你的塔罗牌</div>
           <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'rgba(255,255,255,0.1)',color:'#C4B5FD',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
@@ -1668,7 +1668,7 @@ function HourAssistantModal({profile,onResult,onClose}){
 
 function AIScreen({profile,initialMode,onUpdateProfile}){
   const [mode,setMode]=useState(initialMode||'bazi');
-  const [dm,setDm]=useState('expert');
+  const [dm,setDm]=useState('simple');
   // Sync mode when navigated from other pages
   useEffect(()=>{if(initialMode&&initialMode!==mode)setMode(initialMode)},[initialMode]);
     const [showTarotModal,setShowTarotModal]=useState(false);
