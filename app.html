@@ -1950,20 +1950,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
   const followUp=async(q)=>{
     if(!q.trim()||chatLoading)return;
-    // 使用函数式更新确保读到最新chatHistory
-    let latestChat=[];
-    setModeStates(prev=>{
-      const cur=prev[mode]||{q:'',result:null,loading:false,elapsed:0,error:null,loadMsg:'',chatHistory:[]};
-      latestChat=[...(cur.chatHistory||[])];
-      return prev; // 不修改，只读取
-    });
-    if(latestChat.length>=20){window.yuanheToast?.('本次会话已达上限，请点击重新提问');return}
+    const ch=[...(ms.chatHistory||[])];
+    if(ch.length>=20){window.yuanheToast?.('本次会话已达上限，请点击重新提问');return}
+    setChatLoading(true);
     setReportExpanded(false);
     const userMsg={role:'user',text:q,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
-    const newChat=[...latestChat,userMsg];
+    const newChat=[...ch,userMsg];
     setMS(mode,{chatHistory:newChat});
     setFollowUpQ('');
-    setChatLoading(true);
     try{
       const reportSummary=ms.result?.response?.substring(0,500)||'';
       const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:latestChat.slice(-6)};
@@ -2399,6 +2393,15 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                   </div>
                 </div>
               </div>}
+              {/* 重新分析按钮 — 在聊天气泡下方 */}
+              <button onClick={()=>{
+                setMS(mode,{result:null,error:null,chatHistory:[],q:mode==='meihua'?'':ms.q||''});
+                if(mode==='meihua'){setMhNum1('');setMhNum2('')}
+                if(mode==='tarot'){setTarotCards([])}
+                try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s[mode];localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
+              }} style={{width:'100%',padding:'10px',borderRadius:10,border:`1.5px solid ${T.border}`,marginTop:16,marginBottom:8,fontSize:12,fontWeight:500,cursor:'pointer',background:T.card,color:T.textSec}}>
+                {mode==='meihua'?'🔄 重新起卦 · 新问题':mode==='tarot'?'🔄 重新抽牌 · 新解读':'🔄 清除报告 · 重新分析'}
+              </button>
               <div ref={chatEndRef}/>
             </div>}
           </div>);
@@ -2412,7 +2415,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     {/* === FIXED BOTTOM BAR === */}
-    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50,minHeight:66}}>
+    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:T.isDark?'rgba(15,15,26,0.97)':'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50,minHeight:66}}>
       {(ms.loading||ms.result?._streaming)?<>
         {/* Loading / Streaming: button itself is progress bar */}
         <button disabled style={{width:'100%',height:50,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',position:'relative',overflow:'hidden',cursor:'default',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -2469,16 +2472,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',
               boxShadow:(!followUpQ.trim()||chatLoading)?'none':`0 2px 8px ${mc}40`}}>{chatLoading?'…':'↑'}</button>
         </div>
-        {/* 重新分析/起卦/抽牌按钮 — 所有模式统一在底部显示 */}
-        <button onClick={()=>{
-          setMS(mode,{result:null,error:null,chatHistory:[],q:mode==='meihua'?'':ms.q||''});
-          if(mode==='meihua'){setMhNum1('');setMhNum2('')}
-          if(mode==='tarot'){setTarotCards([])}
-          try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s[mode];localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
-        }} style={{width:'100%',padding:'10px',borderRadius:10,border:`1.5px solid ${T.border}`,marginTop:12,fontSize:12,fontWeight:500,cursor:'pointer',
-          background:T.card,color:T.textSec}}>
-          {mode==='meihua'?'🔄 重新起卦 · 新问题':mode==='tarot'?'🔄 重新抽牌 · 新解读':'🔄 清除报告 · 重新分析'}
-        </button>
       </>}
     </div>
 
