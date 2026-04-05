@@ -2139,7 +2139,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           <input value={ms.q} onChange={e=>setMS(mode,{q:e.target.value})} placeholder="例：这次考试能通过吗？" style={{width:'100%',padding:'10px 12px',border:'2px solid #FCD34D',borderRadius:10,fontSize:13,background:T.card,outline:'none',marginBottom:10,boxSizing:'border-box'}}/>
           {/* Example questions */}
           <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
-            {['这件事能成吗','和ta有缘分吗','这个项目值得投资吗','该不该做这件事'].map(ex=>(
+            {['这件事能成吗','和ta有缘分吗','这个项目值得投资吗','近期运气如何'].map(ex=>(
               <button key={ex} onClick={()=>setMS(mode,{q:ex})} style={{padding:'3px 8px',borderRadius:6,border:`1px solid ${ms.q===ex?'#D97706':'#FCD34D'}`,background:ms.q===ex?'#FEF3C7':'#fff',color:'#92400E',fontSize:10,cursor:'pointer'}}>{ex}</button>
             ))}
           </div>
