@@ -2861,7 +2861,7 @@ function getIcebreaker(conv){
   return null;
 }
 
-function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,profile}){
+function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,profile,goTo}){
   const [activeId,setActiveId]=useState(openConvId||null);
   const [chatInput,setChatInput]=useState('');
   const [sending,setSending]=useState(false);
@@ -3138,7 +3138,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
             <div style={{fontSize:11,color:showTyping?T.accent2:isOnline?'#34D399':T.textThi}}>{showTyping?'正在输入…':isOnline?'在线':'离线'} · {activeConv.user.sign}</div>
           </div>
         </div>
-        <button onClick={()=>{setSearchMode(!searchMode);setSearchQuery('')}} style={{width:32,height:32,borderRadius:16,border:'none',background:searchMode?`${T.accent2}10`:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:searchMode?T.accent2:T.textThi}}>🔍</button>
+        <button onClick={()=>{setActiveId(null);goTo(S.AI,'synastry')}} title="AI缘分分析" style={{width:32,height:32,borderRadius:16,border:'none',background:`${T.accent2}12`,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>✨</button>
         <button onClick={()=>setShowReport(true)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:T.textThi}}>⋯</button>
       </div>
       {/* Search bar */}
@@ -4307,7 +4307,7 @@ function App(){
     {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={saveProfile}/></div>}
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={saveProfile}/></div>}
-    {scr===S.MSGS&&<div key="msgs" style={{height:'100%'}}><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile}/></div>}
+    {scr===S.MSGS&&<div key="msgs" style={{height:'100%'}}><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile} goTo={goTo}/></div>}
     {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm('确定退出登录？',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setAuthToken(null);setProfile(null);setScr(S.LOGIN)},{detail:'退出后本地数据将被清除'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={saveProfile} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
