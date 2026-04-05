@@ -2207,25 +2207,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{fontSize:11,color:mc,marginTop:6,opacity:.7}}>点击底部按钮开始AI预测</div>
       </div>}
 
-      {/* History: show other modes that have saved results */}
-      {!ms.loading&&!ms.result&&(()=>{
-        const saved=MODES.filter(m=>m.id!==mode&&getMS(m.id).result);
-        if(!saved.length)return null;
-        return <div style={{marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>📜 历史报告</div>
-          {saved.map(m=>{const s=getMS(m.id);const chatLen=(s.chatHistory||[]).length;
-            return <div key={m.id} onClick={()=>trySetMode(m.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:T.card,borderRadius:12,marginBottom:6,cursor:'pointer',boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
-              <div style={{width:32,height:32,borderRadius:8,background:`${m.c}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{m.icon}</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:600,color:T.text}}>{MODE_FULL[m.id]}</div>
-                <div style={{fontSize:10,color:T.textThi,marginTop:1}}>{s.result?.response?.length||0}字{chatLen>0?` · ${chatLen/2|0}轮追问`:''}</div>
-              </div>
-              <div style={{fontSize:11,color:m.c,fontWeight:500}}>查看 →</div>
-            </div>;
-          })}
-        </div>;
-      })()}
-
       {/* Loading state in content area — only before init arrives */}
       {ms.loading&&!ms.result&&<div className="anim-in" style={{textAlign:'center',padding:'50px 20px'}}>
         <div style={{position:'relative',width:88,height:88,margin:'0 auto 20px'}}>
