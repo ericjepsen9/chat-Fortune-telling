@@ -84,6 +84,7 @@ tr:hover{background:#1f1f30}
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script type="text/babel">
 const {useState,useEffect,useCallback}=React;
 
@@ -164,10 +165,38 @@ function ChangePasswordModal({forced,onDone,onClose}){
 }
 
 // ===== DASHBOARD (placeholder for Step B) =====
+// Trend Chart Component
+function TrendChart({data}){
+  const canvasRef=useRef(null);const chartRef=useRef(null);
+  useEffect(()=>{
+    if(!data||!canvasRef.current)return;
+    if(chartRef.current)chartRef.current.destroy();
+    chartRef.current=new Chart(canvasRef.current,{
+      type:'line',
+      data:{
+        labels:data.map(d=>d.date),
+        datasets:[
+          {label:'活跃用户',data:data.map(d=>d.activeUsers),borderColor:'#A78BFA',backgroundColor:'#A78BFA20',fill:true,tension:0.4,pointRadius:2},
+          {label:'新增用户',data:data.map(d=>d.newUsers),borderColor:'#34D399',backgroundColor:'#34D39920',fill:true,tension:0.4,pointRadius:2},
+          {label:'占卜次数',data:data.map(d=>d.divinations),borderColor:'#F59E0B',backgroundColor:'#F59E0B20',fill:true,tension:0.4,pointRadius:2},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9CA3AF',font:{size:10}}}},scales:{x:{ticks:{color:'#6B7280',font:{size:9},maxTicksLimit:10},grid:{color:'#2D2D3F'}},y:{ticks:{color:'#6B7280',font:{size:10}},grid:{color:'#2D2D3F'},beginAtZero:true}}}
+    });
+    return()=>{if(chartRef.current)chartRef.current.destroy()};
+  },[data]);
+  return<canvas ref={canvasRef}/>;
+}
+
 function DashboardPage(){
   const [stats,setStats]=useState(null);const [uStats,setUStats]=useState(null);
+  const [trends,setTrends]=useState(null);const [funnel,setFunnel]=useState(null);
+  const [announcement,setAnnouncement]=useState({text:'',enabled:false,type:'info'});
+  const [trendDays,setTrendDays]=useState(7);
   const loadStats=()=>{apiGet('/api/stats').then(setStats);apiGet('/api/admin/stats').then(setUStats)};
-  useEffect(()=>{loadStats();const t=setInterval(loadStats,30000);return()=>clearInterval(t)},[]);
+  const loadTrends=(d)=>{apiGet('/api/admin/trends?days='+d).then(setTrends)};
+  useEffect(()=>{loadStats();loadTrends(trendDays);apiGet('/api/admin/funnel').then(setFunnel);apiGet('/api/admin/announcement').then(a=>{if(a)setAnnouncement(a)});const t=setInterval(loadStats,30000);return()=>clearInterval(t)},[]);
+  const saveAnnouncement=()=>{apiPost('/api/admin/announcement',announcement).then(()=>showToast('公告已保存','success'))};
   if(!stats)return <div className="container"><div className="panel"><span className="spinner"/> 加载中…</div></div>;
   return(<div className="container">
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>📊 系统概览</h2>
@@ -182,6 +211,50 @@ function DashboardPage(){
       <div className="stat-card"><div className="label">引擎调用</div><div className="value">{stats.engine?.calls||0}</div><div className="sub">错误 {stats.engine?.errors||0}</div></div>
       <div className="stat-card"><div className="label">内存</div><div className="value" style={{fontSize:16}}>{stats.memory?.heap||'—'} / {stats.memory?.rss||'—'}</div></div>
     </div>
+    <div className="panel">
+    {/* 趋势图 */}
+    <div className="panel">
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <h3 style={{margin:0}}>📈 用户趋势</h3>
+        <div style={{display:'flex',gap:4}}>
+          {[7,14,30].map(d=><button key={d} onClick={()=>{setTrendDays(d);loadTrends(d)}} className={`btn-sm ${trendDays===d?'btn-primary':'btn-ghost'}`}>{d}天</button>)}
+        </div>
+      </div>
+      {trends?<div style={{height:200}}><TrendChart data={trends}/></div>:<div style={{textAlign:'center',padding:40,color:'#6B7280'}}><span className="spinner"/></div>}
+    </div>
+
+    {/* 漏斗 */}
+    {funnel&&funnel.length>0&&<div className="panel">
+      <h3>🔽 用户转化漏斗</h3>
+      {funnel.map((f,i)=>(
+        <div key={f.step} style={{marginBottom:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:3}}>
+            <span>{f.step}</span>
+            <span style={{color:'#A78BFA',fontWeight:600}}>{f.count}人 ({f.rate}%)</span>
+          </div>
+          <div style={{height:8,background:'#1f1f30',borderRadius:4,overflow:'hidden'}}>
+            <div style={{height:'100%',background:i===0?'#A78BFA':i===1?'#34D399':i===2?'#F59E0B':'#EC4899',borderRadius:4,width:f.rate+'%',transition:'width .6s'}}/>
+          </div>
+        </div>
+      ))}
+    </div>}
+
+    {/* 系统公告 */}
+    <div className="panel">
+      <h3>📢 系统公告</h3>
+      <div style={{display:'flex',gap:8,marginBottom:8}}>
+        <input value={announcement.text} onChange={e=>setAnnouncement({...announcement,text:e.target.value})} placeholder="输入公告内容…" style={{flex:1,padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:13}}/>
+        <select value={announcement.type||'info'} onChange={e=>setAnnouncement({...announcement,type:e.target.value})} style={{padding:'8px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12}}>
+          <option value="info">通知</option><option value="warn">警告</option><option value="promo">活动</option>
+        </select>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <button onClick={()=>{setAnnouncement({...announcement,enabled:!announcement.enabled});setTimeout(saveAnnouncement,100)}} className={`btn-sm ${announcement.enabled?'btn-danger':'btn-primary'}`}>{announcement.enabled?'关闭公告':'发布公告'}</button>
+        <button onClick={saveAnnouncement} className="btn-sm btn-ghost">保存</button>
+        {announcement.enabled&&<span style={{fontSize:11,color:'#34D399',alignSelf:'center'}}>✅ 公告已发布</span>}
+      </div>
+    </div>
+
     <div className="panel">
       <h3>📡 API端点统计</h3>
       <table><thead><tr><th>端点</th><th>请求数</th><th>成功</th><th>失败</th><th>平均耗时</th></tr></thead>

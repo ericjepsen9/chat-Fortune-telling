@@ -452,6 +452,32 @@ app.get('/api/admin/stats', admin.adminAuth, (req, res) => {
   res.json(auth.adminGetStats());
 });
 
+app.get('/api/admin/trends', admin.adminAuth, (req, res) => {
+  res.json(auth.adminGetTrends(parseInt(req.query.days) || 30));
+});
+
+app.get('/api/admin/funnel', admin.adminAuth, (req, res) => {
+  res.json(auth.adminGetFunnel());
+});
+
+// 系统公告管理
+app.get('/api/admin/announcement', admin.adminAuth, (req, res) => {
+  res.json(configManager.get('announcement') || { text: '', enabled: false });
+});
+
+app.post('/api/admin/announcement', admin.adminAuth, (req, res) => {
+  configManager.set('announcement', req.body);
+  admin.logAction(req.admin.id, 'update_announcement', null, req.body.enabled ? '发布公告: ' + (req.body.text || '').substring(0, 50) : '关闭公告');
+  res.json({ success: true });
+});
+
+// 前端获取公告
+app.get('/api/announcement', (req, res) => {
+  const a = configManager.get('announcement');
+  if (a && a.enabled && a.text) res.json({ text: a.text, type: a.type || 'info' });
+  else res.json(null);
+});
+
 app.get('/api/admin/users', admin.adminAuth, (req, res) => {
   const { search, gender, page, limit } = req.query;
   res.json(auth.adminListUsers({ search, gender, page: parseInt(page) || 1, limit: parseInt(limit) || 20 }));

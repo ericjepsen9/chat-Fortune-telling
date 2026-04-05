@@ -524,6 +524,8 @@ module.exports = {
   adminBanUser,
   adminDeleteUser,
   adminGetStats,
+  adminGetTrends,
+  adminGetFunnel,
   // Admin chat management
   adminListConversations,
   adminGetConversation,
@@ -780,6 +782,41 @@ function adminGetStats() {
       female: allUsers.filter(u => u.profile?.gender === 'female').length,
     },
   };
+}
+
+// 趋势数据(最近N天)
+function adminGetTrends(days = 30) {
+  const allUsers = Object.values(users);
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i); d.setHours(0, 0, 0, 0);
+    const ds = d.toDateString();
+    const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+    data.push({
+      date: dateStr,
+      newUsers: allUsers.filter(u => new Date(u.createdAt).toDateString() === ds).length,
+      activeUsers: allUsers.filter(u => u.lastActiveAt && new Date(u.lastActiveAt).toDateString() === ds).length,
+      divinations: allUsers.reduce((s, u) => s + (u.divinations || []).filter(d => d.createdAt && new Date(d.createdAt).toDateString() === ds).length, 0),
+    });
+  }
+  return data;
+}
+
+// 漏斗数据
+function adminGetFunnel() {
+  const allUsers = Object.values(users);
+  const total = allUsers.length;
+  const withProfile = allUsers.filter(u => u.profile?.year).length;
+  const hasDivination = allUsers.filter(u => u.divinations?.length > 0).length;
+  const swipeData = (() => { try { const f = path.join(DATA_DIR, 'swipes.json'); if (fs.existsSync(f)) { const s = JSON.parse(fs.readFileSync(f, 'utf-8')); const swipers = new Set(Object.keys(s).map(k => k.split(':')[0])); return swipers.size; } } catch (e) {} return 0; })();
+  const hasConversation = allUsers.filter(u => { try { const c = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'messages.json'), 'utf-8') || '{}'); return Object.keys(c).some(k => k.includes(u.id)); } catch (e) { return false; } }).length;
+
+  return [
+    { step: '注册', count: total, rate: 100 },
+    { step: '完善资料', count: withProfile, rate: total ? Math.round(withProfile / total * 100) : 0 },
+    { step: '首次占卜', count: hasDivination, rate: total ? Math.round(hasDivination / total * 100) : 0 },
+    { step: '首次滑卡', count: swipeData, rate: total ? Math.round(swipeData / total * 100) : 0 },
+  ];
 }
 
 // ============ Posts (缘友圈) ============
