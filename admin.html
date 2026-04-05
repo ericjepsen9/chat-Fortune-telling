@@ -544,49 +544,124 @@ function ContentPage(){
 
 // ===== LLM PAGE =====
 function LLMPage(){
-  const [config,setConfig]=useState(null);const [stats,setStats]=useState(null);
+  const [cfg,setCfg]=useState(null);const [llmCfg,setLlmCfg]=useState(null);const [stats,setStats]=useState(null);
+  const [samples,setSamples]=useState([]);const [showSamples,setShowSamples]=useState(false);
   useEffect(()=>{
-    apiGet('/api/admin/llm-config').then(setConfig).catch(()=>{});
-    apiGet('/api/stats').then(setStats).catch(()=>{});
+    apiGet('/api/admin/config').then(setCfg);
+    apiGet('/api/admin/llm-config').then(setLlmCfg);
+    apiGet('/api/stats').then(setStats);
   },[]);
+
+  const toggle=(key)=>{
+    const val=!key.split('.').reduce((o,k)=>o?.[k],cfg);
+    apiPost('/api/admin/config',{[key.split('.')[0]]:{...cfg[key.split('.')[0]],[key.split('.').slice(1).join('.')]:val}}).then(d=>{
+      if(!d.error){setCfg(d);showToast(val?'已启用':'已关闭','success')}
+    });
+  };
+  const updateCfg=(patch)=>{apiPost('/api/admin/config',patch).then(d=>{if(!d.error){setCfg(d);showToast('已保存','success')}})};
+  const loadSamples=()=>{apiGet('/api/admin/ai-samples?limit=20').then(d=>{if(Array.isArray(d))setSamples(d);setShowSamples(true)})};
+
+  if(!cfg)return <div className="container"><div className="panel"><span className="spinner"/> 加载中…</div></div>;
   return(<div className="container">
-    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>🤖 LLM配置</h2>
+    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>⚙️ 系统配置</h2>
 
-    {stats&&<div className="stats-grid">
-      <div className="stat-card"><div className="label">LLM总调用</div><div className="value">{stats.llm?.calls||0}</div></div>
-      <div className="stat-card"><div className="label">成功</div><div className="value" style={{color:'#34D399'}}>{stats.llm?.success||0}</div></div>
-      <div className="stat-card"><div className="label">失败</div><div className="value" style={{color:'#EF4444'}}>{stats.llm?.error||0}</div></div>
-      <div className="stat-card"><div className="label">超时</div><div className="value" style={{color:'#F59E0B'}}>{stats.llm?.timeout||0}</div></div>
-      <div className="stat-card"><div className="label">截断</div><div className="value">{stats.llm?.truncated||0}</div></div>
-      <div className="stat-card"><div className="label">平均耗时</div><div className="value" style={{fontSize:18}}>{stats.llm?.avgTimeSeconds||'—'}</div></div>
-    </div>}
-
-    <div className="panel">
-      <h3>📡 Provider配置</h3>
-      {config?<table><thead><tr><th>名称</th><th>URL</th><th>模型</th><th>状态</th><th>连续错误</th></tr></thead>
-      <tbody>{config.providers?.map((p,i)=>(
-        <tr key={p.name}>
-          <td style={{fontWeight:600}}>{p.name} {i===config.activeProvider&&<span className="badge badge-ok">当前</span>}</td>
-          <td style={{fontSize:12,color:'#9CA3AF'}}>{p.url}</td>
-          <td><span className="badge badge-purple">{p.model}</span></td>
-          <td>{(config.providerErrors?.[p.name]||0)>=3?<span className="badge badge-err">异常</span>:<span className="badge badge-ok">正常</span>}</td>
-          <td>{config.providerErrors?.[p.name]||0}</td>
-        </tr>
-      ))}</tbody></table>:<div>加载中…</div>}
-      <div style={{marginTop:12,fontSize:11,color:'#6B7280'}}>
-        Provider配置在 .env 文件中修改: LLM_BASE_URL / LLM_API_KEY / LLM_MODEL<br/>
-        备用Provider: LLM_BACKUP_URL / LLM_BACKUP_KEY / LLM_BACKUP_MODEL<br/>
-        修改后需重启服务器生效 (pm2 restart yuanhe)
+    {/* 维护模式 */}
+    <div className="panel" style={{border:cfg.maintenance?.enabled?'2px solid #EF4444':undefined}}>
+      <h3>🔧 维护模式</h3>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <button onClick={()=>updateCfg({maintenance:{...cfg.maintenance,enabled:!cfg.maintenance?.enabled}})} className={`btn-sm ${cfg.maintenance?.enabled?'btn-danger':'btn-primary'}`}>
+          {cfg.maintenance?.enabled?'🔴 关闭维护':'🟢 开启维护'}
+        </button>
+        <span style={{fontSize:12,color:'#6B7280'}}>{cfg.maintenance?.enabled?'用户端已显示维护页面':'系统正常运行'}</span>
       </div>
     </div>
 
-    {stats?.api&&<div className="panel">
-      <h3>📊 占卜API调用分布</h3>
-      <table><thead><tr><th>端点</th><th>调用次数</th><th>成功</th><th>失败</th><th>平均耗时</th></tr></thead>
-      <tbody>{Object.entries(stats.api).filter(([ep])=>ep.includes('divine')||ep.includes('chat')||ep.includes('calculate')).map(([ep,s])=>{
-        const avg=s.count?Math.round(s.totalTime/s.count):0;
-        return<tr key={ep}><td>{ep}</td><td>{s.count}</td><td><span className="badge badge-ok">{s.success}</span></td><td>{s.error?<span className="badge badge-err">{s.error}</span>:'—'}</td><td>{avg}ms</td></tr>;
-      })}</tbody></table>
+    {/* 功能开关 */}
+    <div className="panel">
+      <h3>🎛️ 功能开关</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        {[['fortuneWheel','命运转盘'],['communityPosts','缘友圈'],['moodTracker','心情打卡'],['shareCards','分享卡片'],['voiceMessage','语音消息'],['imageMessage','图片消息']].map(([k,l])=>(
+          <div key={k} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',background:'#0f0f1a',borderRadius:8}}>
+            <span style={{fontSize:12}}>{l}</span>
+            <button onClick={()=>updateCfg({features:{...cfg.features,[k]:!cfg.features?.[k]}})} style={{padding:'2px 10px',borderRadius:6,border:'none',fontSize:10,fontWeight:600,cursor:'pointer',background:cfg.features?.[k]!==false?'#34D39930':'#EF444430',color:cfg.features?.[k]!==false?'#34D399':'#EF4444'}}>{cfg.features?.[k]!==false?'开':'关'}</button>
+          </div>
+        ))}
+      </div>
+      <div style={{fontSize:12,fontWeight:600,color:'#6B7280',margin:'12px 0 6px'}}>占卜模式</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>
+        {[['bazi','八字'],['astrology','星座'],['tarot','塔罗'],['meihua','梅花'],['vedic','印度'],['hehun','合婚'],['synastry','配对'],['hepan','合盘']].map(([k,l])=>(
+          <div key={k} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 8px',background:'#0f0f1a',borderRadius:6}}>
+            <span style={{fontSize:10}}>{l}</span>
+            <button onClick={()=>updateCfg({features:{...cfg.features,modes:{...cfg.features?.modes,[k]:!cfg.features?.modes?.[k]}}})} style={{padding:'1px 8px',borderRadius:4,border:'none',fontSize:9,fontWeight:600,cursor:'pointer',background:cfg.features?.modes?.[k]!==false?'#34D39930':'#EF444430',color:cfg.features?.modes?.[k]!==false?'#34D399':'#EF4444'}}>{cfg.features?.modes?.[k]!==false?'开':'关'}</button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Bot配置 */}
+    <div className="panel">
+      <h3>🤖 Bot行为</h3>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+        <button onClick={()=>updateCfg({bot:{...cfg.bot,enabled:!cfg.bot?.enabled}})} className={`btn-sm ${cfg.bot?.enabled?'btn-primary':'btn-danger'}`}>{cfg.bot?.enabled?'Bot已启用':'Bot已关闭'}</button>
+        <button onClick={()=>updateCfg({bot:{...cfg.bot,autoGreet:!cfg.bot?.autoGreet}})} className="btn-sm btn-ghost">{cfg.bot?.autoGreet?'✅ 自动问候':'❌ 自动问候'}</button>
+        <button onClick={()=>updateCfg({bot:{...cfg.bot,proactiveMessages:!cfg.bot?.proactiveMessages}})} className="btn-sm btn-ghost">{cfg.bot?.proactiveMessages?'✅ 主动消息':'❌ 主动消息'}</button>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:12}}>
+        <div>回复延迟: {cfg.bot?.replyDelayMin/1000}s - {cfg.bot?.replyDelayMax/1000}s</div>
+        <div>活跃时段: {cfg.bot?.activeHourStart}:00 - {cfg.bot?.activeHourEnd}:00</div>
+      </div>
+    </div>
+
+    {/* LLM限额 */}
+    <div className="panel">
+      <h3>📊 LLM限额</h3>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,fontSize:12}}>
+        <div style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
+          <div style={{color:'#6B7280',fontSize:10}}>每天占卜次数</div>
+          <div style={{fontWeight:700,color:'#A78BFA'}}>{cfg.limits?.divinationsPerDay||'不限'}</div>
+        </div>
+        <div style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
+          <div style={{color:'#6B7280',fontSize:10}}>每报告追问</div>
+          <div style={{fontWeight:700,color:'#A78BFA'}}>{cfg.limits?.followUpsPerReport||20}</div>
+        </div>
+        <div style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
+          <div style={{color:'#6B7280',fontSize:10}}>每天追问</div>
+          <div style={{fontWeight:700,color:'#A78BFA'}}>{cfg.limits?.followUpsPerDay||'不限'}</div>
+        </div>
+      </div>
+    </div>
+
+    {/* AI输出质量抽查 */}
+    <div className="panel">
+      <h3 style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>🔍 AI输出质量
+        <button className="btn-sm btn-primary" onClick={loadSamples}>抽查最近20条</button>
+      </h3>
+      {showSamples&&<div style={{maxHeight:400,overflow:'auto'}}>
+        {samples.length===0?<div style={{color:'#6B7280',fontSize:12,padding:20,textAlign:'center'}}>暂无占卜记录</div>:
+        samples.map((s,i)=><div key={i} style={{padding:'10px',borderBottom:'1px solid #1f1f30',fontSize:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+            <span><span className="badge badge-purple">{s.mode}</span> {s.userName||'?'}</span>
+            <span style={{color:'#6B7280',fontSize:10}}>{s.createdAt?.substring(0,16).replace('T',' ')}</span>
+          </div>
+          {s.question&&<div style={{color:'#9CA3AF'}}>❓ {s.question}</div>}
+          <div style={{color:'#e0e0e0',marginTop:4,maxHeight:60,overflow:'hidden'}}>{s.preview||'无预览'}</div>
+        </div>)}
+      </div>}
+    </div>
+
+    {/* LLM Provider */}
+    {llmCfg&&<div className="panel">
+      <h3>📡 Provider状态</h3>
+      <table><thead><tr><th>名称</th><th>URL</th><th>模型</th><th>状态</th></tr></thead>
+      <tbody>{llmCfg.providers?.map((p,i)=>(
+        <tr key={p.name}><td style={{fontWeight:600}}>{p.name} {i===llmCfg.activeProvider&&<span className="badge badge-ok">当前</span>}</td><td style={{fontSize:11,color:'#9CA3AF'}}>{p.url}</td><td><span className="badge badge-purple">{p.model}</span></td><td>{(llmCfg.providerErrors?.[p.name]||0)>=3?<span className="badge badge-err">异常</span>:<span className="badge badge-ok">正常</span>}</td></tr>
+      ))}</tbody></table>
+    </div>}
+
+    {stats&&<div className="stats-grid">
+      <div className="stat-card"><div className="label">LLM调用</div><div className="value">{stats.llm?.calls||0}</div></div>
+      <div className="stat-card"><div className="label">成功率</div><div className="value" style={{fontSize:18,color:'#34D399'}}>{stats.llm?.calls?(((stats.llm?.success||0)/(stats.llm?.calls)*100)|0)+'%':'—'}</div></div>
+      <div className="stat-card"><div className="label">平均耗时</div><div className="value" style={{fontSize:18}}>{stats.llm?.avgTimeSeconds||'—'}</div></div>
     </div>}
   </div>);
 }

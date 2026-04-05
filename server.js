@@ -394,6 +394,48 @@ app.post('/api/admin/reports/:id/resolve', admin.adminAuth, (req, res) => {
   res.json(result);
 });
 
+// ============ Admin: System Config ============
+
+const configManager = require('./src/config-manager');
+
+// 获取全部配置
+app.get('/api/admin/config', admin.adminAuth, (req, res) => {
+  res.json(configManager.getAll());
+});
+
+// 更新配置(patch)
+app.post('/api/admin/config', admin.adminAuth, (req, res) => {
+  const result = configManager.update(req.body);
+  admin.logAction(req.admin.id, 'update_config', null, `更新配置: ${JSON.stringify(req.body).substring(0, 200)}`);
+  res.json(result);
+});
+
+// 维护模式检查(前端用)
+app.get('/api/status', (req, res) => {
+  const cfg = configManager.getAll();
+  res.json({ maintenance: cfg.maintenance.enabled, message: cfg.maintenance.message });
+});
+
+// AI输出质量抽查 — 最近N条占卜结果
+app.get('/api/admin/ai-samples', admin.adminAuth, (req, res) => {
+  const limit = parseInt(req.query.limit) || 20;
+  const allUsers = Object.values(require('./src/auth').adminListUsers({ limit: 100 }).items || []);
+  // 收集所有用户的最近占卜
+  const samples = [];
+  const users = require('./src/auth');
+  const userList = users.adminListUsers({ limit: 200 });
+  (userList.items || []).forEach(u => {
+    const detail = users.adminGetUser(u.id);
+    if (detail?.divinations) {
+      detail.divinations.forEach(d => {
+        samples.push({ userId: u.id, userName: u.name, ...d });
+      });
+    }
+  });
+  samples.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  res.json(samples.slice(0, limit));
+});
+
 // ============ Admin: LLM Config ============
 
 app.get('/api/admin/llm-config', admin.adminAuth, (req, res) => {
