@@ -1888,10 +1888,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         let updateTimer=null;let streaming=true;
         const flushUpdate=(final)=>{
           let clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
-          // During streaming, also strip unclosed <think> tags
+          // During streaming, strip unclosed <think> tags but track thinking state
+          const isThinking=!final&&/<think>[^]*$/.test(fullText)&&!/<\/think>[^]*$/.test(fullText);
           if(!final)clean=clean.replace(/<think>[\s\S]*$/,'').trim();
           if(final)streaming=false;
-          setMS(m,{result:{response:clean,engineData,structured,_genTime:new Date().toLocaleTimeString(),_elapsed:getMS(m).elapsed,_streaming:streaming},loading:false});
+          // If AI is in <think> mode and no visible content yet, show thinking indicator
+          if(isThinking&&!clean){clean='💭 AI正在深度分析中，请稍候…'}
+          setMS(m,{result:{response:clean,engineData,structured,_genTime:new Date().toLocaleTimeString(),_elapsed:getMS(m).elapsed,_streaming:streaming,_thinking:isThinking},loading:false});
         };
         while(true){
           const {done,value}=await reader.read();
@@ -2313,7 +2316,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {/* Streaming indicator */}
               {ms.result._streaming&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'12px 16px',color:mc}}>
                 <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
-                <span style={{fontSize:12}}>AI正在生成分析…</span>
+                <span style={{fontSize:12}}>{ms.result._thinking?'💭 AI正在深度分析…':'✨ 内容生成中…'}</span>
               </div>}
               {/* Actions — ChatGPT style line icons */}
               {!ms.result._streaming&&!chatLoading&&<div style={{display:'flex',alignItems:'center',gap:2,marginTop:10}}>
