@@ -2225,7 +2225,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         {ms.q&&reportExpanded&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:T.card,borderRadius:10,marginBottom:8,boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
           <div style={{fontSize:12,color:T.textThi,flexShrink:0}}>❓</div>
           <div style={{flex:1,fontSize:12,color:T.text,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>"{ms.q}"</div>
-          <button onClick={()=>{const q=ms.q;setMS(mode,{result:null,error:null,chatHistory:[],q});}} style={{background:'none',border:'none',fontSize:14,cursor:'pointer',color:mc,flexShrink:0,padding:'2px 4px'}}>✏️</button>
         </div>}
         {(profile.hour===-1||hourApprox)&&['bazi','astrology','vedic','hehun','synastry','hepan'].includes(mode)&&
           <div style={{background:'#FFF8EB',border:'1px solid #FCD34D',borderRadius:10,padding:'8px 12px',marginBottom:10,fontSize:11,color:'#92400E',lineHeight:1.5}}>
