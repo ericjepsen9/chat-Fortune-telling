@@ -1711,6 +1711,26 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const loadingMode=Object.keys(modeStates).find(k=>modeStates[k]?.loading);
   const loadingModeInfo=loadingMode?MODES.find(m=>m.id===loadingMode):null;
 
+  // 模式切换锁: AI计算中禁止切换，超时自动解锁
+  const trySetMode=(newMode)=>{
+    if(loadingMode){
+      const info=MODES.find(m=>m.id===loadingMode);
+      window.yuanheToast?.(`${info?.n||''}正在分析中，请稍候…`);
+      return;
+    }
+    setMode(newMode);
+  };
+
+  // 超时自动解锁(3分钟)
+  useEffect(()=>{
+    if(!loadingMode)return;
+    const timer=setTimeout(()=>{
+      setMS(loadingMode,{loading:false,error:'⏳ 分析超时，请重试'});
+      window.yuanheToast?.('AI分析超时，已自动解锁');
+    },180000);
+    return()=>clearTimeout(timer);
+  },[loadingMode]);
+
   // Current mode state
   const ms=getMS(mode);
   const isPair=['hehun','synastry','hepan'].includes(mode);
@@ -1888,7 +1908,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           {[{k:'single',l:'个人模式'},{k:'pair',l:'配对分析'}].map(c=>{
             const active=isPair?(c.k==='pair'):(c.k==='single');
-            return <button key={c.k} onClick={()=>setMode(MODES.find(m=>m.cat===c.k).id)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
+            return <button key={c.k} onClick={()=>trySetMode(MODES.find(m=>m.cat===c.k).id)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
               <span style={{fontSize:active?24:18,fontWeight:active?800:500,color:active?T.text:T.textThi,transition:'all .2s'}}>{c.l}</span>
               {active&&<div style={{position:'absolute',bottom:-4,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:T.accent2}}/>}
             </button>;
@@ -1903,7 +1923,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       {/* Sticky mode pills — always visible in header */}
       {scrolledPastModes&&<div style={{display:'flex',gap:6,paddingBottom:10}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>(
-          <button key={m.id} onClick={()=>setMode(m.id)} style={{flex:1,padding:'6px 4px',borderRadius:12,border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,cursor:'pointer',fontSize:10,fontWeight:600,whiteSpace:'nowrap',textAlign:'center',
+          <button key={m.id} onClick={()=>trySetMode(m.id)} style={{flex:1,padding:'6px 4px',borderRadius:12,border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,cursor:'pointer',fontSize:10,fontWeight:600,whiteSpace:'nowrap',textAlign:'center',
             background:mode===m.id?`${m.c}0A`:T.card,
             color:mode===m.id?m.c:T.textSec,transition:'all .2s'}}>
             {m.label.substring(0,4)}
@@ -1931,7 +1951,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
           const hasResult=!!getMS(m.id).result;
           const isLoading=!!getMS(m.id).loading;
-          return(<button key={m.id} onClick={()=>setMode(m.id)} style={{
+          return(<button key={m.id} onClick={()=>trySetMode(m.id)} style={{
             flex:1,padding:'10px 2px',borderRadius:12,cursor:'pointer',textAlign:'center',transition:'all .25s',position:'relative',
             border:mode===m.id?`2px solid ${m.c}`:`1.5px solid ${T.border}`,
             background:mode===m.id?`${m.c}0A`:T.card,
@@ -2069,7 +2089,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         return <div style={{marginBottom:14}}>
           <div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>📜 历史报告</div>
           {saved.map(m=>{const s=getMS(m.id);const chatLen=(s.chatHistory||[]).length;
-            return <div key={m.id} onClick={()=>setMode(m.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:T.card,borderRadius:12,marginBottom:6,cursor:'pointer',boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
+            return <div key={m.id} onClick={()=>trySetMode(m.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:T.card,borderRadius:12,marginBottom:6,cursor:'pointer',boxShadow:'0 1px 3px rgba(0,0,0,0.04)',border:`1px solid ${T.border}`}}>
               <div style={{width:32,height:32,borderRadius:8,background:`${m.c}10`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{m.icon}</div>
               <div style={{flex:1}}>
                 <div style={{fontSize:13,fontWeight:600,color:T.text}}>{MODE_FULL[m.id]}</div>
