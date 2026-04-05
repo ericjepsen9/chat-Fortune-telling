@@ -1985,14 +1985,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   return(<div ref={scrollRef} onScroll={e=>{setScrolledPastModes(e.target.scrollTop>160)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER — matches Discover style === */}
-    <div style={{padding:'8px 16px 4px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:scrolledPastModes?`1px solid ${T.border}`:'none'}}>
+    <div style={{padding:'12px 16px 8px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:`1px solid ${T.border}`}}>
       {/* Category tabs as title */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:scrolledPastModes?6:0}}>
-        <div style={{display:'flex',alignItems:'center',gap:14}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
           {[{k:'single',l:'个人模式'},{k:'pair',l:'配对分析'}].map(c=>{
             const active=isPair?(c.k==='pair'):(c.k==='single');
             return <button key={c.k} onClick={()=>trySetMode(MODES.find(m=>m.cat===c.k).id)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
-              <span style={{fontSize:active?20:15,fontWeight:active?800:500,color:active?T.text:T.textThi,transition:'all .2s'}}>{c.l}</span>
+              <span style={{fontSize:active?24:18,fontWeight:active?800:500,color:active?T.text:T.textThi,transition:'all .2s'}}>{c.l}</span>
               {active&&<div style={{position:'absolute',bottom:-4,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:T.accent2}}/>}
             </button>;
           })}
@@ -2026,11 +2026,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           <div style={{color:T.accent2,fontSize:10,fontWeight:600,flexShrink:0}}>查看 ▾</div>
         </div>;
       })()}
-    </div>
-
-    <div style={{padding:'4px 16px 220px'}}>
-      {/* MODE GRID — with icons */}
-      <div style={{display:'flex',gap:6,marginBottom:14}}>
+      {/* MODE GRID — inside sticky header */}
+      {!scrolledPastModes&&<div style={{display:'flex',gap:6,marginBottom:4}}>
         {MODES.filter(m=>isPair?m.cat==='pair':m.cat==='single').map(m=>{
           const hasResult=!!getMS(m.id).result;
           const isLoading=!!getMS(m.id).loading;
@@ -2045,20 +2042,11 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             {(hasResult||isLoading)&&<div style={{position:'absolute',top:4,right:4,width:6,height:6,borderRadius:3,background:isLoading?'#F59E0B':T.success}}/>}
           </button>);
         })}
-      </div>
+      </div>}
+    </div>
 
-      {/* Collapsed report — below mode grid (when not scrolled) */}
-      {!scrolledPastModes&&ms.result&&ms.result.response&&(ms.chatHistory||[]).length>0&&!reportExpanded&&(()=>{
-        const secs=parseSections(ms.result.response,false);
-        return <div onClick={()=>{setReportExpanded(true);setTimeout(()=>ref.current?.scrollIntoView({behavior:'smooth',block:'start'}),100)}} style={{marginBottom:12,background:`${T.accent2}08`,borderRadius:12,padding:'10px 14px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,border:`1px solid ${T.accent2}15`}}>
-          <div style={{width:28,height:28,borderRadius:8,background:`${mc}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{modeInfo.icon}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{color:T.text,fontSize:12,fontWeight:700}}>{MODE_FULL[mode]}{ms.result.structured?.dayMaster?` · ${ms.result.structured.dayMaster}${ms.result.structured.element}`:''}</div>
-            <div style={{color:T.textThi,fontSize:10,marginTop:1}}>{ms.q?`"${ms.q.substring(0,15)}${ms.q.length>15?'…':''}" · `:''}{secs.length}个维度</div>
-          </div>
-          <div style={{color:T.accent2,fontSize:10,fontWeight:600,flexShrink:0}}>查看 ▾</div>
-        </div>;
-      })()}
+    <div style={{padding:'4px 16px 220px'}}>
+
 
       {/* HOUR COMPLETION PROMPT (when hour=-1 and not skipped) */}
       {profile.hour===-1&&!hourSkipped&&!ms.loading&&!ms.result&&(()=>{
