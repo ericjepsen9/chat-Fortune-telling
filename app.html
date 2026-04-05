@@ -1201,6 +1201,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     if(top.realUserId&&localStorage.getItem('yuanhe_token')){
       apiPost('/api/swipe',{targetId:top.realUserId,direction:dir}).then(r=>{
         if(r?.matched){haptic('success');setTimeout(()=>setMatchUser(top),300)}
+        else if(dir==='right'){window.yuanheToast?.('已喜欢 💕 等待对方回应')}
       }).catch(()=>{});
     }
     // Bot匹配: 保持原有逻辑
@@ -1286,6 +1287,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     }} onClose={()=>{
       // "继续看看"也自动创建会话(不跳转消息页，但能在消息列表找到)
       addConv(matchUser);autoGreet(ChatStore.getAll().find(c=>c.user.id===matchUser.id));setMatchUser(null);
+      window.yuanheToast?.(`已和${matchUser.name}匹配成功，可在消息页找到 TA 💬`);
     }}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
     {/* Fortune Wheel — fullscreen */}
