@@ -2316,14 +2316,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <span style={{fontSize:12}}>AI正在生成分析…</span>
               </div>}
               {/* Actions — ChatGPT style line icons */}
-              {!ms.result._streaming&&<div style={{display:'flex',alignItems:'center',gap:2,marginTop:10}}>
+              {!ms.result._streaming&&!chatLoading&&<div style={{display:'flex',alignItems:'center',gap:2,marginTop:10}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制 ✓')}} title="复制" style={{width:32,height:32,borderRadius:8,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',opacity:.45}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
                 <button onClick={()=>setShowShare(true)} title="分享" style={{width:32,height:32,borderRadius:8,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',opacity:.45}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
                 {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return <button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} title="收藏" style={{width:32,height:32,borderRadius:8,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',opacity:isFav?.8:.45}}><svg width="18" height="18" viewBox="0 0 24 24" fill={isFav?'#F59E0B':'none'} stroke={isFav?'#F59E0B':T.text} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>})()}
                 <button onClick={()=>divine(mode,false)} title="重新生成" style={{width:32,height:32,borderRadius:8,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',opacity:.45}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
               </div>}
               {/* Feedback — separate line */}
-              {!ms.result._streaming&&(()=>{const fbKey='yuanhe_fb_'+mode;const fb=localStorage.getItem(fbKey);
+              {!ms.result._streaming&&!chatLoading&&(()=>{const fbKey='yuanhe_fb_'+mode;const fb=localStorage.getItem(fbKey);
                 if(fb)return <div style={{fontSize:11,color:T.textThi,padding:'4px 0'}}>感谢反馈 {fb==='up'?'👍':'👎'}</div>;
                 return <div style={{display:'flex',alignItems:'center',gap:6,padding:'6px 0',fontSize:12,color:T.textThi}}>
                   <span>这个分析准确吗？</span>
@@ -2362,7 +2362,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 </div>
               </div>}
               {/* 折叠模式下 — 同样的线性图标 */}
-              {!expanded&&!ms.result._streaming&&<>
+              {!expanded&&!ms.result._streaming&&!chatLoading&&<>
               <div style={{display:'flex',alignItems:'center',gap:2,marginTop:10}}>
                 <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制 ✓')}} title="复制" style={{width:32,height:32,borderRadius:8,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',opacity:.45}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
                 <button onClick={()=>setShowShare(true)} title="分享" style={{width:32,height:32,borderRadius:8,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',opacity:.45}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
@@ -2387,7 +2387,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               <button onClick={()=>divine(mode,false)} style={{padding:'4px 14px',borderRadius:8,border:'none',background:'#F59E0B',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>重新生成</button>
             </div>}
             {/* 清除追问按钮(仅有追问时显示) */}
-            {chatHistory.length>0&&<button onClick={()=>{
+            {chatHistory.length>0&&!chatLoading&&<button onClick={()=>{
               setMS(mode,{chatHistory:[]});
               try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');if(s[mode]){s[mode].chatHistory=[];localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}}catch(e){}
               setReportExpanded(true);
