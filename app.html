@@ -1283,10 +1283,9 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:T.primary,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 3px 12px ${T.primary}40`}}><Icons.heart s={22} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{
-      const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS);
+      const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setLastSwiped(null);setMatchUser(null);goTo(S.MSGS);
     }} onClose={()=>{
-      // "继续看看"也自动创建会话(不跳转消息页，但能在消息列表找到)
-      addConv(matchUser);autoGreet(ChatStore.getAll().find(c=>c.user.id===matchUser.id));setMatchUser(null);
+      addConv(matchUser);autoGreet(ChatStore.getAll().find(c=>c.user.id===matchUser.id));setLastSwiped(null);setMatchUser(null);
       window.yuanheToast?.(`已和${matchUser.name}匹配成功，可在消息页找到 TA 💬`);
     }}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
