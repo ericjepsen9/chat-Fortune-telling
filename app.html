@@ -2315,24 +2315,17 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
                 <span style={{fontSize:12}}>AI正在生成分析…</span>
               </div>}
-              {/* Actions */}
-              {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
-                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
-                <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
-                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return <button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
-                <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
+              {/* Actions — icon style */}
+              {!ms.result._streaming&&<div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:16,marginTop:10,marginBottom:4}}>
+                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制 ✓')}} title="复制" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>📋</button>
+                <button onClick={()=>setShowShare(true)} title="分享" style={{width:36,height:36,borderRadius:18,border:`1px solid ${mc}30`,background:`${mc}08`,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>📤</button>
+                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return <button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} title="收藏" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>{isFav?'⭐':'☆'}</button>})()}
+                <button onClick={()=>divine(mode,false)} title="重新分析" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>🔄</button>
+                {(()=>{const fbKey='yuanhe_fb_'+mode;const fb=localStorage.getItem(fbKey);if(fb)return <span style={{fontSize:14}}>{fb==='up'?'👍':'👎'}</span>;return <React.Fragment>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'up');setMS(mode,{...getMS(mode)})}} title="准" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>👍</button>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'down');setMS(mode,{...getMS(mode)})}} title="不准" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>👎</button>
+                </React.Fragment>})()}
               </div>}
-              {/* Feedback */}
-              {!ms.result._streaming&&(()=>{
-                const fbKey='yuanhe_fb_'+mode;
-                const existingFb=localStorage.getItem(fbKey);
-                if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'8px 0',marginBottom:8}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
-                return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'10px 0',marginBottom:8,borderTop:`1px solid ${T.border}`,marginTop:8}}>
-                  <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
-                  <button onClick={()=>{localStorage.setItem(fbKey,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👍 准</button>
-                  <button onClick={()=>{localStorage.setItem(fbKey,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👎 不准</button>
-                </div>;
-              })()}
               {/* Collapse button at bottom */}
               {hasChat&&<div onClick={()=>setReportExpanded(false)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',cursor:'pointer',color:mc,fontSize:11,fontWeight:600,borderTop:`1px solid ${T.border}`}}>
                 ▴ 收起报告
@@ -2363,11 +2356,15 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                   </div>
                 </div>
               </div>}
-              {/* 折叠模式下的操作按钮 */}
-              {!expanded&&!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
-                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
-                <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
-                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return <button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
+              {/* 折叠模式下的操作+反馈 */}
+              {!expanded&&!ms.result._streaming&&<div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:16,marginTop:10,marginBottom:4}}>
+                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制 ✓')}} title="复制" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>📋</button>
+                <button onClick={()=>setShowShare(true)} title="分享" style={{width:36,height:36,borderRadius:18,border:`1px solid ${mc}30`,background:`${mc}08`,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>📤</button>
+                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return <button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} title="收藏" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>{isFav?'⭐':'☆'}</button>})()}
+                {(()=>{const fbKey='yuanhe_fb_'+mode;const fb=localStorage.getItem(fbKey);if(fb)return <span style={{fontSize:12,color:T.textThi}}>{fb==='up'?'👍':'👎'}</span>;return <React.Fragment>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'up');setMS(mode,{...getMS(mode)})}} title="准" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>👍</button>
+                  <button onClick={()=>{localStorage.setItem('yuanhe_fb_'+mode,'down');setMS(mode,{...getMS(mode)})}} title="不准" style={{width:36,height:36,borderRadius:18,border:`1px solid ${T.border}`,background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>👎</button>
+                </React.Fragment>})()}
               </div>}
               <div ref={chatEndRef}/>
             </div>}
