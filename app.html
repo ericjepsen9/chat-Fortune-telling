@@ -2271,7 +2271,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         </button>
       </>:!ms.result?<>
         {/* Initial: big AI button only */}
-        <button onClick={()=>divine(mode,false)} disabled={!!loadingMode||(mode==='meihua'&&!ms.q.trim())} style={{
+        <button onClick={()=>divine(mode,false)} disabled={ms.loading||(mode==='meihua'&&!ms.q.trim())} style={{
           width:'100%',height:50,borderRadius:14,border:'none',fontSize:15,fontWeight:700,color:'#fff',
           cursor:(mode==='meihua'&&!ms.q.trim())?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,
           background:(mode==='meihua'&&!ms.q.trim())?T.textThi:`linear-gradient(135deg,${mc},${mc}cc)`,
