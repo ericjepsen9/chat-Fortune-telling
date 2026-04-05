@@ -2342,6 +2342,11 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               </div>;
             })()}
 
+            {/* Bottom expand/collapse toggle */}
+            {hasChat&&<div onClick={()=>setReportExpanded(!expanded)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',cursor:'pointer',color:mc,fontSize:11,fontWeight:600,borderTop:`1px solid ${T.border}`,marginTop:4}}>
+              {expanded?'▴ 收起报告':'▾ 展开报告'}
+            </div>}
+
             {/* Chat History (follow-up bubbles) */}
             {chatHistory.length>0&&<div style={{marginBottom:10}}>
               {expanded&&<div style={{borderTop:`1px solid ${T.border}`,marginTop:4,marginBottom:12}}/>}
