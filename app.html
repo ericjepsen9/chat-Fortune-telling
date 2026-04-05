@@ -345,7 +345,55 @@ const WsManager = {
 };
 window.WsManager = WsManager; // 全局可访问
 
-// 星座计算
+// 星座计算+特征
+const ZODIAC_TRAITS={
+  '白羊座':{element:'火',ruler:'火星',traits:['热情','直率','冲动','勇敢'],color:'#EF4444',lucky:'周二',compat:'狮子座·射手座'},
+  '金牛座':{element:'土',ruler:'金星',traits:['踏实','耐心','固执','享受'],color:'#D97706',lucky:'周五',compat:'处女座·摩羯座'},
+  '双子座':{element:'风',ruler:'水星',traits:['机智','多变','好奇','善言'],color:'#F59E0B',lucky:'周三',compat:'天秤座·水瓶座'},
+  '巨蟹座':{element:'水',ruler:'月亮',traits:['温柔','敏感','顾家','情绪化'],color:'#6366F1',lucky:'周一',compat:'天蝎座·双鱼座'},
+  '狮子座':{element:'火',ruler:'太阳',traits:['自信','大方','骄傲','领导力'],color:'#F59E0B',lucky:'周日',compat:'白羊座·射手座'},
+  '处女座':{element:'土',ruler:'水星',traits:['细致','完美','挑剔','务实'],color:'#0D9488',lucky:'周三',compat:'金牛座·摩羯座'},
+  '天秤座':{element:'风',ruler:'金星',traits:['优雅','公正','犹豫','社交'],color:'#EC4899',lucky:'周五',compat:'双子座·水瓶座'},
+  '天蝎座':{element:'水',ruler:'冥王星',traits:['深沉','专注','记仇','洞察'],color:'#7C3AED',lucky:'周二',compat:'巨蟹座·双鱼座'},
+  '射手座':{element:'火',ruler:'木星',traits:['乐观','自由','粗心','冒险'],color:'#8B5CF6',lucky:'周四',compat:'白羊座·狮子座'},
+  '摩羯座':{element:'土',ruler:'土星',traits:['沉稳','野心','保守','坚韧'],color:'#374151',lucky:'周六',compat:'金牛座·处女座'},
+  '水瓶座':{element:'风',ruler:'天王星',traits:['独立','创新','叛逆','博爱'],color:'#3B82F6',lucky:'周六',compat:'双子座·天秤座'},
+  '双鱼座':{element:'水',ruler:'海王星',traits:['浪漫','直觉','逃避','共情'],color:'#8B5CF6',lucky:'周四',compat:'巨蟹座·天蝎座'},
+};
+// Nakshatra (月亮星宿) — 简化版，根据月日粗略推算
+function getNakshatra(month,day){
+  const nk=[
+    {name:'Ashwini 马头',deity:'双马神',nature:'急速·疗愈',quality:'行动力强'},
+    {name:'Bharani 大陵',deity:'阎王',nature:'承载·转化',quality:'坚韧不拔'},
+    {name:'Krittika 昴宿',deity:'火神',nature:'切割·净化',quality:'目标明确'},
+    {name:'Rohini 毕宿',deity:'梵天',nature:'生长·美丽',quality:'创造力强'},
+    {name:'Mrigashira 参宿',deity:'月神',nature:'探索·好奇',quality:'求知欲强'},
+    {name:'Ardra 觜宿',deity:'暴风神',nature:'破坏·重建',quality:'变革能力'},
+    {name:'Punarvasu 井宿',deity:'因陀罗母',nature:'归来·更新',quality:'恢复力强'},
+    {name:'Pushya 鬼宿',deity:'祭主',nature:'滋养·保护',quality:'包容心强'},
+    {name:'Ashlesha 柳宿',deity:'蛇神',nature:'缠绕·直觉',quality:'洞察力强'},
+    {name:'Magha 星宿',deity:'祖灵',nature:'权威·传承',quality:'领导气质'},
+    {name:'Purva Phalguni 张宿',deity:'爱神',nature:'享乐·创造',quality:'艺术天赋'},
+    {name:'Uttara Phalguni 翼宿',deity:'太阳神',nature:'友谊·契约',quality:'守信可靠'},
+    {name:'Hasta 轸宿',deity:'风神',nature:'技巧·灵巧',quality:'手艺精湛'},
+    {name:'Chitra 角宿',deity:'造物主',nature:'光辉·美丽',quality:'审美独到'},
+    {name:'Swati 亢宿',deity:'风神',nature:'独立·自由',quality:'适应力强'},
+    {name:'Vishakha 氐宿',deity:'因陀罗',nature:'目标·分支',quality:'毅力超群'},
+    {name:'Anuradha 房宿',deity:'密多罗',nature:'友谊·奉献',quality:'社交达人'},
+    {name:'Jyeshtha 心宿',deity:'因陀罗',nature:'保护·长者',quality:'责任感强'},
+    {name:'Mula 尾宿',deity:'毁灭女神',nature:'根源·解脱',quality:'探寻真相'},
+    {name:'Purva Ashadha 箕宿',deity:'水神',nature:'不可征服',quality:'信念坚定'},
+    {name:'Uttara Ashadha 斗宿',deity:'宇宙神',nature:'最终胜利',quality:'持久耐力'},
+    {name:'Shravana 牛宿',deity:'毗湿奴',nature:'倾听·学习',quality:'智慧深远'},
+    {name:'Dhanishta 女宿',deity:'八方神',nature:'财富·韵律',quality:'音乐天赋'},
+    {name:'Shatabhisha 虚宿',deity:'伐楼拿',nature:'疗愈·神秘',quality:'治愈能力'},
+    {name:'Purva Bhadrapada 危宿',deity:'火神',nature:'烈焰·苦行',quality:'精神力强'},
+    {name:'Uttara Bhadrapada 室宿',deity:'深海蛇',nature:'深度·稳定',quality:'内心宁静'},
+    {name:'Revati 壁宿',deity:'养育神',nature:'旅途·完成',quality:'慈悲宽容'},
+  ];
+  const idx=((month*30+day)*27/365|0)%27;
+  return nk[idx];
+}
 function getZodiac(month,day){
   const z=[['摩羯','♑',1,20],['水瓶','♒',2,19],['双鱼','♓',3,20],['白羊','♈',4,20],['金牛','♉',5,21],['双子','♊',6,21],['巨蟹','♋',7,22],['狮子','♌',8,23],['处女','♍',9,23],['天秤','♎',10,23],['天蝎','♏',11,22],['射手','♐',12,22],['摩羯','♑',12,31]];
   for(let i=0;i<z.length;i++){if(month<z[i][2]||(month===z[i][2]&&day<=z[i][3]))return{name:z[i][0]+'座',symbol:z[i][1]}}
@@ -2238,6 +2286,11 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                       {profile.hour>=0&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>含上升星座</span>}
                       {profile.hour===-1&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.15)',fontSize:10}}>太阳星座</span>}
                     </div>})()}
+                    {/* 印度占星: Nakshatra */}
+                    {mode==='vedic'&&(()=>{const nk=getNakshatra(profile.month,profile.day);return<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+                      <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>🌙 {nk.name}</span>
+                      <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.15)',fontSize:10}}>{nk.nature}</span>
+                    </div>})()}
                     {/* 八字: 日主+身强弱 */}
                     {ms.result.structured?.dayMaster&&<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>日主 {ms.result.structured.dayMaster}{ms.result.structured.element}</span>
@@ -2253,6 +2306,41 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                   }
                 </div>
               </div>
+              {/* 星座特征卡片 */}
+              {mode==='astrology'&&(()=>{const zd=getZodiac(profile.month,profile.day);const tr=ZODIAC_TRAITS[zd.name];if(!tr)return null;return(
+                <div style={{background:T.card,borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                    <div style={{width:44,height:44,borderRadius:22,background:`${tr.color}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>{zd.symbol}</div>
+                    <div>
+                      <div style={{fontSize:15,fontWeight:700,color:T.text}}>{zd.name}</div>
+                      <div style={{fontSize:11,color:T.textThi}}>{tr.element}象 · 守护星 {tr.ruler}</div>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                    {tr.traits.map(t=><span key={t} style={{padding:'3px 10px',borderRadius:8,background:`${tr.color}10`,color:tr.color,fontSize:11,fontWeight:600}}>{t}</span>)}
+                  </div>
+                  <div style={{display:'flex',gap:12,fontSize:11,color:T.textSec}}>
+                    <span>🍀 幸运日 {tr.lucky}</span>
+                    <span>💕 最配 {tr.compat}</span>
+                  </div>
+                </div>
+              )})()}
+              {/* 印度占星 Nakshatra 卡片 */}
+              {mode==='vedic'&&(()=>{const nk=getNakshatra(profile.month,profile.day);return(
+                <div style={{background:T.card,borderRadius:14,padding:14,marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                    <div style={{width:44,height:44,borderRadius:22,background:'#F59E0B15',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>🌙</div>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:700,color:T.text}}>{nk.name}</div>
+                      <div style={{fontSize:11,color:T.textThi}}>守护神 {nk.deity}</div>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:12,fontSize:11,color:T.textSec}}>
+                    <span>✦ {nk.nature}</span>
+                    <span>💎 {nk.quality}</span>
+                  </div>
+                </div>
+              )})()}
               {/* Four Pillars */}
               {ms.result.structured?.fourPillars&&<FourPillarsCard structured={ms.result.structured} mc={mc}/>}
               {/* All report cards — progressive animation for new results */}
