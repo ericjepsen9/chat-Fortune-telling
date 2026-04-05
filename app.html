@@ -2240,24 +2240,21 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           const expanded=reportExpanded;
           return(<div>
 
-            {/* Report Header — always visible */}
-              <div style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:10,color:'#fff'}}>
+            {/* Report Header — always visible, clickable to toggle */}
+              <div onClick={hasChat?()=>setReportExpanded(!expanded):undefined} style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:expanded?10:6,color:'#fff',cursor:hasChat?'pointer':'default'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                   <div style={{flex:1}}>
                     <div style={{fontSize:10,opacity:.6}}>{mode==='astrology'||mode==='synastry'?'星座分析':'命理报告'}</div>
                     <div className="serif" style={{fontSize:17,fontWeight:700,marginTop:2}}>{modeInfo.icon} {MODE_FULL[mode]}</div>
-                    {/* 星座: 显示星座符号+名称 */}
-                    {(mode==='astrology'||mode==='synastry')&&(()=>{const zd=getZodiac(profile.month,profile.day);return<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+                    {(mode==='astrology'||mode==='synastry')&&(()=>{const zd=getZodiac(profile.month,profile.day);return <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{zd.symbol} {zd.name}</span>
                       {profile.hour>=0&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>含上升星座</span>}
                       {profile.hour===-1&&<span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.15)',fontSize:10}}>太阳星座</span>}
                     </div>})()}
-                    {/* 印度占星: Nakshatra */}
-                    {mode==='vedic'&&(()=>{const nk=getNakshatra(profile.month,profile.day);return<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+                    {mode==='vedic'&&(()=>{const nk=getNakshatra(profile.month,profile.day);return <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>🌙 {nk.name}</span>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.15)',fontSize:10}}>{nk.nature}</span>
                     </div>})()}
-                    {/* 八字: 日主+身强弱 */}
                     {ms.result.structured?.dayMaster&&<div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>日主 {ms.result.structured.dayMaster}{ms.result.structured.element}</span>
                       <span style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.2)',fontSize:10}}>{ms.result.structured.strength}</span>
@@ -2266,16 +2263,12 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                     </div>}
                     <div style={{fontSize:11,opacity:.75,marginTop:6}}>{profile.name||'缘友'} · {profile.year}.{profile.month}.{profile.day}</div>
                   </div>
-                  {ms.result.structured?.wuxing?
+                  {expanded?ms.result.structured?.wuxing?
                     <WuxingRadar data={ms.result.structured.wuxing} size={110}/>
                     :<div style={{background:'rgba(255,255,255,0.2)',borderRadius:10,padding:'6px 10px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:700}}>{sections.length}</div><div style={{fontSize:9,opacity:.7}}>维度</div></div>
-                  }
+                  :<div style={{fontSize:10,opacity:.6,alignSelf:'center'}}>▾ 展开</div>}
                 </div>
               </div>
-            {/* Expand/Collapse toggle */}
-            {hasChat&&<div onClick={()=>setReportExpanded(!expanded)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'6px',marginBottom:4,cursor:'pointer',color:mc,fontSize:11,fontWeight:600}}>
-              {expanded?'▴ 收起报告':'▾ 展开报告'}
-            </div>}
             {/* Expanded detail cards */}
             {expanded&&<>
               {/* 星座特征卡片 */}
@@ -2322,30 +2315,29 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 <div style={{width:14,height:14,borderRadius:7,border:'2px solid transparent',borderTopColor:mc,animation:'spin .8s linear infinite'}}/>
                 <span style={{fontSize:12}}>AI正在生成分析…</span>
               </div>}
+              {/* Actions */}
+              {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
+                <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
+                <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
+                {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return <button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
+                <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
+              </div>}
+              {/* Feedback */}
+              {!ms.result._streaming&&(()=>{
+                const fbKey='yuanhe_fb_'+mode;
+                const existingFb=localStorage.getItem(fbKey);
+                if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'8px 0',marginBottom:8}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
+                return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'10px 0',marginBottom:8,borderTop:`1px solid ${T.border}`,marginTop:8}}>
+                  <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
+                  <button onClick={()=>{localStorage.setItem(fbKey,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👍 准</button>
+                  <button onClick={()=>{localStorage.setItem(fbKey,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👎 不准</button>
+                </div>;
+              })()}
+              {/* Collapse button at bottom */}
+              {hasChat&&<div onClick={()=>setReportExpanded(false)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',cursor:'pointer',color:mc,fontSize:11,fontWeight:600,borderTop:`1px solid ${T.border}`}}>
+                ▴ 收起报告
+              </div>}
             </>}
-            {/* Actions - always visible */}
-            {!ms.result._streaming&&<div style={{display:'flex',gap:6,marginTop:10,marginBottom:4}}>
-              <button onClick={()=>{navigator.clipboard?.writeText(ms.result.response);window.yuanheToast?.('已复制到剪贴板 ✓')}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${P.accentLight}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>📋 复制</button>
-              <button onClick={()=>setShowShare(true)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${mc}30`,background:`${mc}06`,fontSize:11,color:mc,cursor:'pointer'}}>📤 分享</button>
-              {(()=>{const favKey='yuanhe_fav_'+mode;const isFav=localStorage.getItem(favKey);return<button onClick={()=>{if(isFav){localStorage.removeItem(favKey);window.yuanheToast?.('已取消收藏')}else{localStorage.setItem(favKey,JSON.stringify({mode,question:ms.q||'',response:ms.result.response||'',structured:ms.result.structured||null,engineData:(ms.result.engineData||'').substring(0,500),time:new Date().toLocaleString(),ts:Date.now()}));window.yuanheToast?.('已收藏 ⭐')}setMS(mode,{...getMS(mode)})}} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:isFav?'#FEF3C7':T.card,fontSize:11,color:isFav?'#D97706':T.textThi,cursor:'pointer'}}>{isFav?'⭐':'☆'}</button>})()}
-              <button onClick={()=>divine(mode,false)} style={{padding:'8px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textThi,cursor:'pointer'}}>🔄</button>
-            </div>}
-            {/* Feedback */}
-            {!ms.result._streaming&&(()=>{
-              const fbKey='yuanhe_fb_'+mode;
-              const existingFb=localStorage.getItem(fbKey);
-              if(existingFb)return <div style={{fontSize:11,color:T.textThi,textAlign:'center',padding:'8px 0',marginBottom:16}}>感谢你的反馈 {existingFb==='up'?'👍':'👎'}</div>;
-              return <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12,padding:'10px 0',marginBottom:16,borderTop:`1px solid ${T.border}`,marginTop:8}}>
-                <span style={{fontSize:11,color:T.textThi}}>这个分析准吗？</span>
-                <button onClick={()=>{localStorage.setItem(fbKey,'up');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👍 准</button>
-                <button onClick={()=>{localStorage.setItem(fbKey,'down');setMS(mode,{...getMS(mode)})}} style={{padding:'4px 12px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:12,cursor:'pointer'}}>👎 不准</button>
-              </div>;
-            })()}
-
-            {/* Bottom expand/collapse toggle */}
-            {hasChat&&<div onClick={()=>setReportExpanded(!expanded)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',cursor:'pointer',color:mc,fontSize:11,fontWeight:600,borderTop:`1px solid ${T.border}`,marginTop:4}}>
-              {expanded?'▴ 收起报告':'▾ 展开报告'}
-            </div>}
 
             {/* Chat History (follow-up bubbles) */}
             {chatHistory.length>0&&<div style={{marginBottom:10}}>
