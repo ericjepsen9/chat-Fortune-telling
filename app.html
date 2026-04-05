@@ -812,7 +812,7 @@ function MatchPopup({user,onChat,onClose}){
 
 // ===== HOME =====
 // Card Detail Modal (prototype-style: hero card + colored tabs)
-function CardDetailModal({user,profile,onClose,goTo}){
+function CardDetailModal({user,profile,onClose,goTo,addConv,autoGreet}){
   const [match,setMatch]=useState(null);
   const [tab,setTab]=useState('info');
   const [showShare,setShowShare]=useState(false);
@@ -973,8 +973,11 @@ function CardDetailModal({user,profile,onClose,goTo}){
 
         {/* Bottom action */}
         <div style={{position:'sticky',bottom:0,padding:'12px 16px 20px',background:T.bg}}>
-          <button onClick={()=>{onClose();goTo(S.AI,'hehun')}} style={{width:'100%',padding:'14px',borderRadius:28,border:'none',background:`linear-gradient(135deg,${ac},${ac}dd)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',boxShadow:`0 4px 14px ${ac}33`,letterSpacing:1}}>💑 AI深度合婚分析</button>
-          <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'10px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:12,cursor:'pointer',marginTop:8}}>📤 分享匹配卡</button>
+          {addConv?<div style={{display:'flex',gap:10,marginBottom:8}}>
+            <button onClick={onClose} style={{flex:1,padding:'14px',borderRadius:28,border:`1.5px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:14,fontWeight:500,cursor:'pointer'}}>✕ 跳过</button>
+            <button onClick={()=>{const c=addConv(user);if(autoGreet)autoGreet(c);window.yuanheToast?.(`已和${user.name}匹配，可在消息页聊天 💬`);onClose()}} style={{flex:1,padding:'14px',borderRadius:28,border:'none',background:'linear-gradient(135deg,#EC4899,#DB2777)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:'0 4px 14px rgba(236,72,153,0.3)'}}>💕 喜欢</button>
+          </div>:<button onClick={onClose} style={{width:'100%',padding:'14px',borderRadius:28,border:`1.5px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:14,fontWeight:500,cursor:'pointer',marginBottom:8}}>返回</button>}
+          <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'10px',borderRadius:20,border:`1px solid ${T.border}`,background:T.card,color:T.textSec,fontSize:12,cursor:'pointer'}}>📤 分享匹配卡</button>
         </div>
     {showShare&&<ShareModal type="match" profile={profile} partner={user} score={match?.score||user.score} compatibility={match?.compatibility} onClose={()=>setShowShare(false)}/>}
     </div>
@@ -1288,7 +1291,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       addConv(matchUser);autoGreet(ChatStore.getAll().find(c=>c.user.id===matchUser.id));setLastSwiped(null);setMatchUser(null);
       window.yuanheToast?.(`已和${matchUser.name}匹配成功，可在消息页找到 TA 💬`);
     }}/>}
-    {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
+    {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo} addConv={addConv} autoGreet={autoGreet}/>}
     {/* Fortune Wheel — fullscreen */}
     {showWheel&&<div style={{position:'fixed',inset:0,zIndex:250,background:'#0F0F1A',display:'flex',flexDirection:'column',overflow:'auto'}}>
       <div style={{padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
@@ -2445,7 +2448,7 @@ function FortuneWheel({profile,goTo,addConv,setOpenConvId,autoGreet,onClose}){
           <button onClick={handleChat} style={{padding:'12px 16px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#F59E0B,#D97706)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>💬</button>
         </div>
       </div>}
-      {showDetail&&result&&<CardDetailModal user={result} profile={profile} onClose={()=>setShowDetail(false)} goTo={goTo}/>}
+      {showDetail&&result&&<CardDetailModal user={result} profile={profile} onClose={()=>setShowDetail(false)} goTo={goTo} addConv={addConv} autoGreet={autoGreet}/>}
       </>}
     </div>
   );
