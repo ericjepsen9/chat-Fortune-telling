@@ -148,6 +148,19 @@ function verifyCode(phone, code) {
   let user = Object.values(users).find(u => u.phone === phone);
   const isNew = !user;
 
+  // 检查封禁状态(含过期自动解封)
+  if (user && user.banned) {
+    if (user.banUntil && new Date(user.banUntil) < new Date()) {
+      user.banned = false; user.banReason = ''; user.banUntil = null;
+      saveUsers();
+    } else {
+      return { error: `账号已被封禁${user.banReason ? '：' + user.banReason : ''}${user.banUntil ? '，解封时间：' + user.banUntil.substring(0, 10) : ''}`, code: 403 };
+    }
+  }
+  if (user && user.deleted) {
+    return { error: '账号已注销', code: 403 };
+  }
+
   if (isNew) {
     user = {
       id: crypto.randomUUID(),

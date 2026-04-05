@@ -68,9 +68,18 @@ tr:hover{background:#1f1f30}
 .modal label{display:block;font-size:12px;color:#9CA3AF;margin:10px 0 4px}
 .modal input,.modal select{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0}
 .modal .actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:10px;background:#1a1a2e;border:1px solid #2D2D3F;color:#e0e0e0;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.toast-err{border-color:#EF4444;color:#EF4444}
+.toast.toast-ok{border-color:#34D399;color:#34D399}
+/* Loading spinner */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(167,139,250,0.3);border-top-color:#A78BFA;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+<div id="admin-toast" class="toast"></div>
 <div id="root"></div>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -80,13 +89,32 @@ const {useState,useEffect,useCallback}=React;
 
 // API helpers
 const getToken=()=>localStorage.getItem('yuanhe_admin_token');
+// Toast system
+let _toastTimer=null;
+function showToast(msg,type='info'){
+  const el=document.getElementById('admin-toast');
+  if(!el)return;
+  el.textContent=msg;
+  el.className='toast show '+(type==='error'?'toast-err':type==='success'?'toast-ok':'');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{el.className='toast'},3000);
+}
+// Debounce
+function useDebounce(value,delay=400){
+  const [deb,setDeb]=useState(value);
+  useEffect(()=>{const t=setTimeout(()=>setDeb(value),delay);return()=>clearTimeout(t)},[value,delay]);
+  return deb;
+}
 const api=async(path,opts={})=>{
   const headers={'Content-Type':'application/json'};
   const t=getToken();if(t)headers.Authorization='Bearer '+t;
-  const r=await fetch(path,{...opts,headers:{...headers,...(opts.headers||{})}});
-  const data=await r.json();
-  if(r.status===401){localStorage.removeItem('yuanhe_admin_token');window.location.reload()}
-  return data;
+  try{
+    const r=await fetch(path,{...opts,headers:{...headers,...(opts.headers||{})}});
+    if(r.status===401){localStorage.removeItem('yuanhe_admin_token');window.location.reload();return{}}
+    const data=await r.json();
+    if(data.error)showToast(data.error,'error');
+    return data;
+  }catch(e){showToast('网络错误: '+e.message,'error');return{error:e.message}}
 };
 const apiGet=(p)=>api(p);
 const apiPost=(p,b)=>api(p,{method:'POST',body:JSON.stringify(b)});
@@ -138,8 +166,9 @@ function ChangePasswordModal({forced,onDone,onClose}){
 // ===== DASHBOARD (placeholder for Step B) =====
 function DashboardPage(){
   const [stats,setStats]=useState(null);const [uStats,setUStats]=useState(null);
-  useEffect(()=>{apiGet('/api/stats').then(setStats).catch(()=>{});apiGet('/api/admin/stats').then(setUStats).catch(()=>{})},[]);
-  if(!stats)return <div className="container"><div className="panel">加载中…</div></div>;
+  const loadStats=()=>{apiGet('/api/stats').then(setStats);apiGet('/api/admin/stats').then(setUStats)};
+  useEffect(()=>{loadStats();const t=setInterval(loadStats,30000);return()=>clearInterval(t)},[]);
+  if(!stats)return <div className="container"><div className="panel"><span className="spinner"/> 加载中…</div></div>;
   return(<div className="container">
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>📊 系统概览</h2>
     <div className="stats-grid">
@@ -198,11 +227,14 @@ function UsersPage(){
   const [detail,setDetail]=useState(null);
   const [banModal,setBanModal]=useState(null);
   const [editModal,setEditModal]=useState(null);
+  const [loading,setLoading]=useState(false);
   const limit=15;
+  const debouncedSearch=useDebounce(search);
 
   const load=useCallback(()=>{
-    apiGet(`/api/admin/users?search=${encodeURIComponent(search)}&gender=${gender}&page=${page}&limit=${limit}`).then(setData).catch(()=>{});
-  },[search,gender,page]);
+    setLoading(true);
+    apiGet(`/api/admin/users?search=${encodeURIComponent(debouncedSearch)}&gender=${gender}&page=${page}&limit=${limit}`).then(d=>{setData(d.items?d:{items:[],total:0});setLoading(false)}).catch(()=>setLoading(false));
+  },[debouncedSearch,gender,page]);
 
   useEffect(()=>{load()},[load]);
   useEffect(()=>{apiGet('/api/admin/stats').then(setStats).catch(()=>{})},[]);
@@ -227,7 +259,7 @@ function UsersPage(){
         <select value={gender} onChange={e=>{setGender(e.target.value);setPage(1)}} style={{padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:13}}>
           <option value="all">全部性别</option><option value="male">男</option><option value="female">女</option>
         </select>
-        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>共 {data.total} 条</span>
+        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>{loading&&<span className="spinner" style={{marginRight:6}}/>}共 {data.total} 条</span>
       </div>
 
       <table><thead><tr><th></th><th>昵称</th><th>手机号</th><th>性别</th><th>城市</th><th>占卜</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead>
@@ -244,7 +276,7 @@ function UsersPage(){
           <td>
             <button className="btn-sm btn-ghost" style={{marginRight:4}} onClick={()=>setEditModal(u)}>编辑</button>
             {u.banned
-              ?<button className="btn-sm btn-primary" onClick={()=>{apiPost('/api/admin/users/'+u.id+'/ban',{ban:false}).then(()=>load())}}>解封</button>
+              ?<button className="btn-sm btn-primary" onClick={()=>{apiPost('/api/admin/users/'+u.id+'/ban',{ban:false}).then(()=>{showToast('已解封','success');load()})}}>解封</button>
               :<button className="btn-sm btn-danger" onClick={()=>setBanModal(u)}>封禁</button>
             }
           </td>
@@ -327,11 +359,14 @@ function ChatPage(){
   const [page,setPage]=useState(1);
   const [activeConv,setActiveConv]=useState(null);
   const [showSensitive,setShowSensitive]=useState(false);
+  const [loading,setLoading]=useState(false);
   const limit=20;
+  const debouncedSearch=useDebounce(search);
 
   const load=useCallback(()=>{
-    apiGet(`/api/admin/conversations?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`).then(setData).catch(()=>{});
-  },[search,page]);
+    setLoading(true);
+    apiGet(`/api/admin/conversations?search=${encodeURIComponent(debouncedSearch)}&page=${page}&limit=${limit}`).then(d=>{setData(d.items?d:{items:[],total:0});setLoading(false)}).catch(()=>setLoading(false));
+  },[debouncedSearch,page]);
   useEffect(()=>{load()},[load]);
 
   const openConv=(key)=>{
@@ -557,6 +592,51 @@ function LLMPage(){
 }
 
 // ===== PLACEHOLDER PAGES =====
+// ===== ADMINS PAGE =====
+function AdminsPage({role}){
+  const [admins,setAdmins]=useState([]);
+  const [showCreate,setShowCreate]=useState(false);
+  useEffect(()=>{if(role==='superadmin')apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)})},[]);
+  if(role!=='superadmin')return<div className="container" style={{textAlign:'center',paddingTop:80}}><div style={{fontSize:48,marginBottom:16}}>🔒</div><div style={{fontSize:16,color:'#6B7280'}}>仅超级管理员可访问</div></div>;
+  return(<div className="container">
+    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      👤 管理员账号
+      <button className="btn-sm btn-primary" onClick={()=>setShowCreate(true)}>+ 新建管理员</button>
+    </h2>
+    <div className="panel"><table><thead><tr><th>用户名</th><th>名称</th><th>角色</th><th>最后登录</th><th>创建时间</th></tr></thead>
+    <tbody>{admins.map(a=>(
+      <tr key={a.id}>
+        <td style={{fontWeight:600}}>{a.username}</td>
+        <td>{a.name}</td>
+        <td><span className={`badge ${a.role==='superadmin'?'badge-purple':a.role==='operator'?'badge-ok':'badge-warn'}`}>{a.role}</span></td>
+        <td style={{fontSize:11,color:'#6B7280'}}>{a.lastLoginAt?.substring(0,16).replace('T',' ')||'从未'}</td>
+        <td style={{fontSize:11,color:'#6B7280'}}>{a.createdAt?.substring(0,10)}</td>
+      </tr>
+    ))}</tbody></table></div>
+    {showCreate&&(()=>{
+      const [u,setU]=useState('');const [n,setN]=useState('');const [r,setR]=useState('operator');const [pw,setPw]=useState('');
+      const create=async()=>{
+        if(!u.trim()){showToast('用户名不能为空','error');return}
+        const res=await apiPost('/api/admin/create',{username:u,name:n||u,role:r,password:pw||undefined});
+        if(res.success){showToast('创建成功','success');setShowCreate(false);apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)})}
+      };
+      return<div className="modal-bg" onClick={()=>setShowCreate(false)}><div className="modal" onClick={e=>e.stopPropagation()}>
+        <h3>新建管理员</h3>
+        <label>用户名 *</label><input value={u} onChange={e=>setU(e.target.value)}/>
+        <label>名称</label><input value={n} onChange={e=>setN(e.target.value)} placeholder="可选"/>
+        <label>角色</label>
+        <select value={r} onChange={e=>setR(e.target.value)}><option value="operator">运营</option><option value="support">客服</option><option value="superadmin">超级管理员</option></select>
+        <label>初始密码</label><input value={pw} onChange={e=>setPw(e.target.value)} placeholder="留空则为changeme"/>
+        <div style={{fontSize:10,color:'#6B7280',marginTop:4}}>首次登录将强制修改密码</div>
+        <div className="actions">
+          <button className="btn-sm btn-ghost" onClick={()=>setShowCreate(false)}>取消</button>
+          <button className="btn-sm btn-primary" onClick={create}>创建</button>
+        </div>
+      </div></div>;
+    })()}
+  </div>);
+}
+
 function PlaceholderPage({title,icon}){
   return(<div className="container" style={{textAlign:'center',paddingTop:80}}>
     <div style={{fontSize:48,marginBottom:16}}>{icon}</div>
@@ -599,17 +679,19 @@ function App(){
     content:<ContentPage/>,
     llm:<LLMPage/>,
     logs:<LogsPage/>,
+    admins:<AdminsPage role={adminUser.role}/>,
   };
 
   return(<>
     <div className="nav">
       <div className="brand">🔮 缘合</div>
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}>概览</button>
-      <button className={page==='users'?'active':''} onClick={()=>setPage('users')}>用户</button>
+      {adminUser.role!=='support'&&<button className={page==='users'?'active':''} onClick={()=>setPage('users')}>用户</button>}
       <button className={page==='chat'?'active':''} onClick={()=>setPage('chat')}>聊天</button>
       <button className={page==='content'?'active':''} onClick={()=>setPage('content')}>内容</button>
-      <button className={page==='llm'?'active':''} onClick={()=>setPage('llm')}>LLM</button>
+      {adminUser.role==='superadmin'&&<button className={page==='llm'?'active':''} onClick={()=>setPage('llm')}>LLM</button>}
       <button className={page==='logs'?'active':''} onClick={()=>setPage('logs')}>日志</button>
+      {adminUser.role==='superadmin'&&<button className={page==='admins'?'active':''} onClick={()=>setPage('admins')}>管理员</button>}
       <div className="right">
         <span className="info">{adminUser.name||adminUser.username||'管理员'} · {adminUser.role}</span>
         <button className="btn-sm btn-ghost" onClick={()=>setShowChangePw(true)}>改密码</button>
