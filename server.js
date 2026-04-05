@@ -684,7 +684,7 @@ app.post('/api/hour-correct', (req, res) => {
 // API：轻量追问（聊天气泡，非完整报告）
 app.post('/api/chat-followup', async (req, res) => {
   try {
-    const { mode, year, month, day, hour, gender, question, reportSummary, recentChat } = req.body;
+    const { mode, year, month, day, hour, gender, question, reportSummary, recentChat, profileB } = req.body;
     if (!question || !question.trim()) {
       return res.status(400).json({ error: '请输入问题' });
     }
@@ -693,18 +693,20 @@ app.post('/api/chat-followup', async (req, res) => {
     if (safety.blocked && safety.safetyLevel === 'blocked') {
       return res.type('application/json; charset=utf-8').json({ blocked: true, reason: safety.reason });
     }
+    const MODE_NAMES={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星(吠陀)',hehun:'八字合婚',synastry:'星座配对',hepan:'综合合盘'};
+    const pairInfo=profileB?`\n\n对方信息：${profileB.year||'?'}年${profileB.month||'?'}月${profileB.day||'?'}日${profileB.hour>=0?profileB.hour+'时':''}，${profileB.gender==='female'?'女':'男'}。`:'';
     // Build lightweight prompt
-    const systemPrompt = `你是一位精通${mode==='bazi'?'八字命理':mode==='astrology'?'星座运势':mode==='tarot'?'塔罗牌':mode==='meihua'?'梅花易数':'命理'}的专家。
+    const systemPrompt = `你是一位精通${MODE_NAMES[mode]||'命理'}的专家。
 用户已经做过一次完整分析，现在在追问具体问题。
 
 之前分析的核心摘要：
-${(reportSummary || '').substring(0, 500)}
+${(reportSummary || '').substring(0, 800)}${pairInfo}
 
 请基于以上分析背景，简要回答用户的追问。
 要求：
 - 直接回答，不需要章节标题或markdown格式
 - 1-3段文字，简洁有力
-- 结合命理术语但通俗易懂
+- 结合${MODE_NAMES[mode]||'命理'}术语但通俗易懂
 - 最后给一句实用建议`;
     // Include recent chat for context
     let userMsg = question;
