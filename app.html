@@ -1156,6 +1156,18 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const [lastSwiped,setLastSwiped]=useState(null);
   const [showWheel,setShowWheel]=useState(false);
 
+  // 转盘自动弹出: 每天最多2次, 首次进入首页时自动弹出
+  useEffect(()=>{
+    const wheelKey='yuanhe_wheel_'+new Date().toDateString();
+    const used=parseInt(localStorage.getItem(wheelKey)||'0');
+    const shownKey='yuanhe_wheel_shown_'+new Date().toDateString();
+    const shownToday=parseInt(localStorage.getItem(shownKey)||'0');
+    if(used<2&&shownToday<2){
+      const timer=setTimeout(()=>{setShowWheel(true);localStorage.setItem(shownKey,String(shownToday+1))},1500);
+      return()=>clearTimeout(timer);
+    }
+  },[]);
+
   const [guideHidden,setGuideHidden]=useState(()=>!!localStorage.getItem('yuanhe_swipe_guided'));
   const showGuide=!guideHidden&&swiped===0;
 
@@ -1270,9 +1282,11 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
       <button onClick={()=>swipe('right')} style={{width:50,height:50,borderRadius:25,border:'none',background:T.primary,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 3px 12px ${T.primary}40`}}><Icons.heart s={22} c="#fff" fill="#fff"/></button>
     </div>}
     {matchUser&&<MatchPopup user={matchUser} onChat={()=>{
-      // 统一逻辑: 自动创建会话+开始聊天(真实用户和Bot都一样)
       const c=addConv(matchUser);autoGreet(c);setOpenConvId(c.id);setMatchUser(null);goTo(S.MSGS);
-    }} onClose={()=>setMatchUser(null)}/>}
+    }} onClose={()=>{
+      // "继续看看"也自动创建会话(不跳转消息页，但能在消息列表找到)
+      addConv(matchUser);autoGreet(ChatStore.getAll().find(c=>c.user.id===matchUser.id));setMatchUser(null);
+    }}/>}
     {detailUser&&<CardDetailModal user={detailUser} profile={profile} onClose={()=>setDetailUser(null)} goTo={goTo}/>}
     {/* Fortune Wheel — fullscreen */}
     {showWheel&&<div style={{position:'fixed',inset:0,zIndex:250,background:'#0F0F1A',display:'flex',flexDirection:'column',overflow:'auto'}}>
@@ -3467,6 +3481,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showAvatarPicker,setShowAvatarPicker]=useState(false);
   const [showBlacklist,setShowBlacklist]=useState(false);
   const [showMyPosts,setShowMyPosts]=useState(false);
+  const [showMatchHistory,setShowMatchHistory]=useState(false);
   const [generatingPersonality,setGeneratingPersonality]=useState(false);
   const [showPersonality,setShowPersonality]=useState(false);
   const history=(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}})();
@@ -3630,7 +3645,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       {[{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',ic:'#F59E0B',a:onEdit},
         {icon:'🔐',label:'隐私设置',desc:privacyLabel,ic:'#3B82F6',a:()=>setShowPrivacy(true)},
         {icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色':'浅色',ic:'#8B5CF6',a:toggleTheme},
-        {icon:'💕',label:'匹配历史',desc:ChatStore.getAll().length+'次匹配',ic:'#EC4899',a:()=>goTo(S.MSGS)},
+        {icon:'💕',label:'匹配历史',desc:ChatStore.getAll().length+'次匹配',ic:'#EC4899',a:()=>setShowMatchHistory(true)},
         {icon:'🚫',label:'黑名单',desc:(JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')).length+'人',ic:'#EF4444',a:()=>setShowBlacklist(true)},
         {icon:'📊',label:'我的数据',desc:'查看·导出·删除',ic:'#0D9488',a:()=>setShowDataMgmt(true)}].map((it,i,arr)=>
         <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:i<arr.length-1?`1px solid ${T.border}`:'none'}}>
@@ -3767,6 +3782,31 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     }catch(e){return null}
   })()}
   {/* My posts page */}
+  {/* 匹配历史弹窗 */}
+  {showMatchHistory&&<div onClick={()=>setShowMatchHistory(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'75vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:18,fontWeight:700}}>💕 匹配历史</div>
+        <button onClick={()=>setShowMatchHistory(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+      </div>
+      {(()=>{const allConvs=ChatStore.getAll();
+        if(allConvs.length===0)return<div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}><div style={{fontSize:28,marginBottom:8}}>💫</div><div style={{fontSize:13}}>还没有匹配记录</div></div>;
+        return allConvs.map((conv,i)=>(
+          <div key={conv.id} onClick={()=>{setShowMatchHistory(false);goTo(S.MSGS)}} style={{display:'flex',alignItems:'center',gap:12,padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,marginBottom:8,cursor:'pointer'}}>
+            <div style={{width:44,height:44,borderRadius:22,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{conv.user.gender==='female'?'👩':'👨'}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:600,color:T.text}}>{conv.user.name}</div>
+              <div style={{fontSize:11,color:T.textThi}}>{conv.user.sign} · {(conv.messages||[]).length}条消息</div>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0}}>
+              <div style={{fontSize:15,fontWeight:700,color:T.accent2}}>{conv.user.score||'?'}%</div>
+              <div style={{fontSize:9,color:T.textThi}}>{conv.createdAt?new Date(conv.createdAt).toLocaleDateString([],{month:'numeric',day:'numeric'}):''}</div>
+            </div>
+          </div>
+        ));
+      })()}
+    </div>
+  </div>}
   {showMyPosts&&<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
     <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,position:'sticky',top:0,zIndex:1}}>
       <button onClick={()=>setShowMyPosts(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
