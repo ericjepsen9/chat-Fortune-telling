@@ -2467,9 +2467,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           if(mode==='meihua'){setMhNum1('');setMhNum2('')}
           if(mode==='tarot'){setTarotCards([])}
           try{const s=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');delete s[mode];localStorage.setItem('yuanhe_mode_results',JSON.stringify(s))}catch(e){}
-        }} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',marginTop:16,fontSize:14,fontWeight:600,cursor:'pointer',
-          background:mode==='meihua'?'linear-gradient(135deg,#D97706,#F59E0B)':mode==='tarot'?'linear-gradient(135deg,#0D9488,#14B8A6)':`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,
-          color:'#fff',boxShadow:mode==='meihua'?'0 4px 14px rgba(217,119,6,0.3)':mode==='tarot'?'0 4px 14px rgba(13,148,136,0.3)':`0 4px 14px ${T.accent2}33`,letterSpacing:1}}>
+        }} style={{width:'100%',padding:'10px',borderRadius:10,border:`1.5px solid ${T.border}`,marginTop:12,fontSize:12,fontWeight:500,cursor:'pointer',
+          background:T.card,color:T.textSec}}>
           {mode==='meihua'?'🔄 重新起卦 · 新问题':mode==='tarot'?'🔄 重新抽牌 · 新解读':'🔄 清除报告 · 重新分析'}
         </button>
       </>}
