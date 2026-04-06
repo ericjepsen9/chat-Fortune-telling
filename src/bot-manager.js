@@ -32,7 +32,7 @@ load();
 
 function getAll() { return bots; }
 
-function getById(id) { return bots.find(b => b.id === id); }
+function getById(id) { return bots.find(b => String(b.id) === String(id)); }
 
 function create(data) {
   const bot = {
@@ -59,8 +59,8 @@ function create(data) {
 }
 
 function update(id, data) {
-  const bot = bots.find(b => b.id === id);
-  if (!bot) return { error: 'Bot不存在' };
+  const bot = bots.find(b => String(b.id) === String(id));
+  if (!bot) return { error: 'Bot不存在 (id:'+id+')' };
   if (data.name !== undefined) bot.name = data.name;
   if (data.age !== undefined) bot.age = parseInt(data.age);
   if (data.bio !== undefined) bot.bio = data.bio;
@@ -79,7 +79,7 @@ function update(id, data) {
 }
 
 function remove(id) {
-  const idx = bots.findIndex(b => b.id === id);
+  const idx = bots.findIndex(b => String(b.id) === String(id));
   if (idx < 0) return { error: 'Bot不存在' };
   bots.splice(idx, 1);
   save();
@@ -87,7 +87,7 @@ function remove(id) {
 }
 
 function toggle(id) {
-  const bot = bots.find(b => b.id === id);
+  const bot = bots.find(b => String(b.id) === String(id));
   if (!bot) return { error: 'Bot不存在' };
   bot.enabled = !bot.enabled;
   save();

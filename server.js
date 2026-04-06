@@ -485,20 +485,20 @@ app.post('/api/admin/bots', admin.adminAuth, (req, res) => {
 });
 
 app.post('/api/admin/bots/:id/update', admin.adminAuth, (req, res) => {
-  const result = botManager.update(parseInt(req.params.id), req.body);
+  const result = botManager.update(req.params.id, req.body);
   if (result.error) return res.status(400).json(result);
   admin.logAction(req.admin.id, 'update_bot', req.params.id, `编辑Bot: ${result.name}`);
   res.json(result);
 });
 
 app.post('/api/admin/bots/:id/toggle', admin.adminAuth, (req, res) => {
-  const result = botManager.toggle(parseInt(req.params.id));
+  const result = botManager.toggle(req.params.id);
   if (result.error) return res.status(400).json(result);
   res.json(result);
 });
 
 app.post('/api/admin/bots/:id/delete', admin.adminAuth, (req, res) => {
-  const result = botManager.remove(parseInt(req.params.id));
+  const result = botManager.remove(req.params.id);
   if (result.error) return res.status(400).json(result);
   admin.logAction(req.admin.id, 'delete_bot', req.params.id, '删除Bot');
   res.json(result);
