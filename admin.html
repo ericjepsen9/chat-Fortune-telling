@@ -698,12 +698,13 @@ function LLMPage(){
     {/* 维护模式 */}
     <div className="panel" style={{border:cfg.maintenance?.enabled?'2px solid #EF4444':undefined}}>
       <h3>🔧 维护模式</h3>
-      <div style={{display:'flex',alignItems:'center',gap:12}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
         <button onClick={()=>updateCfg({maintenance:{...cfg.maintenance,enabled:!cfg.maintenance?.enabled}})} className={`btn-sm ${cfg.maintenance?.enabled?'btn-danger':'btn-primary'}`}>
           {cfg.maintenance?.enabled?'🔴 关闭维护':'🟢 开启维护'}
         </button>
         <span style={{fontSize:12,color:'#6B7280'}}>{cfg.maintenance?.enabled?'用户端已显示维护页面':'系统正常运行'}</span>
       </div>
+      <input value={cfg.maintenance?.message||''} onChange={e=>setCfg({...cfg,maintenance:{...cfg.maintenance,message:e.target.value}})} onBlur={()=>updateCfg({maintenance:cfg.maintenance})} placeholder="维护提示消息" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12}}/>
     </div>
 
     {/* 功能开关 */}
@@ -737,27 +738,25 @@ function LLMPage(){
         <button onClick={()=>updateCfg({bot:{...cfg.bot,proactiveMessages:!cfg.bot?.proactiveMessages}})} className="btn-sm btn-ghost">{cfg.bot?.proactiveMessages?'✅ 主动消息':'❌ 主动消息'}</button>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:12}}>
-        <div>回复延迟: {cfg.bot?.replyDelayMin/1000}s - {cfg.bot?.replyDelayMax/1000}s</div>
-        <div>活跃时段: {cfg.bot?.activeHourStart}:00 - {cfg.bot?.activeHourEnd}:00</div>
+        {[['replyDelayMin','最短回复(ms)',2000],['replyDelayMax','最长回复(ms)',7000],['typingDurationMin','最短打字(ms)',2000],['typingDurationMax','最长打字(ms)',6000],['activeHourStart','活跃开始(时)',8],['activeHourEnd','活跃结束(时)',23]].map(([k,l,def])=>(
+          <div key={k} style={{padding:'6px 8px',background:'#0f0f1a',borderRadius:6}}>
+            <div style={{color:'#6B7280',fontSize:10,marginBottom:2}}>{l}</div>
+            <input type="number" value={cfg.bot?.[k]??def} onChange={e=>setCfg({...cfg,bot:{...cfg.bot,[k]:parseInt(e.target.value)||0}})} onBlur={()=>updateCfg({bot:cfg.bot})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid #2D2D3F',background:'transparent',color:'#A78BFA',fontSize:13,fontWeight:700,outline:'none'}}/>
+          </div>
+        ))}
       </div>
     </div>
 
     {/* LLM限额 */}
     <div className="panel">
-      <h3>📊 LLM限额</h3>
+      <h3>📊 LLM限额 <span style={{fontSize:10,color:'#6B7280',fontWeight:400}}>（0=不限）</span></h3>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,fontSize:12}}>
-        <div style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
-          <div style={{color:'#6B7280',fontSize:10}}>每天占卜次数</div>
-          <div style={{fontWeight:700,color:'#A78BFA'}}>{cfg.limits?.divinationsPerDay||'不限'}</div>
-        </div>
-        <div style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
-          <div style={{color:'#6B7280',fontSize:10}}>每报告追问</div>
-          <div style={{fontWeight:700,color:'#A78BFA'}}>{cfg.limits?.followUpsPerReport||20}</div>
-        </div>
-        <div style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
-          <div style={{color:'#6B7280',fontSize:10}}>每天追问</div>
-          <div style={{fontWeight:700,color:'#A78BFA'}}>{cfg.limits?.followUpsPerDay||'不限'}</div>
-        </div>
+        {[['divinationsPerDay','每天占卜次数',0],['followUpsPerReport','每报告追问',20],['followUpsPerDay','每天追问总数',0]].map(([k,l,def])=>(
+          <div key={k} style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
+            <div style={{color:'#6B7280',fontSize:10,marginBottom:2}}>{l}</div>
+            <input type="number" value={cfg.limits?.[k]??def} onChange={e=>setCfg({...cfg,limits:{...cfg.limits,[k]:parseInt(e.target.value)||0}})} onBlur={()=>updateCfg({limits:cfg.limits})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid #2D2D3F',background:'transparent',color:'#A78BFA',fontSize:16,fontWeight:700,outline:'none'}}/>
+          </div>
+        ))}
       </div>
     </div>
 
@@ -777,6 +776,24 @@ function LLMPage(){
           <div style={{color:'#e0e0e0',marginTop:4,maxHeight:60,overflow:'hidden'}}>{s.preview||'无预览'}</div>
         </div>)}
       </div>}
+    </div>
+
+    {/* 自动标记规则 */}
+    <div className="panel">
+      <h3>🛡️ 自动标记规则 <span style={{fontSize:10,color:'#6B7280',fontWeight:400}}>（正则表达式，匹配的消息/帖子自动标记）</span></h3>
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        {(cfg.autoFlag?.patterns||[]).map((p,i)=>(
+          <div key={i} style={{display:'flex',gap:6,alignItems:'center'}}>
+            <input value={p} onChange={e=>{const ps=[...(cfg.autoFlag?.patterns||[])];ps[i]=e.target.value;setCfg({...cfg,autoFlag:{...cfg.autoFlag,patterns:ps}})}} onBlur={()=>updateCfg({autoFlag:cfg.autoFlag})} style={{flex:1,padding:'6px 8px',borderRadius:6,border:'1px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:11,fontFamily:'monospace'}}/>
+            <button onClick={()=>{const ps=(cfg.autoFlag?.patterns||[]).filter((_,j)=>j!==i);const nc={...cfg,autoFlag:{...cfg.autoFlag,patterns:ps}};setCfg(nc);updateCfg({autoFlag:nc.autoFlag})}} style={{background:'none',border:'none',color:'#EF4444',cursor:'pointer',fontSize:14}}>✕</button>
+          </div>
+        ))}
+        <button onClick={()=>{const ps=[...(cfg.autoFlag?.patterns||[]),''];setCfg({...cfg,autoFlag:{...cfg.autoFlag,patterns:ps}})}} className="btn-sm btn-ghost" style={{alignSelf:'flex-start',fontSize:11}}>+ 添加规则</button>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
+        <span style={{fontSize:11,color:'#6B7280'}}>自动标记</span>
+        <button onClick={()=>updateCfg({autoFlag:{...cfg.autoFlag,enabled:!cfg.autoFlag?.enabled}})} style={{padding:'2px 10px',borderRadius:6,border:'none',fontSize:10,fontWeight:600,cursor:'pointer',background:cfg.autoFlag?.enabled!==false?'#34D39930':'#EF444430',color:cfg.autoFlag?.enabled!==false?'#34D399':'#EF4444'}}>{cfg.autoFlag?.enabled!==false?'开':'关'}</button>
+      </div>
     </div>
 
     {/* LLM Provider */}
