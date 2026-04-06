@@ -201,4 +201,40 @@ function todayFortune(profile) {
   }
 }
 
-module.exports = { quickMatch, batchMatch, todayFortune, fallbackMatch };
+// ============ i18n层：对输出结果做本地化映射 ============
+const I18N_EN = {
+  dimensions: { '日干配合':'Day Master Harmony', '地支关系':'Branch Relationship', '五行互补':'Element Balance', '大运同步':'Life Cycle Sync', '纳音配合':'Tone Harmony' },
+  tags: { '天干合':'Stem Union', '日干相生':'Day Master Support', '地支和谐':'Branch Harmony', '五行互补':'Element Balance', '大运同步':'Life Sync', '上等缘分':'Superior Match', '正缘特征':'Soulmate Sign', '生肖三合':'Zodiac Trine', '生肖六合':'Zodiac Sextile', '生肖相冲':'Zodiac Clash' },
+  compatibility: { '同类共鸣':'Kindred Spirits', '五行互补':'Yin-Yang Balance', '天生一对':'Natural Pair', '成长型':'Growth Match', '待深入分析':'Needs Deeper Analysis' },
+  compDesc: { '性格相似，容易理解对方':'Similar personalities, easy mutual understanding', '你缺的TA刚好有':'They have what you lack', '日干相合，天然吸引':'Natural cosmic attraction', '需要磨合，但有成长空间':'Needs work, but has great potential', '完整匹配需要更多信息':'Complete matching needs more details' },
+  grades: { '上等':'Excellent', '良好':'Good', '一般':'Fair', '需磨合':'Needs Work' },
+  gradeDescs: { '缘分很深':'Deep connection', '值得了解':'Worth exploring', '需要磨合':'Needs work' },
+  aspects: { '事业':'Career', '感情':'Love', '财运':'Finance', '健康':'Health', '人际':'Social', '学业':'Study' },
+  lucky: { '大吉':'Great Day', '吉':'Good Day', '中吉':'Favorable', '小吉':'Okay', '平':'Neutral', '小凶':'Challenging' },
+  wxColor: { '绿色':'Green', '红色':'Red', '黄色':'Yellow', '白色':'White', '黑色/蓝色':'Blue/Black', '紫色':'Purple' },
+  wxDir: { '东方':'East', '南方':'South', '中央':'Center', '西方':'West', '北方':'North', '不定':'Variable' },
+  strength: { '身强':'Strong', '身弱':'Weak', '中和':'Balanced' },
+  wx: { '木':'Wood', '火':'Fire', '土':'Earth', '金':'Metal', '水':'Water' },
+};
+
+function localizeResult(result, lang) {
+  if (!lang || lang === 'zh-CN' || !result) return result;
+  const L = I18N_EN;
+  const r = { ...result };
+  if (r.dimensions) r.dimensions = r.dimensions.map(d => ({ ...d, name: L.dimensions[d.name] || d.name }));
+  if (r.tags) r.tags = r.tags.map(t => L.tags[t] || t);
+  if (r.compatibility) r.compatibility = { ...r.compatibility, type: L.compatibility[r.compatibility.type] || r.compatibility.type, desc: L.compDesc[r.compatibility.desc] || r.compatibility.desc };
+  if (r.grade) r.grade = L.grades[r.grade] || r.grade;
+  if (r.gradeDesc) r.gradeDesc = L.gradeDescs[r.gradeDesc] || r.gradeDesc;
+  if (r.aspects) r.aspects = r.aspects.map(a => ({ ...a, name: L.aspects[a.name] || a.name }));
+  if (r.lucky) r.lucky = L.lucky[r.lucky] || r.lucky;
+  if (r.luckyColor2) r.luckyColor2 = L.wxColor[r.luckyColor2] || r.luckyColor2;
+  if (r.luckyDirection) r.luckyDirection = L.wxDir[r.luckyDirection] || r.luckyDirection;
+  if (r.strength) r.strength = L.strength[r.strength] || r.strength;
+  if (r.element) r.element = L.wx[r.element] || r.element;
+  if (r.personA?.element) r.personA = { ...r.personA, element: L.wx[r.personA.element] || r.personA.element };
+  if (r.personB?.element) r.personB = { ...r.personB, element: L.wx[r.personB.element] || r.personB.element };
+  return r;
+}
+
+module.exports = { quickMatch, batchMatch, todayFortune, fallbackMatch, localizeResult };

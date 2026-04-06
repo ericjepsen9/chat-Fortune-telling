@@ -82,10 +82,10 @@ class ErrorBoundary extends React.Component{
       const T_=THEMES[getThemeMode()];
       return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:T_.bg,color:T_.text,padding:40,textAlign:'center'}},
         React.createElement('div',{style:{fontSize:48,marginBottom:16}},'⚠️'),
-        React.createElement('div',{style:{fontSize:18,fontWeight:700,marginBottom:8}},'出了点问题'),
-        React.createElement('div',{style:{fontSize:13,color:T_.textSec,marginBottom:20,lineHeight:1.6}},(this.state.error?.message||'').substring(0,100)||'应用遇到了未知错误'),
-        React.createElement('button',{onClick:()=>{this.setState({hasError:false,error:null})},style:{padding:'12px 28px',borderRadius:14,border:'none',background:T_.accent2,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}},'重新加载'),
-        React.createElement('button',{onClick:()=>{localStorage.clear();window.location.reload()},style:{marginTop:10,padding:'10px 24px',borderRadius:14,border:`1px solid ${T_.border}`,background:'none',color:T_.textSec,fontSize:12,cursor:'pointer'}},'清除数据并重启')
+        React.createElement('div',{style:{fontSize:18,fontWeight:700,marginBottom:8}},t('errTitle')),
+        React.createElement('div',{style:{fontSize:13,color:T_.textSec,marginBottom:20,lineHeight:1.6}},(this.state.error?.message||'').substring(0,100)||t('errUnknown')),
+        React.createElement('button',{onClick:()=>{this.setState({hasError:false,error:null})},style:{padding:'12px 28px',borderRadius:14,border:'none',background:T_.accent2,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}},t('errReload')),
+        React.createElement('button',{onClick:()=>{localStorage.clear();window.location.reload()},style:{marginTop:10,padding:'10px 24px',borderRadius:14,border:`1px solid ${T_.border}`,background:'none',color:T_.textSec,fontSize:12,cursor:'pointer'}},t('errClearRestart'))
       );
     }
     return this.props.children;
@@ -465,7 +465,8 @@ const ChatStore={
 function ScoreRing({score,size=60,stroke=4}){
   const r=(size-stroke)/2,c=2*Math.PI*r;
   const color=score>=90?'#FF6B6B':score>=80?'#FFB347':score>=70?'#4ECDC4':'#9CA3AF';
-  const label=score>=90?'天作之合':score>=80?'良缘佳偶':score>=70?'有缘有份':'需要磨合';
+  const gl=t('matchGradeLabels')||['天作之合','良缘佳偶','有缘有份','需要磨合'];
+  const label=score>=90?gl[0]:score>=80?gl[1]:score>=70?gl[2]:gl[3];
   return(<div style={{position:'relative',width:size,height:size,display:'inline-flex',alignItems:'center',justifyContent:'center'}}>
     <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={stroke}/><circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={c} strokeDashoffset={c*(1-score/100)} strokeLinecap="round" style={{transition:'stroke-dashoffset 1s ease'}}/></svg>
     <div style={{position:'absolute',textAlign:'center'}}><div style={{fontSize:size*0.28,fontWeight:700,color:'#fff'}}>{score}</div><div style={{fontSize:size*0.12,color:'rgba(255,255,255,0.7)'}}>{label}</div></div>
@@ -490,7 +491,7 @@ function usePullRefresh(onRefresh){
   const onTouchStart=(e)=>{if(scrollRef.current?.scrollTop<=0)startY.current=e.touches[0].clientY};
   const onTouchMove=(e)=>{if(startY.current===0)return;const dy=e.touches[0].clientY-startY.current;if(dy>0&&scrollRef.current?.scrollTop<=0){setPullDist(Math.min(dy*0.4,60));if(dy>80)setPulling(true)}};
   const onTouchEnd=()=>{if(pulling&&onRefresh){onRefresh();haptic('medium')}setPullDist(0);setPulling(false);startY.current=0};
-  const pullIndicator=pullDist>5?React.createElement('div',{style:{textAlign:'center',padding:`${Math.min(pullDist,50)}px 0 8px`,transition:pulling?'none':'padding .3s',fontSize:12,color:T.textThi}},pulling?'🔄 松手刷新':'↓ 下拉刷新'):null;
+  const pullIndicator=pullDist>5?React.createElement('div',{style:{textAlign:'center',padding:`${Math.min(pullDist,50)}px 0 8px`,transition:pulling?'none':'padding .3s',fontSize:12,color:T.textThi}},pulling?t('pullRelease'):t('pullDown')):null;
   return{scrollRef,onTouchStart,onTouchMove,onTouchEnd,pullIndicator};
 }
 
@@ -503,13 +504,13 @@ function EmptyState({icon,title,desc,action,actionLabel}){
   </div>);
 }
 function ErrorState({error,onRetry}){
-  const isNetwork=error?.includes?.('网络')||error?.includes?.('连接')||error?.includes?.('fetch');
-  const isTimeout=error?.includes?.('超时');
+  const isNetwork=error?.includes?.('网络')||error?.includes?.('连接')||error?.includes?.('fetch')||error?.includes?.('Network');
+  const isTimeout=error?.includes?.('超时')||error?.includes?.('timeout');
   return(<div style={{textAlign:'center',padding:'40px 20px'}}>
     <div style={{fontSize:36,marginBottom:12}}>{isNetwork?'📡':isTimeout?'⏳':'⚠️'}</div>
-    <div style={{fontSize:15,fontWeight:600,color:T.text}}>{isNetwork?'网络连接异常':isTimeout?'请求超时':'出了点问题'}</div>
-    <div style={{fontSize:12,color:T.textThi,marginTop:6,lineHeight:1.6}}>{error||'请稍后再试'}</div>
-    {onRetry&&<button onClick={onRetry} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>重试</button>}
+    <div style={{fontSize:15,fontWeight:600,color:T.text}}>{isNetwork?t('errNetwork'):isTimeout?t('errTimeout'):t('errGeneric')}</div>
+    <div style={{fontSize:12,color:T.textThi,marginTop:6,lineHeight:1.6}}>{error||t('errRetryHint')}</div>
+    {onRetry&&<button onClick={onRetry} style={{marginTop:14,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>{t('retry')}</button>}
   </div>);
 }
 function Skeleton({width,height,radius,style}){
@@ -631,7 +632,7 @@ function OnboardingScreen({onDone}){
     <div style={{height:'100%',display:'flex',flexDirection:'column',background:p.bg,transition:'background .5s ease',overflow:'hidden'}}>
       {/* Skip */}
       <div style={{padding:'48px 20px 0',textAlign:'right',flexShrink:0}}>
-        {!isLast&&<button onClick={onDone} style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:16,padding:'6px 16px',color:'rgba(255,255,255,0.8)',fontSize:12,cursor:'pointer'}}>跳过</button>}
+        {!isLast&&<button onClick={onDone} style={{background:'rgba(255,255,255,0.15)',border:'none',borderRadius:16,padding:'6px 16px',color:'rgba(255,255,255,0.8)',fontSize:12,cursor:'pointer'}}>{t('onboardSkip')}</button>}
       </div>
       {/* Content */}
       <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'0 40px',textAlign:'center'}}>
@@ -647,7 +648,7 @@ function OnboardingScreen({onDone}){
         </div>
         {/* Button */}
         <button onClick={()=>{if(isLast)onDone();else setStep(s=>s+1)}} style={{width:'100%',height:52,borderRadius:26,border:'none',fontSize:16,fontWeight:700,cursor:'pointer',background:'rgba(255,255,255,0.95)',color:p.bg.includes('8B5CF6')?'#7C3AED':p.bg.includes('EC4899')?'#DB2777':'#D97706',boxShadow:'0 4px 20px rgba(0,0,0,0.15)',transition:'all .3s'}}>
-          {isLast?'开始探索命运 →':'下一步'}
+          {isLast?t('onboardStart'):t('onboardNext')}
         </button>
       </div>
     </div>
@@ -691,12 +692,12 @@ function BirthScreen({onSubmit}){
   useEffect(()=>{if(f.year&&f.month&&f.day&&f.hour)apiGet(`/api/lunar?year=${f.year}&month=${f.month}&day=${f.day}&hour=${f.hour}`).then(sL).catch(()=>sL(null));else sL(null)},[f.year,f.month,f.day,f.hour]);
   const validate=()=>{
     const y=+f.year,m=+f.month,d=+f.day,h=+f.hour;
-    if(!f.year||!f.month||!f.day)return'请选择出生日期';
-    if(y<1900||y>2030)return'年份超出范围';
-    if(f.hour!==''&&(h<0||h>23))return'时辰请输入0-23';
+    if(!f.year||!f.month||!f.day)return t('validBirthDate');
+    if(y<1900||y>2030)return t('validYearRange');
+    if(f.hour!==''&&(h<0||h>23))return t('validHourRange');
     const today=new Date();const birth=new Date(y,m-1,d);
     const age=Math.floor((today-birth)/(365.25*24*60*60*1000));
-    if(age<13)return'根据相关法规，本应用仅向13岁及以上用户提供服务。';
+    if(age<13)return t('ageGate');
     return'';
   };
   const submit=()=>{
@@ -811,25 +812,25 @@ function LoginScreen({onLogin}){
       {/* Logo */}
       <div className="anim-in" style={{textAlign:'center',marginBottom:48}}>
         <div style={{fontSize:48,marginBottom:12}}>🔮</div>
-        <div className="serif" style={{fontSize:28,fontWeight:700,color:T.text}}>缘合</div>
-        <div style={{fontSize:13,color:T.textSec,marginTop:8}}>命理契合 · 缘分天成</div>
+        <div className="serif" style={{fontSize:28,fontWeight:700,color:T.text}}>{t('appName')}</div>
+        <div style={{fontSize:13,color:T.textSec,marginTop:8}}>{t('appSlogan')}</div>
       </div>
 
       {step==='phone'&&<div className="anim-in">
-        <div style={{fontSize:15,fontWeight:600,color:T.text,marginBottom:16}}>手机号登录</div>
+        <div style={{fontSize:15,fontWeight:600,color:T.text,marginBottom:16}}>{t('loginTitle')}</div>
         <div style={{position:'relative',marginBottom:16}}>
           <span style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',fontSize:14,color:T.textSec}}>+86</span>
           <input
             type="tel" maxLength={11} value={phone}
             onChange={e=>setPhone(e.target.value.replace(/\D/g,''))}
-            placeholder="请输入手机号"
+            placeholder={t('loginPhone')}
             style={{width:'100%',padding:'14px 14px 14px 52px',borderRadius:14,border:`1.5px solid ${T.border}`,background:T.card,fontSize:15,color:T.text,outline:'none'}}
           />
         </div>
         {err&&<div style={{fontSize:12,color:'#EF4444',marginBottom:12}}>{err}</div>}
         <button onClick={sendCode} disabled={!phoneValid||sending}
           style={{width:'100%',padding:'15px',borderRadius:14,border:'none',background:phoneValid?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.border,color:phoneValid?'#fff':T.textThi,fontSize:15,fontWeight:600,cursor:phoneValid?'pointer':'default'}}>
-          {sending?'发送中…':'获取验证码'}
+          {sending?t('loginSending'):t('loginGetCode')}
         </button>
         <div style={{fontSize:11,color:T.textThi,textAlign:'center',marginTop:20,lineHeight:1.6}}>
           登录即表示同意《用户协议》和《隐私政策》
@@ -838,7 +839,7 @@ function LoginScreen({onLogin}){
 
       {step==='code'&&<div className="anim-in">
         <button onClick={()=>{setStep('phone');setCode('');setErr('')}} style={{background:'none',border:'none',fontSize:13,color:T.textSec,cursor:'pointer',marginBottom:16}}>← 返回修改</button>
-        <div style={{fontSize:15,fontWeight:600,color:T.text,marginBottom:6}}>输入验证码</div>
+        <div style={{fontSize:15,fontWeight:600,color:T.text,marginBottom:6}}>{t('loginCode')}</div>
         <div style={{fontSize:13,color:T.textSec,marginBottom:20}}>已发送到 {phone.replace(/(\d{3})\d{4}(\d{4})/,'$1****$2')}</div>
         {/* 6-digit code input */}
         <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:20}}>
@@ -858,7 +859,7 @@ function LoginScreen({onLogin}){
         {err&&<div style={{fontSize:12,color:'#EF4444',marginBottom:12,textAlign:'center'}}>{err}</div>}
         <button onClick={verify} disabled={code.length!==6||verifying}
           style={{width:'100%',padding:'15px',borderRadius:14,border:'none',background:code.length===6?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.border,color:code.length===6?'#fff':T.textThi,fontSize:15,fontWeight:600,cursor:code.length===6?'pointer':'default'}}>
-          {verifying?'验证中…':'登录'}
+          {verifying?t('loginVerifying'):t('loginSubmit')}
         </button>
         <div style={{textAlign:'center',marginTop:16}}>
           <button onClick={()=>{if(countdown<=0)sendCode()}} disabled={countdown>0}
@@ -1690,6 +1691,31 @@ const LOCALES={
       // 免责
       disclaimer:'⚠️ *以上分析仅供参考娱乐，不构成任何专业建议。重大人生决策请结合实际情况，必要时咨询专业人士。*',
       ageGate:'根据相关法规，本应用仅向13岁及以上用户提供服务。',
+      // 错误状态
+      errTitle:'出了点问题',errUnknown:'应用遇到了未知错误',errReload:'重新加载',errClearRestart:'清除数据并重启',
+      errNetwork:'网络连接异常',errTimeout:'请求超时',errGeneric:'出了点问题',errRetryHint:'请稍后再试',
+      errServerDown:'服务器未启动或需要重启',
+      // 下拉刷新
+      pullRelease:'🔄 松手刷新',pullDown:'↓ 下拉刷新',
+      // 横屏提示
+      rotateTip:'请旋转手机至竖屏使用 📱',
+      // 匹配
+      matchGradeLabels:['天作之合','良缘佳偶','有缘有份','需要磨合'],
+      matchPotential:'潜力之缘',
+      matchDescHigh:'天作之合，千万别错过！',matchDescMid:'有缘有份，值得深入了解',matchDescLow:'命理相合，试试聊聊？',
+      matchAge:'年龄',matchSign:'星座',matchDist:'距离',matchElement:'五行',matchScoreSuffix:'分',
+      // Onboarding
+      onboardSkip:'跳过',onboardNext:'下一步',onboardStart:'开始探索命运 →',
+      // 登录
+      loginSending:'发送中…',loginGetCode:'获取验证码',loginVerifying:'验证中…',
+      // 资料验证
+      validBirthDate:'请选择出生日期',validYearRange:'年份超出范围',validHourRange:'时辰请输入0-23',
+      // 塔罗
+      tarotConfirm:'✦ 确认{n}张牌',tarotContinue:'继续选牌',
+      // 今日状态
+      todayStatus:'今日状态',
+      // 强弱
+      strong:'身强',weak:'身弱',balanced:'中和',
     },
   },
 
@@ -1751,6 +1777,21 @@ const LOCALES={
       onboard3:{title:'Begin the Journey',desc:'Daily readings · Personal reports · Cosmic dating\nYour destiny starts here'},
       disclaimer:'⚠️ *For entertainment purposes only. Not professional advice. For major life decisions, consult qualified professionals.*',
       ageGate:'You must be 13 or older to use this app.',
+      errTitle:'Something went wrong',errUnknown:'An unexpected error occurred',errReload:'Reload',errClearRestart:'Clear data & restart',
+      errNetwork:'Network error',errTimeout:'Request timed out',errGeneric:'Something went wrong',errRetryHint:'Please try again later',
+      errServerDown:'Server is not running',
+      pullRelease:'🔄 Release to refresh',pullDown:'↓ Pull to refresh',
+      rotateTip:'Please rotate to portrait mode 📱',
+      matchGradeLabels:['Soulmates','Great Match','Good Connection','Needs Work'],
+      matchPotential:'Potential Match',
+      matchDescHigh:'A cosmic match — don\'t miss this!',matchDescMid:'Great connection, worth exploring',matchDescLow:'Promising match, start chatting?',
+      matchAge:'Age',matchSign:'Sign',matchDist:'Distance',matchElement:'Element',matchScoreSuffix:'pts',
+      onboardSkip:'Skip',onboardNext:'Next',onboardStart:'Explore My Destiny →',
+      loginSending:'Sending…',loginGetCode:'Get code',loginVerifying:'Verifying…',
+      validBirthDate:'Please select your birth date',validYearRange:'Year out of range',validHourRange:'Hour must be 0-23',
+      tarotConfirm:'✦ Confirm {n} cards',tarotContinue:'Pick more cards',
+      todayStatus:'Today\'s Status',
+      strong:'Strong',weak:'Weak',balanced:'Balanced',
     },
   },
 };

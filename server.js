@@ -968,9 +968,9 @@ app.get('/api/lunar', (req, res) => {
 // API：匹配评分
 app.post('/api/match', (req, res) => {
   try {
-    const { profileA, profileB } = req.body;
+    const { profileA, profileB, lang } = req.body;
     const matching = require('./src/engines/matching');
-    const result = matching.quickMatch(profileA, profileB);
+    const result = matching.localizeResult(matching.quickMatch(profileA, profileB), lang);
     res.type('application/json; charset=utf-8').json(result);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -980,9 +980,11 @@ app.post('/api/match', (req, res) => {
 // API：批量匹配（首页卡片）
 app.post('/api/batch-match', (req, res) => {
   try {
-    const { profile, candidates } = req.body;
+    const { profile, candidates, lang } = req.body;
     const matching = require('./src/engines/matching');
-    const results = matching.batchMatch(profile, candidates);
+    const results = matching.batchMatch(profile, candidates).map(r => ({
+      ...r, matchResult: matching.localizeResult(r.matchResult, lang),
+    }));
     res.type('application/json; charset=utf-8').json(results);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -992,9 +994,9 @@ app.post('/api/batch-match', (req, res) => {
 // API：今日运势
 app.post('/api/fortune', (req, res) => {
   try {
-    const profile = req.body;
+    const { lang, ...profile } = req.body;
     const matching = require('./src/engines/matching');
-    const result = matching.todayFortune(profile);
+    const result = matching.localizeResult(matching.todayFortune(profile), lang);
     res.type('application/json; charset=utf-8').json(result);
   } catch (e) {
     res.status(400).json({ error: e.message });
