@@ -660,13 +660,13 @@ function UsersPage(){
     {detail&&<UserDetailModal detail={detail} onClose={()=>setDetail(null)} onBan={()=>{setDetail(null);setBanModal(detail)}} onEdit={()=>{setDetail(null);setEditModal({...detail,...detail.profile,adminTags:detail.adminTags,adminNote:detail.adminNote})}} onGrantVip={()=>{setDetail(null);setVipModal({userId:detail.id,userName:detail.profile?.name,tier:detail.vip?.tier||'basic'})}} onRefresh={()=>openDetail(detail.id)} onReload={load}/>}
 
     {/* 封禁弹窗 */}
-    {banModal&&<BanModal user={banModal} onClose={()=>setBanModal(null)} onDone={()=>{setBanModal(null);showToast('已封禁','success');load()}}/>}
+    {banModal&&<BanModal user={banModal} onClose={()=>setBanModal(null)} onDone={()=>{setBanModal(null);showToast('已封禁','success');load();if(detail)openDetail(detail.id)}}/>}
 
     {/* 编辑弹窗 */}
-    {editModal&&<EditModal user={editModal} onClose={()=>setEditModal(null)} onDone={()=>{setEditModal(null);showToast('已保存','success');load()}}/>}
+    {editModal&&<EditModal user={editModal} onClose={()=>setEditModal(null)} onDone={()=>{setEditModal(null);showToast('已保存','success');load();if(detail)openDetail(detail.id)}}/>}
 
     {/* VIP弹窗 */}
-    {vipModal&&<GrantVipModal data={vipModal} onClose={()=>setVipModal(null)} onDone={()=>{setVipModal(null);load()}}/>}
+    {vipModal&&<GrantVipModal data={vipModal} onClose={()=>setVipModal(null)} onDone={()=>{setVipModal(null);load();if(detail)openDetail(detail.id)}}/>}
   </div>);
 }
 
@@ -806,8 +806,11 @@ function ChatPage(){
   const [activeConv,setActiveConv]=useState(null);
   const [showSensitive,setShowSensitive]=useState(false);
   const [loading,setLoading]=useState(false);
+  const [deleting,setDeleting]=useState(null);
   const limit=20;
   const debouncedSearch=useDebounce(search);
+  // Esc关闭弹窗
+  useEffect(()=>{const h=e=>{if(e.key==='Escape'){if(showSensitive)setShowSensitive(false);else if(activeConv)setActiveConv(null)}};document.addEventListener('keydown',h);return()=>document.removeEventListener('keydown',h)},[showSensitive,activeConv]);
 
   const load=useCallback(()=>{
     setLoading(true);
@@ -816,13 +819,15 @@ function ChatPage(){
   useEffect(()=>{load()},[load]);
 
   const openConv=(key)=>{
-    apiGet('/api/admin/conversations/'+encodeURIComponent(key)).then(setActiveConv).catch(()=>{});
+    apiGet('/api/admin/conversations/'+encodeURIComponent(key)).then(d=>{if(d&&!d.error)setActiveConv(d)}).catch(()=>showToast('加载失败','error'));
   };
   const deleteMsg=(key,msgId)=>{
-    if(!confirm('确定删除这条消息？'))return;
+    setDeleting(msgId);
     apiPost('/api/admin/conversations/'+encodeURIComponent(key)+'/delete-message',{messageId:msgId}).then(()=>{
-      openConv(key); // 刷新
-    });
+      showToast('已删除','success');
+      openConv(key);
+      setDeleting(null);
+    }).catch(()=>setDeleting(null));
   };
 
   const totalPages=Math.ceil((data.total||0)/limit);
@@ -830,6 +835,7 @@ function ChatPage(){
   return(<div className="container">
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>💬 聊天管理
       <button className="btn-sm btn-ghost" style={{marginLeft:12,fontSize:12}} onClick={()=>setShowSensitive(true)}>🛡️ 敏感词管理</button>
+      <button className="btn-sm btn-ghost" style={{marginLeft:6,fontSize:12}} onClick={load}>🔄 刷新</button>
     </h2>
 
     <div className="panel">
@@ -871,7 +877,7 @@ function ChatPage(){
               {m.msgType==='image'&&<div style={{fontSize:11,color:'#6B7280'}}>[图片消息]</div>}
               {m.msgType==='voice'&&<div style={{fontSize:11,color:'#6B7280'}}>[语音 {m.voiceDuration}″]</div>}
             </div>
-            <button className="btn-sm btn-danger" style={{fontSize:10,padding:'2px 8px',flexShrink:0}} onClick={()=>deleteMsg(activeConv.key,m.id)}>删除</button>
+            <button className="btn-sm btn-danger" style={{fontSize:10,padding:'2px 8px',flexShrink:0}} disabled={deleting===m.id} onClick={()=>{if(confirm('删除此消息？'))deleteMsg(activeConv.key,m.id)}}>{deleting===m.id?'…':'删除'}</button>
           </div>
         ))}
         {(!activeConv.messages||activeConv.messages.length===0)&&<div style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无消息</div>}
@@ -921,19 +927,21 @@ function ContentPage(){
   const [reportStatus,setReportStatus]=useState('pending');
   const [page,setPage]=useState(1);
 
-  const loadPosts=()=>apiGet(`/api/admin/posts?search=${encodeURIComponent(search)}&page=${page}&limit=20`).then(setPosts).catch(()=>{});
-  const loadReports=()=>apiGet(`/api/admin/reports?status=${reportStatus}&page=${page}&limit=20`).then(setReports).catch(()=>{});
+  const loadPosts=()=>apiGet(`/api/admin/posts?search=${encodeURIComponent(search)}&page=${page}&limit=20`).then(d=>{if(d?.items)setPosts(d)}).catch(()=>{});
+  const loadReports=()=>apiGet(`/api/admin/reports?status=${reportStatus}&page=${page}&limit=20`).then(d=>{if(d?.items)setReports(d)}).catch(()=>{});
   useEffect(()=>{if(tab==='posts')loadPosts();else loadReports()},[tab,search,reportStatus,page]);
 
-  const deletePost=(id)=>{if(!confirm('确定删除？'))return;apiPost('/api/admin/posts/'+id+'/delete',{}).then(loadPosts)};
-  const pinPost=(id,pinned)=>apiPost('/api/admin/posts/'+id+'/pin',{pinned}).then(loadPosts);
+  const deletePost=(id)=>{if(!confirm('确定删除该帖子？'))return;apiPost('/api/admin/posts/'+id+'/delete',{}).then(()=>{showToast('已删除','success');loadPosts()})};
+  const pinPost=(id,pinned)=>apiPost('/api/admin/posts/'+id+'/pin',{pinned}).then(()=>{showToast(pinned?'已置顶':'已取消置顶','success');loadPosts()});
   const resolveReport=(id,status)=>{
     const resolution=status==='resolved'?prompt('处理说明(可选):'):'';
-    apiPost('/api/admin/reports/'+id+'/resolve',{status,resolution:resolution||''}).then(loadReports);
+    apiPost('/api/admin/reports/'+id+'/resolve',{status,resolution:resolution||''}).then(()=>{showToast('已处理','success');loadReports()});
   };
 
   return(<div className="container">
-    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>📋 内容审核</h2>
+    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>📋 内容审核
+      <button className="btn-sm btn-ghost" style={{marginLeft:12,fontSize:12}} onClick={()=>{loadPosts();loadReports()}}>🔄 刷新</button>
+    </h2>
     <div style={{display:'flex',gap:8,marginBottom:12}}>
       <button className={`btn-sm ${tab==='posts'?'btn-primary':'btn-ghost'}`} onClick={()=>{setTab('posts');setPage(1)}}>帖子管理</button>
       <button className={`btn-sm ${tab==='reports'?'btn-primary':'btn-ghost'}`} onClick={()=>{setTab('reports');setPage(1)}}>
@@ -1079,7 +1087,8 @@ function LLMPage(){
         {(testing||testResult)&&<div style={{marginTop:12,padding:12,background:testResult?.ok?'#34D39910':'#EF444410',borderRadius:8,border:`1px solid ${testResult?.ok?'#34D39930':'#EF444430'}`}}>
           {testing?<span><span className="spinner" style={{marginRight:8}}/>正在测试连接…</span>:
           testResult?.ok?<div style={{fontSize:12}}>
-            <span style={{color:'#34D399',fontWeight:600}}>连接成功</span> · 耗时 {testResult.time}ms
+            <span style={{color:testResult.time>10000?'#F59E0B':testResult.time>5000?'#F59E0B':'#34D399',fontWeight:600}}>{testResult.time>10000?'⚠️ 连接成功(过慢!)':testResult.time>5000?'连接成功(较慢)':'连接成功'}</span> · 耗时 <b>{testResult.time>1000?(testResult.time/1000).toFixed(1)+'s':testResult.time+'ms'}</b>
+            {testResult.time>10000&&<div style={{color:'#F59E0B',marginTop:4,fontSize:11}}>响应超过10秒，生产环境可能导致超时</div>}
             <div style={{color:'#9CA3AF',marginTop:4}}>回复: {testResult.reply}</div>
           </div>:<div style={{fontSize:12}}>
             <span style={{color:'#EF4444',fontWeight:600}}>连接失败</span> · 耗时 {testResult?.time}ms
@@ -1399,7 +1408,7 @@ function ProviderModal({provider,onClose,onDone,testFn,testResult,testing}){
     {/* 测试结果 */}
     {(localTesting||localTest)&&<div style={{marginTop:10,padding:10,background:localTest?.ok?'#34D39910':'#EF444410',borderRadius:8,fontSize:12}}>
       {localTesting?<span><span className="spinner" style={{marginRight:6}}/>测试中…</span>:
-      localTest?.ok?<span style={{color:'#34D399'}}>连接成功 · {localTest.time}ms · 回复: {localTest.reply?.substring(0,50)}</span>:
+      localTest?.ok?<span style={{color:localTest.time>10000?'#F59E0B':'#34D399'}}>{localTest.time>10000?'⚠️ 成功(过慢)':'成功'} · {localTest.time>1000?(localTest.time/1000).toFixed(1)+'s':localTest.time+'ms'} · {localTest.reply?.substring(0,50)}</span>:
       <span style={{color:'#EF4444'}}>失败: {localTest?.error}</span>}
     </div>}
 
@@ -1545,16 +1554,19 @@ function VipPage(){
   const [inactiveDays,setInactiveDays]=useState(7);
   const [grantModal,setGrantModal]=useState(null);
 
-  useEffect(()=>{
-    apiGet('/api/admin/revenue').then(setRevenue);
-    apiGet('/api/admin/orders?limit=20').then(d=>{if(d.items)setOrders(d)});
-  },[]);
+  const loadRevenue=()=>{
+    apiGet('/api/admin/revenue').then(d=>{if(d&&!d.error)setRevenue(d)}).catch(()=>{});
+    apiGet('/api/admin/orders?limit=20').then(d=>{if(d?.items)setOrders(d)}).catch(()=>{});
+  };
+  useEffect(()=>{loadRevenue()},[]);
 
-  const loadInactive=(days)=>{setInactiveDays(days);apiGet('/api/admin/inactive-users?days='+days).then(d=>{if(Array.isArray(d))setInactive(d)})};
+  const loadInactive=(days)=>{setInactiveDays(days);apiGet('/api/admin/inactive-users?days='+days).then(d=>{if(Array.isArray(d))setInactive(d)}).catch(()=>{})};
   useEffect(()=>{loadInactive(7)},[]);
 
   return(<div className="container">
-    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>💎 营收 & VIP</h2>
+    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px'}}>💎 营收 & VIP
+      <button className="btn-sm btn-ghost" style={{marginLeft:12,fontSize:12}} onClick={()=>{loadRevenue();loadInactive(inactiveDays)}}>🔄 刷新</button>
+    </h2>
 
     <div style={{display:'flex',gap:8,marginBottom:12}}>
       {[{k:'overview',l:'概览'},{k:'orders',l:'订单'},{k:'inactive',l:'流失用户'}].map(t=>
@@ -1632,19 +1644,24 @@ function VipPage(){
 function AdminsPage({role}){
   const [admins,setAdmins]=useState([]);
   const [showCreate,setShowCreate]=useState(false);
-  useEffect(()=>{if(role==='superadmin')apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)})},[]);
+  const loadAdmins=()=>{apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)}).catch(()=>{})};
+  useEffect(()=>{if(role==='superadmin')loadAdmins()},[]);
   if(role!=='superadmin')return<div className="container" style={{textAlign:'center',paddingTop:80}}><div style={{fontSize:48,marginBottom:16}}>🔒</div><div style={{fontSize:16,color:'#6B7280'}}>仅超级管理员可访问</div></div>;
   return(<div className="container">
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-      👤 管理员账号
-      <button className="btn-sm btn-primary" onClick={()=>setShowCreate(true)}>+ 新建管理员</button>
+      👤 管理员账号 <span style={{fontSize:12,color:'#6B7280',fontWeight:400}}>{admins.length}人</span>
+      <div style={{display:'flex',gap:6}}>
+        <button className="btn-sm btn-ghost" onClick={loadAdmins}>🔄 刷新</button>
+        <button className="btn-sm btn-primary" onClick={()=>setShowCreate(true)}>+ 新建管理员</button>
+      </div>
     </h2>
-    <div className="panel"><table><thead><tr><th>用户名</th><th>名称</th><th>角色</th><th>最后登录</th><th>创建时间</th></tr></thead>
+    <div className="panel"><table><thead><tr><th>用户名</th><th>名称</th><th>角色</th><th>权限</th><th>最后登录</th><th>创建时间</th></tr></thead>
     <tbody>{admins.map(a=>(
       <tr key={a.id}>
         <td style={{fontWeight:600}}>{a.username}</td>
         <td>{a.name}</td>
-        <td><span className={`badge ${a.role==='superadmin'?'badge-purple':a.role==='operator'?'badge-ok':'badge-warn'}`}>{a.role}</span></td>
+        <td><span className={`badge ${a.role==='superadmin'?'badge-purple':a.role==='operator'?'badge-ok':'badge-warn'}`}>{a.role==='superadmin'?'超管':a.role==='operator'?'运营':'客服'}</span></td>
+        <td style={{fontSize:10,color:'#6B7280'}}>{a.role==='superadmin'?'全部权限':a.role==='operator'?'用户·内容·Bot·VIP':'聊天·内容·日志'}</td>
         <td style={{fontSize:11,color:'#6B7280'}}>{a.lastLoginAt?.substring(0,16).replace('T',' ')||'从未'}</td>
         <td style={{fontSize:11,color:'#6B7280'}}>{a.createdAt?.substring(0,10)}</td>
       </tr>
@@ -1653,9 +1670,10 @@ function AdminsPage({role}){
   </div>);
 }
 
+// PlaceholderPage preserved for future use
 function PlaceholderPage({title,icon}){
   return(<div className="container" style={{textAlign:'center',paddingTop:80}}>
-    <div style={{fontSize:48,marginBottom:16}}>{icon}</div>
+    <div style={{fontSize:48,marginBottom:16}}>{icon||'🔧'}</div>
     <div style={{fontSize:18,fontWeight:600,color:'#A78BFA'}}>{title}</div>
     <div style={{fontSize:13,color:'#6B7280',marginTop:8}}>即将开发…</div>
   </div>);
@@ -1691,16 +1709,19 @@ function App(){
 
   if(!adminUser)return<LoginPage onLogin={handleLogin}/>;
 
+  // 角色权限强制(防止通过修改state绕过UI)
+  const role=adminUser.role;
+  const NoAccess=()=><div className="container"><div className="panel" style={{textAlign:'center',padding:40}}><div style={{fontSize:36,marginBottom:12}}>🔒</div><div style={{fontSize:15,fontWeight:600,color:'#EF4444'}}>无权访问</div><div style={{fontSize:12,color:'#6B7280',marginTop:6}}>当前角色({role})无此页面权限</div></div></div>;
   const pages={
     dashboard:<DashboardPage/>,
-    users:<UsersPage/>,
+    users:role==='support'?<NoAccess/>:<UsersPage/>,
     chat:<ChatPage/>,
     content:<ContentPage/>,
-    llm:<LLMPage/>,
+    llm:role==='superadmin'?<LLMPage/>:<NoAccess/>,
     logs:<LogsPage/>,
     bots:<BotPage/>,
     vip:<VipPage/>,
-    admins:<AdminsPage role={adminUser.role}/>,
+    admins:role==='superadmin'?<AdminsPage role={role}/>:<NoAccess/>,
   };
 
   return(<div className="admin-layout">
