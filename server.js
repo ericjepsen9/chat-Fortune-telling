@@ -347,7 +347,12 @@ app.post('/api/admin/create', admin.adminAuth, admin.superOnly, (req, res) => {
 
 // 操作日志
 app.get('/api/admin/logs', admin.adminAuth, (req, res) => {
-  res.json(admin.getAdminLogs(parseInt(req.query.limit) || 50));
+  const { limit, action, adminId, search, page } = req.query;
+  res.json(admin.getAdminLogs(parseInt(limit) || 50, { action, adminId, search, page: parseInt(page) || 1 }));
+});
+
+app.get('/api/admin/log-types', admin.adminAuth, (req, res) => {
+  res.json(admin.getLogActionTypes());
 });
 
 // ============ Admin: Chat Management ============
@@ -815,6 +820,14 @@ app.post('/api/auth/divination', auth.authMiddleware, (req, res) => {
   const { mode, question, response, structured, engineData, depth } = req.body;
   const result = auth.saveDivination(req.user.id, { mode, question, response, structured, engineData, depth });
   if (!result) return res.status(404).json({ error: '保存失败' });
+  res.json(result);
+});
+
+// 追加占卜追问记录
+app.post('/api/auth/divination/:id/chat', auth.authMiddleware, (req, res) => {
+  const { messages } = req.body;
+  const result = auth.appendDivinationChat(req.user.id, req.params.id, messages);
+  if (!result) return res.status(404).json({ error: '记录不存在' });
   res.json(result);
 });
 

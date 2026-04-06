@@ -2252,7 +2252,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         // Save to history
         try{const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');hist.unshift({mode:m,question:q,time:new Date().toLocaleString(),ts:Date.now()});if(hist.length>50)hist.length=50;localStorage.setItem('yuanhe_history',JSON.stringify(hist))}catch(e){}
         // 同步到服务器
-        if(localStorage.getItem('yuanhe_token')){const ms_=modeStates[m];apiPost('/api/auth/divination',{mode:m,question:q,response:ms_?.result?.response||'',structured:ms_?.result?.structured,engineData:ms_?.result?.engineData}).catch(()=>{})}
+        if(localStorage.getItem('yuanhe_token')){const ms_=modeStates[m];apiPost('/api/auth/divination',{mode:m,question:q,response:ms_?.result?.response||'',structured:ms_?.result?.structured,engineData:ms_?.result?.engineData}).then(r=>{if(r?.id)setMS(m,{result:{...ms_?.result,divId:r.id}})}).catch(()=>{})}
         }catch(abortErr){
           if(abortErr.name==='AbortError'){
             if(fullText){flushUpdate(true)}
@@ -2298,13 +2298,17 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       if(['hehun','synastry','hepan'].includes(mode)){body.profileB=p2}
       const r=await apiPost('/api/chat-followup',body);
       const aiTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      const aiMsg={role:'ai',text:r.blocked?r.reason:r.error?'⚠️ '+r.error:r.response,time:aiTime};
       // AI回复时再次从最新状态追加，避免覆盖
       setModeStates(prev=>{
         const cur=prev[mode]||{chatHistory:[]};
         const currentChat=[...(cur.chatHistory||[])];
-        const aiMsg={role:'ai',text:r.blocked?r.reason:r.error?'⚠️ '+r.error:r.response,time:aiTime};
         return{...prev,[mode]:{...cur,chatHistory:[...currentChat,aiMsg]}};
       });
+      // 保存追问到服务器(用于管理后台查看完整对话)
+      if(localStorage.getItem('yuanhe_token')&&ms.result?.divId){
+        apiPost('/api/auth/divination/'+ms.result.divId+'/chat',{messages:[userMsg,aiMsg]}).catch(()=>{});
+      }
     }catch(e){setModeStates(prev=>{const cur=prev[mode]||{chatHistory:[]};return{...prev,[mode]:{...cur,chatHistory:[...(cur.chatHistory||[]),{role:'ai',text:'⚠️ 网络错误，请重试',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]}}});}
     setChatLoading(false);
     setChatCooldown(true);setTimeout(()=>setChatCooldown(false),3000);

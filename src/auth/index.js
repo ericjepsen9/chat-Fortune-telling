@@ -272,6 +272,7 @@ function saveDivination(userId, data) {
     structured: data.structured || null,
     engineData: data.engineData ? String(data.engineData).substring(0, 5000) : null,
     depth: data.depth || 'expert',
+    chatHistory: [], // 追问对话记录
     createdAt: new Date().toISOString(),
   };
   user.divinations.unshift(entry);
@@ -279,6 +280,22 @@ function saveDivination(userId, data) {
   if (user.divinations.length > 100) user.divinations.length = 100;
   saveUsers();
   return { id: entry.id, createdAt: entry.createdAt };
+}
+
+function appendDivinationChat(userId, divId, messages) {
+  const user = users[userId];
+  if (!user || !user.divinations) return null;
+  const d = user.divinations.find(x => x.id === divId);
+  if (!d) return null;
+  if (!d.chatHistory) d.chatHistory = [];
+  const newMsgs = (Array.isArray(messages) ? messages : [messages]).map(m => ({
+    role: m.role, text: (m.text || '').substring(0, 5000), time: m.time || new Date().toISOString(),
+  }));
+  d.chatHistory.push(...newMsgs);
+  // 限制每个占卜最多50条追问
+  if (d.chatHistory.length > 50) d.chatHistory = d.chatHistory.slice(-50);
+  saveUsers();
+  return { success: true, count: d.chatHistory.length };
 }
 
 function getDivinations(userId, mode) {
@@ -503,6 +520,7 @@ module.exports = {
   updateProfile,
   migrateLocalData,
   saveDivination,
+  appendDivinationChat,
   getDivinations,
   saveMessage,
   getMessages,
@@ -845,6 +863,7 @@ function adminGetUserDivination(userId, divId) {
     engineData: d.engineData || null,
     structured: d.structured || null,
     depth: d.depth || 'expert',
+    chatHistory: d.chatHistory || [],
     createdAt: d.createdAt,
     userName: u.profile?.name || '—',
     userId: u.id,

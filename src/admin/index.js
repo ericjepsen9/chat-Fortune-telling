@@ -83,8 +83,28 @@ function logAction(adminId, action, target, detail) {
   return entry;
 }
 
-function getAdminLogs(limit = 50) {
-  return adminLogs.slice(0, limit);
+function getAdminLogs(limit = 50, { action, adminId, search, page = 1 } = {}) {
+  let filtered = [...adminLogs];
+  if (action) filtered = filtered.filter(l => l.action === action);
+  if (adminId) filtered = filtered.filter(l => l.adminId === adminId);
+  if (search) {
+    const s = search.toLowerCase();
+    filtered = filtered.filter(l =>
+      l.detail?.toLowerCase().includes(s) ||
+      l.adminName?.toLowerCase().includes(s) ||
+      l.action?.toLowerCase().includes(s) ||
+      l.target?.toLowerCase().includes(s)
+    );
+  }
+  const total = filtered.length;
+  const start = (page - 1) * limit;
+  return { items: filtered.slice(start, start + limit), total, page, limit };
+}
+
+function getLogActionTypes() {
+  const types = new Set();
+  adminLogs.forEach(l => types.add(l.action));
+  return [...types].sort();
 }
 
 // ============ 登录 ============
@@ -220,4 +240,5 @@ module.exports = {
   listAdmins,
   logAction,
   getAdminLogs,
+  getLogActionTypes,
 };
