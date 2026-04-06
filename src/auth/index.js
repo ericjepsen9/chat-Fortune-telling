@@ -525,6 +525,10 @@ module.exports = {
   adminUpdateUser,
   adminBanUser,
   adminDeleteUser,
+  adminSetUserTags,
+  adminBatchBan,
+  adminExportUsers,
+  adminGetAllTags,
   adminGetStats,
   adminGetTrends,
   adminGetFunnel,
@@ -668,7 +672,7 @@ function adminDeleteMessage(convKey, messageId) {
 
 // ============ Admin: User Management ============
 
-function adminListUsers({ search, gender, page = 1, limit = 20 } = {}) {
+function adminListUsers({ search, gender, page = 1, limit = 20, status, vip, sort, tag } = {}) {
   let list = Object.values(users);
 
   // 搜索 (手机号/昵称/ID)
@@ -684,13 +688,57 @@ function adminListUsers({ search, gender, page = 1, limit = 20 } = {}) {
   if (gender && gender !== 'all') {
     list = list.filter(u => u.profile?.gender === gender);
   }
+  // 状态筛选
+  if (status === 'banned') list = list.filter(u => u.banned);
+  else if (status === 'normal') list = list.filter(u => !u.banned && !u.deleted);
+  else if (status === 'deleted') list = list.filter(u => u.deleted);
+  else if (status === 'incomplete') list = list.filter(u => !u.profile?.year);
+  // VIP筛选
+  if (vip && vip !== 'all') {
+    list = list.filter(u => {
+      const tier = u.vip?.tier || 'free';
+      if (vip === 'paying') return tier !== 'free';
+      return tier === vip;
+    });
+  }
+  // 标签筛选
+  if (tag && tag !== 'all') {
+    list = list.filter(u => (u.adminTags || []).includes(tag));
+  }
 
-  // 按注册时间倒序
-  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  // 排序
+  if (sort === 'active') list.sort((a, b) => new Date(b.lastActiveAt || 0) - new Date(a.lastActiveAt || 0));
+  else if (sort === 'divinations') list.sort((a, b) => (b.divinations?.length || 0) - (a.divinations?.length || 0));
+  else if (sort === 'oldest') list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  else list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // default: newest
 
   const total = list.length;
   const start = (page - 1) * limit;
-  const items = list.slice(start, start + limit).map(u => ({
+  const items = list.slice(start, start + limit).map(u => _mapUserSummary(u));
+
+  return { total, page, limit, items };
+}
+
+function _mapUserSummary(u) {
+  // Count matches for this user
+  let matchCount = 0;
+  for (const [key, dir] of Object.entries(swipes)) {
+    if (dir !== 'right') continue;
+    const [from, to] = key.split(':');
+    if (from !== u.id) continue;
+    if (swipes[`${to}:${from}`] === 'right') matchCount++;
+  }
+  // Count messages
+  let msgCount = 0;
+  if (global._yuanheMessages) {
+    for (const [key, msgs] of Object.entries(global._yuanheMessages)) {
+      if (key.includes(u.id)) msgCount += msgs.filter(m => m.from === u.id).length;
+    }
+  }
+  // Count friends
+  const friendCount = friendData.accepted.filter(a => a.userA === u.id || a.userB === u.id).length;
+
+  return {
     id: u.id,
     phone: u.phone,
     name: u.profile?.name || '—',
@@ -698,20 +746,63 @@ function adminListUsers({ search, gender, page = 1, limit = 20 } = {}) {
     city: u.profile?.city || '—',
     avatar: u.profile?.avatar || '',
     year: u.profile?.year,
+    bio: u.profile?.bio || '',
     banned: u.banned || false,
+    deleted: u.deleted || false,
     banReason: u.banReason || '',
     banUntil: u.banUntil || null,
     createdAt: u.createdAt,
     lastActiveAt: u.lastActiveAt,
     divinationCount: u.divinations?.length || 0,
-  }));
-
-  return { total, page, limit, items };
+    matchCount,
+    msgCount,
+    friendCount,
+    vipTier: u.vip?.tier || 'free',
+    vipExpires: u.vip?.expiresAt || null,
+    adminTags: u.adminTags || [],
+    profileComplete: !!(u.profile?.year && u.profile?.name && u.profile?.gender),
+  };
 }
 
 function adminGetUser(userId) {
   const u = users[userId];
   if (!u) return null;
+
+  // Match count
+  let matchCount = 0;
+  for (const [key, dir] of Object.entries(swipes)) {
+    if (dir !== 'right') continue;
+    const [from, to] = key.split(':');
+    if (from !== userId) continue;
+    if (swipes[`${to}:${from}`] === 'right') matchCount++;
+  }
+  // Message count
+  let msgCount = 0;
+  if (global._yuanheMessages) {
+    for (const [key, msgs] of Object.entries(global._yuanheMessages)) {
+      if (key.includes(userId)) msgCount += msgs.filter(m => m.from === userId).length;
+    }
+  }
+  // Friends
+  const friends = friendData.accepted
+    .filter(a => a.userA === userId || a.userB === userId)
+    .map(a => {
+      const fid = a.userA === userId ? a.userB : a.userA;
+      const fu = users[fid];
+      return { id: fid, name: fu?.profile?.name || '缘友', gender: fu?.profile?.gender, since: a.createdAt };
+    });
+  // Swipe stats
+  let swipedRight = 0, swipedLeft = 0, beenLiked = 0;
+  for (const [key, dir] of Object.entries(swipes)) {
+    const [from, to] = key.split(':');
+    if (from === userId) { if (dir === 'right') swipedRight++; else swipedLeft++; }
+    if (to === userId && dir === 'right') beenLiked++;
+  }
+  // User posts
+  const userPosts = (posts || []).filter(p => p.authorId === userId).slice(0, 5).map(p => ({
+    id: p.id, content: (p.content || '').substring(0, 60), likes: p.likes?.length || 0, createdAt: p.createdAt,
+  }));
+
   return {
     id: u.id,
     phone: u.phone,
@@ -722,23 +813,96 @@ function adminGetUser(userId) {
     deleted: u.deleted || false,
     createdAt: u.createdAt,
     lastActiveAt: u.lastActiveAt,
+    vip: u.vip || null,
+    adminTags: u.adminTags || [],
+    adminNote: u.adminNote || '',
     divinationCount: u.divinations?.length || 0,
     divinations: (u.divinations || []).slice(0, 10).map(d => ({
       id: d.id, mode: d.mode, question: d.question,
       createdAt: d.createdAt, preview: (d.response || '').substring(0, 80),
     })),
     postCount: (posts || []).filter(p => p.authorId === userId).length,
+    posts: userPosts,
+    matchCount,
+    msgCount,
+    friendCount: friends.length,
+    friends: friends.slice(0, 10),
+    swipeStats: { swipedRight, swipedLeft, beenLiked },
   };
 }
 
 function adminUpdateUser(userId, data) {
   const u = users[userId];
   if (!u) return { error: '用户不存在' };
-  if (data.name !== undefined) { if (!u.profile) u.profile = {}; u.profile.name = data.name; }
-  if (data.bio !== undefined) { if (!u.profile) u.profile = {}; u.profile.bio = data.bio; }
-  if (data.city !== undefined) { if (!u.profile) u.profile = {}; u.profile.city = data.city; }
+  if (!u.profile) u.profile = {};
+  if (data.name !== undefined) u.profile.name = data.name;
+  if (data.bio !== undefined) u.profile.bio = data.bio;
+  if (data.city !== undefined) u.profile.city = data.city;
+  if (data.gender !== undefined) u.profile.gender = data.gender;
+  if (data.year !== undefined) u.profile.year = parseInt(data.year);
+  if (data.month !== undefined) u.profile.month = parseInt(data.month);
+  if (data.day !== undefined) u.profile.day = parseInt(data.day);
+  if (data.hour !== undefined) u.profile.hour = parseInt(data.hour);
+  if (data.adminTags !== undefined) u.adminTags = data.adminTags;
+  if (data.adminNote !== undefined) u.adminNote = data.adminNote;
   saveUsers();
   return { success: true };
+}
+
+function adminSetUserTags(userId, tags) {
+  const u = users[userId];
+  if (!u) return { error: '用户不存在' };
+  u.adminTags = tags || [];
+  saveUsers();
+  return { success: true, tags: u.adminTags };
+}
+
+function adminBatchBan(userIds, { ban, reason, days }) {
+  let count = 0;
+  for (const id of userIds) {
+    const u = users[id];
+    if (!u) continue;
+    if (ban) {
+      u.banned = true;
+      u.banReason = reason || '批量封禁';
+      u.banUntil = days ? new Date(Date.now() + days * 86400000).toISOString() : null;
+    } else {
+      u.banned = false;
+      u.banReason = '';
+      u.banUntil = null;
+    }
+    count++;
+  }
+  saveUsers();
+  return { success: true, count };
+}
+
+function adminExportUsers({ search, gender, status, vip, tag } = {}) {
+  // Reuse filtering logic, return all matching users as CSV-ready data
+  const result = adminListUsers({ search, gender, status, vip, tag, page: 1, limit: 99999 });
+  return result.items.map(u => ({
+    ID: u.id,
+    昵称: u.name,
+    手机号: u.phone,
+    性别: u.gender === 'female' ? '女' : u.gender === 'male' ? '男' : '—',
+    城市: u.city,
+    VIP: u.vipTier,
+    占卜次数: u.divinationCount,
+    匹配数: u.matchCount,
+    好友数: u.friendCount,
+    状态: u.banned ? '封禁' : u.deleted ? '已删除' : '正常',
+    标签: (u.adminTags || []).join(','),
+    注册时间: u.createdAt?.substring(0, 10),
+    最后活跃: u.lastActiveAt?.substring(0, 16)?.replace('T', ' ') || '从未',
+  }));
+}
+
+function adminGetAllTags() {
+  const tagSet = new Set();
+  Object.values(users).forEach(u => {
+    (u.adminTags || []).forEach(t => tagSet.add(t));
+  });
+  return [...tagSet].sort();
 }
 
 function adminBanUser(userId, { ban, reason, days }) {

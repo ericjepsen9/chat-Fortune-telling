@@ -557,8 +557,24 @@ app.get('/api/announcement', (req, res) => {
 });
 
 app.get('/api/admin/users', admin.adminAuth, (req, res) => {
-  const { search, gender, page, limit } = req.query;
-  res.json(auth.adminListUsers({ search, gender, page: parseInt(page) || 1, limit: parseInt(limit) || 20 }));
+  const { search, gender, page, limit, status, vip, sort, tag } = req.query;
+  res.json(auth.adminListUsers({ search, gender, status, vip, sort, tag, page: parseInt(page) || 1, limit: parseInt(limit) || 20 }));
+});
+
+// Export & tags must be before :id route
+app.get('/api/admin/users/export', admin.adminAuth, (req, res) => {
+  const { search, gender, status, vip, tag } = req.query;
+  const rows = auth.adminExportUsers({ search, gender, status, vip, tag });
+  if (rows.length === 0) return res.json({ error: '无匹配用户' });
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r[h]+'').replace(/"/g,'""')}"`).join(','))].join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename=users_export.csv');
+  res.send('\uFEFF' + csv);
+});
+
+app.get('/api/admin/users/tags', admin.adminAuth, (req, res) => {
+  res.json(auth.adminGetAllTags());
 });
 
 app.get('/api/admin/users/:id', admin.adminAuth, (req, res) => {
@@ -585,6 +601,23 @@ app.post('/api/admin/users/:id/delete', admin.adminAuth, admin.superOnly, (req, 
   const result = auth.adminDeleteUser(req.params.id);
   if (result.error) return res.status(400).json(result);
   admin.logAction(req.admin.id, 'delete_user', req.params.id, '删除用户(软删除)');
+  res.json(result);
+});
+
+// User tags
+app.post('/api/admin/users/:id/tags', admin.adminAuth, (req, res) => {
+  const result = auth.adminSetUserTags(req.params.id, req.body.tags);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'set_tags', req.params.id, `设置标签: ${(req.body.tags||[]).join(',')}`);
+  res.json(result);
+});
+
+// Batch ban/unban
+app.post('/api/admin/users/batch/ban', admin.adminAuth, (req, res) => {
+  const { userIds, ban, reason, days } = req.body;
+  if (!Array.isArray(userIds) || userIds.length === 0) return res.status(400).json({ error: '请选择用户' });
+  const result = auth.adminBatchBan(userIds, { ban, reason, days });
+  admin.logAction(req.admin.id, ban ? 'batch_ban' : 'batch_unban', null, `批量${ban?'封禁':'解封'} ${result.count}个用户`);
   res.json(result);
 });
 
