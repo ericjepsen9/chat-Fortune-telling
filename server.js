@@ -218,7 +218,7 @@ async function handleDivination(mode, profile, question, displayMode, ctxOptions
   // Extract structured data for frontend visualization
   const structured = aiService.extractStructured(mode, profile);
   // Append disclaimer to all divination responses
-  const finalResponse = response + (aiService.DIVINATION_DISCLAIMER || '');
+  const finalResponse = response + (aiService.getDisclaimer(req.lang) || '');
   return { mode, displayMode: req.displayMode, category: req.category, safetyLevel: req.safetyLevel, engineData: req.engineData, context: req.context.fullStr, response: finalResponse, structured };
 }
 
@@ -1202,7 +1202,7 @@ app.post('/api/divine-stream', async (req, res) => {
           const data = trimmed.slice(6);
           if (data === '[DONE]') {
             // Append disclaimer as final chunk
-            res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.DIVINATION_DISCLAIMER||''})}\n\n`);
+            res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.getDisclaimer(buildReq.lang)||''})}\n\n`);
             res.write(`data: [DONE]\n\n`);
             res.end();
             return;
@@ -1229,7 +1229,7 @@ app.post('/api/divine-stream', async (req, res) => {
             } catch(e) {}
           }
         }
-        res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.DIVINATION_DISCLAIMER||''})}\n\n`);
+        res.write(`data: ${JSON.stringify({type:'chunk',text:aiService.getDisclaimer(buildReq.lang)||''})}\n\n`);
         res.write(`data: [DONE]\n\n`);
         res.end();
       });
@@ -1252,9 +1252,9 @@ app.post('/api/divine-stream', async (req, res) => {
 // API：计算 + AI 解读
 app.post('/api/divine', async (req, res) => {
   try {
-    const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, context } = req.body;
+    const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, context, lang } = req.body;
     const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
-    const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
+    const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, lang: lang || 'zh-CN' };
     // 追问上下文：把之前的分析摘要拼入问题
     let fullQuestion = question || '';
     if (context && context.trim()) {

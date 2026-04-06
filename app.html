@@ -533,10 +533,11 @@ function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return(
 // ===== ONBOARDING (3-step guide) =====
 function OnboardingScreen({onDone}){
   const [step,setStep]=useState(0);
+  const ob1=t('onboard1'),ob2=t('onboard2'),ob3=t('onboard3');
   const pages=[
-    {icon:'🔮',title:'认识自己',desc:'通过八字、星座、塔罗等古老命理体系\n发现你的性格天赋与人生方向',bg:'linear-gradient(135deg,#8B5CF6,#7C3AED,#6D28D9)'},
-    {icon:'💕',title:'命理匹配',desc:'不只看外貌和兴趣\n用命理维度找到真正契合的灵魂',bg:'linear-gradient(135deg,#EC4899,#DB2777,#BE185D)'},
-    {icon:'✦',title:'开启缘分',desc:'AI深度解读 + 智能匹配\n你的命中注定，就在这里',bg:'linear-gradient(135deg,#F59E0B,#D97706,#B45309)'},
+    {icon:'🔮',title:ob1?.title||'Know Yourself',desc:ob1?.desc||'',bg:'linear-gradient(135deg,#8B5CF6,#7C3AED,#6D28D9)'},
+    {icon:'💕',title:ob2?.title||'Find Your Match',desc:ob2?.desc||'',bg:'linear-gradient(135deg,#EC4899,#DB2777,#BE185D)'},
+    {icon:'✦',title:ob3?.title||'Begin',desc:ob3?.desc||'',bg:'linear-gradient(135deg,#F59E0B,#D97706,#B45309)'},
   ];
   const p=pages[step];
   const isLast=step===pages.length-1;
@@ -624,7 +625,7 @@ function BirthScreen({onSubmit}){
   const days=[];for(let d=1;d<=31;d++)days.push({v:String(d),l:d+'日'});
   const hours=[];for(let h=0;h<=23;h++)hours.push({v:String(h),l:h+'时 ('+['子','丑','丑','寅','寅','卯','卯','辰','辰','巳','巳','午','午','未','未','申','申','酉','酉','戌','戌','亥','亥','子'][h]+')'});
   return(<div style={{height:'100%',overflow:'auto',background:T.bg}}><div style={{padding:'60px 24px 100px'}}>
-    <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>你的生辰</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>请输入公历出生信息</div></div>
+    <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>{t('profileTitle')}</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>{t('profileSubtitle')}</div></div>
     {lunar&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FF6B6B10,#8B5CF610)',padding:'14px 16px',borderRadius:14,marginBottom:24,textAlign:'center'}}><div style={{fontSize:13,color:T.primary,fontWeight:500}}>{lunar.lunarFull}</div><div style={{fontSize:12,color:T.textSec,marginTop:4}}>{lunar.ganzhi}</div></div>}
     <div style={{marginBottom:16}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="输入昵称（可选）" style={is}/></div>
     {/* Date picker trigger */}
@@ -646,7 +647,7 @@ function BirthScreen({onSubmit}){
     <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>性别</label><div style={{display:'flex',gap:12}}>
       {[{v:'female',l:'♀ 女',c:T.accent3},{v:'male',l:'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:T.card,color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
     </div></div>
-    <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#FF6B6B,#FF8A9B)':T.border,boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>开启我的命运之旅 ✦</button>
+    <button onClick={submit} style={{width:'100%',padding:'16px',borderRadius:14,border:'none',fontSize:16,fontWeight:700,color:'#fff',cursor:filled?'pointer':'default',background:filled?'linear-gradient(135deg,#FF6B6B,#FF8A9B)':T.border,boxShadow:filled?'0 4px 20px rgba(255,107,107,0.35)':'none',transition:'all .3s'}}>{t('profileSubmit')}</button>
   </div>
   {/* Date Picker Modal */}
   {showDatePicker&&<div onClick={()=>setShowDatePicker(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
@@ -1103,7 +1104,7 @@ function DailyStatusModal({profile,onClose}){
       {/* Header */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
-        <div style={{fontSize:16,fontWeight:700,color:T.text}}>命理日历</div>
+        <div style={{fontSize:16,fontWeight:700,color:T.text}}>{t('calTitle')}</div>
         <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>今天</button>
       </div>
 
@@ -1165,7 +1166,7 @@ function DailyStatusModal({profile,onClose}){
         const topMode=Object.entries(weekModes).sort((a,b)=>b[1]-a[1])[0];
         const weekMoods=[];for(let i=0;i<7;i++){const d=new Date(weekStart.getTime()+i*86400000);const m=localStorage.getItem('yuanhe_mood_'+d.toDateString());if(m!==null)weekMoods.push(parseInt(m))}
         const MOOD_E=['😄','😊','😐','😔','😢'];
-        const MODE_F={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗占卜',meihua:'梅花易数',vedic:'印度占星',hehun:'合婚分析',synastry:'星座配对',hepan:'合盘分析'};
+        const MODE_F=MODE_FULL;
         const weekMsgs=allConvs.reduce((s,c)=>{const msgs=(c.messages||[]).filter(m=>m.role==='user'&&m.ts&&m.ts>=weekStart.getTime());return s+msgs.length},0);
         const bestMatch=allConvs.length>0?[...allConvs].sort((a,b)=>(b.user.score||0)-(a.user.score||0))[0]:null;
         if(weekHistory.length===0&&weekMoods.length===0&&allConvs.length===0)return null;
@@ -1194,7 +1195,7 @@ function DailyStatusModal({profile,onClose}){
       })()}
 
       {/* Share */}
-      <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 分享今日运势</button>
+      <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 {t('shareToday')}</button>
     </div>
     {showShare&&<ShareModal type={showShare.type==='weekly'?'fortune':'fortune'} profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:t.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:t.color,keywords:t.keywords}} onClose={()=>setShowShare(false)}/>}
   </div>);
@@ -1529,30 +1530,209 @@ function ReportCard({title, icon, color, content, index, md}) {
   );
 }
 
-// ===== AI =====
-const MODES=[
-  {id:'bazi',label:'八字命理',icon:'☰',c:'#8B5CF6',cat:'single'},
-  {id:'astrology',label:'星座运势',icon:'★',c:'#6366F1',cat:'single'},
-  {id:'tarot',label:'塔罗牌',icon:'✦',c:'#0D9488',cat:'single'},
-  {id:'meihua',label:'梅花易数',icon:'❀',c:'#D97706',cat:'single'},
-  {id:'vedic',label:'印度占星',icon:'◎',c:'#2563EB',cat:'single'},
-  {id:'hehun',label:'八字合婚',icon:'💑',c:'#DB2777',cat:'pair'},
-  {id:'synastry',label:'星座配对',icon:'💫',c:'#9333EA',cat:'pair'},
-  {id:'hepan',label:'综合合盘',icon:'❤',c:'#E11D48',cat:'pair'},
-];
-const MODE_FULL={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星',hehun:'八字合婚',synastry:'星座配对',hepan:'综合合盘'};
-const MODE_INTRO={bazi:'以出生年月日时推算天干地支，解读一生命运走向',astrology:'基于太阳、月亮、上升星座的西方占星分析',tarot:'通过塔罗牌阵获取直觉指引与方向建议',meihua:'以数字或时间快速起卦，判断事件吉凶',vedic:'印度吠陀占星系统，恒星黄道深度分析',hehun:'八字合婚 · 需要双方完整出生年月日时\n从天干合冲、日主关系、十神互见等维度分析婚姻匹配',synastry:'星座配对 · 只需要对方月日\n分析太阳星座间的化学反应和相处模式',hepan:'综合合盘 · 需要双方完整出生年月日时\n融合八字+星座多维度评分，全面评估缘分'};
-const QUICK_QS={
-  bazi:['桃花运详解','当前大运分析','今年运势','适合创业吗','贵人方位','事业方向'],
-  astrology:['本月星座运势','水逆影响','感情运势','适合什么工作','幸运色和数字'],
-  tarot:['今天适合做什么','感情指引','事业抉择','近期需要注意什么'],
-  meihua:['这件事能成吗','什么时候合适','成功概率多大'],
-  vedic:['当前大运周期','事业方向','婚姻时机','财运走势','前世业力'],
-  hehun:['适合在一起吗','婚后相处','财务观念','子女缘分','需要磨合的地方'],
-  synastry:['化学反应如何','相处建议','容易吵架吗','谁更主动','长远发展'],
-  hepan:['综合匹配度','感情走向','适合结婚吗','互补还是冲突','长远建议'],
+// ===== I18N — 多语言 + 功能联动 =====
+const LOCALES={
+  'zh-CN':{
+    code:'zh-CN', label:'简体中文', flag:'🇨🇳', dir:'ltr',
+    // 功能配置：哪些模式显示、顺序
+    modeOrder:['bazi','astrology','tarot','meihua','vedic','hehun','synastry','hepan'],
+    hiddenModes:[], // 中文版全部显示
+    primaryModes:['bazi','astrology','tarot'], // 首页推荐
+    calendarStyle:'chinese', // 宜忌风格
+    dateFormat:'YYYY年M月D日',
+    defaultCity:'北京', defaultLat:39.9, defaultLng:116.4,
+    crisisHotline:'全国心理援助热线 400-161-9995\n北京心理危机研究与干预中心 010-82951332\n生命热线 400-821-1215',
+    // 文案
+    t:{
+      // App名称
+      appName:'缘合',appSlogan:'AI命理 · 缘分社交',
+      // 底部导航
+      navHome:'首页',navDiscover:'发现',navAI:'AI占卜',navMsgs:'消息',navMe:'我的',
+      // 占卜模式
+      modes:{
+        bazi:{label:'八字命理',full:'八字命理',desc:'以出生年月日时推算天干地支，解读一生命运走向',icon:'☰'},
+        astrology:{label:'星座运势',full:'星座运势',desc:'基于太阳、月亮、上升星座的西方占星分析',icon:'★'},
+        tarot:{label:'塔罗牌',full:'塔罗牌',desc:'通过塔罗牌阵获取直觉指引与方向建议',icon:'✦'},
+        meihua:{label:'梅花易数',full:'梅花易数',desc:'以数字或时间快速起卦，判断事件吉凶',icon:'❀'},
+        vedic:{label:'印度占星',full:'印度占星',desc:'印度吠陀占星系统，恒星黄道深度分析',icon:'◎'},
+        hehun:{label:'八字合婚',full:'八字合婚',desc:'八字合婚 · 需要双方完整出生年月日时\n从天干合冲、日主关系、十神互见等维度分析婚姻匹配',icon:'💑'},
+        synastry:{label:'星座配对',full:'星座配对',desc:'星座配对 · 只需要对方月日\n分析太阳星座间的化学反应和相处模式',icon:'💫'},
+        hepan:{label:'综合合盘',full:'综合合盘',desc:'综合合盘 · 需要双方完整出生年月日时\n融合八字+星座多维度评分，全面评估缘分',icon:'❤'},
+      },
+      // 快速提问
+      quickQ:{
+        bazi:['桃花运详解','当前大运分析','今年运势','适合创业吗','贵人方位','事业方向'],
+        astrology:['本月星座运势','水逆影响','感情运势','适合什么工作','幸运色和数字'],
+        tarot:['今天适合做什么','感情指引','事业抉择','近期需要注意什么'],
+        meihua:['这件事能成吗','什么时候合适','成功概率多大'],
+        vedic:['当前大运周期','事业方向','婚姻时机','财运走势','前世业力'],
+        hehun:['适合在一起吗','婚后相处','财务观念','子女缘分','需要磨合的地方'],
+        synastry:['化学反应如何','相处建议','容易吵架吗','谁更主动','长远发展'],
+        hepan:['综合匹配度','感情走向','适合结婚吗','互补还是冲突','长远建议'],
+      },
+      loadMsgs:['排盘计算中…','分析命局格局…','推演大运流年…','AI撰写解读…','即将完成…'],
+      // 命理日历
+      luckLevels:['大吉','吉','中吉','小吉','平','小凶'],
+      calTitle:'命理日历',calYi:'宜',calJi:'忌',
+      yiItems:['学习','冥想','远行','社交','投资','表白','运动','创作','谈判','约会'],
+      jiItems:['冲动决策','熬夜','争吵','借钱','搬家','签约','赌博'],
+      shareToday:'分享今日运势',
+      // 通用
+      cancel:'取消',confirm:'确认',save:'保存',close:'关闭',loading:'加载中…',retry:'重试',
+      send:'发送',delete:'删除',edit:'编辑',back:'返回',next:'下一步',done:'完成',
+      networkError:'网络错误，请重试',
+      // 登录
+      loginTitle:'开始你的命运之旅',loginPhone:'请输入手机号',loginCode:'验证码',loginSendCode:'发送验证码',loginSubmit:'登录',
+      // 资料
+      profileTitle:'你的生辰',profileSubtitle:'请输入公历出生信息',profileBirthYear:'出生年',profileBirthMonth:'月',profileBirthDay:'日',
+      profileHour:'出生时辰（选填）',profileHourHint:'点击选择（可跳过）',profileGender:'性别',profileMale:'男',profileFemale:'女',
+      profileSubmit:'开启我的命运之旅 ✦',profileRequired:'* 出生日期为必填 · 时辰选填（部分功能精度降低）',
+      profileCity:'所在城市',profileBio:'个性签名',
+      // 匹配
+      matchScore:'缘分',matchLike:'喜欢',matchSkip:'跳过',matchChat:'聊天',
+      matchSuccess:'匹配成功 💕 开始聊天吧',
+      matchGrades:['天作之合','良缘佳偶','有缘有份','需要磨合'],
+      // 社区
+      communityTitle:'缘友圈',communityPost:'发帖',communityEmpty:'还没有帖子，来发第一条吧',
+      // 我的页面
+      meSettings:'设置',meTheme:'主题',meLanguage:'语言',meAbout:'关于',meLogout:'退出登录',
+      meDivHistory:'占卜记录',meFriends:'好友',
+      // Onboarding
+      onboard1:{title:'认识自己',desc:'通过八字、星座、塔罗等古老命理体系\n发现你的性格天赋与人生方向'},
+      onboard2:{title:'遇见缘分',desc:'AI智能匹配，在命理契合中\n找到那个与你命运相连的人'},
+      onboard3:{title:'开启旅程',desc:'每日运势 · 专属报告 · 缘分社交\n你的命运之旅从这里开始'},
+      // 免责
+      disclaimer:'⚠️ *以上分析仅供参考娱乐，不构成任何专业建议。重大人生决策请结合实际情况，必要时咨询专业人士。*',
+      ageGate:'根据相关法规，本应用仅向13岁及以上用户提供服务。',
+    },
+  },
+
+  'en-US':{
+    code:'en-US', label:'English', flag:'🇺🇸', dir:'ltr',
+    // Feature config: reorder modes, hide deeply Chinese ones by default
+    modeOrder:['astrology','tarot','synastry','vedic','bazi','meihua','hehun','hepan'],
+    hiddenModes:[], // all available, just reordered (Chinese modes last)
+    primaryModes:['astrology','tarot','vedic'], // homepage recommendations
+    calendarStyle:'horoscope', // western daily horoscope style
+    dateFormat:'MMM D, YYYY',
+    defaultCity:'New York', defaultLat:40.7, defaultLng:-74.0,
+    crisisHotline:'988 Suicide & Crisis Lifeline: Call or text 988\nCrisis Text Line: Text HOME to 741741\nIMAlive: www.imalive.org',
+    t:{
+      appName:'YuanHe',appSlogan:'AI Astrology · Cosmic Dating',
+      navHome:'Home',navDiscover:'Discover',navAI:'Divine',navMsgs:'Messages',navMe:'Me',
+      modes:{
+        bazi:{label:'Chinese Birth Chart',full:'Chinese Birth Chart (BaZi)',desc:'An ancient 3,000-year system that reads your destiny from the exact moment of birth using Heavenly Stems & Earthly Branches',icon:'☰'},
+        astrology:{label:'Horoscope',full:'Western Astrology',desc:'Sun, Moon & Rising sign analysis based on Western zodiac',icon:'★'},
+        tarot:{label:'Tarot',full:'Tarot Reading',desc:'Draw cards for intuitive guidance and direction',icon:'✦'},
+        meihua:{label:'I-Ching Oracle',full:'I-Ching Oracle (Meihua)',desc:'Ancient Chinese divination — ask a question, get a hexagram answer',icon:'❀'},
+        vedic:{label:'Vedic Astrology',full:'Vedic Astrology (Jyotish)',desc:'Indian sidereal astrology with Nakshatra & Dasha cycles',icon:'◎'},
+        hehun:{label:'Eastern Match',full:'Chinese Marriage Compatibility',desc:'Traditional BaZi marriage matching\nAnalyzes Day Masters, Five Elements & destiny harmony',icon:'💑'},
+        synastry:{label:'Star Match',full:'Zodiac Compatibility',desc:'Compare your signs · Just need partner\'s birthday\nDiscover your cosmic chemistry',icon:'💫'},
+        hepan:{label:'Full Composite',full:'East-West Composite',desc:'Combines Chinese BaZi + Western Astrology\nThe most comprehensive compatibility analysis',icon:'❤'},
+      },
+      quickQ:{
+        bazi:['Love & romance outlook','Current life cycle','This year\'s fortune','Career direction','Lucky elements','Health outlook'],
+        astrology:['This month\'s horoscope','Mercury retrograde effects','Love forecast','Best career path','Lucky colors & numbers'],
+        tarot:['What should I focus on today?','Love guidance','Career crossroads','What to watch out for'],
+        meihua:['Will this work out?','When is the right time?','What are my chances?'],
+        vedic:['Current Dasha period','Career path','Marriage timing','Financial outlook','Past life karma'],
+        hehun:['Are we compatible?','Life together','Money views','Children','Areas to work on'],
+        synastry:['Our chemistry','Relationship advice','Conflict areas','Who leads?','Long-term outlook'],
+        hepan:['Overall compatibility','Relationship trajectory','Marriage potential','Complement or clash?','Long-term advice'],
+      },
+      loadMsgs:['Calculating your chart…','Analyzing cosmic patterns…','Reading the stars…','AI composing your reading…','Almost ready…'],
+      luckLevels:['Great Day','Good Day','Favorable','Okay','Neutral','Challenging'],
+      calTitle:'Daily Cosmic Guide',calYi:'Lucky for',calJi:'Avoid',
+      yiItems:['Learning','Meditation','Travel','Socializing','Investing','Confessing love','Exercise','Creating','Negotiating','Dating'],
+      jiItems:['Impulsive decisions','Staying up late','Arguments','Lending money','Moving','Signing contracts','Gambling'],
+      shareToday:'Share today\'s reading',
+      cancel:'Cancel',confirm:'Confirm',save:'Save',close:'Close',loading:'Loading…',retry:'Retry',
+      send:'Send',delete:'Delete',edit:'Edit',back:'Back',next:'Next',done:'Done',
+      networkError:'Network error, please try again',
+      loginTitle:'Begin your cosmic journey',loginPhone:'Phone number',loginCode:'Verification code',loginSendCode:'Send code',loginSubmit:'Sign in',
+      profileTitle:'Your birth details',profileSubtitle:'Enter your date of birth (Gregorian calendar)',profileBirthYear:'Birth year',profileBirthMonth:'Month',profileBirthDay:'Day',
+      profileHour:'Birth hour (optional)',profileHourHint:'Tap to select (can skip)',profileGender:'Gender',profileMale:'Male',profileFemale:'Female',
+      profileSubmit:'Start My Cosmic Journey ✦',profileRequired:'* Birth date required · Hour optional (some features less precise without it)',
+      profileCity:'City',profileBio:'Bio',
+      matchScore:'Match',matchLike:'Like',matchSkip:'Skip',matchChat:'Chat',
+      matchSuccess:'It\'s a match! 💕 Start chatting',
+      matchGrades:['Soulmates','Great Match','Good Connection','Needs Work'],
+      communityTitle:'Community',communityPost:'Post',communityEmpty:'No posts yet. Be the first!',
+      meSettings:'Settings',meTheme:'Theme',meLanguage:'Language',meAbout:'About',meLogout:'Sign out',
+      meDivHistory:'Reading history',meFriends:'Friends',
+      onboard1:{title:'Know Yourself',desc:'Discover your personality, talents & life path\nthrough ancient Eastern & Western wisdom'},
+      onboard2:{title:'Find Your Match',desc:'AI-powered cosmic matching\nfind someone written in your stars'},
+      onboard3:{title:'Begin the Journey',desc:'Daily readings · Personal reports · Cosmic dating\nYour destiny starts here'},
+      disclaimer:'⚠️ *For entertainment purposes only. Not professional advice. For major life decisions, consult qualified professionals.*',
+      ageGate:'You must be 13 or older to use this app.',
+    },
+  },
 };
-const LOAD_MSGS=['排盘计算中…','分析命局格局…','推演大运流年…','AI撰写解读…','即将完成…'];
+
+// 当前语言状态 (全局)
+let _currentLang = localStorage.getItem('yuanhe_lang') || (navigator.language?.startsWith('zh') ? 'zh-CN' : 'en-US');
+let _locale = LOCALES[_currentLang] || LOCALES['zh-CN'];
+
+function getLang(){ return _currentLang; }
+function getLocale(){ return _locale; }
+function t(key){
+  const keys = key.split('.');
+  let val = _locale.t;
+  for(const k of keys){ val = val?.[k]; if(val===undefined) break; }
+  // fallback到中文
+  if(val===undefined){
+    val = LOCALES['zh-CN'].t;
+    for(const k of keys){ val = val?.[k]; if(val===undefined) break; }
+  }
+  return val ?? key;
+}
+
+// 获取当前locale的模式列表(已排序+过滤)
+function getLocaleModes(){
+  const L=getLocale();
+  const modeColors={bazi:'#8B5CF6',astrology:'#6366F1',tarot:'#0D9488',meihua:'#D97706',vedic:'#2563EB',hehun:'#DB2777',synastry:'#9333EA',hepan:'#E11D48'};
+  const modeCats={bazi:'single',astrology:'single',tarot:'single',meihua:'single',vedic:'single',hehun:'pair',synastry:'pair',hepan:'pair'};
+  return L.modeOrder.filter(id=>!L.hiddenModes.includes(id)).map(id=>{
+    const m=L.t.modes[id]||{};
+    return {id,label:m.label||id,icon:m.icon||'?',c:modeColors[id],cat:modeCats[id]};
+  });
+}
+function getModeFull(id){ return getLocale().t.modes?.[id]?.full || id; }
+function getModeDesc(id){ return getLocale().t.modes?.[id]?.desc || ''; }
+function getQuickQs(id){ return getLocale().t.quickQ?.[id] || []; }
+
+// ===== AI =====
+// 向后兼容：MODES/MODE_FULL/MODE_INTRO/QUICK_QS/LOAD_MSGS 动态从locale获取
+// 使用getter使它们随语言切换自动更新
+Object.defineProperty(window,'__yuanheModes',{get:()=>getLocaleModes()});
+const MODES_PROXY=new Proxy([],{
+  get(_,prop){
+    const modes=getLocaleModes();
+    if(prop==='length')return modes.length;
+    if(prop==='find')return modes.find.bind(modes);
+    if(prop==='filter')return modes.filter.bind(modes);
+    if(prop==='map')return modes.map.bind(modes);
+    if(prop==='forEach')return modes.forEach.bind(modes);
+    if(prop==='some')return modes.some.bind(modes);
+    if(prop===Symbol.iterator)return modes[Symbol.iterator].bind(modes);
+    const n=Number(prop);
+    if(!isNaN(n))return modes[n];
+    return modes[prop];
+  }
+});
+const MODES=MODES_PROXY;
+const MODE_FULL=new Proxy({},{get:(_,k)=>getModeFull(k)});
+const MODE_INTRO=new Proxy({},{get:(_,k)=>getModeDesc(k)});
+const QUICK_QS=new Proxy({},{get:(_,k)=>getQuickQs(k)});
+const LOAD_MSGS=new Proxy([],{
+  get(_,prop){
+    const msgs=t('loadMsgs')||[];
+    if(prop==='length')return msgs.length;
+    const n=Number(prop);
+    if(!isNaN(n))return msgs[n];
+    return msgs[prop];
+  }
+});
 
 // Tarot Modal
 function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
@@ -1865,7 +2045,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     setReportExpanded(true);
     startTimer(m);
     try{
-      const body={mode:m,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,displayMode:dm};
+      const body={mode:m,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,displayMode:dm,lang:getLang()};
       if(profile.hour===-1)body.hourUnknown=true;
       if(hourApprox)body.hourApprox=true;
       if(['hehun','synastry','hepan'].includes(m))body.profileB=p2;
@@ -2705,7 +2885,8 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
   const [showMoodPicker,setShowMoodPicker]=useState(false);
   const pickMood=(idx)=>{localStorage.setItem(moodKey,String(idx));setCurMood(idx);setShowMoodPicker(false);window.yuanheToast?.(MOODS[idx].label+' · 今日打卡成功')};
 
-  const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
+  const luckLabels=t('luckLevels')||['大吉','吉','中吉','小吉','平','小凶'];
+  const todayLuck=luckLabels[dayN%6];
   // 大吉=金色 吉=中国红 中吉=紫色 小吉=青色 平=灰色 小凶=蓝灰
   const luckColor=['#D97706','#DC2626','#8B5CF6','#0D9488','#6B7280','#64748B'][dayN%6];
   const luckBgLight=['linear-gradient(135deg,#FFFBEB,#FDE68A)','linear-gradient(135deg,#FFF5F5,#FEE2E2)','linear-gradient(135deg,#FAF5FF,#EDE9FE)','linear-gradient(135deg,#F0FDFA,#CCFBF1)','linear-gradient(135deg,#F9FAFB,#F3F4F6)','linear-gradient(135deg,#F8FAFC,#E2E8F0)'];
@@ -2759,7 +2940,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
               <span style={{fontSize:12,color:T.textThi}}>今日 {today.getMonth()+1}月{today.getDate()}日</span>
             </div>
             <div style={{fontSize:20,fontWeight:700,color:luckColor,marginTop:3}}>{todayLuck}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:3}}>宜：学习、冥想 · 忌：冲动决策</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:3}}>{t('calYi')}：{(t('yiItems')||[]).slice(0,2).join(getLang()==='zh-CN'?'、':', ')} · {t('calJi')}：{(t('jiItems')||[]).slice(0,1).join('')}</div>
           </div>
           <span style={{fontSize:11,color:T.textThi}}>详细运势 ›</span>
         </div>
@@ -3841,12 +4022,17 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
 
     {/* Settings group + blacklist */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
-      {[{icon:'✏️',label:'修改生辰',desc:profile.year+'年'+profile.month+'月'+profile.day+'日',ic:'#F59E0B',a:onEdit},
-        {icon:'🔐',label:'隐私设置',desc:privacyLabel,ic:'#3B82F6',a:()=>setShowPrivacy(true)},
-        {icon:themeMode==='dark'?'🌙':'☀️',label:'外观模式',desc:themeMode==='dark'?'深色':'浅色',ic:'#8B5CF6',a:toggleTheme},
-        {icon:'💕',label:'匹配历史',desc:ChatStore.getAll().length+'次匹配',ic:'#EC4899',a:()=>setShowMatchHistory(true)},
-        {icon:'🚫',label:'黑名单',desc:(JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')).length+'人',ic:'#EF4444',a:()=>setShowBlacklist(true)},
-        {icon:'📊',label:'我的数据',desc:'查看·导出·删除',ic:'#0D9488',a:()=>setShowDataMgmt(true)}].map((it,i,arr)=>
+      {[{icon:'✏️',label:getLang()==='zh-CN'?'修改生辰':'Edit birth info',desc:profile.year+(getLang()==='zh-CN'?'年':'-')+profile.month+(getLang()==='zh-CN'?'月':'-')+profile.day+(getLang()==='zh-CN'?'日':''),ic:'#F59E0B',a:onEdit},
+        {icon:'🌐',label:t('meLanguage'),desc:getLocale().flag+' '+getLocale().label,ic:'#6366F1',a:()=>{
+          const next=getLang()==='zh-CN'?'en-US':'zh-CN';
+          _currentLang=next;_locale=LOCALES[next];localStorage.setItem('yuanhe_lang',next);
+          window.location.reload(); // 重新加载以应用新语言
+        }},
+        {icon:'🔐',label:getLang()==='zh-CN'?'隐私设置':'Privacy',desc:privacyLabel,ic:'#3B82F6',a:()=>setShowPrivacy(true)},
+        {icon:themeMode==='dark'?'🌙':'☀️',label:getLang()==='zh-CN'?'外观模式':'Theme',desc:themeMode==='dark'?(getLang()==='zh-CN'?'深色':'Dark'):(getLang()==='zh-CN'?'浅色':'Light'),ic:'#8B5CF6',a:toggleTheme},
+        {icon:'💕',label:getLang()==='zh-CN'?'匹配历史':'Match history',desc:ChatStore.getAll().length+(getLang()==='zh-CN'?'次匹配':' matches'),ic:'#EC4899',a:()=>setShowMatchHistory(true)},
+        {icon:'🚫',label:getLang()==='zh-CN'?'黑名单':'Blocked',desc:(JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')).length+(getLang()==='zh-CN'?'人':' users'),ic:'#EF4444',a:()=>setShowBlacklist(true)},
+        {icon:'📊',label:getLang()==='zh-CN'?'我的数据':'My data',desc:getLang()==='zh-CN'?'查看·导出·删除':'View · Export · Delete',ic:'#0D9488',a:()=>setShowDataMgmt(true)}].map((it,i,arr)=>
         <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:i<arr.length-1?`1px solid ${T.border}`:'none'}}>
           <div style={{width:30,height:30,borderRadius:8,background:`${it.ic}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
           <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{it.label}</div></div>
@@ -3857,8 +4043,8 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
 
     {/* Info + logout group */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
-      {[{icon:'📜',label:'用户协议',desc:'',ic:'#6B7280',a:()=>setShowTerms(true)},
-        {icon:'ℹ️',label:'关于缘合',desc:'v0.9.0',ic:'#9CA3AF',a:()=>setShowAbout(true)}].map((it,i,arr)=>
+      {[{icon:'📜',label:getLang()==='zh-CN'?'用户协议':'Terms',desc:'',ic:'#6B7280',a:()=>setShowTerms(true)},
+        {icon:'ℹ️',label:getLang()==='zh-CN'?'关于缘合':'About '+t('appName'),desc:'v0.9.0',ic:'#9CA3AF',a:()=>setShowAbout(true)}].map((it,i,arr)=>
         <div key={it.label} onClick={it.a} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',borderBottom:`1px solid ${T.border}`}}>
           <div style={{width:30,height:30,borderRadius:8,background:`${it.ic}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>{it.icon}</div>
           <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{it.label}</div></div>
@@ -3867,7 +4053,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         </div>)}
       <div onClick={onLogout} style={{padding:'13px 16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}>
         <div style={{width:30,height:30,borderRadius:8,background:'#EF444412',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🚪</div>
-        <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:'#EF4444'}}>退出登录</div></div>
+        <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:'#EF4444'}}>{t('meLogout')}</div></div>
       </div>
     </div>
 
@@ -3885,7 +4071,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       const totalMsgs=allConvs.reduce((s,c)=>s+(c.messages?.length||0),0);
       return <div style={{marginTop:12}}>
         <button onClick={()=>setShowDevStats(!showDevStats)} style={{width:'100%',padding:'8px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:10,color:T.textThi,cursor:'pointer'}}>
-          {showDevStats?'隐藏':'显示'}系统状态 🤖
+          {showDevStats?(getLang()==='zh-CN'?'隐藏':'Hide'):(getLang()==='zh-CN'?'显示':'Show')} {getLang()==='zh-CN'?'系统状态':'System'} 🤖
         </button>
         {showDevStats&&<div style={{marginTop:8,background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
@@ -4288,10 +4474,11 @@ function FortuneShareCard({profile,dayInfo}){
   const today=new Date();const d=dayInfo?.date||today.getDate();const m=dayInfo?.month||(today.getMonth()+1);const y=dayInfo?.year||today.getFullYear();
   const luck=['大吉','吉','中吉','小吉','平','小凶'][d%6];
   const luckColors={大吉:'#D97706',吉:'#DC2626',中吉:'#8B5CF6',小吉:'#0D9488',平:'#6B7280',小凶:'#64748B'};
-  const yis=['学习','冥想','远行','社交','投资','表白','运动','创作','谈判','约会'];
-  const jis=['冲动决策','熬夜','争吵','借钱','搬家','签约','赌博'];
-  const yi=yis.filter((_,i)=>(d+i*7)%3===0).slice(0,3).join(' · ');
-  const ji=jis.filter((_,i)=>(d+i*5)%3===0).slice(0,2).join(' · ');
+  const yis=t('yiItems')||[];
+  const jis=t('jiItems')||[];
+  const sep=getLang()==='zh-CN'?' · ':' · ';
+  const yi=yis.filter((_,i)=>(d+i*7)%3===0).slice(0,3).join(sep);
+  const ji=jis.filter((_,i)=>(d+i*5)%3===0).slice(0,2).join(sep);
   const colors=['#E11D48','#7C3AED','#0891B2','#D97706','#059669'];
   const luckyColor=colors[d%colors.length];
   // If dayInfo provided, use its theme
@@ -4318,11 +4505,11 @@ function FortuneShareCard({profile,dayInfo}){
       </div>}
       {!theme&&<div style={{display:'flex',gap:12,marginBottom:16}}>
         <div style={{flex:1,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 12px'}}>
-          <div style={{fontSize:10,opacity:.6}}>宜</div>
+          <div style={{fontSize:10,opacity:.6}}>{t('calYi')}</div>
           <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{yi}</div>
         </div>
         <div style={{flex:1,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 12px'}}>
-          <div style={{fontSize:10,opacity:.6}}>忌</div>
+          <div style={{fontSize:10,opacity:.6}}>{t('calJi')}</div>
           <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{ji}</div>
         </div>
       </div>}
@@ -4383,7 +4570,7 @@ function ShareModal({type,profile,structured,partner,score,compatibility,dayInfo
 // ===== TAB BAR =====
 function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
-  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:"首页"},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:"发现"},{id:S.AI,ic:null,label:"AI占卜",center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:"消息",badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:"我的"}];
+  const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:t('navHome')},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:t('navDiscover')},{id:S.AI,ic:null,label:t('navAI'),center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:t('navMsgs'),badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:t('navMe')}];
   return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:60,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 4px 0',zIndex:100}}>
     {tabs.map(tab=>{const act=active===tab.id;
       if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}DD)`,border:'none',borderRadius:22,width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:`0 3px 12px ${T.accent2}40`,marginTop:-14}}><Icons.sparkles s={20} c="#fff"/></button>;

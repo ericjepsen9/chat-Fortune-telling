@@ -371,6 +371,24 @@ function buildPrompt(mode, displayMode, question) {
   return `${roles[mode]}${ban}\n\n${instruction}${followUp}\n\n以下是系统精确计算的数据（只能引用，不可修改或补充）：\n`;
 }
 
+// 英文语言包装：在中文prompt外层添加英文输出指令
+function wrapPromptForLang(prompt, lang) {
+  if (!lang || lang === 'zh-CN') return prompt;
+  if (lang === 'en-US') {
+    return `IMPORTANT: The user's language is English. You MUST respond entirely in English.\n` +
+      `Translate all Chinese astrological terms naturally:\n` +
+      `- 天干地支 → Heavenly Stems & Earthly Branches\n` +
+      `- 五行(金木水火土) → Five Elements (Metal, Wood, Water, Fire, Earth)\n` +
+      `- 十神 → use plain English equivalents (e.g. 偏财→Side Wealth/Investment luck, 七杀→Competitive Pressure, 桃花→Romance Star)\n` +
+      `- 大运 → Major Life Cycle, 流年 → Annual Fortune\n` +
+      `- Use Western date format (Month Day, Year)\n` +
+      `- Keep the analysis insightful and engaging for a Western audience unfamiliar with Chinese astrology\n` +
+      `- For BaZi/Meihua/Hehun modes: briefly explain the system in 1 sentence before diving into the reading\n\n` +
+      `--- Original analysis instructions (follow the structure, but output in English) ---\n\n${prompt}`;
+  }
+  return prompt;
+}
+
 // ============ 安全过滤 ============
 const BLOCKED_PATTERNS = [
   // Self-harm / suicide
@@ -384,7 +402,10 @@ const BLOCKED_PATTERNS = [
   // Fraud
   /怎么[偷骗黑]|诈骗.*方法|盗号|钓鱼/,
 ];
-const CRISIS_RESPONSE = '💙 你的感受很重要。如果你正在经历困难时刻，请联系专业支持：\n\n🆘 全国心理援助热线：400-161-9995\n🆘 北京心理危机研究与干预中心：010-82951332\n🆘 24小时生命热线：400-821-1215\n\n专业的帮助比命理分析更适合你目前的状况。你值得被好好对待 ❤️';
+const CRISIS_RESPONSE_ZH = '💙 你的感受很重要。如果你正在经历困难时刻，请联系专业支持：\n\n🆘 全国心理援助热线：400-161-9995\n🆘 北京心理危机研究与干预中心：010-82951332\n🆘 24小时生命热线：400-821-1215\n\n专业的帮助比命理分析更适合你目前的状况。你值得被好好对待 ❤️';
+const CRISIS_RESPONSE_EN = '💙 Your feelings matter. If you\'re going through a difficult time, please reach out for professional support:\n\n🆘 988 Suicide & Crisis Lifeline: Call or text 988\n🆘 Crisis Text Line: Text HOME to 741741\n🆘 IMAlive: www.imalive.org\n\nProfessional help is more appropriate than astrology readings for what you\'re going through. You deserve support ❤️';
+function getCrisisResponse(lang) { return lang === 'en-US' ? CRISIS_RESPONSE_EN : CRISIS_RESPONSE_ZH; }
+const CRISIS_RESPONSE = CRISIS_RESPONSE_ZH; // backward compat
 
 const SENSITIVE_PATTERNS = [
   /[离婚分手].*什么时候|什么时候.*[死亡离婚]/,
@@ -395,7 +416,10 @@ const SENSITIVE_PATTERNS = [
 ];
 
 // Disclaimer appended to all AI divination responses
-const DIVINATION_DISCLAIMER = '\n\n---\n⚠️ *以上分析仅供参考娱乐，不构成任何专业建议。重大人生决策请结合实际情况，必要时咨询专业人士。*';
+const DIVINATION_DISCLAIMER_ZH = '\n\n---\n⚠️ *以上分析仅供参考娱乐，不构成任何专业建议。重大人生决策请结合实际情况，必要时咨询专业人士。*';
+const DIVINATION_DISCLAIMER_EN = '\n\n---\n⚠️ *For entertainment purposes only. Not professional advice. For major life decisions, consult qualified professionals.*';
+function getDisclaimer(lang) { return lang === 'en-US' ? DIVINATION_DISCLAIMER_EN : DIVINATION_DISCLAIMER_ZH; }
+const DIVINATION_DISCLAIMER = DIVINATION_DISCLAIMER_ZH; // backward compat
 
 function safetyCheck(question) {
   if (!question) return { safe: true, level: 'normal' };
@@ -478,8 +502,11 @@ function buildRequest(mode, profile, question, options = {}) {
     hourDisclaimer = '\n\n【注意】用户提供的出生时辰为大致时段估计（非精确），时柱可能有偏差。分析时柱相关内容时请注明"基于大致时段推算"。';
   }
 
-  const systemPrompt = buildPrompt(mode, dm, question) + categoryHint + sensitiveDisclaimer + hourDisclaimer + engineData;
-  return { systemPrompt, userMessage: (question && question.trim()) || '请为我进行全面分析', engineData, context: ctx, displayMode: dm, mode, category, safetyLevel: safety.level };
+  const lang = options.lang || 'zh-CN';
+  let systemPrompt = buildPrompt(mode, dm, question) + categoryHint + sensitiveDisclaimer + hourDisclaimer + engineData;
+  systemPrompt = wrapPromptForLang(systemPrompt, lang);
+  const defaultQ = lang === 'en-US' ? 'Please give me a comprehensive reading' : '请为我进行全面分析';
+  return { systemPrompt, userMessage: (question && question.trim()) || defaultQ, engineData, context: ctx, displayMode: dm, mode, category, safetyLevel: safety.level, lang };
 }
 
 // ============ 测试 ============
@@ -617,4 +644,4 @@ function extractStructured(mode, profile) {
 }
 
 if (require.main === module) test();
-module.exports = { buildRequest, calculateAll, createContext, extractStructured, DIVINATION_DISCLAIMER };
+module.exports = { buildRequest, calculateAll, createContext, extractStructured, DIVINATION_DISCLAIMER, wrapPromptForLang, getDisclaimer, getCrisisResponse };
