@@ -45,42 +45,63 @@ function loadEnv() {
 }
 loadEnv();
 
+const configManager = require('./src/config-manager');
+
 const LLM_BASE_URL = process.env.LLM_BASE_URL || 'http://127.0.0.1:8080/v1';
 const LLM_API_KEY = process.env.LLM_API_KEY || 'ollama';
 const LLM_MODEL = process.env.LLM_MODEL || 'deepseek-r1:1.5b';
 const PORT = parseInt(process.env.SERVER_PORT) || 3000;
 
-// Multi-LLM failover: primary → backup → fallback
-const LLM_PROVIDERS = [
-  { name:'primary', url:LLM_BASE_URL, key:LLM_API_KEY, model:LLM_MODEL },
-  process.env.LLM_BACKUP_URL ? { name:'backup', url:process.env.LLM_BACKUP_URL, key:process.env.LLM_BACKUP_KEY||LLM_API_KEY, model:process.env.LLM_BACKUP_MODEL||LLM_MODEL } : null,
-  process.env.LLM_FALLBACK_URL ? { name:'fallback', url:process.env.LLM_FALLBACK_URL, key:process.env.LLM_FALLBACK_KEY||LLM_API_KEY, model:process.env.LLM_FALLBACK_MODEL||LLM_MODEL } : null,
-].filter(Boolean);
+// ============ LLM Provider Manager (动态管理) ============
 
-let activeProvider = 0; // index into LLM_PROVIDERS
 const providerErrors = {}; // track consecutive errors per provider
 
-function getProvider() {
-  // Return current active provider, skip providers with too many recent errors
-  for (let i = 0; i < LLM_PROVIDERS.length; i++) {
-    const idx = (activeProvider + i) % LLM_PROVIDERS.length;
-    const p = LLM_PROVIDERS[idx];
-    const errs = providerErrors[p.name] || 0;
-    if (errs < 3) return { ...p, index: idx };
+// 获取所有providers: 优先config中的动态配置，兜底env vars
+function getAllProviders() {
+  const cfgProviders = configManager.get('llm.providers') || [];
+  if (cfgProviders.length > 0) {
+    return cfgProviders.filter(p => p.enabled !== false);
   }
-  // All providers have errors, reset and try primary
+  // 兜底: 从env构建
+  const envProviders = [
+    { id:'env_primary', name:'primary', url:LLM_BASE_URL, key:LLM_API_KEY, model:LLM_MODEL, enabled:true },
+    process.env.LLM_BACKUP_URL ? { id:'env_backup', name:'backup', url:process.env.LLM_BACKUP_URL, key:process.env.LLM_BACKUP_KEY||LLM_API_KEY, model:process.env.LLM_BACKUP_MODEL||LLM_MODEL, enabled:true } : null,
+    process.env.LLM_FALLBACK_URL ? { id:'env_fallback', name:'fallback', url:process.env.LLM_FALLBACK_URL, key:process.env.LLM_FALLBACK_KEY||LLM_API_KEY, model:process.env.LLM_FALLBACK_MODEL||LLM_MODEL, enabled:true } : null,
+  ].filter(Boolean);
+  return envProviders;
+}
+
+function getActiveProviderIndex() {
+  return configManager.get('llm.activeIndex') || 0;
+}
+
+function getProvider() {
+  const providers = getAllProviders();
+  if (providers.length === 0) return { name:'none', url:LLM_BASE_URL, key:LLM_API_KEY, model:LLM_MODEL, index:0 };
+  const activeIdx = getActiveProviderIndex();
+  for (let i = 0; i < providers.length; i++) {
+    const idx = (activeIdx + i) % providers.length;
+    const p = providers[idx];
+    if ((providerErrors[p.id||p.name] || 0) < 3) return { ...p, index: idx };
+  }
   Object.keys(providerErrors).forEach(k => providerErrors[k] = 0);
-  return { ...LLM_PROVIDERS[0], index: 0 };
+  return { ...providers[0], index: 0 };
 }
 
 function onProviderSuccess(name) { providerErrors[name] = 0; }
 function onProviderError(name) {
   providerErrors[name] = (providerErrors[name] || 0) + 1;
-  if (providerErrors[name] >= 3 && LLM_PROVIDERS.length > 1) {
-    const oldIdx = LLM_PROVIDERS.findIndex(p => p.name === name);
-    activeProvider = (oldIdx + 1) % LLM_PROVIDERS.length;
-    logger.warn('LLM', `${name}连续失败${providerErrors[name]}次，切换到${LLM_PROVIDERS[activeProvider].name}`);
+  const providers = getAllProviders();
+  if (providerErrors[name] >= 3 && providers.length > 1) {
+    const oldIdx = providers.findIndex(p => (p.id||p.name) === name);
+    const newIdx = (oldIdx + 1) % providers.length;
+    configManager.set('llm.activeIndex', newIdx);
+    logger.warn('LLM', `${name}连续失败${providerErrors[name]}次，切换到${providers[newIdx].name}`);
   }
+}
+
+function getLLMParams() {
+  return configManager.get('llm.defaultParams') || { temperature: 0.5, maxTokens: 6144, timeout: 180000 };
 }
 
 // 引入新的 AI 服务
@@ -92,10 +113,13 @@ admin.setSecret(auth.JWT_SECRET);
 
 // ============ LLM 调用 ============
 
-async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
+async function callLLM(systemPrompt, userMessage, mode = '', maxTokens) {
   const provider = getProvider();
+  const params = getLLMParams();
   const apiUrl = `${provider.url}/chat/completions`;
   const llmCtx = logger.logLLMStart(mode, systemPrompt.length, userMessage.length);
+  const actualMaxTokens = maxTokens || params.maxTokens || 6144;
+  const timeout = params.timeout || 180000;
 
   const body = JSON.stringify({
     model: provider.model,
@@ -103,8 +127,8 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
     ],
-    max_tokens: maxTokens,
-    temperature: 0.5,
+    max_tokens: actualMaxTokens,
+    temperature: params.temperature ?? 0.5,
     stream: false,
   });
 
@@ -128,7 +152,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
             let content = json.choices[0].message.content;
             const finishReason = json.choices[0].finish_reason;
             const result = logger.logLLMSuccess(llmCtx, content.length, finishReason, res.statusCode);
-            onProviderSuccess(provider.name);
+            onProviderSuccess(provider.id || provider.name);
             if (finishReason === 'length') {
               content += '\n\n---\n⚠️ *AI输出因长度限制被截断，以上为部分内容。可输入具体问题获取更聚焦的分析。*';
             }
@@ -153,10 +177,10 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens = 6144) {
     req.on('error', (e) => {
       const err = new Error(`连接 LLM 失败: ${e.message}`);
       logger.logLLMError(llmCtx, err);
-      onProviderError(provider.name);
+      onProviderError(provider.id || provider.name);
       reject(err);
     });
-    req.setTimeout(180000, () => { req.destroy(); const err = new Error('LLM 请求超时(180s)'); logger.logLLMError(llmCtx, err); reject(err); });
+    req.setTimeout(timeout, () => { req.destroy(); const err = new Error(`LLM 请求超时(${Math.round(timeout/1000)}s)`); logger.logLLMError(llmCtx, err); reject(err); });
     req.write(body); req.end();
   });
 }
@@ -477,8 +501,6 @@ app.post('/api/admin/bots/:id/delete', admin.adminAuth, (req, res) => {
 
 // ============ Admin: System Config ============
 
-const configManager = require('./src/config-manager');
-
 // 获取全部配置
 app.get('/api/admin/config', admin.adminAuth, (req, res) => {
   res.json(configManager.getAll());
@@ -516,12 +538,131 @@ app.get('/api/admin/ai-samples', admin.adminAuth, (req, res) => {
 
 // ============ Admin: LLM Config ============
 
+// ============ Admin: LLM管理 ============
+
 app.get('/api/admin/llm-config', admin.adminAuth, (req, res) => {
+  const providers = getAllProviders();
+  const allCfgProviders = configManager.get('llm.providers') || [];
   res.json({
-    providers: LLM_PROVIDERS.map(p => ({ name: p.name, url: p.url, model: p.model })),
-    activeProvider: activeProvider,
+    providers: providers.map(p => ({ id:p.id, name:p.name, url:p.url, model:p.model, enabled:p.enabled!==false })),
+    allProviders: allCfgProviders.map(p => ({ id:p.id, name:p.name, url:p.url, model:p.model, enabled:p.enabled!==false })),
+    activeIndex: getActiveProviderIndex(),
     providerErrors,
+    params: getLLMParams(),
+    envDefaults: { url:LLM_BASE_URL, model:LLM_MODEL, hasKey:!!process.env.LLM_API_KEY },
   });
+});
+
+// 添加provider
+app.post('/api/admin/llm/providers', admin.adminAuth, (req, res) => {
+  const { name, url, key, model } = req.body;
+  if (!name || !url || !model) return res.status(400).json({ error: '名称/URL/模型必填' });
+  const providers = configManager.get('llm.providers') || [];
+  const id = 'llm_' + Date.now().toString(36);
+  providers.push({ id, name, url, key: key || '', model, enabled: true, createdAt: new Date().toISOString() });
+  configManager.set('llm.providers', providers);
+  // 如果是第一个provider，自动激活
+  if (providers.filter(p => p.enabled).length === 1) configManager.set('llm.activeIndex', 0);
+  admin.logAction(req.admin.id, 'add_llm_provider', id, `添加LLM: ${name} (${model})`);
+  res.json({ success: true, id });
+});
+
+// 更新provider
+app.post('/api/admin/llm/providers/:id', admin.adminAuth, (req, res) => {
+  const providers = configManager.get('llm.providers') || [];
+  const idx = providers.findIndex(p => p.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Provider不存在' });
+  const { name, url, key, model, enabled } = req.body;
+  if (name !== undefined) providers[idx].name = name;
+  if (url !== undefined) providers[idx].url = url;
+  if (key !== undefined) providers[idx].key = key;
+  if (model !== undefined) providers[idx].model = model;
+  if (enabled !== undefined) providers[idx].enabled = enabled;
+  configManager.set('llm.providers', providers);
+  admin.logAction(req.admin.id, 'update_llm_provider', req.params.id, `更新LLM: ${providers[idx].name}`);
+  res.json({ success: true });
+});
+
+// 删除provider
+app.post('/api/admin/llm/providers/:id/delete', admin.adminAuth, (req, res) => {
+  let providers = configManager.get('llm.providers') || [];
+  const idx = providers.findIndex(p => p.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Provider不存在' });
+  const name = providers[idx].name;
+  providers.splice(idx, 1);
+  configManager.set('llm.providers', providers);
+  // 如果删除的是active的，重置
+  const activeIdx = getActiveProviderIndex();
+  if (activeIdx >= providers.length) configManager.set('llm.activeIndex', 0);
+  admin.logAction(req.admin.id, 'delete_llm_provider', req.params.id, `删除LLM: ${name}`);
+  res.json({ success: true });
+});
+
+// 切换active provider
+app.post('/api/admin/llm/switch', admin.adminAuth, (req, res) => {
+  const { index } = req.body;
+  const providers = getAllProviders();
+  if (index < 0 || index >= providers.length) return res.status(400).json({ error: '无效索引' });
+  configManager.set('llm.activeIndex', index);
+  // 清除该provider的错误计数
+  const p = providers[index];
+  providerErrors[p.id||p.name] = 0;
+  admin.logAction(req.admin.id, 'switch_llm', null, `切换LLM到: ${p.name} (${p.model})`);
+  res.json({ success: true, provider: { name:p.name, model:p.model } });
+});
+
+// 测试provider连通性
+app.post('/api/admin/llm/test', admin.adminAuth, async (req, res) => {
+  const { url, key, model } = req.body;
+  if (!url || !model) return res.status(400).json({ error: 'URL和模型必填' });
+  const apiUrl = `${url}/chat/completions`;
+  const testBody = JSON.stringify({
+    model, messages:[{role:'user',content:'你好，请回复"连接成功"四个字'}],
+    max_tokens:50, temperature:0.1, stream:false,
+  });
+  const start = Date.now();
+  try {
+    const parsed = new URL(apiUrl);
+    const result = await new Promise((resolve, reject) => {
+      const options = {
+        hostname:parsed.hostname, port:parsed.port, path:parsed.pathname, method:'POST',
+        headers: anonLLMHeaders(Buffer.byteLength(testBody), key||'test'),
+      };
+      const req = (parsed.protocol==='https:'?require('https'):http).request(options, (resp)=>{
+        let data=''; resp.on('data',c=>data+=c);
+        resp.on('end',()=>{
+          try {
+            const json=JSON.parse(data);
+            if(json.choices?.[0]) resolve({ok:true,reply:json.choices[0].message?.content||'',time:Date.now()-start,status:resp.statusCode});
+            else if(json.error) resolve({ok:false,error:json.error.message||JSON.stringify(json.error),time:Date.now()-start});
+            else resolve({ok:false,error:`状态码${resp.statusCode}: ${data.substring(0,200)}`,time:Date.now()-start});
+          } catch(e){ resolve({ok:false,error:`非JSON响应: ${data.substring(0,200)}`,time:Date.now()-start}); }
+        });
+      });
+      req.on('error',e=>resolve({ok:false,error:e.message,time:Date.now()-start}));
+      req.setTimeout(15000,()=>{req.destroy();resolve({ok:false,error:'连接超时(15s)',time:Date.now()-start})});
+      req.write(testBody);req.end();
+    });
+    res.json(result);
+  } catch(e) { res.json({ok:false,error:e.message,time:Date.now()-start}); }
+});
+
+// 更新LLM默认参数
+app.post('/api/admin/llm/params', admin.adminAuth, (req, res) => {
+  const { temperature, maxTokens, timeout } = req.body;
+  const params = getLLMParams();
+  if (temperature !== undefined) params.temperature = parseFloat(temperature);
+  if (maxTokens !== undefined) params.maxTokens = parseInt(maxTokens);
+  if (timeout !== undefined) params.timeout = parseInt(timeout);
+  configManager.set('llm.defaultParams', params);
+  admin.logAction(req.admin.id, 'update_llm_params', null, `更新LLM参数: temp=${params.temperature},tokens=${params.maxTokens}`);
+  res.json({ success: true, params });
+});
+
+// 重置provider错误计数
+app.post('/api/admin/llm/reset-errors', admin.adminAuth, (req, res) => {
+  Object.keys(providerErrors).forEach(k => providerErrors[k] = 0);
+  res.json({ success: true });
 });
 
 // ============ Admin: User Management ============
@@ -577,6 +718,15 @@ app.get('/api/admin/users/tags', admin.adminAuth, (req, res) => {
   res.json(auth.adminGetAllTags());
 });
 
+// Batch operations must be before :id route
+app.post('/api/admin/users/batch/ban', admin.adminAuth, (req, res) => {
+  const { userIds, ban, reason, days } = req.body;
+  if (!Array.isArray(userIds) || userIds.length === 0) return res.status(400).json({ error: '请选择用户' });
+  const result = auth.adminBatchBan(userIds, { ban, reason, days });
+  admin.logAction(req.admin.id, ban ? 'batch_ban' : 'batch_unban', null, `批量${ban?'封禁':'解封'} ${result.count}个用户`);
+  res.json(result);
+});
+
 app.get('/api/admin/users/:id', admin.adminAuth, (req, res) => {
   const user = auth.adminGetUser(req.params.id);
   if (!user) return res.status(404).json({ error: '用户不存在' });
@@ -609,15 +759,6 @@ app.post('/api/admin/users/:id/tags', admin.adminAuth, (req, res) => {
   const result = auth.adminSetUserTags(req.params.id, req.body.tags);
   if (result.error) return res.status(400).json(result);
   admin.logAction(req.admin.id, 'set_tags', req.params.id, `设置标签: ${(req.body.tags||[]).join(',')}`);
-  res.json(result);
-});
-
-// Batch ban/unban
-app.post('/api/admin/users/batch/ban', admin.adminAuth, (req, res) => {
-  const { userIds, ban, reason, days } = req.body;
-  if (!Array.isArray(userIds) || userIds.length === 0) return res.status(400).json({ error: '请选择用户' });
-  const result = auth.adminBatchBan(userIds, { ban, reason, days });
-  admin.logAction(req.admin.id, ban ? 'batch_ban' : 'batch_unban', null, `批量${ban?'封禁':'解封'} ${result.count}个用户`);
   res.json(result);
 });
 
@@ -1030,7 +1171,7 @@ app.post('/api/divine-stream', async (req, res) => {
         { role: 'system', content: buildReq.systemPrompt },
         { role: 'user', content: buildReq.userMessage },
       ],
-      max_tokens: 6144, temperature: 0.5, stream: true,
+      max_tokens: getLLMParams().maxTokens || 6144, temperature: getLLMParams().temperature ?? 0.5, stream: true,
     });
 
     const parsed = new URL(streamApiUrl);

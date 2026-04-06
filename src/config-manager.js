@@ -65,6 +65,17 @@ const DEFAULTS = {
       'QQ[：:]?\\s*\\d{5,}',          // QQ号
     ],
   },
+
+  // LLM providers (可通过后台动态管理)
+  llm: {
+    activeIndex: 0,
+    defaultParams: {
+      temperature: 0.5,
+      maxTokens: 6144,
+      timeout: 180000,
+    },
+    providers: [],  // 动态添加的provider列表
+  },
 };
 
 let config = null;
