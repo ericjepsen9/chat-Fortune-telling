@@ -814,6 +814,85 @@ function LLMPage(){
 }
 
 // ===== PLACEHOLDER PAGES =====
+// ===== BOT MANAGEMENT PAGE =====
+function BotPage(){
+  const [bots,setBots]=useState([]);
+  const [editBot,setEditBot]=useState(null);
+  const [loading,setLoading]=useState(true);
+
+  const load=()=>{setLoading(true);apiGet('/api/admin/bots').then(d=>{if(Array.isArray(d))setBots(d);setLoading(false)})};
+  useEffect(()=>{load()},[]);
+
+  const toggleBot=(id)=>apiPost('/api/admin/bots/'+id+'/toggle',{}).then(()=>{showToast('已切换','success');load()});
+  const deleteBot=(id)=>{if(!confirm('确定删除？'))return;apiPost('/api/admin/bots/'+id+'/delete',{}).then(()=>{showToast('已删除','success');load()})};
+
+  return (<div className="container">
+    <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      🤖 Bot管理 <span style={{fontSize:12,color:'#6B7280',fontWeight:400}}>{bots.length}个Bot</span>
+      <button className="btn-sm btn-primary" onClick={()=>setEditBot({id:0,name:'',age:25,bio:'',year:2000,month:1,day:1,hour:12,gender:'female',dist:'3km',sign:'',tags:[],chatStyle:'',enabled:true})}>+ 新建Bot</button>
+    </h2>
+    {loading?<div className="panel"><span className="spinner"/> 加载中…</div>:
+    bots.length===0?<div className="panel" style={{textAlign:'center',padding:30,color:'#6B7280'}}>
+      <div style={{fontSize:28,marginBottom:8}}>🤖</div>
+      <div>暂无Bot，前端使用硬编码数据</div>
+      <div style={{fontSize:11,marginTop:4}}>创建Bot后可在后台管理角色信息</div>
+    </div>:
+    <div className="panel">
+      <table><thead><tr><th>名称</th><th>性别</th><th>年龄</th><th>星座</th><th>简介</th><th>聊天风格</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>{bots.map(b=>(
+        <tr key={b.id}>
+          <td style={{fontWeight:600}}>{b.name}</td>
+          <td>{b.gender==='female'?<span style={{color:'#EC4899'}}>♀</span>:<span style={{color:'#3B82F6'}}>♂</span>}</td>
+          <td>{b.age}</td>
+          <td style={{fontSize:11}}>{b.sign}</td>
+          <td style={{fontSize:11,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.bio}</td>
+          <td style={{fontSize:11,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'#9CA3AF'}}>{b.chatStyle}</td>
+          <td><button onClick={()=>toggleBot(b.id)} style={{padding:'2px 8px',borderRadius:4,border:'none',fontSize:10,fontWeight:600,cursor:'pointer',background:b.enabled!==false?'#34D39930':'#EF444430',color:b.enabled!==false?'#34D399':'#EF4444'}}>{b.enabled!==false?'启用':'停用'}</button></td>
+          <td style={{whiteSpace:'nowrap'}}>
+            <button className="btn-sm btn-ghost" style={{marginRight:4}} onClick={()=>setEditBot({...b})}>编辑</button>
+            <button className="btn-sm btn-danger" onClick={()=>deleteBot(b.id)}>删除</button>
+          </td>
+        </tr>
+      ))}</tbody></table>
+    </div>}
+
+    {editBot&&<BotEditModal bot={editBot} onClose={()=>setEditBot(null)} onDone={()=>{setEditBot(null);load()}}/>}
+  </div>);
+}
+function BotEditModal({bot,onClose,onDone}){
+  const [d,setD]=useState({...bot});
+  const [tagStr,setTagStr]=useState((bot.tags||[]).join('、'));
+  const isNew=!bot.id||bot.id===0;
+  const doSave=async()=>{
+    const data={...d,tags:tagStr.split(/[、,，]/).map(t=>t.trim()).filter(Boolean)};
+    if(!data.name?.trim()){showToast('名称不能为空','error');return}
+    const r=isNew?await apiPost('/api/admin/bots',data):await apiPost('/api/admin/bots/'+bot.id+'/update',data);
+    if(!r.error){showToast(isNew?'创建成功':'已保存','success');onDone()}
+  };
+  return (<div className="modal-bg" onClick={onClose}><div className="modal" style={{width:500}} onClick={e=>e.stopPropagation()}>
+    <h3>{isNew?'新建Bot':'编辑Bot'} — {d.name||'未命名'}</h3>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+      <div><label>名称 *</label><input value={d.name||''} onChange={e=>setD({...d,name:e.target.value})}/></div>
+      <div><label>性别</label><select value={d.gender||'female'} onChange={e=>setD({...d,gender:e.target.value})}><option value="female">女</option><option value="male">男</option></select></div>
+      <div><label>年龄</label><input type="number" value={d.age||25} onChange={e=>setD({...d,age:e.target.value})}/></div>
+      <div><label>星座</label><input value={d.sign||''} onChange={e=>setD({...d,sign:e.target.value})} placeholder="如: 双鱼座"/></div>
+      <div><label>出生年</label><input type="number" value={d.year||2000} onChange={e=>setD({...d,year:e.target.value})}/></div>
+      <div><label>出生月</label><input type="number" value={d.month||1} onChange={e=>setD({...d,month:e.target.value})}/></div>
+      <div><label>出生日</label><input type="number" value={d.day||1} onChange={e=>setD({...d,day:e.target.value})}/></div>
+      <div><label>出生时</label><input type="number" value={d.hour||12} onChange={e=>setD({...d,hour:e.target.value})}/></div>
+      <div><label>距离</label><input value={d.dist||'3km'} onChange={e=>setD({...d,dist:e.target.value})}/></div>
+      <div><label>状态</label><select value={d.enabled!==false?'true':'false'} onChange={e=>setD({...d,enabled:e.target.value==='true'})}><option value="true">启用</option><option value="false">停用</option></select></div>
+    </div>
+    <label>个人简介</label><input value={d.bio||''} onChange={e=>setD({...d,bio:e.target.value})} placeholder="如: 插画师·猫咪收容志愿者 🐱"/>
+    <label>兴趣标签 (用顿号分隔)</label><input value={tagStr} onChange={e=>setTagStr(e.target.value)} placeholder="如: 插画、猫咪、手账"/>
+    <label>聊天风格 (AI会参考此描述模拟回复)</label><input value={d.chatStyle||''} onChange={e=>setD({...d,chatStyle:e.target.value})} placeholder="如: 温柔文艺，喜欢用比喻"/>
+    <div className="actions">
+      <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
+      <button className="btn-sm btn-primary" onClick={doSave}>{isNew?'创建':'保存'}</button>
+    </div>
+  </div></div>);
+}
+
 // ===== VIP & REVENUE PAGE =====
 function VipPage(){
   const [tab,setTab]=useState('overview');
@@ -976,6 +1055,7 @@ function App(){
     content:<ContentPage/>,
     llm:<LLMPage/>,
     logs:<LogsPage/>,
+    bots:<BotPage/>,
     vip:<VipPage/>,
     admins:<AdminsPage role={adminUser.role}/>,
   };
@@ -988,6 +1068,7 @@ function App(){
         {adminUser.role!=='support'&&<button className={page==='users'?'active':''} onClick={()=>setPage('users')}>👥 <span>用户</span></button>}
         <button className={page==='chat'?'active':''} onClick={()=>setPage('chat')}>💬 <span>聊天</span></button>
         <button className={page==='content'?'active':''} onClick={()=>setPage('content')}>📋 <span>内容</span></button>
+        <button className={page==='bots'?'active':''} onClick={()=>setPage('bots')}>🤖 <span>Bot</span></button>
         {adminUser.role==='superadmin'&&<button className={page==='llm'?'active':''} onClick={()=>setPage('llm')}>⚙️ <span>系统</span></button>}
         <button className={page==='logs'?'active':''} onClick={()=>setPage('logs')}>📝 <span>日志</span></button>
         <button className={page==='vip'?'active':''} onClick={()=>setPage('vip')}>💎 <span>营收</span></button>

@@ -441,6 +441,40 @@ app.get('/api/admin/inactive-users', admin.adminAuth, (req, res) => {
   res.json(vipManager.getInactiveUsers(users._users || {}, parseInt(req.query.days) || 7, parseInt(req.query.limit) || 50));
 });
 
+// ============ Admin: Bot Management ============
+
+const botManager = require('./src/bot-manager');
+
+app.get('/api/admin/bots', admin.adminAuth, (req, res) => {
+  res.json(botManager.getAll());
+});
+
+app.post('/api/admin/bots', admin.adminAuth, (req, res) => {
+  const bot = botManager.create(req.body);
+  admin.logAction(req.admin.id, 'create_bot', bot.id, `创建Bot: ${bot.name}`);
+  res.json(bot);
+});
+
+app.post('/api/admin/bots/:id/update', admin.adminAuth, (req, res) => {
+  const result = botManager.update(parseInt(req.params.id), req.body);
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'update_bot', req.params.id, `编辑Bot: ${result.name}`);
+  res.json(result);
+});
+
+app.post('/api/admin/bots/:id/toggle', admin.adminAuth, (req, res) => {
+  const result = botManager.toggle(parseInt(req.params.id));
+  if (result.error) return res.status(400).json(result);
+  res.json(result);
+});
+
+app.post('/api/admin/bots/:id/delete', admin.adminAuth, (req, res) => {
+  const result = botManager.remove(parseInt(req.params.id));
+  if (result.error) return res.status(400).json(result);
+  admin.logAction(req.admin.id, 'delete_bot', req.params.id, '删除Bot');
+  res.json(result);
+});
+
 // ============ Admin: System Config ============
 
 const configManager = require('./src/config-manager');
