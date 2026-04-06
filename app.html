@@ -134,7 +134,7 @@ const S={SPLASH:0,LANG_SELECT:-1,LOGIN:2,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,A
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
 const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦁','🐸','🦄'];
 const GRADS=['linear-gradient(135deg,#F9E4E4,#F4D5DB)','linear-gradient(135deg,#D5F0ED,#D0E8EE)','linear-gradient(135deg,#E5DEF5,#DDD8F0)','linear-gradient(135deg,#F5E6D0,#F9E4E4)','linear-gradient(135deg,#D5ECDF,#D5F0ED)','linear-gradient(135deg,#F4D5DB,#F5E6D0)','linear-gradient(135deg,#D0E8EE,#E5DEF5)','linear-gradient(135deg,#F0E4C8,#F5E6D0)','linear-gradient(135deg,#DDD8F0,#F9E4E4)','linear-gradient(135deg,#D5F0ED,#D5ECDF)','linear-gradient(135deg,#F9E4E4,#E5DEF5)','linear-gradient(135deg,#F5E6D0,#D5F0ED)'];
-const USERS=[
+const USERS_ZH=[
   {id:1,name:'林雨薇',age:31,bio:'喜欢旅行和音乐 ✈️',year:1994,month:3,day:15,hour:8,gender:'female',score:92,dist:'1km',sign:'双鱼座',tags:['旅行','音乐','瑜伽']},
   {id:2,name:'张子轩',age:30,bio:'代码写诗的程序员 💻',year:1995,month:7,day:22,hour:14,gender:'male',score:87,dist:'11km',sign:'巨蟹座',tags:['编程','读书','咖啡']},
   {id:3,name:'王思琪',age:29,bio:'瑜伽爱好者 🧘‍♀️',year:1996,month:11,day:8,hour:22,gender:'female',score:78,dist:'5km',sign:'天蝎座',tags:['瑜伽','冥想','素食']},
@@ -148,55 +148,71 @@ const USERS=[
   {id:11,name:'刘星辰',age:31,bio:'创业者·永不停歇 🚀',year:1994,month:4,day:25,hour:20,gender:'female',score:93,dist:'3km',sign:'金牛座',tags:['创业','健身','旅行']},
   {id:12,name:'郑梦瑶',age:28,bio:'心理学研究生 🔮',year:1997,month:12,day:6,hour:2,gender:'male',score:69,dist:'6km',sign:'射手座',tags:['心理学','冥想','写作']},
 ];
+const USERS_EN=[
+  {id:1,name:'Mia Chen',age:31,bio:'Travel & music lover ✈️',year:1994,month:3,day:15,hour:8,gender:'female',score:92,dist:'1mi',sign:'Pisces',tags:['Travel','Music','Yoga']},
+  {id:2,name:'Alex Wang',age:30,bio:'Coder who writes poetry 💻',year:1995,month:7,day:22,hour:14,gender:'male',score:87,dist:'7mi',sign:'Cancer',tags:['Coding','Books','Coffee']},
+  {id:3,name:'Sophie Li',age:29,bio:'Yoga enthusiast 🧘‍♀️',year:1996,month:11,day:8,hour:22,gender:'female',score:78,dist:'3mi',sign:'Scorpio',tags:['Yoga','Meditation','Vegan']},
+  {id:4,name:'Ryan Zhang',age:28,bio:'Foodie & photographer 🍜',year:1997,month:2,day:14,hour:6,gender:'male',score:95,dist:'2mi',sign:'Aquarius',tags:['Food','Photography','Travel']},
+  {id:5,name:'Emma Liu',age:27,bio:'Photographer · Life moments 📸',year:1998,month:8,day:3,hour:10,gender:'female',score:71,dist:'4mi',sign:'Leo',tags:['Photography','Hiking','Cats']},
+  {id:6,name:'Daniel Yang',age:26,bio:'Bookworm · Cat dad · Coffee ☕',year:1999,month:5,day:28,hour:16,gender:'male',score:83,dist:'1mi',sign:'Gemini',tags:['Reading','Cats','Coffee']},
+  {id:7,name:'Sarah Zhao',age:30,bio:'Designer · Beauty seeker 🎨',year:1995,month:10,day:17,hour:0,gender:'female',score:88,dist:'1mi',sign:'Libra',tags:['Design','Art','Galleries']},
+  {id:8,name:'James Sun',age:29,bio:'Finance · Runner 🏃',year:1996,month:1,day:9,hour:12,gender:'male',score:76,dist:'5mi',sign:'Capricorn',tags:['Running','Investing','Fitness']},
+  {id:9,name:'Lily Zhou',age:28,bio:'Freelance writer ✍️',year:1997,month:6,day:20,hour:18,gender:'female',score:90,dist:'1mi',sign:'Gemini',tags:['Writing','Travel','Film']},
+  {id:10,name:'David Wu',age:27,bio:'Teacher · Nature lover 🌿',year:1998,month:9,day:11,hour:4,gender:'male',score:85,dist:'3mi',sign:'Virgo',tags:['Nature','Hiking','Reading']},
+  {id:11,name:'Grace Liu',age:31,bio:'Entrepreneur · Never stop 🚀',year:1994,month:4,day:25,hour:20,gender:'female',score:93,dist:'2mi',sign:'Taurus',tags:['Startup','Fitness','Travel']},
+  {id:12,name:'Kevin Zheng',age:28,bio:'Psychology grad student 🔮',year:1997,month:12,day:6,hour:2,gender:'male',score:69,dist:'4mi',sign:'Sagittarius',tags:['Psychology','Meditation','Writing']},
+];
+const USERS=getLang()==='en-US'?USERS_EN:USERS_ZH;
 
 // ===== BOT PROFILES (冷启动机器人) =====
-const BOTS=[
-  // 10 female bots
-  {id:101,name:'苏晚晴',age:27,bio:'插画师·猫咪收容志愿者 🐱',year:1998,month:3,day:12,hour:9,gender:'female',dist:'2km',sign:'双鱼座',tags:['插画','猫咪','手账'],isBot:true,
-    chatStyle:'温柔文艺，喜欢用比喻，偶尔发猫咪表情，说话慢慢的很治愈'},
-  {id:102,name:'方念安',age:25,bio:'大厂产品经理·周末徒步 🏔️',year:2000,month:7,day:5,hour:14,gender:'female',dist:'5km',sign:'巨蟹座',tags:['产品','徒步','播客'],isBot:true,
-    chatStyle:'理性但有趣，喜欢分析问题，偶尔吐槽工作，说话干脆利落'},
-  {id:103,name:'陆思语',age:29,bio:'独立咖啡店主 ☕',year:1996,month:11,day:22,hour:6,gender:'female',dist:'1km',sign:'天蝎座',tags:['咖啡','烘焙','音乐'],isBot:true,
-    chatStyle:'有点高冷但内心柔软，说话简短有力，偶尔冷幽默'},
-  {id:104,name:'沈芷萱',age:26,bio:'舞蹈老师·生活需要仪式感 💃',year:1999,month:4,day:18,hour:20,gender:'female',dist:'3km',sign:'白羊座',tags:['舞蹈','健身','旅行'],isBot:true,
-    chatStyle:'热情活泼，话多爱分享，喜欢用emoji，说话很有感染力'},
-  {id:105,name:'顾明月',age:28,bio:'中学语文老师·古诗词爱好者 📖',year:1997,month:9,day:8,hour:10,gender:'female',dist:'4km',sign:'处女座',tags:['读书','书法','茶道'],isBot:true,
-    chatStyle:'知性优雅，偶尔引用诗词，说话有教养但不做作'},
-  {id:106,name:'叶清欢',age:24,bio:'留学生·现居波士顿 🇺🇸',year:2001,month:1,day:25,hour:16,gender:'female',dist:'8km',sign:'水瓶座',tags:['留学','摄影','电影'],isBot:true,
-    chatStyle:'中英混搭，思维跳跃，对新事物好奇，喜欢讨论文化差异'},
-  {id:107,name:'程晓薇',age:30,bio:'律师·铁人三项选手 🏊',year:1995,month:6,day:14,hour:4,gender:'female',dist:'6km',sign:'双子座',tags:['法律','运动','红酒'],isBot:true,
-    chatStyle:'逻辑清晰，说话有条理，偶尔展现竞争心，聊运动会很兴奋'},
-  {id:108,name:'温如玉',age:27,bio:'中医养生博主·爱煲汤 🍵',year:1998,month:12,day:3,hour:8,gender:'female',dist:'2km',sign:'射手座',tags:['中医','养生','美食'],isBot:true,
-    chatStyle:'关心人，总想给建议，说话温暖，会根据季节推荐养生'},
-  {id:109,name:'秦婉如',age:26,bio:'花艺设计师·生活美学家 🌺',year:1999,month:8,day:19,hour:12,gender:'female',dist:'3km',sign:'狮子座',tags:['花艺','设计','瑜伽'],isBot:true,
-    chatStyle:'审美在线，喜欢分享美的事物，说话有画面感，偶尔小骄傲'},
-  {id:110,name:'林清歌',age:25,bio:'音乐制作人·深夜创作型 🎵',year:2000,month:2,day:28,hour:23,gender:'female',dist:'7km',sign:'双鱼座',tags:['音乐','吉他','写歌'],isBot:true,
-    chatStyle:'感性浪漫，容易被打动，说话诗意，深夜更活跃'},
-  // 10 male bots
-  {id:201,name:'陆辰逸',age:28,bio:'建筑设计师·空间美学 🏛️',year:1997,month:5,day:10,hour:7,gender:'male',dist:'4km',sign:'金牛座',tags:['建筑','摄影','旅行'],isBot:true,
-    chatStyle:'沉稳有品味，说话不多但有深度，喜欢聊空间和设计'},
-  {id:202,name:'宋子墨',age:26,bio:'独立游戏开发者 🎮',year:1999,month:10,day:2,hour:15,gender:'male',dist:'3km',sign:'天秤座',tags:['游戏','编程','动漫'],isBot:true,
-    chatStyle:'幽默宅系，会用游戏术语比喻生活，偶尔自嘲，很真实'},
-  {id:203,name:'谢明朗',age:30,bio:'纪录片导演·在路上 🎬',year:1995,month:3,day:28,hour:11,gender:'male',dist:'9km',sign:'白羊座',tags:['纪录片','旅行','人文'],isBot:true,
-    chatStyle:'见多识广爱讲故事，说话有画面感，对人和事有独到观察'},
-  {id:204,name:'傅景琛',age:29,bio:'投资分析师·周末烘焙 🍰',year:1996,month:8,day:15,hour:6,gender:'male',dist:'2km',sign:'狮子座',tags:['金融','烘焙','咖啡'],isBot:true,
-    chatStyle:'表面理性内心浪漫，工作聊数据，生活聊美食，反差萌'},
-  {id:205,name:'江清寒',age:27,bio:'中医世家·太极爱好者 ☯️',year:1998,month:11,day:7,hour:5,gender:'male',dist:'5km',sign:'天蝎座',tags:['中医','太极','书法'],isBot:true,
-    chatStyle:'说话慢条斯理有哲理感，偶尔用五行解释事物，很有古风'},
-  {id:206,name:'沈亦舟',age:25,bio:'海归·咖啡品鉴师 ☕',year:2000,month:4,day:22,hour:16,gender:'male',dist:'1km',sign:'金牛座',tags:['咖啡','旅行','音乐'],isBot:true,
-    chatStyle:'生活品质派，对吃喝很讲究，说话温和有礼，偶尔中英混搭'},
-  {id:207,name:'顾北辰',age:31,bio:'急诊科医生·偶尔弹吉他 🎸',year:1994,month:1,day:16,hour:2,gender:'male',dist:'6km',sign:'摩羯座',tags:['医学','吉他','跑步'],isBot:true,
-    chatStyle:'成熟稳重，说话简洁温暖，工作忙回复慢，但很认真'},
-  {id:208,name:'楚天澜',age:28,bio:'体育记者·足球狂热 ⚽',year:1997,month:7,day:1,hour:18,gender:'male',dist:'4km',sign:'巨蟹座',tags:['足球','写作','摄影'],isBot:true,
-    chatStyle:'热血青年，聊运动超激动，平时话不多但聊到兴趣滔滔不绝'},
-  {id:209,name:'裴洛书',age:26,bio:'插画师·深夜食堂常客 🌙',year:1999,month:12,day:11,hour:22,gender:'male',dist:'3km',sign:'射手座',tags:['插画','美食','音乐'],isBot:true,
-    chatStyle:'文艺忧郁系，说话有意境，喜欢深夜聊天，分享美食和音乐'},
-  {id:210,name:'霍言泽',age:29,bio:'创业中·连续失败连续开始 🔥',year:1996,month:6,day:8,hour:13,gender:'male',dist:'7km',sign:'双子座',tags:['创业','健身','读书'],isBot:true,
-    chatStyle:'乐观能量满满，爱分享创业故事，说话直接有冲劲，很励志'},
+const BOTS_ZH=[
+  {id:101,name:'苏晚晴',age:27,bio:'插画师·猫咪收容志愿者 🐱',year:1998,month:3,day:12,hour:9,gender:'female',dist:'2km',sign:'双鱼座',tags:['插画','猫咪','手账'],isBot:true,chatStyle:'温柔文艺，喜欢用比喻，偶尔发猫咪表情，说话慢慢的很治愈'},
+  {id:102,name:'方念安',age:25,bio:'大厂产品经理·周末徒步 🏔️',year:2000,month:7,day:5,hour:14,gender:'female',dist:'5km',sign:'巨蟹座',tags:['产品','徒步','播客'],isBot:true,chatStyle:'理性但有趣，喜欢分析问题，偶尔吐槽工作，说话干脆利落'},
+  {id:103,name:'陆思语',age:29,bio:'独立咖啡店主 ☕',year:1996,month:11,day:22,hour:6,gender:'female',dist:'1km',sign:'天蝎座',tags:['咖啡','烘焙','音乐'],isBot:true,chatStyle:'有点高冷但内心柔软，说话简短有力，偶尔冷幽默'},
+  {id:104,name:'沈芷萱',age:26,bio:'舞蹈老师·生活需要仪式感 💃',year:1999,month:4,day:18,hour:20,gender:'female',dist:'3km',sign:'白羊座',tags:['舞蹈','健身','旅行'],isBot:true,chatStyle:'热情活泼，话多爱分享，喜欢用emoji，说话很有感染力'},
+  {id:105,name:'顾明月',age:28,bio:'中学语文老师·古诗词爱好者 📖',year:1997,month:9,day:8,hour:10,gender:'female',dist:'4km',sign:'处女座',tags:['读书','书法','茶道'],isBot:true,chatStyle:'知性优雅，偶尔引用诗词，说话有教养但不做作'},
+  {id:106,name:'叶清欢',age:24,bio:'留学生·现居波士顿 🇺🇸',year:2001,month:1,day:25,hour:16,gender:'female',dist:'8km',sign:'水瓶座',tags:['留学','摄影','电影'],isBot:true,chatStyle:'中英混搭，思维跳跃，对新事物好奇，喜欢讨论文化差异'},
+  {id:107,name:'程晓薇',age:30,bio:'律师·铁人三项选手 🏊',year:1995,month:6,day:14,hour:4,gender:'female',dist:'6km',sign:'双子座',tags:['法律','运动','红酒'],isBot:true,chatStyle:'逻辑清晰，说话有条理，偶尔展现竞争心，聊运动会很兴奋'},
+  {id:108,name:'温如玉',age:27,bio:'中医养生博主·爱煲汤 🍵',year:1998,month:12,day:3,hour:8,gender:'female',dist:'2km',sign:'射手座',tags:['中医','养生','美食'],isBot:true,chatStyle:'关心人，总想给建议，说话温暖，会根据季节推荐养生'},
+  {id:109,name:'秦婉如',age:26,bio:'花艺设计师·生活美学家 🌺',year:1999,month:8,day:19,hour:12,gender:'female',dist:'3km',sign:'狮子座',tags:['花艺','设计','瑜伽'],isBot:true,chatStyle:'审美在线，喜欢分享美的事物，说话有画面感，偶尔小骄傲'},
+  {id:110,name:'林清歌',age:25,bio:'音乐制作人·深夜创作型 🎵',year:2000,month:2,day:28,hour:23,gender:'female',dist:'7km',sign:'双鱼座',tags:['音乐','吉他','写歌'],isBot:true,chatStyle:'感性浪漫，容易被打动，说话诗意，深夜更活跃'},
+  {id:201,name:'陆辰逸',age:28,bio:'建筑设计师·空间美学 🏛️',year:1997,month:5,day:10,hour:7,gender:'male',dist:'4km',sign:'金牛座',tags:['建筑','摄影','旅行'],isBot:true,chatStyle:'沉稳有品味，说话不多但有深度，喜欢聊空间和设计'},
+  {id:202,name:'宋子墨',age:26,bio:'独立游戏开发者 🎮',year:1999,month:10,day:2,hour:15,gender:'male',dist:'3km',sign:'天秤座',tags:['游戏','编程','动漫'],isBot:true,chatStyle:'幽默宅系，会用游戏术语比喻生活，偶尔自嘲，很真实'},
+  {id:203,name:'谢明朗',age:30,bio:'纪录片导演·在路上 🎬',year:1995,month:3,day:28,hour:11,gender:'male',dist:'9km',sign:'白羊座',tags:['纪录片','旅行','人文'],isBot:true,chatStyle:'见多识广爱讲故事，说话有画面感，对人和事有独到观察'},
+  {id:204,name:'傅景琛',age:29,bio:'投资分析师·周末烘焙 🍰',year:1996,month:8,day:15,hour:6,gender:'male',dist:'2km',sign:'狮子座',tags:['金融','烘焙','咖啡'],isBot:true,chatStyle:'表面理性内心浪漫，工作聊数据，生活聊美食，反差萌'},
+  {id:205,name:'江清寒',age:27,bio:'中医世家·太极爱好者 ☯️',year:1998,month:11,day:7,hour:5,gender:'male',dist:'5km',sign:'天蝎座',tags:['中医','太极','书法'],isBot:true,chatStyle:'说话慢条斯理有哲理感，偶尔用五行解释事物，很有古风'},
+  {id:206,name:'沈亦舟',age:25,bio:'海归·咖啡品鉴师 ☕',year:2000,month:4,day:22,hour:16,gender:'male',dist:'1km',sign:'金牛座',tags:['咖啡','旅行','音乐'],isBot:true,chatStyle:'生活品质派，对吃喝很讲究，说话温和有礼，偶尔中英混搭'},
+  {id:207,name:'顾北辰',age:31,bio:'急诊科医生·偶尔弹吉他 🎸',year:1994,month:1,day:16,hour:2,gender:'male',dist:'6km',sign:'摩羯座',tags:['医学','吉他','跑步'],isBot:true,chatStyle:'成熟稳重，说话简洁温暖，工作忙回复慢，但很认真'},
+  {id:208,name:'楚天澜',age:28,bio:'体育记者·足球狂热 ⚽',year:1997,month:7,day:1,hour:18,gender:'male',dist:'4km',sign:'巨蟹座',tags:['足球','写作','摄影'],isBot:true,chatStyle:'热血青年，聊运动超激动，平时话不多但聊到兴趣滔滔不绝'},
+  {id:209,name:'裴洛书',age:26,bio:'插画师·深夜食堂常客 🌙',year:1999,month:12,day:11,hour:22,gender:'male',dist:'3km',sign:'射手座',tags:['插画','美食','音乐'],isBot:true,chatStyle:'文艺忧郁系，说话有意境，喜欢深夜聊天，分享美食和音乐'},
+  {id:210,name:'霍言泽',age:29,bio:'创业中·连续失败连续开始 🔥',year:1996,month:6,day:8,hour:13,gender:'male',dist:'7km',sign:'双子座',tags:['创业','健身','读书'],isBot:true,chatStyle:'乐观能量满满，爱分享创业故事，说话直接有冲劲，很励志'},
 ];
+const BOTS_EN=[
+  {id:101,name:'Luna Hart',age:27,bio:'Illustrator · Cat rescue volunteer 🐱',year:1998,month:3,day:12,hour:9,gender:'female',dist:'1mi',sign:'Pisces',tags:['Art','Cats','Journaling'],isBot:true,chatStyle:'Gentle and creative, loves metaphors, sends cat pics, warm and healing vibe'},
+  {id:102,name:'Ava Brooks',age:25,bio:'Product manager · Weekend hiker 🏔️',year:2000,month:7,day:5,hour:14,gender:'female',dist:'3mi',sign:'Cancer',tags:['Product','Hiking','Podcasts'],isBot:true,chatStyle:'Analytical but fun, loves problem-solving, sometimes vents about work, straight-talker'},
+  {id:103,name:'Nora Kim',age:29,bio:'Indie coffee shop owner ☕',year:1996,month:11,day:22,hour:6,gender:'female',dist:'0.5mi',sign:'Scorpio',tags:['Coffee','Baking','Music'],isBot:true,chatStyle:'Cool exterior, warm inside, short and direct, dry humor'},
+  {id:104,name:'Zara Lee',age:26,bio:'Dance instructor · Ritual lover 💃',year:1999,month:4,day:18,hour:20,gender:'female',dist:'2mi',sign:'Aries',tags:['Dance','Fitness','Travel'],isBot:true,chatStyle:'Enthusiastic and expressive, loves emojis, infectious energy'},
+  {id:105,name:'Claire Moon',age:28,bio:'English teacher · Poetry lover 📖',year:1997,month:9,day:8,hour:10,gender:'female',dist:'3mi',sign:'Virgo',tags:['Reading','Calligraphy','Tea'],isBot:true,chatStyle:'Elegant and well-read, occasionally quotes poetry, refined but approachable'},
+  {id:106,name:'Yuki Tanaka',age:24,bio:'Grad student in Boston 🇺🇸',year:2001,month:1,day:25,hour:16,gender:'female',dist:'5mi',sign:'Aquarius',tags:['Study Abroad','Photography','Film'],isBot:true,chatStyle:'Curious and open-minded, loves cultural exchange, bilingual vibes'},
+  {id:107,name:'Victoria Sage',age:30,bio:'Lawyer · Triathlete 🏊',year:1995,month:6,day:14,hour:4,gender:'female',dist:'4mi',sign:'Gemini',tags:['Law','Sports','Wine'],isBot:true,chatStyle:'Sharp and organized, competitive streak, gets excited about fitness'},
+  {id:108,name:'Maya Chen',age:27,bio:'Wellness blogger · Soup lover 🍵',year:1998,month:12,day:3,hour:8,gender:'female',dist:'1mi',sign:'Sagittarius',tags:['Wellness','Health','Food'],isBot:true,chatStyle:'Caring, always giving advice, warm tone, seasonal health tips'},
+  {id:109,name:'Stella Rose',age:26,bio:'Floral designer · Aesthete 🌺',year:1999,month:8,day:19,hour:12,gender:'female',dist:'2mi',sign:'Leo',tags:['Flowers','Design','Yoga'],isBot:true,chatStyle:'Great taste, shares beautiful things, vivid descriptions, slightly proud'},
+  {id:110,name:'Aria Song',age:25,bio:'Music producer · Night owl 🎵',year:2000,month:2,day:28,hour:23,gender:'female',dist:'4mi',sign:'Pisces',tags:['Music','Guitar','Songwriting'],isBot:true,chatStyle:'Romantic and emotional, easily moved, poetic, more active at night'},
+  {id:201,name:'Ethan Park',age:28,bio:'Architect · Space aesthetics 🏛️',year:1997,month:5,day:10,hour:7,gender:'male',dist:'3mi',sign:'Taurus',tags:['Architecture','Photography','Travel'],isBot:true,chatStyle:'Calm and tasteful, few words but depth, loves talking about design'},
+  {id:202,name:'Max Song',age:26,bio:'Indie game developer 🎮',year:1999,month:10,day:2,hour:15,gender:'male',dist:'2mi',sign:'Libra',tags:['Gaming','Coding','Anime'],isBot:true,chatStyle:'Funny and nerdy, uses game metaphors for life, self-deprecating, authentic'},
+  {id:203,name:'Leo Xie',age:30,bio:'Documentary filmmaker · On the road 🎬',year:1995,month:3,day:28,hour:11,gender:'male',dist:'6mi',sign:'Aries',tags:['Documentary','Travel','Culture'],isBot:true,chatStyle:'Well-traveled storyteller, vivid descriptions, unique perspective on people'},
+  {id:204,name:'Oliver Fu',age:29,bio:'Investment analyst · Weekend baker 🍰',year:1996,month:8,day:15,hour:6,gender:'male',dist:'1mi',sign:'Leo',tags:['Finance','Baking','Coffee'],isBot:true,chatStyle:'Rational outside, romantic inside, talks data at work and food in life'},
+  {id:205,name:'Kai River',age:27,bio:'Herbalist family · Tai Chi lover ☯️',year:1998,month:11,day:7,hour:5,gender:'male',dist:'3mi',sign:'Scorpio',tags:['Herbs','Tai Chi','Calligraphy'],isBot:true,chatStyle:'Thoughtful and philosophical, explains things through elements, old-soul vibe'},
+  {id:206,name:'Theo Shen',age:25,bio:'Coffee sommelier · Returnee ☕',year:2000,month:4,day:22,hour:16,gender:'male',dist:'0.5mi',sign:'Taurus',tags:['Coffee','Travel','Music'],isBot:true,chatStyle:'Refined taste, particular about food and drink, polite and warm'},
+  {id:207,name:'Nathan Gu',age:31,bio:'ER doctor · Guitar on weekends 🎸',year:1994,month:1,day:16,hour:2,gender:'male',dist:'4mi',sign:'Capricorn',tags:['Medicine','Guitar','Running'],isBot:true,chatStyle:'Mature and steady, concise and warm, busy but attentive'},
+  {id:208,name:'Chase Chu',age:28,bio:'Sports journalist · Football fanatic ⚽',year:1997,month:7,day:1,hour:18,gender:'male',dist:'3mi',sign:'Cancer',tags:['Football','Writing','Photography'],isBot:true,chatStyle:'Passionate about sports, quiet otherwise but can\'t stop talking about his interests'},
+  {id:209,name:'Felix Pei',age:26,bio:'Illustrator · Late-night foodie 🌙',year:1999,month:12,day:11,hour:22,gender:'male',dist:'2mi',sign:'Sagittarius',tags:['Illustration','Food','Music'],isBot:true,chatStyle:'Artistic and moody, loves late-night chats, shares food and music'},
+  {id:210,name:'Hawk Huo',age:29,bio:'Serial entrepreneur · Never give up 🔥',year:1996,month:6,day:8,hour:13,gender:'male',dist:'4mi',sign:'Gemini',tags:['Startup','Fitness','Reading'],isBot:true,chatStyle:'Optimistic energy, shares startup stories, direct and inspiring'},
+];
+const BOTS=getLang()==='en-US'?BOTS_EN:BOTS_ZH;
 
 // Global error handlers
-window.addEventListener('unhandledrejection',e=>{console.error('Unhandled rejection:',e.reason);e.preventDefault();if(window.yuanheToast)window.yuanheToast('网络异常，请稍后重试')});
+window.addEventListener('unhandledrejection',e=>{console.error('Unhandled rejection:',e.reason);e.preventDefault();if(window.yuanheToast)window.yuanheToast(t('networkError'))});
 
 // ===== WEBSOCKET MANAGER =====
 const WsManager = {
@@ -449,7 +465,7 @@ const ChatStore={
     const conv=convs.find(c=>c.id===convId);
     if(!conv)return;
     const msg=conv.messages.find(m=>m.id===msgId);
-    if(msg){msg.recalled=true;msg.text='';delete msg.image;conv.lastMessage='消息已撤回';this.save(convs)}
+    if(msg){msg.recalled=true;msg.text='';delete msg.image;conv.lastMessage=getLang()==='zh-CN'?'消息已撤回':'Recalled';this.save(convs)}
   },
   // Mark conversation as read
   markRead(convId){
@@ -3155,7 +3171,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
             return<>
           <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="写评论…" autoFocus style={{flex:1,padding:'10px 14px',borderRadius:20,border:`1.5px solid ${T.border}`,background:T.bg,fontSize:13,outline:'none'}}
             onKeyDown={e=>{if(e.key==='Enter')submitComment()}}/>
-          <button onClick={submitComment} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.accent2:T.border,color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>发送</button></>;
+          <button onClick={submitComment} style={{padding:'10px 16px',borderRadius:20,border:'none',background:commentText.trim()?T.accent2:T.border,color:'#fff',fontSize:13,fontWeight:600,cursor:commentText.trim()?'pointer':'default'}}>{t('send')}</button></>;
           })()}
         </div>
         <button onClick={()=>setCommentPost(null)} style={{width:'100%',padding:'10px',background:'none',border:'none',color:T.textThi,fontSize:12,cursor:'pointer',marginTop:6}}>取消</button>
@@ -3638,7 +3654,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         {msgs.length===0&&!typing&&<div style={{textAlign:'center',padding:'40px 20px',color:T.textThi}}>
           <div style={{fontSize:36,marginBottom:12}}>👋</div>
           <div style={{fontSize:14,fontWeight:500,color:T.text}}>打个招呼吧</div>
-          <div style={{fontSize:12,marginTop:6}}>发送第一条消息开始聊天</div>
+          <div style={{fontSize:12,marginTop:6}}>{getLang()==='zh-CN'?'发送第一条消息开始聊天':'Send a message to start chatting'}</div>
         </div>}
         {searchMode&&searchQuery&&<div style={{fontSize:11,color:T.textThi,marginBottom:8}}>🔍 搜索"{searchQuery}" — {msgs.filter(m=>!m.recalled&&m.text&&m.text.toLowerCase().includes(searchQuery.toLowerCase())).length}条结果</div>}
         {(searchMode&&searchQuery?msgs.filter(m=>!m.recalled&&m.text&&m.text.toLowerCase().includes(searchQuery.toLowerCase())):msgs).map((msg,idx)=>(
@@ -3649,7 +3665,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
                 background:msg.recalled?'transparent':msg.role==='user'?`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`:T.card,
                 color:msg.recalled?T.textThi:msg.role==='user'?'#fff':T.text,fontSize:msg.recalled?11:14,lineHeight:1.7,fontStyle:msg.recalled?'italic':'normal',
                 boxShadow:msg.recalled?'none':'0 1px 3px rgba(0,0,0,0.04)',overflow:'hidden',cursor:msg.role==='user'?'pointer':'default'}}>
-                {msg.recalled?'消息已撤回':msg.image?<img src={msg.image} loading="lazy" style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.voice?
+                {msg.recalled?(getLang()==='zh-CN'?'消息已撤回':'Message recalled'):msg.image?<img src={msg.image} loading="lazy" style={{maxWidth:'100%',borderRadius:14,display:'block'}}/>:msg.voice?
                   <div onClick={()=>{const a=new Audio(msg.voice);a.play();showToast('播放中…')}} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',minWidth:80+Math.min((msg.voiceDur||3)*8,120)}}>
                     <span style={{fontSize:16}}>▶️</span>
                     <div style={{flex:1,display:'flex',gap:2,alignItems:'center'}}>{[...Array(Math.max(4,Math.min(msg.voiceDur||3,14)))].map((_,i)=>{const h=4+((i*7+3)%12);return <div key={i} style={{width:3,height:h,borderRadius:2,background:msg.role==='user'?'rgba(255,255,255,0.5)':`${T.accent2}40`}}/>})}</div>
@@ -3719,7 +3735,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
           <div style={{width:10,height:10,borderRadius:5,background:T.primary,animation:'pulse 1s infinite'}}/>
           <span style={{fontSize:16,fontWeight:700,color:T.primary,fontVariantNumeric:'tabular-nums'}}>{recordDuration}″</span>
         </div>
-        <button onClick={stopRecording} style={{padding:'8px 18px',borderRadius:20,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:`0 2px 8px ${T.accent2}30`}}>发送</button>
+        <button onClick={stopRecording} style={{padding:'8px 18px',borderRadius:20,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:`0 2px 8px ${T.accent2}30`}}>{t('send')}</button>
       </div>}
       {/* Input bar */}
       {!recording&&<div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:6,alignItems:'center'}}>
@@ -3729,7 +3745,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <input value={chatInput} onChange={e=>{setChatInput(e.target.value);if(activeConv?.user?.realUserId&&WsManager.connected)WsManager.send({type:'typing',to:activeConv.user.realUserId})}}
           onKeyDown={e=>{if(e.key==='Enter'&&chatInput.trim())sendMsg()}}
           onFocus={()=>{setShowQuick(false);setShowEmoji(false)}}
-          placeholder="发送消息…" disabled={sending}
+          placeholder={getLang()==='zh-CN'?'发送消息…':'Message…'} disabled={sending}
           style={{flex:1,padding:'8px 14px',borderRadius:20,border:'none',background:T.bg,fontSize:13,outline:'none',color:T.text}}/>
         {chatInput.trim()?
           <button onClick={sendMsg} disabled={sending}
@@ -3747,13 +3763,13 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       {msgAction&&<div onClick={()=>setMsgAction(null)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
         <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'12px 16px 30px',animation:'slideUp .3s ease'}}>
           <div style={{width:32,height:4,borderRadius:2,background:T.border,margin:'0 auto 12px'}}/>
-          <button onClick={()=>{navigator.clipboard?.writeText(msgAction.text);showToast('已复制');setMsgAction(null)}} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:T.text,cursor:'pointer'}}>
-            <span style={{fontSize:16,width:24,textAlign:'center'}}>📋</span><span>复制</span>
+          <button onClick={()=>{navigator.clipboard?.writeText(msgAction.text);showToast(getLang()==='zh-CN'?'已复制':'Copied');setMsgAction(null)}} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:T.text,cursor:'pointer'}}>
+            <span style={{fontSize:16,width:24,textAlign:'center'}}>📋</span><span>{getLang()==='zh-CN'?'复制':'Copy'}</span>
           </button>
-          {msgAction.canRecall&&<button onClick={()=>{ChatStore.recallMessage(activeConv.id,msgAction.id);refreshConvs();setMsgAction(null);showToast('已撤回')}} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:T.primary,cursor:'pointer'}}>
-            <span style={{fontSize:16,width:24,textAlign:'center'}}>↩️</span><span>撤回</span>
+          {msgAction.canRecall&&<button onClick={()=>{ChatStore.recallMessage(activeConv.id,msgAction.id);refreshConvs();setMsgAction(null);showToast(getLang()==='zh-CN'?'已撤回':'Recalled')}} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:T.primary,cursor:'pointer'}}>
+            <span style={{fontSize:16,width:24,textAlign:'center'}}>↩️</span><span>{getLang()==='zh-CN'?'撤回':'Recall'}</span>
           </button>}
-          <button onClick={()=>setMsgAction(null)} style={{display:'block',width:'100%',padding:'14px',border:'none',background:'none',fontSize:14,color:T.textThi,cursor:'pointer',marginTop:4,textAlign:'center'}}>取消</button>
+          <button onClick={()=>setMsgAction(null)} style={{display:'block',width:'100%',padding:'14px',border:'none',background:'none',fontSize:14,color:T.textThi,cursor:'pointer',marginTop:4,textAlign:'center'}}>{t('cancel')}</button>
         </div>
       </div>}
       {/* Toast */}
@@ -3763,9 +3779,9 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
       {showReport&&<div onClick={()=>setShowReport(false)} style={{position:'fixed',inset:0,zIndex:500,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
         <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'12px 16px 30px',animation:'slideUp .3s ease'}}>
           <div style={{width:32,height:4,borderRadius:2,background:T.border,margin:'0 auto 12px'}}/>
-          {[{l:'搜索聊天记录',icon:'🔍',a:()=>{setShowReport(false);setSearchMode(true)}},
-            {l:'查看个人资料',icon:'👤',a:()=>{setShowReport(false);setShowProfile(true)}},
-            {l:'拉黑此人',icon:'🚫',danger:true,a:()=>{window.yuanheConfirm('确定拉黑'+activeConv.user.name+'？',()=>{blockUser(activeConv.user.id);setShowReport(false);setActiveId(null);refreshConvs()})}},
+          {[{l:getLang()==='zh-CN'?'搜索聊天记录':'Search messages',icon:'🔍',a:()=>{setShowReport(false);setSearchMode(true)}},
+            {l:getLang()==='zh-CN'?'查看个人资料':'View profile',icon:'👤',a:()=>{setShowReport(false);setShowProfile(true)}},
+            {l:getLang()==='zh-CN'?'拉黑此人':'Block user',icon:'🚫',danger:true,a:()=>{window.yuanheConfirm((getLang()==='zh-CN'?'确定拉黑':'Block ')+activeConv.user.name+'？',()=>{blockUser(activeConv.user.id);setShowReport(false);setActiveId(null);refreshConvs()})}},
             {l:'举报',icon:'⚠️',danger:true,a:()=>{setShowReport(false);setTimeout(()=>setShowReport('report'),100)}}
           ].map(it=><button key={it.l} onClick={it.a} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'14px 16px',border:'none',borderBottom:`1px solid ${T.border}`,background:'none',fontSize:14,color:it.danger?T.primary:T.text,cursor:'pointer',textAlign:'left'}}>
             <span style={{fontSize:16,width:24,textAlign:'center'}}>{it.icon}</span>
