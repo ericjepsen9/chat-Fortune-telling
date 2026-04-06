@@ -522,6 +522,7 @@ module.exports = {
   // Admin user management
   adminListUsers,
   adminGetUser,
+  adminGetUserDivination,
   adminUpdateUser,
   adminBanUser,
   adminDeleteUser,
@@ -828,6 +829,25 @@ function adminGetUser(userId) {
     friendCount: friends.length,
     friends: friends.slice(0, 10),
     swipeStats: { swipedRight, swipedLeft, beenLiked },
+  };
+}
+
+function adminGetUserDivination(userId, divId) {
+  const u = users[userId];
+  if (!u || !u.divinations) return null;
+  const d = u.divinations.find(x => x.id === divId);
+  if (!d) return null;
+  return {
+    id: d.id,
+    mode: d.mode,
+    question: d.question,
+    response: d.response || '',
+    engineData: d.engineData || null,
+    structured: d.structured || null,
+    depth: d.depth || 'expert',
+    createdAt: d.createdAt,
+    userName: u.profile?.name || '—',
+    userId: u.id,
   };
 }
 

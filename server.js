@@ -522,18 +522,30 @@ app.get('/api/status', (req, res) => {
 // AI输出质量抽查 — 最近N条占卜结果
 app.get('/api/admin/ai-samples', admin.adminAuth, (req, res) => {
   const limit = parseInt(req.query.limit) || 20;
+  const page = parseInt(req.query.page) || 1;
+  const modeFilter = req.query.mode || '';
   const samples = [];
-  const userList = auth.adminListUsers({ limit: 200 });
+  const userList = auth.adminListUsers({ limit: 500 });
   (userList.items || []).forEach(u => {
     const detail = auth.adminGetUser(u.id);
     if (detail?.divinations) {
       detail.divinations.forEach(d => {
+        if (modeFilter && d.mode !== modeFilter) return;
         samples.push({ userId: u.id, userName: u.name, ...d });
       });
     }
   });
   samples.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-  res.json(samples.slice(0, limit));
+  const total = samples.length;
+  const start = (page - 1) * limit;
+  res.json({ items: samples.slice(start, start + limit), total, page, limit });
+});
+
+// 获取单条占卜完整内容
+app.get('/api/admin/ai-samples/:userId/:divId', admin.adminAuth, (req, res) => {
+  const fullDetail = auth.adminGetUserDivination(req.params.userId, req.params.divId);
+  if (!fullDetail) return res.status(404).json({ error: '记录不存在' });
+  res.json(fullDetail);
 });
 
 // ============ Admin: LLM Config ============

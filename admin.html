@@ -1079,28 +1079,137 @@ function LLMPage(){
     </div>}
 
     {/* ============ 质量抽查 Tab ============ */}
-    {tab==='quality'&&<div className="panel">
-      <h3 style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>🔍 AI输出质量
-        <button className="btn-sm btn-primary" onClick={loadSamples}>抽查最近20条</button>
-      </h3>
-      {showSamples&&<div style={{maxHeight:500,overflow:'auto'}}>
-        {samples.length===0?<div style={{color:'#6B7280',fontSize:12,padding:20,textAlign:'center'}}>暂无占卜记录</div>:
-        samples.map((s,i)=><div key={i} style={{padding:'10px',borderBottom:'1px solid #1f1f30',fontSize:12}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-            <span><span className="badge badge-purple">{s.mode}</span> {s.userName||'?'}</span>
-            <span style={{color:'#6B7280',fontSize:10}}>{s.createdAt?.substring(0,16).replace('T',' ')}</span>
-          </div>
-          {s.question&&<div style={{color:'#9CA3AF'}}>❓ {s.question}</div>}
-          <div style={{color:'#e0e0e0',marginTop:4,maxHeight:80,overflow:'hidden'}}>{s.preview||'无预览'}</div>
-        </div>)}
-      </div>}
-      {!showSamples&&<div style={{color:'#6B7280',fontSize:12,padding:20,textAlign:'center'}}>点击"抽查最近20条"查看AI输出质量</div>}
-    </div>}
+    {tab==='quality'&&<QualityTab/>}
 
     {/* 添加Provider弹窗 */}
     {addModal&&<ProviderModal onClose={()=>setAddModal(false)} onDone={()=>{setAddModal(false);reload()}} testFn={testProvider} testResult={testResult} testing={testing}/>}
     {editProvider&&<ProviderModal provider={editProvider} onClose={()=>setEditProvider(null)} onDone={()=>{setEditProvider(null);reload()}} testFn={testProvider} testResult={testResult} testing={testing}/>}
   </div>);
+}
+
+function QualityTab(){
+  const [samples,setSamples]=useState(null);
+  const [total,setTotal]=useState(0);
+  const [page,setPage]=useState(1);
+  const [mode,setMode]=useState('');
+  const [expanded,setExpanded]=useState(null); // id of expanded sample
+  const [fullContent,setFullContent]=useState(null); // full response loaded from API
+  const [loadingFull,setLoadingFull]=useState(false);
+  const limit=10;
+  const selStyle={padding:'6px 10px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12};
+
+  const load=()=>{
+    apiGet(`/api/admin/ai-samples?page=${page}&limit=${limit}&mode=${mode}`).then(d=>{
+      if(d?.items){setSamples(d.items);setTotal(d.total)}
+      else{setSamples([]);setTotal(0)}
+    });
+  };
+  useEffect(()=>{load()},[page,mode]);
+
+  const toggleExpand=(s)=>{
+    if(expanded===s.id){setExpanded(null);setFullContent(null);return}
+    setExpanded(s.id);
+    // 如果preview很短，加载完整内容
+    setLoadingFull(true);setFullContent(null);
+    apiGet(`/api/admin/ai-samples/${s.userId}/${s.id}`).then(d=>{
+      if(d&&!d.error)setFullContent(d);
+      setLoadingFull(false);
+    }).catch(()=>setLoadingFull(false));
+  };
+
+  const totalPages=Math.ceil(total/limit);
+  const modes=[['','全部'],['bazi','八字'],['astrology','星座'],['tarot','塔罗'],['meihua','梅花'],['vedic','印度'],['hehun','合婚'],['synastry','配对'],['hepan','合盘']];
+
+  // 简单markdown渲染: **粗体**, *斜体*, ##标题, 换行
+  const renderMD=(text)=>{
+    if(!text)return null;
+    return text.split('\n').map((line,i)=>{
+      if(line.startsWith('###'))return <div key={i} style={{fontWeight:700,fontSize:13,color:'#A78BFA',margin:'8px 0 4px'}}>{line.replace(/^###\s*/,'')}</div>;
+      if(line.startsWith('##'))return <div key={i} style={{fontWeight:700,fontSize:14,color:'#A78BFA',margin:'10px 0 4px'}}>{line.replace(/^##\s*/,'')}</div>;
+      if(line.startsWith('#'))return <div key={i} style={{fontWeight:700,fontSize:15,color:'#A78BFA',margin:'12px 0 4px'}}>{line.replace(/^#\s*/,'')}</div>;
+      if(line.startsWith('---'))return <hr key={i} style={{border:'none',borderTop:'1px solid #2D2D3F',margin:'8px 0'}}/>;
+      if(line.trim()==='')return <div key={i} style={{height:6}}/>;
+      // bold + italic inline
+      let html=line.replace(/\*\*(.+?)\*\*/g,'<strong style="color:#e0e0e0">$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>');
+      return <div key={i} style={{lineHeight:1.7}} dangerouslySetInnerHTML={{__html:html}}/>;
+    });
+  };
+
+  return(<>
+    <div className="panel">
+      <h3 style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        🔍 AI输出质量抽查
+        <span style={{fontSize:12,color:'#6B7280',fontWeight:400}}>共 {total} 条记录</span>
+      </h3>
+
+      {/* 筛选栏 */}
+      <div style={{display:'flex',gap:8,marginBottom:12,alignItems:'center',flexWrap:'wrap'}}>
+        {modes.map(([v,l])=><button key={v} className={`btn-sm ${mode===v?'btn-primary':'btn-ghost'}`} style={{fontSize:11,padding:'4px 10px'}} onClick={()=>{setMode(v);setPage(1)}}>{l}</button>)}
+      </div>
+
+      {/* 列表 */}
+      {samples===null?<div style={{textAlign:'center',padding:30}}><span className="spinner"/> 加载中…</div>:
+      samples.length===0?<div style={{textAlign:'center',color:'#6B7280',padding:30,fontSize:13}}>暂无占卜记录</div>:
+      <div>
+        {samples.map(s=>{
+          const isOpen=expanded===s.id;
+          return(<div key={s.id} style={{borderBottom:'1px solid #1f1f30'}}>
+            {/* 摘要行 — 点击展开 */}
+            <div onClick={()=>toggleExpand(s)} style={{padding:'12px 8px',cursor:'pointer',display:'flex',gap:10,alignItems:'flex-start',transition:'background .15s'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#1f1f30'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              <div style={{flexShrink:0,width:20,textAlign:'center',color:'#6B7280',fontSize:12,marginTop:2}}>{isOpen?'▾':'▸'}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                  <span className="badge badge-purple">{s.mode}</span>
+                  <span style={{fontSize:12,fontWeight:600,color:'#e0e0e0'}}>{s.userName||'—'}</span>
+                  <span style={{fontSize:10,color:'#4a4a5a',marginLeft:'auto',flexShrink:0}}>{s.createdAt?.substring(0,16).replace('T',' ')}</span>
+                </div>
+                {s.question&&<div style={{fontSize:12,color:'#9CA3AF',marginBottom:2}}>❓ {s.question}</div>}
+                {!isOpen&&<div style={{fontSize:12,color:'#6B7280',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.preview||'（无预览）'}</div>}
+              </div>
+            </div>
+
+            {/* 展开的完整内容 */}
+            {isOpen&&<div style={{padding:'0 8px 16px 38px'}}>
+              {loadingFull?<div><span className="spinner" style={{marginRight:6}}/>加载完整内容…</div>:
+              fullContent?<>
+                {/* 元信息 */}
+                <div style={{display:'flex',gap:12,marginBottom:10,fontSize:11,color:'#6B7280',flexWrap:'wrap'}}>
+                  <span>模式: <span style={{color:'#A78BFA'}}>{fullContent.mode}</span></span>
+                  <span>深度: <span style={{color:'#A78BFA'}}>{fullContent.depth}</span></span>
+                  <span>字数: <span style={{color:'#A78BFA'}}>{fullContent.response?.length||0}</span></span>
+                  <span>时间: {fullContent.createdAt?.substring(0,16).replace('T',' ')}</span>
+                </div>
+
+                {/* 问题 */}
+                {fullContent.question&&<div style={{padding:'8px 12px',background:'#A78BFA10',borderRadius:8,marginBottom:10,fontSize:12,color:'#A78BFA'}}>
+                  ❓ 用户提问: {fullContent.question}
+                </div>}
+
+                {/* AI完整回复 */}
+                <div style={{padding:'12px 14px',background:'#0f0f1a',borderRadius:10,fontSize:12,color:'#9CA3AF',maxHeight:500,overflow:'auto',lineHeight:1.7,border:'1px solid #2D2D3F'}}>
+                  {renderMD(fullContent.response)}
+                </div>
+
+                {/* 引擎数据 */}
+                {fullContent.engineData&&<details style={{marginTop:8}}>
+                  <summary style={{fontSize:11,color:'#6B7280',cursor:'pointer'}}>查看引擎原始数据</summary>
+                  <pre style={{padding:10,background:'#0f0f1a',borderRadius:8,fontSize:10,color:'#6B7280',overflow:'auto',maxHeight:200,marginTop:4,whiteSpace:'pre-wrap'}}>{fullContent.engineData}</pre>
+                </details>}
+              </>:<div style={{color:'#6B7280',fontSize:12}}>内容加载失败</div>}
+            </div>}
+          </div>);
+        })}
+      </div>}
+
+      {/* 分页 */}
+      {totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:12}}>
+        {page>1&&<button className="btn-sm btn-ghost" onClick={()=>{setPage(page-1);setExpanded(null)}}>← 上一页</button>}
+        <span style={{fontSize:12,color:'#6B7280',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
+        {page<totalPages&&<button className="btn-sm btn-ghost" onClick={()=>{setPage(page+1);setExpanded(null)}}>下一页 →</button>}
+      </div>}
+    </div>
+  </>);
 }
 
 function ProviderModal({provider,onClose,onDone,testFn,testResult,testing}){
