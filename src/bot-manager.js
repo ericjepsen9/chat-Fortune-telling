@@ -35,8 +35,13 @@ function getAll() { return bots; }
 function getById(id) { return bots.find(b => String(b.id) === String(id)); }
 
 function create(data) {
+  // 去重：如果已有相同ID的Bot，跳过
+  const wantId = parseInt(data.id) || (300 + bots.length + Math.floor(Math.random()*100));
+  if (bots.find(b => String(b.id) === String(wantId))) {
+    return { error: '该ID已存在', id: wantId };
+  }
   const bot = {
-    id: parseInt(data.id) || (300 + bots.length),
+    id: wantId,
     name: data.name || '新Bot',
     age: parseInt(data.age) || 25,
     bio: data.bio || '',

@@ -1352,7 +1352,7 @@ function BotPage(){
   const deleteBot=(id)=>{if(!confirm('确定删除？'))return;apiPost('/api/admin/bots/'+id+'/delete',{}).then(()=>{showToast('已删除','success');load()})};
 
   const importDefaults=async()=>{
-    if(!confirm('将导入20个默认Bot（10女+10男），确认？'))return;
+    const existingIds=new Set(bots.map(b=>String(b.id)));
     const defaults=[
       {id:101,name:'苏晚晴',age:27,bio:'插画师·猫咪收容志愿者 🐱',year:1998,month:3,day:12,hour:9,gender:'female',dist:'2km',sign:'双鱼座',tags:['插画','猫咪','手账'],chatStyle:'温柔文艺，喜欢用比喻，偶尔发猫咪表情'},
       {id:102,name:'方念安',age:25,bio:'大厂产品经理·周末徒步 🏔️',year:2000,month:7,day:5,hour:14,gender:'female',dist:'5km',sign:'巨蟹座',tags:['产品','徒步','播客'],chatStyle:'理性但有趣，说话干脆利落'},
@@ -1375,8 +1375,11 @@ function BotPage(){
       {id:209,name:'裴洛书',age:26,bio:'插画师·深夜食堂 🌙',year:1999,month:12,day:11,hour:22,gender:'male',dist:'3km',sign:'射手座',tags:['插画','美食','音乐'],chatStyle:'文艺忧郁系，喜欢深夜聊天'},
       {id:210,name:'霍言泽',age:29,bio:'创业者 🔥',year:1996,month:6,day:8,hour:13,gender:'male',dist:'7km',sign:'双子座',tags:['创业','健身','读书'],chatStyle:'乐观能量满满，说话直接'},
     ];
+    const toImport=defaults.filter(b=>!existingIds.has(String(b.id)));
+    if(toImport.length===0){showToast('所有Bot已存在，无需导入','info');return}
+    if(!confirm(`将导入 ${toImport.length} 个Bot，确认？`))return;
     let count=0;
-    for(const b of defaults){
+    for(const b of toImport){
       const r=await apiPost('/api/admin/bots',{...b,enabled:true});
       if(!r.error)count++;
     }
@@ -1388,7 +1391,7 @@ function BotPage(){
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       🤖 Bot管理 <span style={{fontSize:12,color:'#6B7280',fontWeight:400}}>{bots.length}个Bot</span>
       <div style={{display:'flex',gap:6}}>
-        {bots.length===0&&<button className="btn-sm btn-ghost" onClick={importDefaults}>📥 导入默认Bot</button>}
+        <button className="btn-sm btn-ghost" onClick={importDefaults}>📥 导入默认Bot</button>
         <button className="btn-sm btn-primary" onClick={()=>setEditBot({id:0,name:'',age:25,bio:'',year:2000,month:1,day:1,hour:12,gender:'female',dist:'3km',sign:'',tags:[],chatStyle:'',enabled:true})}>+ 新建Bot</button>
       </div>
     </h2>
