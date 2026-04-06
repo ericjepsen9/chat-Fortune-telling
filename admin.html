@@ -180,7 +180,7 @@ function ChangePasswordModal({forced,onDone,onClose}){
 function TrendChart({data}){
   const canvasRef=useRef(null);const chartRef=useRef(null);
   useEffect(()=>{
-    if(!data||!canvasRef.current||typeof Chart==='undefined')return;
+    if(!data||!Array.isArray(data)||!canvasRef.current||typeof Chart==='undefined')return;
     if(chartRef.current)chartRef.current.destroy();
     chartRef.current=new Chart(canvasRef.current,{
       type:'line',
@@ -204,9 +204,9 @@ function DashboardPage(){
   const [trends,setTrends]=useState(null);const [funnel,setFunnel]=useState(null);
   const [announcement,setAnnouncement]=useState({text:'',enabled:false,type:'info'});
   const [trendDays,setTrendDays]=useState(7);
-  const loadStats=()=>{apiGet('/api/stats').then(setStats);apiGet('/api/admin/stats').then(setUStats)};
-  const loadTrends=(d)=>{apiGet('/api/admin/trends?days='+d).then(setTrends)};
-  useEffect(()=>{loadStats();loadTrends(trendDays);apiGet('/api/admin/funnel').then(setFunnel);apiGet('/api/admin/announcement').then(a=>{if(a)setAnnouncement(a)});const t=setInterval(loadStats,30000);return()=>clearInterval(t)},[]);
+  const loadStats=()=>{apiGet('/api/stats').then(d=>{if(d&&!d.error)setStats(d)});apiGet('/api/admin/stats').then(d=>{if(d&&!d.error)setUStats(d)})};
+  const loadTrends=(d)=>{apiGet('/api/admin/trends?days='+d).then(d=>{if(Array.isArray(d))setTrends(d)})};
+  useEffect(()=>{loadStats();loadTrends(trendDays);apiGet('/api/admin/funnel').then(d=>{if(Array.isArray(d))setFunnel(d)});apiGet('/api/admin/announcement').then(a=>{if(a&&!a.error)setAnnouncement(a)});const t=setInterval(loadStats,30000);return()=>clearInterval(t)},[]);
   const saveAnnouncement=()=>{apiPost('/api/admin/announcement',announcement).then(()=>showToast('公告已保存','success'))};
   if(!stats)return <div className="container"><div className="panel"><span className="spinner"/> 加载中…</div></div>;
   return(<div className="container">
