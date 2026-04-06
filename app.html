@@ -130,7 +130,7 @@ function getThemeMode(){
   return 'light';
 }
 let T=THEMES[getThemeMode()];
-const S={SPLASH:0,LOGIN:2,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
+const S={SPLASH:0,LANG_SELECT:-1,LOGIN:2,ONBOARD:1,BIRTH:4,HOME:10,DISCOVER:11,AI:12,MSGS:13,ME:14};
 const AVATARS=['🌸','🌊','🎭','🎯','📷','📚','🎨','🏃','✍️','🌿','🚀','🔮'];
 const AVATAR_OPTIONS=['👩','👨','👩‍🦰','👨‍🦰','👩‍🦱','👨‍🦱','👧','👦','👸','🤴','🧑‍💼','👩‍💻','👨‍💻','🧑‍🎨','👩‍🏫','👨‍🍳','🧑‍🔬','👩‍⚕️','🦊','🐱','🐰','🐻','🐼','🦁','🐸','🦄'];
 const GRADS=['linear-gradient(135deg,#F9E4E4,#F4D5DB)','linear-gradient(135deg,#D5F0ED,#D0E8EE)','linear-gradient(135deg,#E5DEF5,#DDD8F0)','linear-gradient(135deg,#F5E6D0,#F9E4E4)','linear-gradient(135deg,#D5ECDF,#D5F0ED)','linear-gradient(135deg,#F4D5DB,#F5E6D0)','linear-gradient(135deg,#D0E8EE,#E5DEF5)','linear-gradient(135deg,#F0E4C8,#F5E6D0)','linear-gradient(135deg,#DDD8F0,#F9E4E4)','linear-gradient(135deg,#D5F0ED,#D5ECDF)','linear-gradient(135deg,#F9E4E4,#E5DEF5)','linear-gradient(135deg,#F5E6D0,#D5F0ED)'];
@@ -526,7 +526,93 @@ function SkeletonCard(){
 }
 
 function Splash({onDone}){useEffect(()=>{const t=setTimeout(onDone,2200);return()=>clearTimeout(t)},[]);
-  return(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#FF6B6B 0%,#8B5CF6 50%,#4ECDC4 100%)'}}><div className="anim-in" style={{color:'#fff',textAlign:'center'}}><div className="serif" style={{fontSize:48,fontWeight:700,letterSpacing:8}}>缘合</div><div style={{fontSize:14,opacity:.8,marginTop:8,letterSpacing:4}}>YUANHE</div><div style={{fontSize:12,opacity:.6,marginTop:16}}>以命理连接缘分</div></div></div>);
+  return(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#FF6B6B 0%,#8B5CF6 50%,#4ECDC4 100%)'}}><div className="anim-in" style={{color:'#fff',textAlign:'center'}}><div className="serif" style={{fontSize:48,fontWeight:700,letterSpacing:8}}>缘合</div><div style={{fontSize:14,opacity:.8,marginTop:8,letterSpacing:4}}>YUANHE</div><div style={{fontSize:12,opacity:.6,marginTop:16}}>{getLang()==='en-US'?'Cosmic connections through ancient wisdom':'以命理连接缘分'}</div></div></div>);
+}
+
+// ===== LANGUAGE SELECT (首次登录) =====
+function LangSelectScreen({onSelect}){
+  const [selected,setSelected]=useState(null);
+  const [entering,setEntering]=useState(true);
+  useEffect(()=>{setTimeout(()=>setEntering(false),100)},[]);
+  const langs=[
+    {code:'zh-CN',flag:'🇨🇳',name:'简体中文',desc:'八字命理 · 星座运势 · 塔罗占卜',sub:'为中文用户优化的完整体验'},
+    {code:'en-US',flag:'🇺🇸',name:'English',desc:'Horoscope · Tarot · Vedic Astrology',sub:'Optimized for Western audiences'},
+  ];
+  const doSelect=(code)=>{
+    setSelected(code);
+    _currentLang=code;_locale=LOCALES[code];localStorage.setItem('yuanhe_lang',code);
+    setTimeout(()=>onSelect(code),400);
+  };
+  return(<div style={{height:'100%',display:'flex',flexDirection:'column',background:'linear-gradient(160deg,#0f0f1a 0%,#1a1030 50%,#0f1a2e 100%)'}}>
+    <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24,opacity:entering?0:1,transform:entering?'translateY(20px)':'none',transition:'all .5s ease'}}>
+      <div style={{fontSize:48,marginBottom:8}}>🔮</div>
+      <div className="serif" style={{fontSize:32,fontWeight:700,color:'#fff',letterSpacing:4}}>缘合</div>
+      <div style={{fontSize:13,color:'rgba(255,255,255,0.5)',marginTop:4,letterSpacing:2}}>YUANHE</div>
+      <div style={{fontSize:14,color:'rgba(255,255,255,0.7)',marginTop:24,marginBottom:32}}>Choose your language · 选择语言</div>
+      <div style={{width:'100%',maxWidth:340,display:'flex',flexDirection:'column',gap:12}}>
+        {langs.map(l=>{
+          const isActive=selected===l.code;
+          return(<button key={l.code} onClick={()=>doSelect(l.code)} style={{
+            width:'100%',padding:'20px',borderRadius:16,border:`2px solid ${isActive?'#A78BFA':'rgba(255,255,255,0.1)'}`,
+            background:isActive?'rgba(167,139,250,0.15)':'rgba(255,255,255,0.05)',
+            cursor:'pointer',textAlign:'left',transition:'all .3s ease',
+            transform:isActive?'scale(1.02)':'scale(1)',
+            boxShadow:isActive?'0 0 30px rgba(167,139,250,0.2)':'none',
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <span style={{fontSize:32}}>{l.flag}</span>
+              <div>
+                <div style={{fontSize:18,fontWeight:700,color:'#fff'}}>{l.name}</div>
+                <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginTop:2}}>{l.desc}</div>
+              </div>
+              {isActive&&<span style={{marginLeft:'auto',fontSize:20}}>✓</span>}
+            </div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.35)',marginTop:8}}>{l.sub}</div>
+          </button>);
+        })}
+      </div>
+      <div style={{fontSize:11,color:'rgba(255,255,255,0.25)',marginTop:24}}>You can change this later in Settings · 可在设置中随时更改</div>
+    </div>
+  </div>);
+}
+
+// ===== LANGUAGE PICKER MODAL (设置中切换语言) =====
+function LangPickerModal({onClose}){
+  const curLang=getLang();
+  const langs=[
+    {code:'zh-CN',flag:'🇨🇳',name:'简体中文',desc:'八字命理 · 星座运势 · 塔罗占卜'},
+    {code:'en-US',flag:'🇺🇸',name:'English',desc:'Horoscope · Tarot · Vedic Astrology'},
+  ];
+  const pick=(code)=>{
+    if(code===curLang){onClose();return}
+    _currentLang=code;_locale=LOCALES[code];localStorage.setItem('yuanhe_lang',code);
+    window.location.reload();
+  };
+  return(<div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:18,fontWeight:700,color:T.text}}>🌐 {t('meLanguage')}</div>
+        <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.text}}>✕</button>
+      </div>
+      <div style={{fontSize:12,color:T.textThi,marginBottom:16}}>{getLang()==='zh-CN'?'切换语言后，界面文案和功能展示将自动适配':'Switching language will adapt the UI and features automatically'}</div>
+      {langs.map(l=>{
+        const active=l.code===curLang;
+        return(<button key={l.code} onClick={()=>pick(l.code)} style={{
+          width:'100%',padding:'16px',borderRadius:14,marginBottom:8,
+          border:active?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,
+          background:active?(T.isDark?T.accent2+'15':'#F5F3FF'):T.card,
+          cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:12,
+        }}>
+          <span style={{fontSize:28}}>{l.flag}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:15,fontWeight:600,color:active?T.accent2:T.text}}>{l.name}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{l.desc}</div>
+          </div>
+          {active&&<div style={{width:22,height:22,borderRadius:11,background:T.accent2,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'#fff',fontSize:13,fontWeight:700}}>✓</span></div>}
+        </button>);
+      })}
+    </div>
+  </div>);
 }
 
 // ===== BIRTH =====
@@ -1320,7 +1406,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
     <div key={genderPref} style={{position:'relative',flex:1,margin:'0 14px',minHeight:100,marginBottom:4}}>
       {cards.length===0?(<div style={{height:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:T.textThi}}>
         <div style={{fontSize:48,marginBottom:16}}>🎋</div><div style={{fontSize:16,fontWeight:500,color:T.text}}>今日缘分已看完</div><div style={{fontSize:13,marginTop:8}}>明天会有新的有缘人出现</div>
-        <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>先去AI占卜</button>
+        <button onClick={()=>goTo(S.AI)} style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>{getLang()==='zh-CN'?'先去AI占卜':'Try AI Reading'}</button>
       </div>)
       :cards.slice(-2).map((u,i,arr)=><SwipeCard key={u.id} user={u} onSwipe={swipe} isTop={i===arr.length-1} onDetail={()=>setDetailUser(u)}/>)}
       {/* First-time swipe guide */}
@@ -2173,7 +2259,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       {/* Category tabs as title */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
-          {[{k:'single',l:'个人模式'},{k:'pair',l:'配对分析'}].map(c=>{
+          {[{k:'single',l:getLang()==='zh-CN'?'个人模式':'Personal'},{k:'pair',l:getLang()==='zh-CN'?'配对分析':'Compatibility'}].map(c=>{
             const active=isPair?(c.k==='pair'):(c.k==='single');
             return <button key={c.k} onClick={()=>trySetMode(MODES.find(m=>m.cat===c.k).id)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
               <span style={{fontSize:active?24:18,fontWeight:active?800:500,color:active?T.text:T.textThi,transition:'all .2s'}}>{c.l}</span>
@@ -2182,7 +2268,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           })}
         </div>
         <div style={{display:'flex',gap:4}}>
-          {[{v:'expert',l:'专家'},{v:'simple',l:'大众'}].map(d=>(
+          {[{v:'expert',l:getLang()==='zh-CN'?'专家':'Expert'},{v:'simple',l:getLang()==='zh-CN'?'大众':'Simple'}].map(d=>(
             <button key={d.v} onClick={()=>setDm(d.v)} style={{padding:'4px 12px',borderRadius:14,fontSize:11,fontWeight:600,border:'none',cursor:'pointer',background:dm===d.v?`${T.accent2}15`:'transparent',color:dm===d.v?T.accent2:T.textThi,transition:'all .2s'}}>{d.l}</button>
           ))}
         </div>
@@ -2900,7 +2986,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
       {/* Tab as title + mood in top right */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
-          {[{k:'recommend',l:'推荐'},{k:'community',l:'缘友圈'}].map(t=>(
+          {[{k:'recommend',l:getLang()==='zh-CN'?'推荐':'For You'},{k:'community',l:t('communityTitle')}].map(t=>(
             <button key={t.k} onClick={()=>setDiscoverTab(t.k)} style={{background:'none',border:'none',cursor:'pointer',padding:0,position:'relative'}}>
               <span style={{fontSize:discoverTab===t.k?24:18,fontWeight:discoverTab===t.k?800:500,color:discoverTab===t.k?T.text:T.textThi,transition:'all .2s'}}>{t.l}</span>
               {discoverTab===t.k&&<div style={{position:'absolute',bottom:-4,left:'50%',transform:'translateX(-50%)',width:20,height:3,borderRadius:2,background:T.accent2}}/>}
@@ -3862,6 +3948,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   const [showMyPosts,setShowMyPosts]=useState(false);
   const [showMatchHistory,setShowMatchHistory]=useState(false);
   const [showFavorites,setShowFavorites]=useState(false);
+  const [showLangPicker,setShowLangPicker]=useState(false);
   const [generatingPersonality,setGeneratingPersonality]=useState(false);
   const [showPersonality,setShowPersonality]=useState(false);
   const history=(()=>{try{return JSON.parse(localStorage.getItem('yuanhe_history')||'[]')}catch(e){return[]}})();
@@ -4023,11 +4110,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     {/* Settings group + blacklist */}
     <div style={{background:T.card,borderRadius:14,boxShadow:T.shadow,marginBottom:12,overflow:'hidden'}}>
       {[{icon:'✏️',label:getLang()==='zh-CN'?'修改生辰':'Edit birth info',desc:profile.year+(getLang()==='zh-CN'?'年':'-')+profile.month+(getLang()==='zh-CN'?'月':'-')+profile.day+(getLang()==='zh-CN'?'日':''),ic:'#F59E0B',a:onEdit},
-        {icon:'🌐',label:t('meLanguage'),desc:getLocale().flag+' '+getLocale().label,ic:'#6366F1',a:()=>{
-          const next=getLang()==='zh-CN'?'en-US':'zh-CN';
-          _currentLang=next;_locale=LOCALES[next];localStorage.setItem('yuanhe_lang',next);
-          window.location.reload(); // 重新加载以应用新语言
-        }},
+        {icon:'🌐',label:t('meLanguage'),desc:getLocale().flag+' '+getLocale().label,ic:'#6366F1',a:()=>setShowLangPicker(true)},
         {icon:'🔐',label:getLang()==='zh-CN'?'隐私设置':'Privacy',desc:privacyLabel,ic:'#3B82F6',a:()=>setShowPrivacy(true)},
         {icon:themeMode==='dark'?'🌙':'☀️',label:getLang()==='zh-CN'?'外观模式':'Theme',desc:themeMode==='dark'?(getLang()==='zh-CN'?'深色':'Dark'):(getLang()==='zh-CN'?'浅色':'Light'),ic:'#8B5CF6',a:toggleTheme},
         {icon:'💕',label:getLang()==='zh-CN'?'匹配历史':'Match history',desc:ChatStore.getAll().length+(getLang()==='zh-CN'?'次匹配':' matches'),ic:'#EC4899',a:()=>setShowMatchHistory(true)},
@@ -4094,6 +4177,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
   {showAbout&&<AboutModal onClose={()=>setShowAbout(false)}/>}
   {showTerms&&<TermsModal onClose={()=>setShowTerms(false)}/>}
   {showDaily&&<DailyStatusModal profile={profile} onClose={()=>setShowDaily(false)}/>}
+  {showLangPicker&&<LangPickerModal onClose={()=>setShowLangPicker(false)}/>}
   {/* Personality detail page */}
   {showPersonality&&(()=>{
     try{
@@ -4585,7 +4669,8 @@ function TabBar({active,onTap}){
 
 // ===== APP =====
 function App(){
-  const [scr,setScr]=useState(S.SPLASH);
+  const [langChosen,setLangChosen]=useState(()=>!!localStorage.getItem('yuanhe_lang'));
+  const [scr,setScr]=useState(langChosen?S.SPLASH:S.LANG_SELECT);
   const [authToken,setAuthToken]=useState(()=>localStorage.getItem('yuanhe_token')||null);
   const [profile,setProfile]=useState(()=>{try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));return p&&p.year?p:null}catch(e){return null}});
   const [aiMode,setAiMode]=useState(null);
@@ -4668,6 +4753,7 @@ function App(){
   },[profile]);
   const showTabs=[S.HOME,S.DISCOVER,S.AI,S.MSGS,S.ME].includes(scr)&&!chatActive;
   return(<div style={{maxWidth:480,margin:'0 auto',height:'100dvh',position:'relative',overflow:'hidden',background:T.bg,boxShadow:'0 0 40px rgba(0,0,0,0.08)'}}>
+    {scr===S.LANG_SELECT&&<LangSelectScreen onSelect={()=>{setLangChosen(true);setScr(S.SPLASH)}}/>}
     {scr===S.SPLASH&&<Splash onDone={()=>{
       if(authToken&&profile)setScr(S.HOME);
       else if(authToken&&!profile)setScr(onboarded?S.BIRTH:S.ONBOARD);
@@ -4703,7 +4789,7 @@ function App(){
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
     {profile&&<div style={{display:scr===S.AI?'contents':'none'}}><AIScreen profile={profile} initialMode={aiMode} onUpdateProfile={saveProfile}/></div>}
     {scr===S.MSGS&&<div key="msgs" style={{height:'100%'}}><MsgsScreen convs={convs} refreshConvs={()=>setConvs(ChatStore.getAll())} openConvId={openConvId} setOpenConvId={setOpenConvId} setChatActive={setChatActive} profile={profile} goTo={goTo}/></div>}
-    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm('确定退出登录？',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setAuthToken(null);setProfile(null);setScr(S.LOGIN)},{detail:'退出后本地数据将被清除'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={saveProfile} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
+    {scr===S.ME&&profile&&<div key="me" style={{height:'100%'}}><MeScreen profile={profile} onLogout={()=>{window.yuanheConfirm(getLang()==='zh-CN'?'确定退出登录？':'Sign out?',()=>{const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));keys.forEach(k=>localStorage.removeItem(k));setAuthToken(null);setProfile(null);setScr(S.LOGIN)},{detail:getLang()==='zh-CN'?'退出后本地数据将被清除':'Local data will be cleared'})}} goTo={goTo} onEdit={()=>setScr(S.BIRTH)} onUpdateProfile={saveProfile} themeMode={themeMode} toggleTheme={toggleTheme}/></div>}
     {showTabs&&<TabBar active={scr} onTap={s=>goTo(s)}/>}
     {globalToast&&<div style={{position:'fixed',top:'38%',left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.78)',color:'#fff',padding:'12px 28px',borderRadius:22,fontSize:13,fontWeight:500,zIndex:9999,animation:'toastIn .25s ease',maxWidth:'80%',textAlign:'center',backdropFilter:'blur(4px)'}}>{globalToast}</div>}
     {/* Global confirm dialog */}
