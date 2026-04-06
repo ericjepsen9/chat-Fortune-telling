@@ -74,7 +74,7 @@ tr:hover{background:#1f1f30}
 
 /* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:200}
-.modal{background:#1a1a2e;border-radius:16px;padding:24px;width:420px;max-width:90vw;max-height:80vh;overflow:auto}
+.modal{background:#1a1a2e;border-radius:16px;padding:24px;width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;word-wrap:break-word}
 .modal h3{font-size:16px;font-weight:600;color:#A78BFA;margin-bottom:16px}
 .modal label{display:block;font-size:12px;color:#9CA3AF;margin:10px 0 4px}
 .modal input,.modal select{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0}
@@ -123,6 +123,7 @@ const api=async(path,opts={})=>{
   try{
     const r=await fetch(path,{...opts,headers:{...headers,...(opts.headers||{})}});
     if(r.status===401){localStorage.removeItem('yuanhe_admin_token');window.location.reload();return{}}
+    if(r.status===429){showToast('请求太频繁，请稍后','error');return{error:'rate_limited'}}
     const data=await r.json();
     if(data.error)showToast(data.error,'error');
     return data;
@@ -130,6 +131,45 @@ const api=async(path,opts={})=>{
 };
 const apiGet=(p)=>api(p);
 const apiPost=(p,b)=>api(p,{method:'POST',body:JSON.stringify(b)});
+
+// 全局确认弹窗(替代原生confirm)
+let _confirmResolve=null;
+function AdminConfirm({msg,detail,danger,onResult}){
+  return(<div className="modal-bg" onClick={()=>onResult(false)}><div className="modal" style={{width:340,textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+    <div style={{fontSize:32,marginBottom:12}}>{danger?'⚠️':'❓'}</div>
+    <div style={{fontSize:15,fontWeight:600,color:'#e0e0e0',marginBottom:detail?6:16}}>{msg}</div>
+    {detail&&<div style={{fontSize:12,color:'#6B7280',marginBottom:16}}>{detail}</div>}
+    <div className="actions" style={{justifyContent:'center'}}>
+      <button className="btn-sm btn-ghost" onClick={()=>onResult(false)}>取消</button>
+      <button className={`btn-sm ${danger?'btn-danger':'btn-primary'}`} onClick={()=>onResult(true)}>确认</button>
+    </div>
+  </div></div>);
+}
+
+// 全局Esc关闭弹窗
+function useEscClose(onClose){
+  useEffect(()=>{
+    const h=e=>{if(e.key==='Escape'&&onClose)onClose()};
+    document.addEventListener('keydown',h);
+    return()=>document.removeEventListener('keydown',h);
+  },[onClose]);
+}
+
+// 防双击hook
+function useAsyncAction(){
+  const [loading,setLoading]=useState(false);
+  const run=useCallback(async(fn)=>{
+    if(loading)return;
+    setLoading(true);
+    try{await fn()}finally{setLoading(false)}
+  },[loading]);
+  return [loading,run];
+}
+
+// 复制到剪贴板
+function copyText(text){
+  navigator.clipboard?.writeText(text).then(()=>showToast('已复制','success')).catch(()=>{});
+}
 
 // ===== LOGIN =====
 function LoginPage({onLogin}){
@@ -204,9 +244,9 @@ function DashboardPage(){
   const [trends,setTrends]=useState(null);const [funnel,setFunnel]=useState(null);
   const [announcement,setAnnouncement]=useState({text:'',enabled:false,type:'info'});
   const [trendDays,setTrendDays]=useState(7);
-  const loadStats=()=>{apiGet('/api/stats').then(d=>{if(d&&!d.error)setStats(d)});apiGet('/api/admin/stats').then(d=>{if(d&&!d.error)setUStats(d)})};
-  const loadTrends=(d)=>{apiGet('/api/admin/trends?days='+d).then(d=>{if(Array.isArray(d))setTrends(d)})};
-  useEffect(()=>{loadStats();loadTrends(trendDays);apiGet('/api/admin/funnel').then(d=>{if(Array.isArray(d))setFunnel(d)});apiGet('/api/admin/announcement').then(a=>{if(a&&!a.error)setAnnouncement(a)});const t=setInterval(loadStats,30000);return()=>clearInterval(t)},[]);
+  const loadStats=()=>{apiGet('/api/stats').then(d=>{if(d&&!d.error)setStats(d)}).catch(()=>{});apiGet('/api/admin/stats').then(d=>{if(d&&!d.error)setUStats(d)}).catch(()=>{})};
+  const loadTrends=(d)=>{apiGet('/api/admin/trends?days='+d).then(d=>{if(Array.isArray(d))setTrends(d)}).catch(()=>{})};
+  useEffect(()=>{loadStats();loadTrends(trendDays);apiGet('/api/admin/funnel').then(d=>{if(Array.isArray(d))setFunnel(d)}).catch(()=>{});apiGet('/api/admin/announcement').then(a=>{if(a&&!a.error)setAnnouncement(a)}).catch(()=>{});const t=setInterval(loadStats,30000);return()=>clearInterval(t)},[]);
   const saveAnnouncement=()=>{apiPost('/api/admin/announcement',announcement).then(()=>showToast('公告已保存','success'))};
   if(!stats)return <div className="container"><div className="panel"><span className="spinner"/> 加载中…</div></div>;
   return(<div className="container">
@@ -348,18 +388,21 @@ function LogsPage(){
 
 // ===== MODALS =====
 function BanModal({user,onClose,onDone}){
-  const [reason,setReason]=useState('');const [days,setDays]=useState('');
+  const [reason,setReason]=useState('');const [days,setDays]=useState('');const [saving,setSaving]=useState(false);
+  useEscClose(onClose);
   const doBan=async()=>{
+    setSaving(true);
     const r=await apiPost('/api/admin/users/'+user.id+'/ban',{ban:true,reason:reason||'违规',days:days?parseInt(days):0});
+    setSaving(false);
     if(!r.error)onDone();
   };
   return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <h3>⛔ 封禁 {user.name}</h3>
-    <label>封禁理由</label><input value={reason} onChange={e=>setReason(e.target.value)} placeholder="违规内容/行为描述"/>
-    <label>封禁天数 (0=永久)</label><input type="number" value={days} onChange={e=>setDays(e.target.value)} placeholder="0"/>
+    <label>封禁理由</label><input value={reason} onChange={e=>setReason(e.target.value)} placeholder="违规内容/行为描述" onKeyDown={e=>e.key==='Enter'&&doBan()}/>
+    <label>封禁天数 (0=永久)</label><input type="number" value={days} onChange={e=>setDays(e.target.value)} placeholder="0" min="0" max="3650" onKeyDown={e=>e.key==='Enter'&&doBan()}/>
     <div className="actions">
       <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
-      <button className="btn-sm btn-danger" onClick={doBan}>确认封禁</button>
+      <button className="btn-sm btn-danger" onClick={doBan} disabled={saving}>{saving?'封禁中…':'确认封禁'}</button>
     </div>
   </div></div>);
 }
@@ -375,12 +418,19 @@ function EditModal({user,onClose,onDone}){
   const [adminNote,setAdminNote]=useState(user.adminNote||'');
   const [tagInput,setTagInput]=useState('');
   const [tags,setTags]=useState(user.adminTags||[]);
+  const [saving,setSaving]=useState(false);
+  useEscClose(onClose);
   const addTag=()=>{if(tagInput.trim()&&!tags.includes(tagInput.trim())){setTags([...tags,tagInput.trim()]);setTagInput('')}};
   const removeTag=(i)=>setTags(tags.filter((_,j)=>j!==i));
   const doEdit=async()=>{
+    if(!name.trim()){showToast('昵称不能为空','error');return}
+    if(year&&(parseInt(year)<1900||parseInt(year)>2030)){showToast('年份超出范围','error');return}
+    if(hour&&(parseInt(hour)<0||parseInt(hour)>23)){showToast('时辰应为0-23','error');return}
+    setSaving(true);
     const payload={name,city,bio,gender,adminNote,adminTags:tags};
     if(year)payload.year=year;if(month)payload.month=month;if(day)payload.day=day;if(hour)payload.hour=hour;
     const r=await apiPost('/api/admin/users/'+user.id+'/update',payload);
+    setSaving(false);
     if(!r.error)onDone();
   };
   return (<div className="modal-bg" onClick={onClose}><div className="modal" style={{width:480}} onClick={e=>e.stopPropagation()}>
@@ -411,16 +461,19 @@ function EditModal({user,onClose,onDone}){
     <label>管理备注</label><input value={adminNote} onChange={e=>setAdminNote(e.target.value)} placeholder="仅管理员可见…"/>
     <div className="actions">
       <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
-      <button className="btn-sm btn-primary" onClick={doEdit}>保存</button>
+      <button className="btn-sm btn-primary" onClick={doEdit} disabled={saving}>{saving?'保存中…':'保存'}</button>
     </div>
   </div></div>);
 }
 
 function CreateAdminModal({onClose,onDone}){
-  const [u,setU]=useState('');const [n,setN]=useState('');const [r,setR]=useState('operator');const [pw,setPw]=useState('');
+  const [u,setU]=useState('');const [n,setN]=useState('');const [r,setR]=useState('operator');const [pw,setPw]=useState('');const [saving,setSaving]=useState(false);
+  useEscClose(onClose);
   const create=async()=>{
     if(!u.trim()){showToast('用户名不能为空','error');return}
+    setSaving(true);
     const res=await apiPost('/api/admin/create',{username:u,name:n||u,role:r,password:pw||undefined});
+    setSaving(false);
     if(res.success){showToast('创建成功','success');onDone()}
   };
   return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
@@ -438,10 +491,15 @@ function CreateAdminModal({onClose,onDone}){
   </div></div>);
 }
 function GrantVipModal({data,onClose,onDone}){
-  const [tier,setTier]=useState(data.tier||'basic');const [days,setDays]=useState(data.days||'30');const [uid,setUid]=useState(data.userId||'');
+  const [tier,setTier]=useState(data.tier||'basic');const [days,setDays]=useState(data.days||'30');const [uid,setUid]=useState(data.userId||'');const [saving,setSaving]=useState(false);
+  useEscClose(onClose);
   const doGrant=async()=>{
     if(!uid.trim()){showToast('请输入用户ID','error');return}
-    const r=await apiPost('/api/admin/vip/grant',{userId:uid,tier,days:parseInt(days)||30});
+    const d=parseInt(days)||0;
+    if(d<0||d>3650){showToast('天数范围0-3650','error');return}
+    setSaving(true);
+    const r=await apiPost('/api/admin/vip/grant',{userId:uid,tier,days:d||30});
+    setSaving(false);
     if(r.success){showToast(`已赠送${r.order?.tierName}`,'success');onDone()}
   };
   return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
@@ -450,11 +508,11 @@ function GrantVipModal({data,onClose,onDone}){
     {!data.userId&&<><label>用户ID</label><input value={uid} onChange={e=>setUid(e.target.value)} placeholder="输入用户ID"/></>}
     <label>VIP等级</label>
     <select value={tier} onChange={e=>setTier(e.target.value)}><option value="basic">缘合会员 (Lv.1)</option><option value="premium">缘合至尊 (Lv.2)</option></select>
-    <label>天数 (0=永久)</label>
-    <input type="number" value={days} onChange={e=>setDays(e.target.value)} placeholder="30"/>
+    <label>天数 (0=永久，最大3650)</label>
+    <input type="number" value={days} onChange={e=>setDays(e.target.value)} placeholder="30" min="0" max="3650"/>
     <div className="actions">
       <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
-      <button className="btn-sm btn-primary" onClick={doGrant}>确认赠送</button>
+      <button className="btn-sm btn-primary" onClick={doGrant} disabled={saving}>{saving?'赠送中…':'确认赠送'}</button>
     </div>
   </div></div>);
 }
@@ -493,10 +551,14 @@ function UsersPage(){
   const toggleAll=()=>{if(allSelected)setSelected([]);else setSelected(data.items.map(u=>u.id))};
   const toggleOne=(id)=>setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);
 
+  const [batchLoading,setBatchLoading]=useState(false);
   const batchBan=async(ban)=>{
     if(selected.length===0){showToast('请先选择用户','error');return}
+    if(batchLoading)return;
     if(!confirm(`确定${ban?'封禁':'解封'} ${selected.length} 个用户？`))return;
+    setBatchLoading(true);
     const r=await apiPost('/api/admin/users/batch/ban',{userIds:selected,ban,reason:'批量操作'});
+    setBatchLoading(false);
     if(r.success){showToast(`已${ban?'封禁':'解封'} ${r.count} 个用户`,'success');setSelected([]);load()}
   };
 
@@ -552,9 +614,9 @@ function UsersPage(){
 
       {selected.length>0&&<div style={{display:'flex',gap:8,alignItems:'center',padding:'8px 0',marginBottom:8,borderBottom:'1px solid #2D2D3F'}}>
         <span style={{fontSize:12,color:'#A78BFA',fontWeight:600}}>已选 {selected.length} 人</span>
-        <button className="btn-sm btn-danger" onClick={()=>batchBan(true)}>批量封禁</button>
-        <button className="btn-sm btn-primary" onClick={()=>batchBan(false)}>批量解封</button>
-        <button className="btn-sm btn-ghost" onClick={()=>setSelected([])}>取消选择</button>
+        <button className="btn-sm btn-danger" onClick={()=>batchBan(true)} disabled={batchLoading}>{batchLoading?'处理中…':'批量封禁'}</button>
+        <button className="btn-sm btn-primary" onClick={()=>batchBan(false)} disabled={batchLoading}>{batchLoading?'处理中…':'批量解封'}</button>
+        <button className="btn-sm btn-ghost" onClick={()=>setSelected([])} disabled={batchLoading}>取消选择</button>
       </div>}
 
       <table><thead><tr>
@@ -610,12 +672,16 @@ function UsersPage(){
 
 function UserDetailModal({detail,onClose,onBan,onEdit,onGrantVip,onRefresh,onReload}){
   const [tab,setTab]=useState('info');
+  const [confirmDelete,setConfirmDelete]=useState(false);
+  const [deleting,setDeleting]=useState(false);
+  useEscClose(onClose);
   const tabBtn=(key,label)=><button key={key} className={`btn-sm ${tab===key?'btn-primary':'btn-ghost'}`} style={{fontSize:11}} onClick={()=>setTab(key)}>{label}</button>;
 
   const doDelete=async()=>{
-    if(!confirm('确定删除该用户？此操作不可恢复！'))return;
+    setDeleting(true);
     const r=await apiPost('/api/admin/users/'+detail.id+'/delete',{});
-    if(!r.error){showToast('用户已删除','success');onClose();onReload()}
+    setDeleting(false);
+    if(!r.error){showToast('用户已删除','success');setConfirmDelete(false);onClose();onReload()}
   };
 
   const vipName=(tier)=>tier==='premium'?'缘合至尊':tier==='basic'?'缘合会员':'免费用户';
@@ -659,7 +725,7 @@ function UserDetailModal({detail,onClose,onBan,onEdit,onGrantVip,onRefresh,onRel
     <div style={{maxHeight:'45vh',overflow:'auto'}}>
       {tab==='info'&&<div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:13}}>
-          <div><span style={{color:'#6B7280'}}>ID:</span> <span style={{fontSize:11,userSelect:'all'}}>{detail.id}</span></div>
+          <div><span style={{color:'#6B7280'}}>ID:</span> <span onClick={()=>copyText(detail.id)} style={{fontSize:11,userSelect:'all',cursor:'pointer'}} title="点击复制">{detail.id}</span></div>
           <div><span style={{color:'#6B7280'}}>手机:</span> {detail.phone||'—'}</div>
           <div><span style={{color:'#6B7280'}}>性别:</span> {detail.profile?.gender==='female'?'女':'男'}</div>
           <div><span style={{color:'#6B7280'}}>城市:</span> {detail.profile?.city||'—'}</div>
@@ -725,9 +791,10 @@ function UserDetailModal({detail,onClose,onBan,onEdit,onGrantVip,onRefresh,onRel
     </div>
 
     <div className="actions" style={{marginTop:12}}>
-      <button className="btn-sm btn-danger" style={{marginRight:'auto',fontSize:11}} onClick={doDelete}>删除用户</button>
+      <button className="btn-sm btn-danger" style={{marginRight:'auto',fontSize:11}} onClick={()=>setConfirmDelete(true)}>删除用户</button>
       <button className="btn-sm btn-ghost" onClick={onClose}>关闭</button>
     </div>
+    {confirmDelete&&<AdminConfirm msg={`确定删除 ${detail.profile?.name||'该用户'}？`} detail="此操作为软删除，用户数据标记为已删除" danger onResult={ok=>{if(ok)doDelete();else setConfirmDelete(false)}}/>}
   </div></div>);
 }
 
@@ -818,10 +885,11 @@ function ChatPage(){
 }
 
 function SensitiveWordsModal({onClose}){
-  const [words,setWords]=useState([]);const [newWord,setNew]=useState('');const [loading,setLoading]=useState(true);
-  useEffect(()=>{apiGet('/api/admin/sensitive-words').then(w=>{setWords(w||[]);setLoading(false)}).catch(()=>setLoading(false))},[]);
-  const save=()=>{apiPost('/api/admin/sensitive-words',{words}).then(()=>{onClose()})};
-  const add=()=>{if(newWord.trim()&&!words.includes(newWord.trim().toLowerCase())){setWords([...words,newWord.trim().toLowerCase()]);setNew('')}};
+  const [words,setWords]=useState([]);const [newWord,setNew]=useState('');const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);
+  useEscClose(onClose);
+  useEffect(()=>{apiGet('/api/admin/sensitive-words').then(w=>{if(Array.isArray(w))setWords(w);setLoading(false)}).catch(()=>setLoading(false))},[]);
+  const save=()=>{setSaving(true);apiPost('/api/admin/sensitive-words',{words}).then(()=>{setSaving(false);showToast('已保存','success');onClose()}).catch(()=>setSaving(false))};
+  const add=()=>{if(!newWord.trim()){showToast('请输入敏感词','error');return}if(words.includes(newWord.trim().toLowerCase())){showToast('该词已存在','error');return}setWords([...words,newWord.trim().toLowerCase()]);setNew('')};
   const remove=(i)=>setWords(words.filter((_,j)=>j!==i));
   return(<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <h3>🛡️ 敏感词管理 ({words.length}个)</h3>
@@ -1280,15 +1348,20 @@ function ProviderModal({provider,onClose,onDone,testFn,testResult,testing}){
   const [url,setUrl]=useState(provider?.url||'');
   const [key,setKey]=useState(provider?.key||'');
   const [model,setModel]=useState(provider?.model||'');
-  const [localTest,setLocalTest]=useState(null);const [localTesting,setLocalTesting]=useState(false);
+  const [localTest,setLocalTest]=useState(null);const [localTesting,setLocalTesting]=useState(false);const [saving,setSaving]=useState(false);
+  useEscClose(onClose);
 
   const save=async()=>{
     if(!name.trim()||!url.trim()||!model.trim()){showToast('名称/URL/模型必填','error');return}
+    try{new URL(url)}catch(e){showToast('URL格式不正确','error');return}
+    setSaving(true);
     if(isEdit){
       const r=await apiPost('/api/admin/llm/providers/'+provider.id,{name,url,key,model});
+      setSaving(false);
       if(r.success){showToast('已更新','success');onDone()}
     }else{
       const r=await apiPost('/api/admin/llm/providers',{name,url,key,model});
+      setSaving(false);
       if(r.success){showToast('已添加','success');onDone()}
     }
   };
@@ -1333,7 +1406,7 @@ function ProviderModal({provider,onClose,onDone,testFn,testResult,testing}){
     <div className="actions" style={{marginTop:14}}>
       <button className="btn-sm btn-ghost" onClick={doTest} disabled={localTesting} style={{marginRight:'auto'}}>测试连接</button>
       <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
-      <button className="btn-sm btn-primary" onClick={save}>{isEdit?'保存':'添加'}</button>
+      <button className="btn-sm btn-primary" onClick={save} disabled={saving}>{saving?'保存中…':(isEdit?'保存':'添加')}</button>
     </div>
   </div></div>);
 }
@@ -1426,11 +1499,17 @@ function BotPage(){
 function BotEditModal({bot,onClose,onDone}){
   const [d,setD]=useState({...bot});
   const [tagStr,setTagStr]=useState((bot.tags||[]).join('、'));
+  const [saving,setSaving]=useState(false);
   const isNew=!bot.id||bot.id===0;
+  useEscClose(onClose);
   const doSave=async()=>{
     const data={...d,tags:tagStr.split(/[、,，]/).map(t=>t.trim()).filter(Boolean)};
     if(!data.name?.trim()){showToast('名称不能为空','error');return}
+    if(data.age&&(parseInt(data.age)<18||parseInt(data.age)>60)){showToast('年龄应为18-60','error');return}
+    if(!data.chatStyle?.trim()){showToast('聊天风格不能为空(AI依赖此字段)','error');return}
+    setSaving(true);
     const r=isNew?await apiPost('/api/admin/bots',data):await apiPost('/api/admin/bots/'+bot.id+'/update',data);
+    setSaving(false);
     if(!r.error){showToast(isNew?'创建成功':'已保存','success');onDone()}
   };
   return (<div className="modal-bg" onClick={onClose}><div className="modal" style={{width:500}} onClick={e=>e.stopPropagation()}>
@@ -1452,7 +1531,7 @@ function BotEditModal({bot,onClose,onDone}){
     <label>聊天风格 (AI会参考此描述模拟回复)</label><input value={d.chatStyle||''} onChange={e=>setD({...d,chatStyle:e.target.value})} placeholder="如: 温柔文艺，喜欢用比喻"/>
     <div className="actions">
       <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
-      <button className="btn-sm btn-primary" onClick={doSave}>{isNew?'创建':'保存'}</button>
+      <button className="btn-sm btn-primary" onClick={doSave} disabled={saving}>{saving?(isNew?'创建中…':'保存中…'):(isNew?'创建':'保存')}</button>
     </div>
   </div></div>);
 }

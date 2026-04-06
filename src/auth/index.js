@@ -540,6 +540,7 @@ module.exports = {
   // Admin user management
   adminListUsers,
   adminGetUser,
+  adminGetDivinationSamples,
   adminGetUserDivination,
   adminUpdateUser,
   adminBanUser,
@@ -848,6 +849,25 @@ function adminGetUser(userId) {
     friends: friends.slice(0, 10),
     swipeStats: { swipedRight, swipedLeft, beenLiked },
   };
+}
+
+// 轻量级：直接遍历用户获取占卜样本(不计算匹配/消息等)
+function adminGetDivinationSamples({ mode } = {}) {
+  const samples = [];
+  for (const u of Object.values(users)) {
+    if (!u.divinations || u.divinations.length === 0) continue;
+    const name = u.profile?.name || '—';
+    for (const d of u.divinations) {
+      if (mode && d.mode !== mode) continue;
+      samples.push({
+        userId: u.id, userName: name, id: d.id, mode: d.mode,
+        question: d.question, preview: (d.response || '').substring(0, 80),
+        createdAt: d.createdAt, chatCount: d.chatHistory?.length || 0,
+      });
+    }
+  }
+  samples.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  return samples;
 }
 
 function adminGetUserDivination(userId, divId) {
