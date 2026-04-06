@@ -881,7 +881,8 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
   const rot=dx*0.05,opa=Math.min(Math.abs(dx)/100,1);
   const grad=GRADS[user.id%GRADS.length];
   const isOnline=user.isBot?((user.id*7+new Date().getHours())%3!==0):true;
-  const typeTag=user.matchResult?.gradeDesc?user.matchResult.gradeDesc.substring(0,4):(user.score>=80?'天作之合':user.score>=65?'有缘有份':'潜力之缘');
+  const _gl=t('matchGradeLabels')||[];
+  const typeTag=user.matchResult?.gradeDesc?user.matchResult.gradeDesc.substring(0,4):(user.score>=80?_gl[0]||'天作之合':user.score>=65?_gl[2]||'有缘有份':t('matchPotential'));
   return(
     <div onMouseDown={e=>onS(e.clientX)} onMouseMove={e=>onM(e.clientX)} onMouseUp={onE} onMouseLeave={()=>dragging&&onE()}
       onTouchStart={e=>onS(e.touches[0].clientX)} onTouchMove={e=>onM(e.touches[0].clientX)} onTouchEnd={onE}
@@ -946,7 +947,7 @@ function MatchPopup({user,onChat,onClose}){
       <div className="serif" style={{fontSize:24,fontWeight:800,background:'linear-gradient(135deg,#8B5CF6,#EC4899)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>缘分已到！</div>
       <div style={{fontSize:14,color:T.textSec,marginTop:10}}>你和 <b style={{color:T.text}}>{user.name}</b> 命理契合</div>
       <div style={{margin:'16px auto'}}><ScoreRing score={user.score} size={88} stroke={5}/></div>
-      <div style={{fontSize:12,color:T.textThi,marginBottom:20}}>{user.score>=80?'天作之合，千万别错过！':user.score>=65?'有缘有份，值得深入了解':'命理相合，试试聊聊？'}</div>
+      <div style={{fontSize:12,color:T.textThi,marginBottom:20}}>{user.score>=80?t('matchDescHigh'):user.score>=65?t('matchDescMid'):t('matchDescLow')}</div>
       <button onClick={onChat} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer',boxShadow:`0 4px 16px ${T.accent2}30`,marginBottom:10}}>💬 打个招呼</button>
       <button onClick={onClose} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:'transparent',color:T.textThi,fontSize:14,cursor:'pointer'}}>继续看看</button>
     </div>
@@ -1006,9 +1007,9 @@ function CardDetailModal({user,profile,onClose,goTo,addConv,autoGreet}){
         <div style={{padding:'0 16px 100px'}}>
           <div style={{display:tab==='info'?'block':'none',background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow}}>
             {/* Basic info chips */}
-            <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>📋 基本资料</div>
+            <div style={{fontSize:13,fontWeight:700,color:ac,marginBottom:8,display:'flex',alignItems:'center',gap:6}}>📋 {getLang()==='zh-CN'?'基本资料':'Profile'}</div>
             <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:16}}>
-              {[['年龄',user.age+'岁'],['星座',user.sign],['距离',user.dist],['五行',match?.personB?.element?match.personB.element+'象':'—']].map(([l,v])=>
+              {[[t('matchAge'),user.age+(getLang()==='zh-CN'?'岁':'')],[t('matchSign'),user.sign],[t('matchDist'),user.dist],[t('matchElement'),match?.personB?.element?match.personB.element+(getLang()==='zh-CN'?'象':''):'—']].map(([l,v])=>
                 <div key={l} style={{flex:'1 0 45%',padding:'10px 12px',borderRadius:12,background:`${ac}08`,border:`1px solid ${ac}10`}}>
                   <div style={{fontSize:11,color:T.textThi,marginBottom:2}}>{l}</div>
                   <div style={{fontSize:14,fontWeight:600,color:T.text}}>{v}</div>
@@ -1225,7 +1226,7 @@ function DailyStatusModal({profile,onClose}){
 
       {/* Selected date info */}
       <div style={{fontSize:12,color:T.textThi,marginBottom:8}}>{selDateStr}</div>
-      <div style={{fontSize:22,fontWeight:800,color:T.text,marginBottom:14}}>{isToday(selDate.getDate())&&viewMonth===now.getMonth()?'今日状态':'当日状态'}</div>
+      <div style={{fontSize:22,fontWeight:800,color:T.text,marginBottom:14}}>{t('todayStatus')}</div>
 
       {/* Theme card */}
       <div style={{background:t.bg,borderRadius:20,padding:'24px 20px',textAlign:'center',marginBottom:16}}>
@@ -1915,7 +1916,7 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
         {/* Actions */}
         <div style={{display:'flex',gap:8,marginTop:16}}>
           <button onClick={()=>{setCards([]);onDone(true)}} style={{flex:1,padding:'12px',borderRadius:14,border:'1px solid rgba(196,181,253,0.2)',background:'transparent',fontSize:13,fontWeight:600,color:'#C4B5FD',cursor:'pointer'}}>🎴 随机抽取</button>
-          <button onClick={()=>onDone(true)} disabled={cards.length===0} style={{flex:1,padding:'12px',borderRadius:14,border:'none',background:cards.length>0?'linear-gradient(135deg,#FBBF24,#F59E0B)':'rgba(255,255,255,0.05)',fontSize:13,fontWeight:700,color:cards.length>0?'#fff':'rgba(196,181,253,0.3)',cursor:cards.length>0?'pointer':'default'}}>{cards.length>=need?'✦ 确认'+need+'张牌':'继续选牌'}</button>
+          <button onClick={()=>onDone(true)} disabled={cards.length===0} style={{flex:1,padding:'12px',borderRadius:14,border:'none',background:cards.length>0?'linear-gradient(135deg,#FBBF24,#F59E0B)':'rgba(255,255,255,0.05)',fontSize:13,fontWeight:700,color:cards.length>0?'#fff':'rgba(196,181,253,0.3)',cursor:cards.length>0?'pointer':'default'}}>{cards.length>=need?t('tarotConfirm').replace('{n}',need):t('tarotContinue')}</button>
         </div>
       </div>
     </div>
@@ -2913,8 +2914,8 @@ function FortuneWheel({profile,goTo,addConv,setOpenConvId,autoGreet,onClose}){
         <div style={{display:'flex',alignItems:'center',gap:10,marginTop:12,padding:'10px 14px',background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.15)',borderRadius:12}}>
           <div style={{fontSize:24,fontWeight:800,color:'#FBBF24'}}>{result.score}%</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#FBBF24'}}>{result.score>=80?'天作之合 💕':result.score>=65?'有缘有份 ✨':'潜力之缘 🌱'}</div>
-            <div style={{fontSize:10,color:'rgba(196,181,253,0.5)'}}>{result.score>=80?'命中注定的缘分':result.score>=65?'值得深入了解':'用心经营会绽放'}</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#FBBF24'}}>{result.score>=80?((t('matchGradeLabels')||[])[0]||'Soulmates')+' 💕':result.score>=65?((t('matchGradeLabels')||[])[2]||'Good')+' ✨':t('matchPotential')+' 🌱'}</div>
+            <div style={{fontSize:10,color:'rgba(196,181,253,0.5)'}}>{result.score>=80?t('matchDescHigh'):result.score>=65?t('matchDescMid'):t('matchDescLow')}</div>
           </div>
         </div>
         {/* Action buttons: 3 options */}
@@ -3075,11 +3076,17 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
 
       {/* Quick entry cards */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-        {[{icon:'🔯',title:'八字排盘',desc:'深度命运分析',m:'bazi',c:'#8B5CF6'},
+        {(getLang()==='zh-CN'?[
+          {icon:'🔯',title:'八字排盘',desc:'深度命运分析',m:'bazi',c:'#8B5CF6'},
           {icon:'🃏',title:'塔罗指引',desc:'今日一牌',m:'tarot',c:'#0D9488'},
           {icon:'🌸',title:'梅花速断',desc:'快速问事吉凶',m:'meihua',c:'#D97706'},
-          {icon:'💞',title:'合婚测试',desc:'看两人缘分',m:'hehun',c:'#DB2777'}
-        ].map((it,i)=>
+          {icon:'💞',title:'合婚测试',desc:'看两人缘分',m:'hehun',c:'#DB2777'},
+        ]:[
+          {icon:'★',title:'Horoscope',desc:'Your daily stars',m:'astrology',c:'#6366F1'},
+          {icon:'🃏',title:'Tarot',desc:'Daily card draw',m:'tarot',c:'#0D9488'},
+          {icon:'◎',title:'Vedic',desc:'Life cycle reading',m:'vedic',c:'#2563EB'},
+          {icon:'💫',title:'Star Match',desc:'Zodiac compatibility',m:'synastry',c:'#9333EA'},
+        ]).map((it,i)=>
           <button key={it.m} className="anim-in" onClick={()=>goTo(S.AI,it.m)} style={{animationDelay:i*0.05+'s',background:T.card,borderRadius:14,padding:'16px 14px',border:`1px solid ${T.border}`,cursor:'pointer',textAlign:'left',boxShadow:T.shadow}}>
             <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,${it.c}15,${it.c}08)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,marginBottom:10}}>{it.icon}</div>
             <div style={{fontSize:13,fontWeight:600,color:T.text}}>{it.title}</div>
