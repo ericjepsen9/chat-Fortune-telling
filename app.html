@@ -2706,12 +2706,13 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
   const pickMood=(idx)=>{localStorage.setItem(moodKey,String(idx));setCurMood(idx);setShowMoodPicker(false);window.yuanheToast?.(MOODS[idx].label+' · 今日打卡成功')};
 
   const todayLuck=['大吉','吉','中吉','小吉','平','小凶'][dayN%6];
-  const luckColor=['#DC2626','#F59E0B','#8B5CF6','#0D9488','#6B7280','#EF4444'][dayN%6];
-  const luckBgLight=['linear-gradient(135deg,#FFF5F5,#FEE2E2)','linear-gradient(135deg,#FFFBEB,#FEF3C7)','linear-gradient(135deg,#FAF5FF,#EDE9FE)','linear-gradient(135deg,#F0FDFA,#CCFBF1)','linear-gradient(135deg,#F9FAFB,#F3F4F6)','linear-gradient(135deg,#FFF1F2,#FECDD3)'];
-  const luckBgDark=['linear-gradient(135deg,#DC262615,#DC262625)','linear-gradient(135deg,#F59E0B15,#F59E0B25)','linear-gradient(135deg,#8B5CF615,#8B5CF625)','linear-gradient(135deg,#0D948815,#0D948825)','linear-gradient(135deg,#6B728015,#6B728025)','linear-gradient(135deg,#EF444415,#EF444425)'];
+  // 大吉=金色 吉=中国红 中吉=紫色 小吉=青色 平=灰色 小凶=蓝灰
+  const luckColor=['#D97706','#DC2626','#8B5CF6','#0D9488','#6B7280','#64748B'][dayN%6];
+  const luckBgLight=['linear-gradient(135deg,#FFFBEB,#FDE68A)','linear-gradient(135deg,#FFF5F5,#FEE2E2)','linear-gradient(135deg,#FAF5FF,#EDE9FE)','linear-gradient(135deg,#F0FDFA,#CCFBF1)','linear-gradient(135deg,#F9FAFB,#F3F4F6)','linear-gradient(135deg,#F8FAFC,#E2E8F0)'];
+  const luckBgDark=['linear-gradient(135deg,#D9770615,#D9770625)','linear-gradient(135deg,#DC262615,#DC262625)','linear-gradient(135deg,#8B5CF615,#8B5CF625)','linear-gradient(135deg,#0D948815,#0D948825)','linear-gradient(135deg,#6B728015,#6B728025)','linear-gradient(135deg,#64748B15,#64748B25)'];
   const luckBg=(T.isDark?luckBgDark:luckBgLight)[dayN%6];
-  const luckBorderLight=['#FECACA','#FCD34D','#DDD6FE','#99F6E4','#E5E7EB','#FDA4AF'];
-  const luckBorderDark=['#DC262640','#F59E0B40','#8B5CF640','#0D948840','#6B728040','#EF444440'];
+  const luckBorderLight=['#FCD34D','#FECACA','#DDD6FE','#99F6E4','#E5E7EB','#CBD5E1'];
+  const luckBorderDark=['#D9770640','#DC262640','#8B5CF640','#0D948840','#6B728040','#64748B40'];
   const luckBorder=(T.isDark?luckBorderDark:luckBorderLight)[dayN%6];
   return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
     <div style={{padding:'14px 16px 0'}}>
@@ -4286,7 +4287,7 @@ function MatchShareCard({profile,partner,score,compatibility}){
 function FortuneShareCard({profile,dayInfo}){
   const today=new Date();const d=dayInfo?.date||today.getDate();const m=dayInfo?.month||(today.getMonth()+1);const y=dayInfo?.year||today.getFullYear();
   const luck=['大吉','吉','中吉','小吉','平','小凶'][d%6];
-  const luckColors={大吉:'#DC2626',吉:'#F59E0B',中吉:'#8B5CF6',小吉:'#0D9488',平:'#6B7280',小凶:'#EF4444'};
+  const luckColors={大吉:'#D97706',吉:'#DC2626',中吉:'#8B5CF6',小吉:'#0D9488',平:'#6B7280',小凶:'#64748B'};
   const yis=['学习','冥想','远行','社交','投资','表白','运动','创作','谈判','约会'];
   const jis=['冲动决策','熬夜','争吵','借钱','搬家','签约','赌博'];
   const yi=yis.filter((_,i)=>(d+i*7)%3===0).slice(0,3).join(' · ');
