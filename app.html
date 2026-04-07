@@ -4518,9 +4518,10 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       sections=sections.filter(s=>s.lines.some(l=>l.trim()));
       const md=t=>{try{return{__html:marked.parse(t)}}catch(e){console.warn('markdown parse error:',e);return{__html:t.replace(/\n/g,'<br>')}}};
       return <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
-        <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,position:'sticky',top:0,zIndex:1}}>
-          <button onClick={()=>setShowPersonality(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
-          <div style={{flex:1,fontSize:16,fontWeight:700,color:T.text}}>我的性格分析</div>
+        <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+          <button onClick={()=>setShowPersonality(false)} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+          <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{getLang()==='zh-CN'?'性格分析':'Personality Analysis'}</div>
+          <div style={{width:34}}/>
         </div>
         <div style={{padding:'12px 16px 80px'}}>
           {/* Report header — same style as AI page */}
@@ -4565,37 +4566,42 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     }catch(e){return null}
   })()}
   {/* My posts page */}
-  {/* 收藏列表弹窗 */}
-  {showFavorites&&<div onClick={()=>setShowFavorites(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'80vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-        <div style={{fontSize:18,fontWeight:700}}>⭐ 我的收藏</div>
-        <button onClick={()=>setShowFavorites(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-      </div>
+  {/* 收藏列表 — 全屏二级页面 */}
+  {showFavorites&&<div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,overflow:'auto'}}>
+    <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+      <button onClick={()=>setShowFavorites(false)} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+      <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{getLang()==='zh-CN'?'我的收藏':'Favorites'}</div>
+      <div style={{width:34}}/>
+    </div>
+    <div style={{maxWidth:480,margin:'0 auto',padding:'16px 16px 40px'}}>
       {(()=>{
-        const MODE_F={bazi:'八字命理',astrology:'星座运势',tarot:'塔罗牌',meihua:'梅花易数',vedic:'印度占星',hehun:'合婚分析',synastry:'星座配对',hepan:'合盘分析'};
+        const MODE_F=MODE_FULL;
         const MODE_IC={bazi:'☰',astrology:'★',tarot:'✦',meihua:'❀',vedic:'◎',hehun:'💑',synastry:'💫',hepan:'🔗'};
         const favs=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_fav_')).map(k=>{
           try{const v=JSON.parse(localStorage.getItem(k));return{key:k,mode:k.replace('yuanhe_fav_',''),...v}}catch(e){return null}
         }).filter(Boolean).sort((a,b)=>(b.ts||0)-(a.ts||0));
-        if(favs.length===0)return<div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}>
-          <div style={{fontSize:28,marginBottom:8}}>⭐</div><div style={{fontSize:13}}>还没有收藏报告</div>
-          <div style={{fontSize:11,color:T.textThi,marginTop:6}}>在占卜报告中点击 ☆ 即可收藏</div>
+        if(favs.length===0)return<div style={{textAlign:'center',padding:'60px 0',color:T.textThi}}>
+          <div style={{fontSize:48,marginBottom:12}}>⭐</div>
+          <div style={{fontSize:15,fontWeight:600,color:T.text}}>{getLang()==='zh-CN'?'还没有收藏':'No favorites yet'}</div>
+          <div style={{fontSize:12,marginTop:6}}>{getLang()==='zh-CN'?'在占卜报告中点击 ☆ 即可收藏':'Tap ☆ in any reading to save it'}</div>
         </div>;
-        return favs.map(f=>(
-          <div key={f.key} style={{background:T.bg,borderRadius:14,padding:14,marginBottom:8}}>
-            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
-              <div style={{width:36,height:36,borderRadius:10,background:`${T.gold}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>{MODE_IC[f.mode]||'🔮'}</div>
+        return <>
+          <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>{getLang()==='zh-CN'?`${favs.length} 条收藏`:`${favs.length} saved`}</div>
+          {favs.map(f=>(
+          <div key={f.key} style={{background:T.card,borderRadius:16,padding:16,marginBottom:10,border:`1px solid ${T.border}`,boxShadow:T.shadow}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+              <div style={{width:40,height:40,borderRadius:12,background:`${T.accent2}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{MODE_IC[f.mode]||'🔮'}</div>
               <div style={{flex:1}}>
                 <div style={{fontSize:14,fontWeight:600,color:T.text}}>{MODE_F[f.mode]||f.mode}</div>
                 <div style={{fontSize:10,color:T.textThi}}>{f.time||''}{f.question?` · "${f.question.substring(0,20)}"`:''}</div>
               </div>
-              <button onClick={()=>{localStorage.removeItem(f.key);setShowFavorites(false);setTimeout(()=>setShowFavorites(true),50);window.yuanheToast?.('已取消收藏')}} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${T.border}`,background:T.card,fontSize:10,color:T.textThi,cursor:'pointer'}}>取消</button>
+              <button onClick={()=>{localStorage.removeItem(f.key);setShowFavorites(false);setTimeout(()=>setShowFavorites(true),50);window.yuanheToast?.(getLang()==='zh-CN'?'已取消收藏':'Removed')}} style={{padding:'6px 12px',borderRadius:10,border:'none',background:T.isDark?'#EF444418':'#FEF2F2',fontSize:11,fontWeight:600,color:'#EF4444',cursor:'pointer'}}>{getLang()==='zh-CN'?'取消':'Remove'}</button>
             </div>
-            <div style={{fontSize:12,color:T.textSec,lineHeight:1.7,maxHeight:120,overflow:'hidden'}}>{(f.response||'').substring(0,200)}{(f.response||'').length>200?'…':''}</div>
-            <button onClick={()=>{setShowFavorites(false);goTo(S.AI,f.mode)}} style={{marginTop:8,padding:'6px 16px',borderRadius:8,border:'none',background:`${T.gold}15`,color:T.gold,fontSize:11,fontWeight:600,cursor:'pointer'}}>查看完整报告 →</button>
+            <div style={{fontSize:12,color:T.textSec,lineHeight:1.7,maxHeight:100,overflow:'hidden'}}>{(f.response||'').substring(0,200)}{(f.response||'').length>200?'…':''}</div>
+            <button onClick={()=>{setShowFavorites(false);goTo(S.AI,f.mode)}} style={{marginTop:10,padding:'8px 16px',borderRadius:10,border:'none',background:`${T.accent2}10`,color:T.accent2,fontSize:12,fontWeight:600,cursor:'pointer'}}>{getLang()==='zh-CN'?'查看完整报告 →':'View full reading →'}</button>
           </div>
-        ));
+        ))}
+        </>;
       })()}
     </div>
   </div>}
