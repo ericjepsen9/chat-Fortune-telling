@@ -211,8 +211,125 @@ const BOTS_EN=[
 ];
 const BOTS=getLang()==='en-US'?BOTS_EN:BOTS_ZH;
 
+// ===== DIAGNOSTIC LOGGER (诊断日志) =====
+const DiagLog={
+  _logs:[],
+  _maxLogs:500,
+  _startTime:Date.now(),
+  _session:'s_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+
+  add(category,action,data){
+    const entry={
+      ts:Date.now(),
+      dt:Date.now()-this._startTime,
+      cat:category, // api|sse|state|error|ui|ws
+      act:action,
+      data:typeof data==='string'?data:JSON.parse(JSON.stringify(data||null,(key,val)=>{
+        if(typeof val==='string'&&val.length>500)return val.substring(0,500)+'…[truncated]';
+        return val;
+      })),
+    };
+    this._logs.push(entry);
+    if(this._logs.length>this._maxLogs)this._logs.shift();
+  },
+
+  api(method,url,status,body,resp,duration){
+    this.add('api',method+' '+url,{status,duration:duration+'ms',reqBody:body,respPreview:typeof resp==='string'?resp.substring(0,300):resp});
+  },
+
+  sse(event,data){
+    this.add('sse',event,data);
+  },
+
+  state(component,change){
+    this.add('state',component,change);
+  },
+
+  error(source,err){
+    this.add('error',source,{message:err?.message||String(err),stack:err?.stack?.split('\n').slice(0,3).join('\n')});
+  },
+
+  ui(action,detail){
+    this.add('ui',action,detail);
+  },
+
+  // 导出完整诊断报告
+  export(){
+    const profile=JSON.parse(localStorage.getItem('yuanhe_profile')||'null');
+    const report={
+      version:'1.0',
+      session:this._session,
+      exportedAt:new Date().toISOString(),
+      uptime:Math.round((Date.now()-this._startTime)/1000)+'s',
+      env:{
+        lang:typeof getLang==='function'?getLang():'unknown',
+        theme:localStorage.getItem('yuanhe_theme')||'dark',
+        userAgent:navigator.userAgent,
+        screen:window.innerWidth+'x'+window.innerHeight,
+        online:navigator.onLine,
+      },
+      profile:profile?{year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender}:null,
+      logs:this._logs,
+      localStorage:{
+        keys:Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_')).map(k=>k+' ('+((localStorage.getItem(k)||'').length)+'B)'),
+      },
+    };
+    return report;
+  },
+
+  // 下载为JSON文件
+  download(){
+    const data=JSON.stringify(this.export(),null,2);
+    const blob=new Blob([data],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=`yuanhe-diag-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();URL.revokeObjectURL(url);
+  },
+
+  // 复制到剪贴板
+  copy(){
+    const data=JSON.stringify(this.export(),null,2);
+    navigator.clipboard?.writeText(data).then(()=>{
+      if(window.yuanheToast)window.yuanheToast('诊断日志已复制到剪贴板 ✓');
+    });
+  },
+
+  clear(){this._logs=[]},
+};
+window.DiagLog=DiagLog; // 控制台可直接调用
+
+// 拦截 fetch 自动记录API日志
+const _origFetch=window.fetch;
+window.fetch=async function(...args){
+  const url=typeof args[0]==='string'?args[0]:args[0]?.url||'unknown';
+  const method=(args[1]?.method||'GET').toUpperCase();
+  const body=args[1]?.body?JSON.parse(args[1].body||'{}'):undefined;
+  const start=Date.now();
+  try{
+    const resp=await _origFetch.apply(this,args);
+    const duration=Date.now()-start;
+    // 只记录API请求，跳过CDN
+    if(url.startsWith('/api')){
+      const clone=resp.clone();
+      // 对SSE不读body
+      if(resp.headers.get('content-type')?.includes('event-stream')){
+        DiagLog.api(method,url,resp.status,body,'[SSE stream]',duration);
+      }else{
+        try{const text=await clone.text();DiagLog.api(method,url,resp.status,body,text.substring(0,500),duration)}
+        catch(e){DiagLog.api(method,url,resp.status,body,'[read error]',duration)}
+      }
+    }
+    return resp;
+  }catch(e){
+    DiagLog.api(method,url,'FAIL',body,e.message,Date.now()-start);
+    throw e;
+  }
+};
+
 // Global error handlers
-window.addEventListener('unhandledrejection',e=>{console.error('Unhandled rejection:',e.reason);e.preventDefault();if(window.yuanheToast)window.yuanheToast(t('networkError'))});
+window.addEventListener('unhandledrejection',e=>{DiagLog.error('unhandledrejection',e.reason);console.error('Unhandled rejection:',e.reason);e.preventDefault();if(window.yuanheToast)window.yuanheToast(t('networkError'))});
+window.addEventListener('error',e=>{DiagLog.error('window.onerror',e.error||e.message)});
 
 // ===== WEBSOCKET MANAGER =====
 const WsManager = {
@@ -2206,10 +2323,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         const abortCtrl=new AbortController();
         const timeout=setTimeout(()=>abortCtrl.abort(),180000); // 3 min timeout
         try{
+        DiagLog.sse('start',{mode:m,question:q,displayMode:dm});
         const resp=await fetch('/api/divine-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:abortCtrl.signal});
+        DiagLog.sse('connected',{status:resp.status,contentType:resp.headers.get('content-type')});
+        if(!resp.ok){const errText=await resp.text();DiagLog.sse('http_error',{status:resp.status,body:errText.substring(0,300)});setMS(m,{error:`服务器错误(${resp.status})`,loading:false});clearTimeout(timeout);return}
         const reader=resp.body.getReader();
         const decoder=new TextDecoder();
-        let fullText='';let structured=null;let engineData='';let buf='';
+        let fullText='';let structured=null;let engineData='';let buf='';let chunkCount=0;
         let updateTimer=null;let streaming=true;
         const flushUpdate=(final)=>{
           let clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
@@ -2234,7 +2354,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             if(d==='[DONE]'){if(updateTimer)clearInterval(updateTimer);flushUpdate(true);break}
             try{
               const ev=JSON.parse(d);
-              if(ev.type==='init'){structured=ev.structured;engineData=ev.engineData||'';
+              if(ev.type==='init'){structured=ev.structured;engineData=ev.engineData||'';DiagLog.sse('init',{hasStructured:!!ev.structured,engineDataLen:engineData.length});
                 // Show header immediately with structured data
                 setMS(m,{result:{response:'',engineData,structured,_streaming:true},loading:false});
                 // Scroll to report when it first appears
@@ -2242,13 +2362,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 // Start periodic updates every 300ms
                 updateTimer=setInterval(flushUpdate,500);
               }
-              else if(ev.type==='chunk'){fullText+=ev.text}
-              else if(ev.type==='error'){setMS(m,{error:ev.error,loading:false});if(updateTimer)clearInterval(updateTimer);clearTimeout(timeout);return}
-            }catch(e){}
+              else if(ev.type==='chunk'){fullText+=ev.text;chunkCount++}
+              else if(ev.type==='error'){DiagLog.sse('stream_error',{error:ev.error});setMS(m,{error:ev.error,loading:false});if(updateTimer)clearInterval(updateTimer);clearTimeout(timeout);return}
+            }catch(e){DiagLog.error('sse_parse',{raw:d.substring(0,200),err:e.message})}
           }
         }
         if(updateTimer)clearInterval(updateTimer);
         flushUpdate(true);
+        DiagLog.sse('done',{chunks:chunkCount,totalLen:fullText.length,cleanLen:fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim().length,hasThinkTags:fullText.includes('<think>')});
         // Save to history
         try{const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');hist.unshift({mode:m,question:q,time:new Date().toLocaleString(),ts:Date.now()});if(hist.length>50)hist.length=50;localStorage.setItem('yuanhe_history',JSON.stringify(hist))}catch(e){}
         // 同步到服务器
@@ -4234,13 +4355,18 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           {showDevStats?(getLang()==='zh-CN'?'隐藏':'Hide'):(getLang()==='zh-CN'?'显示':'Show')} {getLang()==='zh-CN'?'系统状态':'System'} 🤖
         </button>
         {showDevStats&&<div style={{marginTop:8,background:T.card,borderRadius:14,padding:14,boxShadow:T.shadow}}>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-          {[{l:'阶段',v:cfg.label},{l:'真人/机器人',v:realConvs.length+'/'+botConvs.length},{l:'机器人比例',v:Math.round(cfg.botRatio*100)+'%'},{l:'总消息数',v:totalMsgs}].map(s=>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+          {[{l:'阶段',v:cfg.label},{l:'真人/机器人',v:realConvs.length+'/'+botConvs.length},{l:'机器人比例',v:Math.round(cfg.botRatio*100)+'%'},{l:'总消息数',v:totalMsgs},{l:'诊断日志',v:DiagLog._logs.length+'条'},{l:'会话ID',v:DiagLog._session.substring(0,8)}].map(s=>
             <div key={s.l} style={{background:T.bg,borderRadius:10,padding:'8px 10px'}}>
               <div style={{fontSize:10,color:T.textThi}}>{s.l}</div>
               <div style={{fontSize:12,fontWeight:600,color:T.text,marginTop:2}}>{s.v}</div>
             </div>
           )}
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={()=>DiagLog.download()} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.bg,fontSize:11,fontWeight:600,color:T.accent2,cursor:'pointer'}}>📥 下载诊断日志</button>
+          <button onClick={()=>DiagLog.copy()} style={{flex:1,padding:'10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.bg,fontSize:11,fontWeight:600,color:T.accent2,cursor:'pointer'}}>📋 复制日志</button>
+          <button onClick={()=>{DiagLog.clear();window.yuanheToast?.('已清空')}} style={{padding:'10px',borderRadius:10,border:`1px solid ${T.border}`,background:T.bg,fontSize:11,color:T.textThi,cursor:'pointer'}}>🗑️</button>
         </div>
         </div>}
       </div>;
