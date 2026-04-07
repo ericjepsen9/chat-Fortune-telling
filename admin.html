@@ -459,7 +459,7 @@ function LogsPage(){
           <td style={{fontSize:11,color:'var(--textThi)',whiteSpace:'nowrap'}}>{l.createdAt?.substring(0,19).replace('T',' ')}</td>
           <td style={{fontWeight:600,fontSize:12}}>{l.adminName}</td>
           <td><span className="badge" style={{background:ac+'20',color:ac}}>{l.action}</span></td>
-          <td style={{fontSize:11,color:'var(--textSec)',fontFamily:'monospace'}}>{l.target?l.target.substring(0,12)+'…':'—'}</td>
+          <td style={{fontSize:11,color:'var(--textSec)',fontFamily:'monospace'}}>{l.target?String(l.target).substring(0,12)+(String(l.target).length>12?'…':''):'—'}</td>
           <td style={{fontSize:12,maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.detail}</td>
         </tr>);
       })}</tbody></table>
