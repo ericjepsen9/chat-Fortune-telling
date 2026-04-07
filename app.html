@@ -2385,7 +2385,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         // Save to history (only on success)
         if(!hasError){try{const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');hist.unshift({mode:m,question:q,time:new Date().toLocaleString(),ts:Date.now()});if(hist.length>50)hist.length=50;localStorage.setItem('yuanhe_history',JSON.stringify(hist))}catch(e){}}
         // 同步到服务器
-        if(localStorage.getItem('yuanhe_token')){const ms_=modeStates[m];apiPost('/api/auth/divination',{mode:m,question:q,response:ms_?.result?.response||'',structured:ms_?.result?.structured,engineData:ms_?.result?.engineData}).then(r=>{if(r?.id)setMS(m,{result:{...ms_?.result,divId:r.id}})}).catch(()=>{})}
+        if(localStorage.getItem('yuanhe_token')){
+          // 用streaming闭包里的变量(非React state)保存,避免状态竞争
+          const saveResp=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
+          apiPost('/api/auth/divination',{mode:m,question:q,response:saveResp,structured,engineData}).then(r=>{
+            if(r?.id)setModeStates(prev=>{const cur=prev[m];return{...prev,[m]:{...cur,result:{...cur?.result,divId:r.id}}}})
+          }).catch(()=>{});
+        }
         }catch(abortErr){
           if(abortErr.name==='AbortError'){
             if(fullText){flushUpdate(true)}
