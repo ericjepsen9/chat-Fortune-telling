@@ -1321,14 +1321,17 @@ function DailyStatusModal({profile,onClose}){
   const selDateStr=`${selDate.getFullYear()}年${selDate.getMonth()+1}月${selDate.getDate()}日 · ${weekDays[selDate.getDay()]}`;
   const th=sel.theme;
 
-  return(<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
-    <div style={{maxWidth:480,margin:'0 auto',padding:'12px 16px 40px'}}>
-      {/* Header */}
+  return(<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,display:'flex',flexDirection:'column'}}>
+    <div style={{maxWidth:480,margin:'0 auto',width:'100%',padding:'12px 16px 0',flexShrink:0}}>
+      {/* Header — fixed at top */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
         <div style={{fontSize:16,fontWeight:700,color:T.text}}>{t('calTitle')}</div>
-        <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>今天</button>
+        <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>{getLang()==='zh-CN'?'今天':'Today'}</button>
       </div>
+    </div>
+    <div style={{flex:1,overflow:'auto'}}>
+    <div style={{maxWidth:480,margin:'0 auto',padding:'0 16px 40px'}}>
 
       {/* Month navigation */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
@@ -1420,7 +1423,7 @@ function DailyStatusModal({profile,onClose}){
       <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 {t('shareToday')}</button>
     </div>
     {showShare&&<ShareModal type={showShare.type==='weekly'?'fortune':'fortune'} profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:th.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:th.color,keywords:th.keywords}} onClose={()=>setShowShare(false)}/>}
-  </div>);
+  </div></div></div>);
 }
 
 function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
