@@ -809,7 +809,8 @@ function WheelPicker({items,value,onChange,label}){
   </div>);
 }
 
-function BirthScreen({onSubmit}){
+function BirthScreen({onSubmit,onBack}){
+  const [showHourAI,setShowHourAI]=useState(false);
   const [f,sF]=useState(()=>{
     try{const p=JSON.parse(localStorage.getItem('yuanhe_profile'));
       if(p&&p.year)return{year:String(p.year),month:String(p.month),day:String(p.day),hour:p.hour>=0?String(p.hour):'',gender:p.gender||'female',name:p.name||'',bio:p.bio||'',city:p.city||''};
@@ -845,7 +846,14 @@ function BirthScreen({onSubmit}){
   const months=[];for(let m=1;m<=12;m++)months.push({v:String(m),l:isEN?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]:m+'月'});
   const days=[];for(let d=1;d<=31;d++)days.push({v:String(d),l:isEN?String(d):d+'日'});
   const hours=[];for(let h=0;h<=23;h++)hours.push({v:String(h),l:isEN?`${h}:00 ${h<12?'AM':'PM'}`:h+'时 ('+['子','丑','丑','寅','寅','卯','卯','辰','辰','巳','巳','午','午','未','未','申','申','酉','酉','戌','戌','亥','亥','子'][h]+')'});
-  return(<div style={{height:'100%',overflow:'auto',background:T.bg}}><div style={{padding:'60px 24px 100px'}}>
+  return(<div style={{height:'100%',overflow:'auto',background:T.bg}}>
+    {/* 标题栏(从"我的"进入时显示返回按钮) */}
+    {onBack&&<div style={{display:'flex',alignItems:'center',padding:'14px 16px 0',position:'sticky',top:0,zIndex:10,background:T.bg}}>
+      <button onClick={onBack} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+      <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{getLang()==='zh-CN'?'修改生辰':'Edit Birth Info'}</div>
+      <div style={{width:34}}/>
+    </div>}
+    <div style={{padding:onBack?'20px 24px 100px':'60px 24px 100px'}}>
     <div className="anim-in serif" style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:28,fontWeight:700}}>{t('profileTitle')}</div><div style={{fontSize:13,color:T.textSec,marginTop:8}}>{t('profileSubtitle')}</div></div>
     {lunar&&!isEN&&<div className="anim-in" style={{background:'linear-gradient(135deg,#FF6B6B10,#8B5CF610)',padding:'14px 16px',borderRadius:14,marginBottom:24,textAlign:'center'}}><div style={{fontSize:13,color:T.primary,fontWeight:500}}>{lunar.lunarFull}</div><div style={{fontSize:12,color:T.textSec,marginTop:4}}>{lunar.ganzhi}</div></div>}
     <div style={{marginBottom:16}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>{isEN?'Nickname':t('profileCity')&&'昵称'}</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder={isEN?'Optional':'输入昵称（可选）'} style={is}/></div>
@@ -863,7 +871,17 @@ function BirthScreen({onSubmit}){
         <span style={{color:T.textThi}}>▼</span>
       </button>
     </div>
-    <div style={{fontSize:11,color:T.textThi,marginBottom:16}}>{t('profileRequired')}</div>
+    <div style={{fontSize:11,color:T.textThi,marginBottom:12}}>{t('profileRequired')}</div>
+    {/* 生辰助手 — 帮用户推算不知道的时辰 */}
+    {(!f.hour||f.hour==='')&&<div style={{marginBottom:16}}>
+      <button onClick={()=>setShowHourAI(true)} style={{width:'100%',padding:'12px',borderRadius:12,border:`1.5px dashed ${T.accent2}40`,background:`${T.accent2}06`,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+        <span style={{fontSize:18}}>🔮</span>
+        <div style={{textAlign:'left'}}>
+          <div style={{fontSize:13,fontWeight:600,color:T.accent2}}>{getLang()==='zh-CN'?'不知道出生时辰？':'Don\'t know birth hour?'}</div>
+          <div style={{fontSize:11,color:T.textSec,marginTop:2}}>{getLang()==='zh-CN'?'AI生辰助手帮你推算（30秒）':'AI assistant helps estimate (30s)'}</div>
+        </div>
+      </button>
+    </div>}
     {err&&<div style={{background:T.isDark?'#EF444415':'#FEF2F2',border:`1px solid ${T.isDark?'#EF444440':'#FECACA'}`,borderRadius:10,padding:'10px 14px',marginBottom:14,fontSize:13,color:'#EF4444',fontWeight:500}}>{err}</div>}
     <div style={{marginBottom:24}}><label style={{fontSize:13,color:T.textSec,marginBottom:8,display:'block'}}>{t('profileGender')}</label><div style={{display:'flex',gap:12}}>
       {[{v:'female',l:isEN?'♀ Female':'♀ 女',c:T.accent3},{v:'male',l:isEN?'♂ Male':'♂ 男',c:T.accent4}].map(g=><button key={g.v} onClick={()=>sF({...f,gender:g.v})} style={{flex:1,padding:'12px 0',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer',border:f.gender===g.v?'none':`1.5px solid ${T.borderDark}`,background:f.gender===g.v?g.c:T.card,color:f.gender===g.v?'#fff':T.textSec}}>{g.l}</button>)}
@@ -901,6 +919,7 @@ function BirthScreen({onSubmit}){
       </div>
     </div>
   </div>}
+  {showHourAI&&<HourAssistantModal profile={{year:+f.year,month:+f.month,day:+f.day,hour:-1,gender:f.gender}} onResult={(h)=>{sF({...f,hour:String(h)});setShowHourAI(false)}} onClose={()=>setShowHourAI(false)}/>}
   </div>);
 }
 
@@ -5048,7 +5067,7 @@ function App(){
     }}/>}
     {scr===S.ONBOARD&&<OnboardingScreen onDone={()=>{localStorage.setItem('yuanhe_onboarded','1');setScr(S.BIRTH)}}/>}
     {scr===S.BIRTH&&!profile&&!termsAccepted&&<TermsModal onAccept={()=>{localStorage.setItem('yuanhe_terms_accepted','1');setTermsAccepted(true)}}/>}
-    {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{saveProfile(p);setScr(S.HOME)}}/>}
+    {scr===S.BIRTH&&<BirthScreen onSubmit={p=>{saveProfile(p);setScr(profile?S.ME:S.HOME)}} onBack={profile?()=>setScr(S.ME):null}/>}
     {scr===S.HOME&&profile&&<div key="home" style={{height:'100%'}}><HomeScreen profile={profile} goTo={goTo} addConv={addConv} setOpenConvId={setOpenConvId} autoGreet={autoGreet}/></div>}
     {scr===S.DISCOVER&&<div key="discover" style={{height:'100%'}}><DiscoverScreen goTo={goTo} profile={profile} onUpdateProfile={saveProfile}/></div>}
     {/* AIScreen always mounted, hidden when not active — preserves loading state */}
