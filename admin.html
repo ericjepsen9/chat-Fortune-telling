@@ -6,40 +6,54 @@
 <title>缘合 · 管理后台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,'Noto Sans SC',sans-serif;background:#0f0f1a;color:#e0e0e0;min-height:100vh}
-a{color:#A78BFA;text-decoration:none}
+:root{
+  --bg:#0f0f1a;--bg2:#1a1a2e;--text:#e0e0e0;--textSec:#9CA3AF;--textThi:#6B7280;
+  --border:#2D2D3F;--border2:#1f1f30;--accent:#A78BFA;--accent2:#8B5CF6;
+  --card:#1a1a2e;--input:#0f0f1a;--hover:#1f1f3060;--hoverSolid:#1f1f30;
+  --shadow:0 1px 3px rgba(0,0,0,0.2);--shadowLg:0 8px 32px rgba(0,0,0,0.3);
+  --ok:#34D399;--okBg:#34D39930;--warn:#F59E0B;--warnBg:#F59E0B30;--err:#EF4444;--errBg:#EF444430;--purpleBg:#8B5CF630;
+}
+body.light{
+  --bg:#F3F4F6;--bg2:#FFFFFF;--text:#1F2937;--textSec:#6B7280;--textThi:#9CA3AF;
+  --border:#E5E7EB;--border2:#F3F4F6;--accent:#7C3AED;--accent2:#8B5CF6;
+  --card:#FFFFFF;--input:#F9FAFB;--hover:#F3F4F640;--hoverSolid:#F3F4F6;
+  --shadow:0 1px 3px rgba(0,0,0,0.08);--shadowLg:0 8px 32px rgba(0,0,0,0.1);
+  --ok:#059669;--okBg:#D1FAE530;--warn:#D97706;--warnBg:#FEF3C730;--err:#DC2626;--errBg:#FEE2E230;--purpleBg:#EDE9FE50;
+}
+body{font-family:-apple-system,'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+a{color:var(--accent);text-decoration:none}
 input,select{font-family:inherit;font-size:14px}
 button{font-family:inherit;cursor:pointer}
 .container{max-width:1280px;margin:0 auto;padding:20px 24px}
 
 /* Login */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh}
-.login-box{background:#1a1a2e;border-radius:16px;padding:40px;width:360px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
-.login-box h1{font-size:24px;margin-bottom:8px;color:#A78BFA}
-.login-box p{font-size:13px;color:#6B7280;margin-bottom:24px}
-.login-box input{width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0;margin-bottom:12px;outline:none}
-.login-box input:focus{border-color:#A78BFA}
-.login-box .btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#8B5CF6,#A78BFA);color:#fff;font-size:15px;font-weight:600}
+.login-box{background:var(--card);border-radius:16px;padding:40px;width:360px;text-align:center;box-shadow:var(--shadowLg)}
+.login-box h1{font-size:24px;margin-bottom:8px;color:var(--accent)}
+.login-box p{font-size:13px;color:var(--textThi);margin-bottom:24px}
+.login-box input{width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--input);color:var(--text);margin-bottom:12px;outline:none}
+.login-box input:focus{border-color:var(--accent)}
+.login-box .btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-size:15px;font-weight:600}
 .login-box .btn:disabled{opacity:0.5}
-.login-box .err{color:#EF4444;font-size:12px;margin-bottom:12px}
+.login-box .err{color:var(--err);font-size:12px;margin-bottom:12px}
 
 /* Layout */
 .admin-layout{display:flex;min-height:100vh}
 /* Sidebar */
-.sidebar{width:210px;background:#1a1a2e;border-right:1px solid #2D2D3F;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;overflow-y:auto}
-.sidebar .brand{font-size:18px;font-weight:700;color:#A78BFA;padding:20px 16px 16px;border-bottom:1px solid #2D2D3F;display:flex;align-items:center;gap:8px}
+.sidebar{width:210px;background:var(--bg2);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;overflow-y:auto;transition:background .3s}
+.sidebar .brand{font-size:18px;font-weight:700;color:var(--accent);padding:20px 16px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
 .sidebar .menu{flex:1;padding:8px 0}
 .sidebar .menu-group{padding:0}
-.sidebar .menu-label{font-size:9px;color:#4a4a5a;text-transform:uppercase;letter-spacing:1.5px;padding:16px 16px 6px;font-weight:600}
-.sidebar button{width:100%;padding:11px 16px;background:none;border:none;color:#9CA3AF;font-size:13px;font-weight:500;text-align:left;display:flex;align-items:center;gap:8px;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
-.sidebar button.active{color:#A78BFA;background:#A78BFA10;border-left-color:#A78BFA}
-.sidebar button:hover{color:#e0e0e0;background:#ffffff08}
-.sidebar .bottom{padding:12px 16px;border-top:1px solid #2D2D3F}
-.sidebar .bottom .info{font-size:11px;color:#6B7280;margin-bottom:8px}
-.sidebar .bottom .logout{width:100%;padding:8px 12px;border-radius:8px;border:1px solid #2D2D3F;background:none;color:#9CA3AF;font-size:12px;cursor:pointer;text-align:center}
-.sidebar .bottom .logout:hover{background:#2D2D3F}
+.sidebar .menu-label{font-size:9px;color:var(--textThi);text-transform:uppercase;letter-spacing:1.5px;padding:16px 16px 6px;font-weight:600}
+.sidebar button{width:100%;padding:11px 16px;background:none;border:none;color:var(--textSec);font-size:13px;font-weight:500;text-align:left;display:flex;align-items:center;gap:8px;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.sidebar button.active{color:var(--accent);background:var(--hover);border-left-color:var(--accent)}
+.sidebar button:hover{color:var(--text);background:var(--hover)}
+.sidebar .bottom{padding:12px 16px;border-top:1px solid var(--border)}
+.sidebar .bottom .info{font-size:11px;color:var(--textThi);margin-bottom:8px}
+.sidebar .bottom .logout{width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--textSec);font-size:12px;cursor:pointer;text-align:center}
+.sidebar .bottom .logout:hover{background:var(--hoverSolid)}
 /* Main content */
-.main-content{margin-left:210px;flex:1;min-height:100vh}
+.main-content{margin-left:210px;flex:1;min-height:100vh;transition:background .3s}
 @media(max-width:1024px){
   .sidebar{width:180px}.main-content{margin-left:180px}
 }
@@ -51,53 +65,55 @@ button{font-family:inherit;cursor:pointer}
 
 /* Cards */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:20px 0}
-.stat-card{background:#1a1a2e;border:1px solid #2D2D3F;border-radius:12px;padding:16px;transition:border-color .2s}
-.stat-card:hover{border-color:#2D2D3F80}
-.stat-card .label{font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px}
-.stat-card .value{font-size:28px;font-weight:700;color:#A78BFA;margin-top:4px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s}
+.stat-card:hover{border-color:var(--accent)20}
+.stat-card .label{font-size:11px;color:var(--textThi);text-transform:uppercase;letter-spacing:0.5px}
+.stat-card .value{font-size:28px;font-weight:700;color:var(--accent);margin-top:4px}
 .stat-card .sub{font-size:11px;color:#4ECDC4;margin-top:4px}
 
 /* Table */
-.panel{background:#1a1a2e;border:1px solid #2D2D3F;border-radius:12px;padding:18px;margin:14px 0}
-.panel h3{font-size:15px;font-weight:600;color:#A78BFA;margin-bottom:14px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin:14px 0;box-shadow:var(--shadow);transition:background .3s}
+.panel h3{font-size:15px;font-weight:600;color:var(--accent);margin-bottom:14px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:10px 12px;color:#6B7280;font-size:11px;font-weight:600;border-bottom:1.5px solid #2D2D3F;letter-spacing:0.3px}
-td{padding:11px 12px;border-bottom:1px solid #1f1f30}
-tr:hover{background:#1f1f3060}
-tr:active{background:#1f1f3090}
+th{text-align:left;padding:10px 12px;color:var(--textThi);font-size:11px;font-weight:600;border-bottom:1.5px solid var(--border);letter-spacing:0.3px}
+td{padding:11px 12px;border-bottom:1px solid var(--border2)}
+tr:hover{background:var(--hover)}
+tr:active{background:var(--hoverSolid)}
 .badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:0.2px}
-.badge-ok{background:#34D39930;color:#34D399}
-.badge-warn{background:#F59E0B30;color:#F59E0B}
-.badge-err{background:#EF444430;color:#EF4444}
-.badge-purple{background:#8B5CF630;color:#A78BFA}
+.badge-ok{background:var(--okBg);color:var(--ok)}
+.badge-warn{background:var(--warnBg);color:var(--warn)}
+.badge-err{background:var(--errBg);color:var(--err)}
+.badge-purple{background:var(--purpleBg);color:var(--accent)}
 
 /* Toolbar */
 .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.toolbar input{padding:9px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0;font-size:13px;min-width:200px;flex:1;max-width:400px}
-.toolbar input:focus{border-color:#A78BFA;outline:none}
+.toolbar input{padding:9px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--input);color:var(--text);font-size:13px;min-width:200px;flex:1;max-width:400px}
+.toolbar input:focus{border-color:var(--accent);outline:none}
 .toolbar .btn-sm{padding:6px 14px;border-radius:8px;border:none;font-size:12px;font-weight:500}
-.btn-primary{background:#8B5CF6;color:#fff;transition:opacity .15s}
+.btn-primary{background:var(--accent2);color:#fff;transition:opacity .15s}
 .btn-primary:hover{opacity:0.85}
 .btn-primary:disabled{opacity:0.5;cursor:default}
-.btn-danger{background:#EF4444;color:#fff;transition:opacity .15s}
+.btn-danger{background:var(--err);color:#fff;transition:opacity .15s}
 .btn-danger:hover{opacity:0.85}
 .btn-danger:disabled{opacity:0.5;cursor:default}
-.btn-ghost{background:none;border:1px solid #2D2D3F;color:#9CA3AF;transition:all .15s}
-.btn-ghost:hover{border-color:#A78BFA40;color:#e0e0e0}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--textSec);transition:all .15s}
+.btn-ghost:hover{border-color:var(--accent);color:var(--text)}
 
 /* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:200;animation:fadeIn .15s ease}
-.modal{background:#1a1a2e;border-radius:16px;padding:24px;width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;word-wrap:break-word;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px #2D2D3F;animation:scaleIn .2s ease}
-.modal h3{font-size:16px;font-weight:600;color:#A78BFA;margin-bottom:16px}
-.modal label{display:block;font-size:12px;color:#9CA3AF;margin:10px 0 4px}
-.modal input,.modal select{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0;outline:none;transition:border-color .15s}
-.modal input:focus,.modal select:focus{border-color:#A78BFA}
+body.light .modal-bg{background:rgba(0,0,0,0.3)}
+.modal{background:var(--card);border-radius:16px;padding:24px;width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;word-wrap:break-word;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px var(--border);animation:scaleIn .2s ease}
+body.light .modal{box-shadow:0 20px 60px rgba(0,0,0,0.15),0 0 0 1px var(--border)}
+.modal h3{font-size:16px;font-weight:600;color:var(--accent);margin-bottom:16px}
+.modal label{display:block;font-size:12px;color:var(--textSec);margin:10px 0 4px}
+.modal input,.modal select{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--input);color:var(--text);outline:none;transition:border-color .15s}
+.modal input:focus,.modal select:focus{border-color:var(--accent)}
 .modal .actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
 /* Toast */
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:12px;background:#1a1a2e;border:1px solid #2D2D3F;color:#e0e0e0;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:12px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadowLg)}
 .toast.show{opacity:1;pointer-events:auto}
-.toast.toast-err{border-color:#EF4444;color:#EF4444}
-.toast.toast-ok{border-color:#34D399;color:#34D399}
+.toast.toast-err{border-color:var(--err);color:var(--err)}
+.toast.toast-ok{border-color:var(--ok);color:var(--ok)}
 /* Loading spinner */
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(167,139,250,0.3);border-top-color:#A78BFA;border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -166,8 +182,8 @@ function AdminConfirmDialog({data,onDone}){
   if(!data)return null;
   return(<div className="modal-bg" onClick={()=>onDone(false)}><div className="modal" style={{width:340,textAlign:'center'}} onClick={e=>e.stopPropagation()}>
     <div style={{fontSize:32,marginBottom:12}}>{data.danger?'⚠️':'❓'}</div>
-    <div style={{fontSize:15,fontWeight:600,color:'#e0e0e0',marginBottom:data.detail?6:16}}>{data.msg}</div>
-    {data.detail&&<div style={{fontSize:12,color:'#6B7280',marginBottom:16}}>{data.detail}</div>}
+    <div style={{fontSize:15,fontWeight:600,color:'var(--text)',marginBottom:data.detail?6:16}}>{data.msg}</div>
+    {data.detail&&<div style={{fontSize:12,color:'var(--textThi)',marginBottom:16}}>{data.detail}</div>}
     <div className="actions" style={{justifyContent:'center'}}>
       <button className="btn-sm btn-ghost" onClick={()=>onDone(false)}>取消</button>
       <button className={`btn-sm ${data.danger?'btn-danger':'btn-primary'}`} onClick={()=>onDone(true)}>确认</button>
@@ -178,8 +194,8 @@ function AdminConfirmDialog({data,onDone}){
 function AdminConfirm({msg,detail,danger,onResult}){
   return(<div className="modal-bg" onClick={()=>onResult(false)}><div className="modal" style={{width:340,textAlign:'center'}} onClick={e=>e.stopPropagation()}>
     <div style={{fontSize:32,marginBottom:12}}>{danger?'⚠️':'❓'}</div>
-    <div style={{fontSize:15,fontWeight:600,color:'#e0e0e0',marginBottom:detail?6:16}}>{msg}</div>
-    {detail&&<div style={{fontSize:12,color:'#6B7280',marginBottom:16}}>{detail}</div>}
+    <div style={{fontSize:15,fontWeight:600,color:'var(--text)',marginBottom:detail?6:16}}>{msg}</div>
+    {detail&&<div style={{fontSize:12,color:'var(--textThi)',marginBottom:16}}>{detail}</div>}
     <div className="actions" style={{justifyContent:'center'}}>
       <button className="btn-sm btn-ghost" onClick={()=>onResult(false)}>取消</button>
       <button className={`btn-sm ${danger?'btn-danger':'btn-primary'}`} onClick={()=>onResult(true)}>确认</button>
@@ -210,6 +226,28 @@ function useAsyncAction(){
 // 复制到剪贴板
 function copyText(text){
   navigator.clipboard?.writeText(text).then(()=>showToast('已复制','success')).catch(()=>{});
+}
+
+// 主题色助手 — 用于inline styles中获取当前主题色
+function C(){
+  const isLight=document.body.classList.contains('light');
+  return{
+    bg:isLight?'#F3F4F6':'#0f0f1a',
+    bg2:isLight?'#FFFFFF':'#1a1a2e',
+    text:isLight?'#1F2937':'#e0e0e0',
+    textSec:isLight?'#6B7280':'#9CA3AF',
+    textThi:isLight?'#9CA3AF':'#6B7280',
+    border:isLight?'#E5E7EB':'#2D2D3F',
+    border2:isLight?'#F3F4F6':'#1f1f30',
+    accent:isLight?'#7C3AED':'#A78BFA',
+    accent2:isLight?'#8B5CF6':'#8B5CF6',
+    card:isLight?'#FFFFFF':'#1a1a2e',
+    input:isLight?'#F9FAFB':'#0f0f1a',
+    ok:isLight?'#059669':'#34D399',
+    warn:isLight?'#D97706':'#F59E0B',
+    err:isLight?'#DC2626':'#EF4444',
+    isLight,
+  };
 }
 
 // ===== LOGIN =====
@@ -245,7 +283,7 @@ function ChangePasswordModal({forced,onDone,onClose}){
   };
   return(<div className="modal-bg" onClick={forced?null:onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <h3>{forced?'⚠️ 首次登录请修改密码':'修改密码'}</h3>
-    {err&&<div style={{color:'#EF4444',fontSize:12,marginBottom:8}}>{err}</div>}
+    {err&&<div style={{color:'var(--err)',fontSize:12,marginBottom:8}}>{err}</div>}
     {!forced&&<><label>旧密码</label><input type="password" value={old} onChange={e=>setOld(e.target.value)}/></>}
     <label>新密码</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="至少6位"/>
     <label>确认新密码</label><input type="password" value={pw2} onChange={e=>setPw2(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()}/>
@@ -273,7 +311,7 @@ function TrendChart({data}){
           {label:'占卜次数',data:data.map(d=>d.divinations),borderColor:'#F59E0B',backgroundColor:'#F59E0B20',fill:true,tension:0.4,pointRadius:2},
         ]
       },
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9CA3AF',font:{size:10}}}},scales:{x:{ticks:{color:'#6B7280',font:{size:9},maxTicksLimit:10},grid:{color:'#2D2D3F'}},y:{ticks:{color:'#6B7280',font:{size:10}},grid:{color:'#2D2D3F'},beginAtZero:true}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'var(--textSec)',font:{size:10}}}},scales:{x:{ticks:{color:'var(--textThi)',font:{size:9},maxTicksLimit:10},grid:{color:'#2D2D3F'}},y:{ticks:{color:'var(--textThi)',font:{size:10}},grid:{color:'#2D2D3F'},beginAtZero:true}}}
     });
     return()=>{if(chartRef.current)chartRef.current.destroy()};
   },[data]);
@@ -311,7 +349,7 @@ function DashboardPage(){
           {[7,14,30].map(d=><button key={d} onClick={()=>{setTrendDays(d);loadTrends(d)}} className={`btn-sm ${trendDays===d?'btn-primary':'btn-ghost'}`}>{d}天</button>)}
         </div>
       </div>
-      {trends?<div style={{height:200}}><TrendChart data={trends}/></div>:<div style={{textAlign:'center',padding:40,color:'#6B7280'}}><span className="spinner"/></div>}
+      {trends?<div style={{height:200}}><TrendChart data={trends}/></div>:<div style={{textAlign:'center',padding:40,color:'var(--textThi)'}}><span className="spinner"/></div>}
     </div>
 
     {/* 漏斗 */}
@@ -321,7 +359,7 @@ function DashboardPage(){
         <div key={f.step} style={{marginBottom:8}}>
           <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:3}}>
             <span>{f.step}</span>
-            <span style={{color:'#A78BFA',fontWeight:600}}>{f.count}人 ({f.rate}%)</span>
+            <span style={{color:'var(--accent)',fontWeight:600}}>{f.count}人 ({f.rate}%)</span>
           </div>
           <div style={{height:8,background:'#1f1f30',borderRadius:4,overflow:'hidden'}}>
             <div style={{height:'100%',background:i===0?'#A78BFA':i===1?'#34D399':i===2?'#F59E0B':'#EC4899',borderRadius:4,width:f.rate+'%',transition:'width .6s'}}/>
@@ -334,15 +372,15 @@ function DashboardPage(){
     <div className="panel">
       <h3>📢 系统公告</h3>
       <div style={{display:'flex',gap:8,marginBottom:8}}>
-        <input value={announcement.text} onChange={e=>setAnnouncement({...announcement,text:e.target.value})} placeholder="输入公告内容…" style={{flex:1,padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:13}}/>
-        <select value={announcement.type||'info'} onChange={e=>setAnnouncement({...announcement,type:e.target.value})} style={{padding:'8px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12}}>
+        <input value={announcement.text} onChange={e=>setAnnouncement({...announcement,text:e.target.value})} placeholder="输入公告内容…" style={{flex:1,padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'var(--text)',fontSize:13}}/>
+        <select value={announcement.type||'info'} onChange={e=>setAnnouncement({...announcement,type:e.target.value})} style={{padding:'8px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'var(--text)',fontSize:12}}>
           <option value="info">通知</option><option value="warn">警告</option><option value="promo">活动</option>
         </select>
       </div>
       <div style={{display:'flex',gap:8}}>
         <button onClick={()=>{setAnnouncement({...announcement,enabled:!announcement.enabled});setTimeout(saveAnnouncement,100)}} className={`btn-sm ${announcement.enabled?'btn-danger':'btn-primary'}`}>{announcement.enabled?'关闭公告':'发布公告'}</button>
         <button onClick={saveAnnouncement} className="btn-sm btn-ghost">保存</button>
-        {announcement.enabled&&<span style={{fontSize:11,color:'#34D399',alignSelf:'center'}}>✅ 公告已发布</span>}
+        {announcement.enabled&&<span style={{fontSize:11,color:'var(--ok)',alignSelf:'center'}}>✅ 公告已发布</span>}
       </div>
     </div>
 
@@ -388,7 +426,7 @@ function LogsPage(){
   useEffect(()=>{apiGet('/api/admin/log-types').then(d=>{if(Array.isArray(d))setActionTypes(d)}).catch(()=>{})},[]);
 
   const totalPages=Math.ceil((data.total||0)/limit);
-  const selStyle={padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12};
+  const selStyle={padding:'8px 12px',borderRadius:8,border:'1.5px solid var(--border)',background:'var(--input)',color:'var(--text)',fontSize:12};
   const actionColors={login:'#34D399',ban_user:'#EF4444',unban_user:'#34D399',delete_user:'#EF4444',update_user:'#F59E0B',set_tags:'#A78BFA',batch_ban:'#EF4444',batch_unban:'#34D399',add_llm_provider:'#3B82F6',switch_llm:'#3B82F6',create_admin:'#A78BFA',change_password:'#6B7280',delete_post:'#EF4444'};
 
   return(<div className="container">
@@ -401,26 +439,26 @@ function LogsPage(){
           {actionTypes.map(a=><option key={a} value={a}>{a}</option>)}
         </select>
         <button className="btn-sm btn-ghost" onClick={load}>🔄 刷新</button>
-        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>{loading&&<span className="spinner" style={{marginRight:6}}/>}共 {data.total} 条</span>
+        <span style={{fontSize:12,color:'var(--textThi)',marginLeft:'auto'}}>{loading&&<span className="spinner" style={{marginRight:6}}/>}共 {data.total} 条</span>
       </div>
 
       <table><thead><tr><th style={{width:140}}>时间</th><th style={{width:80}}>管理员</th><th style={{width:120}}>操作</th><th>目标</th><th>详情</th></tr></thead>
       <tbody>{data.items?.map(l=>{
         const ac=actionColors[l.action]||'#A78BFA';
         return(<tr key={l.id}>
-          <td style={{fontSize:11,color:'#6B7280',whiteSpace:'nowrap'}}>{l.createdAt?.substring(0,19).replace('T',' ')}</td>
+          <td style={{fontSize:11,color:'var(--textThi)',whiteSpace:'nowrap'}}>{l.createdAt?.substring(0,19).replace('T',' ')}</td>
           <td style={{fontWeight:600,fontSize:12}}>{l.adminName}</td>
           <td><span className="badge" style={{background:ac+'20',color:ac}}>{l.action}</span></td>
-          <td style={{fontSize:11,color:'#9CA3AF',fontFamily:'monospace'}}>{l.target?l.target.substring(0,12)+'…':'—'}</td>
+          <td style={{fontSize:11,color:'var(--textSec)',fontFamily:'monospace'}}>{l.target?l.target.substring(0,12)+'…':'—'}</td>
           <td style={{fontSize:12,maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.detail}</td>
         </tr>);
       })}</tbody></table>
 
-      {data.items?.length===0&&<div style={{textAlign:'center',padding:30,color:'#6B7280'}}>暂无日志记录</div>}
+      {data.items?.length===0&&<div style={{textAlign:'center',padding:30,color:'var(--textThi)'}}>暂无日志记录</div>}
 
       {totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:12}}>
         {page>1&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page-1)}>← 上一页</button>}
-        <span style={{fontSize:12,color:'#6B7280',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
+        <span style={{fontSize:12,color:'var(--textThi)',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
         {page<totalPages&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page+1)}>下一页 →</button>}
       </div>}
     </div>
@@ -482,21 +520,21 @@ function EditModal({user,onClose,onDone}){
       <div><label>性别</label><select value={gender} onChange={e=>setGender(e.target.value)}><option value="male">男</option><option value="female">女</option></select></div>
       <div style={{gridColumn:'1/-1'}}><label>个性签名</label><input value={bio} onChange={e=>setBio(e.target.value)} placeholder="用户简介…"/></div>
     </div>
-    <div style={{fontSize:12,fontWeight:600,color:'#6B7280',margin:'12px 0 4px'}}>生辰信息</div>
+    <div style={{fontSize:12,fontWeight:600,color:'var(--textThi)',margin:'12px 0 4px'}}>生辰信息</div>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>
       <div><label style={{fontSize:10}}>年</label><input type="number" value={year} onChange={e=>setYear(e.target.value)} placeholder="1990"/></div>
       <div><label style={{fontSize:10}}>月</label><input type="number" value={month} onChange={e=>setMonth(e.target.value)} placeholder="1" min="1" max="12"/></div>
       <div><label style={{fontSize:10}}>日</label><input type="number" value={day} onChange={e=>setDay(e.target.value)} placeholder="1" min="1" max="31"/></div>
       <div><label style={{fontSize:10}}>时辰</label><input type="number" value={hour} onChange={e=>setHour(e.target.value)} placeholder="12" min="0" max="23"/></div>
     </div>
-    <div style={{fontSize:12,fontWeight:600,color:'#6B7280',margin:'12px 0 4px'}}>管理标签</div>
+    <div style={{fontSize:12,fontWeight:600,color:'var(--textThi)',margin:'12px 0 4px'}}>管理标签</div>
     <div style={{display:'flex',gap:6,marginBottom:6}}>
       <input value={tagInput} onChange={e=>setTagInput(e.target.value)} placeholder="输入标签…" style={{flex:1}} onKeyDown={e=>e.key==='Enter'&&addTag()}/>
       <button className="btn-sm btn-primary" onClick={addTag}>+</button>
     </div>
     <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:8}}>
-      {tags.map((t,i)=><span key={i} style={{padding:'2px 8px',borderRadius:6,background:'#A78BFA20',color:'#A78BFA',fontSize:11,display:'flex',alignItems:'center',gap:4}}>
-        {t} <button onClick={()=>removeTag(i)} style={{background:'none',border:'none',color:'#A78BFA',cursor:'pointer',fontSize:13,padding:0}}>×</button>
+      {tags.map((t,i)=><span key={i} style={{padding:'2px 8px',borderRadius:6,background:'#A78BFA20',color:'var(--accent)',fontSize:11,display:'flex',alignItems:'center',gap:4}}>
+        {t} <button onClick={()=>removeTag(i)} style={{background:'none',border:'none',color:'var(--accent)',cursor:'pointer',fontSize:13,padding:0}}>×</button>
       </span>)}
     </div>
     <label>管理备注</label><input value={adminNote} onChange={e=>setAdminNote(e.target.value)} placeholder="仅管理员可见…"/>
@@ -524,7 +562,7 @@ function CreateAdminModal({onClose,onDone}){
     <label>角色</label>
     <select value={r} onChange={e=>setR(e.target.value)}><option value="operator">运营</option><option value="support">客服</option><option value="superadmin">超级管理员</option></select>
     <label>初始密码</label><input value={pw} onChange={e=>setPw(e.target.value)} placeholder="留空则为changeme"/>
-    <div style={{fontSize:10,color:'#6B7280',marginTop:4}}>首次登录将强制修改密码</div>
+    <div style={{fontSize:10,color:'var(--textThi)',marginTop:4}}>首次登录将强制修改密码</div>
     <div className="actions">
       <button className="btn-sm btn-ghost" onClick={onClose}>取消</button>
       <button className="btn-sm btn-primary" onClick={create}>创建</button>
@@ -545,7 +583,7 @@ function GrantVipModal({data,onClose,onDone}){
   };
   return (<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <h3>💎 赠送VIP</h3>
-    {data.userName&&<div style={{fontSize:13,color:'#A78BFA',marginBottom:8}}>赠送给: {data.userName}</div>}
+    {data.userName&&<div style={{fontSize:13,color:'var(--accent)',marginBottom:8}}>赠送给: {data.userName}</div>}
     {!data.userId&&<><label>用户ID</label><input value={uid} onChange={e=>setUid(e.target.value)} placeholder="输入用户ID"/></>}
     <label>VIP等级</label>
     <select value={tier} onChange={e=>setTier(e.target.value)}><option value="basic">缘合会员 (Lv.1)</option><option value="premium">缘合至尊 (Lv.2)</option></select>
@@ -577,7 +615,7 @@ function UsersPage(){
   const [showFilters,setShowFilters]=useState(false);
   const limit=15;
   const debouncedSearch=useDebounce(search);
-  const selStyle={padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12};
+  const selStyle={padding:'8px 12px',borderRadius:8,border:'1.5px solid var(--border)',background:'var(--input)',color:'var(--text)',fontSize:12};
 
   const load=useCallback(()=>{
     setLoading(true);
@@ -625,7 +663,7 @@ function UsersPage(){
       <div className="stat-card"><div className="label">总用户</div><div className="value">{stats.totalUsers}</div></div>
       <div className="stat-card"><div className="label">今日活跃</div><div className="value">{stats.activeToday}</div></div>
       <div className="stat-card"><div className="label">今日新增</div><div className="value">{stats.newToday}</div></div>
-      <div className="stat-card"><div className="label">已封禁</div><div className="value" style={{color:'#EF4444'}}>{stats.banned}</div></div>
+      <div className="stat-card"><div className="label">已封禁</div><div className="value" style={{color:'var(--err)'}}>{stats.banned}</div></div>
       <div className="stat-card"><div className="label">男/女</div><div className="value" style={{fontSize:16}}>{stats.genderSplit?.male||0} / {stats.genderSplit?.female||0}</div></div>
       <div className="stat-card"><div className="label">占卜总数</div><div className="value">{stats.totalDivinations}</div></div>
     </div>}
@@ -638,7 +676,7 @@ function UsersPage(){
         </select>
         <button className="btn-sm btn-ghost" onClick={()=>setShowFilters(!showFilters)}>{showFilters?'收起':'更多'}筛选</button>
         <button className="btn-sm btn-ghost" onClick={exportCSV} title="导出CSV">📥 导出</button>
-        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>{loading&&<span className="spinner" style={{marginRight:6}}/>}共 {data.total} 条</span>
+        <span style={{fontSize:12,color:'var(--textThi)',marginLeft:'auto'}}>{loading&&<span className="spinner" style={{marginRight:6}}/>}共 {data.total} 条</span>
       </div>
 
       {showFilters&&<div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',padding:'8px 0',borderBottom:'1px solid #2D2D3F'}}>
@@ -654,7 +692,7 @@ function UsersPage(){
       </div>}
 
       {selected.length>0&&<div style={{display:'flex',gap:8,alignItems:'center',padding:'8px 0',marginBottom:8,borderBottom:'1px solid #2D2D3F'}}>
-        <span style={{fontSize:12,color:'#A78BFA',fontWeight:600}}>已选 {selected.length} 人</span>
+        <span style={{fontSize:12,color:'var(--accent)',fontWeight:600}}>已选 {selected.length} 人</span>
         <button className="btn-sm btn-danger" onClick={()=>batchBan(true)} disabled={batchLoading}>{batchLoading?'处理中…':'批量封禁'}</button>
         <button className="btn-sm btn-primary" onClick={()=>batchBan(false)} disabled={batchLoading}>{batchLoading?'处理中…':'批量解封'}</button>
         <button className="btn-sm btn-ghost" onClick={()=>setSelected([])} disabled={batchLoading}>取消选择</button>
@@ -669,17 +707,17 @@ function UsersPage(){
           <td><input type="checkbox" checked={selected.includes(u.id)} onChange={()=>toggleOne(u.id)}/></td>
           <td style={{fontSize:20}}>{u.avatar||(u.gender==='female'?'👩':'👨')}</td>
           <td>
-            <div style={{fontWeight:600,cursor:'pointer',color:'#A78BFA'}} onClick={()=>openDetail(u.id)}>{u.name}</div>
-            {u.adminTags?.length>0&&<div style={{display:'flex',gap:3,marginTop:2,flexWrap:'wrap'}}>{u.adminTags.map(t=><span key={t} style={{padding:'0 4px',borderRadius:4,background:'#A78BFA15',color:'#A78BFA',fontSize:9}}>{t}</span>)}</div>}
+            <div style={{fontWeight:600,cursor:'pointer',color:'var(--accent)'}} onClick={()=>openDetail(u.id)}>{u.name}</div>
+            {u.adminTags?.length>0&&<div style={{display:'flex',gap:3,marginTop:2,flexWrap:'wrap'}}>{u.adminTags.map(t=><span key={t} style={{padding:'0 4px',borderRadius:4,background:'#A78BFA15',color:'var(--accent)',fontSize:9}}>{t}</span>)}</div>}
           </td>
-          <td style={{fontSize:12,color:'#6B7280',cursor:u.phone?'pointer':'default'}} onClick={()=>u.phone&&copyText(u.phone)} title={u.phone?'点击复制':''}>{u.phone||'—'}</td>
+          <td style={{fontSize:12,color:'var(--textThi)',cursor:u.phone?'pointer':'default'}} onClick={()=>u.phone&&copyText(u.phone)} title={u.phone?'点击复制':''}>{u.phone||'—'}</td>
           <td>{u.gender==='female'?<span style={{color:'#EC4899'}}>♀</span>:<span style={{color:'#3B82F6'}}>♂</span>}</td>
           <td style={{fontSize:12}}>{u.city||'—'}</td>
           <td>{u.vipTier!=='free'&&<span className="badge badge-purple">{vipLabel(u.vipTier)}</span>}</td>
           <td>{u.divinationCount}</td>
-          <td style={{fontSize:12,color:'#9CA3AF'}}>{u.matchCount||0}</td>
+          <td style={{fontSize:12,color:'var(--textSec)'}}>{u.matchCount||0}</td>
           <td>{u.deleted?<span className="badge badge-warn">已删除</span>:u.banned?<span className="badge badge-err">封禁</span>:!u.profileComplete?<span className="badge badge-warn">未完善</span>:<span className="badge badge-ok">正常</span>}</td>
-          <td style={{fontSize:11,color:'#6B7280'}}>{u.lastActiveAt?u.lastActiveAt.substring(5,16).replace('T',' '):'从未'}</td>
+          <td style={{fontSize:11,color:'var(--textThi)'}}>{u.lastActiveAt?u.lastActiveAt.substring(5,16).replace('T',' '):'从未'}</td>
           <td style={{whiteSpace:'nowrap'}}>
             <button className="btn-sm btn-ghost" style={{marginRight:4,padding:'5px 10px',fontSize:11}} onClick={()=>setEditModal(u)}>编辑</button>
             {u.banned
@@ -692,7 +730,7 @@ function UsersPage(){
 
       {totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:12}}>
         {page>1&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page-1)}>← 上一页</button>}
-        <span style={{fontSize:12,color:'#6B7280',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
+        <span style={{fontSize:12,color:'var(--textThi)',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
         {page<totalPages&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page+1)}>下一页 →</button>}
       </div>}
     </div>
@@ -738,12 +776,12 @@ function UserDetailModal({detail,onClose,onBan,onEdit,onGrantVip,onRefresh,onRel
           {detail.banned&&<span className="badge badge-err">封禁</span>}
           {detail.deleted&&<span className="badge badge-warn">已删除</span>}
           {detail.vip?.tier&&detail.vip.tier!=='free'&&<span className="badge badge-purple">{vipName(detail.vip.tier)}</span>}
-          {detail.adminTags?.map(t=><span key={t} style={{padding:'1px 6px',borderRadius:4,background:'#A78BFA15',color:'#A78BFA',fontSize:10}}>{t}</span>)}
+          {detail.adminTags?.map(t=><span key={t} style={{padding:'1px 6px',borderRadius:4,background:'#A78BFA15',color:'var(--accent)',fontSize:10}}>{t}</span>)}
         </div>
       </div>
       <div style={{display:'flex',gap:4}}>
         <button className="btn-sm btn-ghost" style={{fontSize:11}} onClick={onEdit}>编辑</button>
-        <button className="btn-sm btn-ghost" style={{fontSize:11,color:'#F59E0B'}} onClick={onGrantVip}>赠VIP</button>
+        <button className="btn-sm btn-ghost" style={{fontSize:11,color:'var(--warn)'}} onClick={onGrantVip}>赠VIP</button>
         {!detail.banned&&<button className="btn-sm btn-danger" style={{fontSize:11}} onClick={onBan}>封禁</button>}
       </div>
     </div>
@@ -751,9 +789,9 @@ function UserDetailModal({detail,onClose,onBan,onEdit,onGrantVip,onRefresh,onRel
     {/* Quick Stats */}
     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6,marginBottom:12}}>
       {[['占卜',detail.divinationCount],['匹配',detail.matchCount],['好友',detail.friendCount],['消息',detail.msgCount],['帖子',detail.postCount]].map(([l,v])=>
-        <div key={l} style={{textAlign:'center',padding:'8px 4px',background:'#0f0f1a',borderRadius:8}}>
-          <div style={{fontSize:16,fontWeight:700,color:'#A78BFA'}}>{v||0}</div>
-          <div style={{fontSize:10,color:'#6B7280'}}>{l}</div>
+        <div key={l} style={{textAlign:'center',padding:'8px 4px',background:'var(--input)',borderRadius:8}}>
+          <div style={{fontSize:16,fontWeight:700,color:'var(--accent)'}}>{v||0}</div>
+          <div style={{fontSize:10,color:'var(--textThi)'}}>{l}</div>
         </div>
       )}
     </div>
@@ -766,68 +804,68 @@ function UserDetailModal({detail,onClose,onBan,onEdit,onGrantVip,onRefresh,onRel
     <div style={{maxHeight:'45vh',overflow:'auto'}}>
       {tab==='info'&&<div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:13}}>
-          <div><span style={{color:'#6B7280'}}>ID:</span> <span onClick={()=>copyText(detail.id)} style={{fontSize:11,userSelect:'all',cursor:'pointer'}} title="点击复制">{detail.id}</span></div>
-          <div><span style={{color:'#6B7280'}}>手机:</span> {detail.phone||'—'}</div>
-          <div><span style={{color:'#6B7280'}}>性别:</span> {detail.profile?.gender==='female'?'女':'男'}</div>
-          <div><span style={{color:'#6B7280'}}>城市:</span> {detail.profile?.city||'—'}</div>
-          <div><span style={{color:'#6B7280'}}>生辰:</span> {detail.profile?.year?`${detail.profile.year}年${detail.profile.month}月${detail.profile.day}日 ${detail.profile.hour}时`:'未填写'}</div>
-          <div><span style={{color:'#6B7280'}}>注册:</span> {detail.createdAt?.substring(0,10)}</div>
-          <div><span style={{color:'#6B7280'}}>最后活跃:</span> {detail.lastActiveAt?detail.lastActiveAt.substring(0,16).replace('T',' '):'从未'}</div>
-          <div><span style={{color:'#6B7280'}}>VIP:</span> {detail.vip?.tier?`${vipName(detail.vip.tier)}${detail.vip.expiresAt?' 至'+detail.vip.expiresAt.substring(0,10):' 永久'}`:'免费用户'}</div>
+          <div><span style={{color:'var(--textThi)'}}>ID:</span> <span onClick={()=>copyText(detail.id)} style={{fontSize:11,userSelect:'all',cursor:'pointer'}} title="点击复制">{detail.id}</span></div>
+          <div><span style={{color:'var(--textThi)'}}>手机:</span> {detail.phone||'—'}</div>
+          <div><span style={{color:'var(--textThi)'}}>性别:</span> {detail.profile?.gender==='female'?'女':'男'}</div>
+          <div><span style={{color:'var(--textThi)'}}>城市:</span> {detail.profile?.city||'—'}</div>
+          <div><span style={{color:'var(--textThi)'}}>生辰:</span> {detail.profile?.year?`${detail.profile.year}年${detail.profile.month}月${detail.profile.day}日 ${detail.profile.hour}时`:'未填写'}</div>
+          <div><span style={{color:'var(--textThi)'}}>注册:</span> {detail.createdAt?.substring(0,10)}</div>
+          <div><span style={{color:'var(--textThi)'}}>最后活跃:</span> {detail.lastActiveAt?detail.lastActiveAt.substring(0,16).replace('T',' '):'从未'}</div>
+          <div><span style={{color:'var(--textThi)'}}>VIP:</span> {detail.vip?.tier?`${vipName(detail.vip.tier)}${detail.vip.expiresAt?' 至'+detail.vip.expiresAt.substring(0,10):' 永久'}`:'免费用户'}</div>
         </div>
-        {detail.profile?.bio&&<div style={{marginTop:10,padding:10,background:'#0f0f1a',borderRadius:8,fontSize:12,color:'#9CA3AF'}}>📝 {detail.profile.bio}</div>}
-        {detail.adminNote&&<div style={{marginTop:8,padding:10,background:'#F59E0B10',borderRadius:8,fontSize:12,color:'#F59E0B'}}>📌 管理备注: {detail.adminNote}</div>}
-        {detail.banned&&<div style={{marginTop:8,padding:10,background:'#EF444420',borderRadius:8,fontSize:12,color:'#EF4444'}}>⛔ 已封禁: {detail.banReason} {detail.banUntil?`(至${detail.banUntil.substring(0,10)})`:' (永久)'}</div>}
+        {detail.profile?.bio&&<div style={{marginTop:10,padding:10,background:'var(--input)',borderRadius:8,fontSize:12,color:'var(--textSec)'}}>📝 {detail.profile.bio}</div>}
+        {detail.adminNote&&<div style={{marginTop:8,padding:10,background:'#F59E0B10',borderRadius:8,fontSize:12,color:'var(--warn)'}}>📌 管理备注: {detail.adminNote}</div>}
+        {detail.banned&&<div style={{marginTop:8,padding:10,background:'var(--errBg)',borderRadius:8,fontSize:12,color:'var(--err)'}}>⛔ 已封禁: {detail.banReason} {detail.banUntil?`(至${detail.banUntil.substring(0,10)})`:' (永久)'}</div>}
       </div>}
 
       {tab==='activity'&&<div>
-        <div style={{fontSize:12,fontWeight:600,color:'#6B7280',marginBottom:8}}>滑动数据</div>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--textThi)',marginBottom:8}}>滑动数据</div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:16}}>
-          <div style={{textAlign:'center',padding:10,background:'#0f0f1a',borderRadius:8}}>
-            <div style={{fontSize:20,fontWeight:700,color:'#34D399'}}>{ss.swipedRight||0}</div>
-            <div style={{fontSize:10,color:'#6B7280'}}>右滑(喜欢)</div>
+          <div style={{textAlign:'center',padding:10,background:'var(--input)',borderRadius:8}}>
+            <div style={{fontSize:20,fontWeight:700,color:'var(--ok)'}}>{ss.swipedRight||0}</div>
+            <div style={{fontSize:10,color:'var(--textThi)'}}>右滑(喜欢)</div>
           </div>
-          <div style={{textAlign:'center',padding:10,background:'#0f0f1a',borderRadius:8}}>
-            <div style={{fontSize:20,fontWeight:700,color:'#EF4444'}}>{ss.swipedLeft||0}</div>
-            <div style={{fontSize:10,color:'#6B7280'}}>左滑(跳过)</div>
+          <div style={{textAlign:'center',padding:10,background:'var(--input)',borderRadius:8}}>
+            <div style={{fontSize:20,fontWeight:700,color:'var(--err)'}}>{ss.swipedLeft||0}</div>
+            <div style={{fontSize:10,color:'var(--textThi)'}}>左滑(跳过)</div>
           </div>
-          <div style={{textAlign:'center',padding:10,background:'#0f0f1a',borderRadius:8}}>
-            <div style={{fontSize:20,fontWeight:700,color:'#F59E0B'}}>{ss.beenLiked||0}</div>
-            <div style={{fontSize:10,color:'#6B7280'}}>被喜欢</div>
+          <div style={{textAlign:'center',padding:10,background:'var(--input)',borderRadius:8}}>
+            <div style={{fontSize:20,fontWeight:700,color:'var(--warn)'}}>{ss.beenLiked||0}</div>
+            <div style={{fontSize:10,color:'var(--textThi)'}}>被喜欢</div>
           </div>
         </div>
-        <div style={{fontSize:12,fontWeight:600,color:'#6B7280',marginBottom:8}}>互动概览</div>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--textThi)',marginBottom:8}}>互动概览</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-          <div style={{padding:10,background:'#0f0f1a',borderRadius:8,fontSize:12}}>
-            <span style={{color:'#6B7280'}}>匹配率:</span> <span style={{color:'#A78BFA',fontWeight:600}}>{ss.swipedRight>0?Math.round(detail.matchCount/ss.swipedRight*100):0}%</span>
+          <div style={{padding:10,background:'var(--input)',borderRadius:8,fontSize:12}}>
+            <span style={{color:'var(--textThi)'}}>匹配率:</span> <span style={{color:'var(--accent)',fontWeight:600}}>{ss.swipedRight>0?Math.round(detail.matchCount/ss.swipedRight*100):0}%</span>
           </div>
-          <div style={{padding:10,background:'#0f0f1a',borderRadius:8,fontSize:12}}>
-            <span style={{color:'#6B7280'}}>人气指数:</span> <span style={{color:'#A78BFA',fontWeight:600}}>{ss.beenLiked||0} 被喜欢</span>
+          <div style={{padding:10,background:'var(--input)',borderRadius:8,fontSize:12}}>
+            <span style={{color:'var(--textThi)'}}>人气指数:</span> <span style={{color:'var(--accent)',fontWeight:600}}>{ss.beenLiked||0} 被喜欢</span>
           </div>
         </div>
       </div>}
 
       {tab==='divinations'&&<div>
-        {detail.divinations?.length>0?detail.divinations.map(d=><div key={d.id} style={{fontSize:12,color:'#9CA3AF',padding:'6px 0',borderBottom:'1px solid #1f1f30',display:'flex',alignItems:'center',gap:8}}>
+        {detail.divinations?.length>0?detail.divinations.map(d=><div key={d.id} style={{fontSize:12,color:'var(--textSec)',padding:'6px 0',borderBottom:'1px solid var(--border2)',display:'flex',alignItems:'center',gap:8}}>
           <span className="badge badge-purple" style={{flexShrink:0}}>{d.mode}</span>
           <span style={{flex:1}}>{d.question||'全面分析'}</span>
           <span style={{color:'#4a4a5a',fontSize:10,flexShrink:0}}>{d.createdAt?.substring(0,10)}</span>
-        </div>):<div style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无占卜记录</div>}
+        </div>):<div style={{textAlign:'center',color:'var(--textThi)',padding:20}}>暂无占卜记录</div>}
       </div>}
 
       {tab==='friends'&&<div>
-        {detail.friends?.length>0?detail.friends.map(f=><div key={f.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid #1f1f30'}}>
+        {detail.friends?.length>0?detail.friends.map(f=><div key={f.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid var(--border2)'}}>
           <span style={{fontSize:18}}>{f.gender==='female'?'👩':'👨'}</span>
           <span style={{fontSize:13,fontWeight:600,flex:1}}>{f.name}</span>
-          <span style={{fontSize:10,color:'#6B7280'}}>{f.since?.substring(0,10)}</span>
-        </div>):<div style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无好友</div>}
+          <span style={{fontSize:10,color:'var(--textThi)'}}>{f.since?.substring(0,10)}</span>
+        </div>):<div style={{textAlign:'center',color:'var(--textThi)',padding:20}}>暂无好友</div>}
       </div>}
 
       {tab==='posts'&&<div>
-        {detail.posts?.length>0?detail.posts.map(p=><div key={p.id} style={{padding:'8px 0',borderBottom:'1px solid #1f1f30'}}>
-          <div style={{fontSize:12,color:'#e0e0e0'}}>{p.content}</div>
-          <div style={{fontSize:10,color:'#6B7280',marginTop:2}}>❤️ {p.likes} · {p.createdAt?.substring(0,10)}</div>
-        </div>):<div style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无帖子</div>}
+        {detail.posts?.length>0?detail.posts.map(p=><div key={p.id} style={{padding:'8px 0',borderBottom:'1px solid var(--border2)'}}>
+          <div style={{fontSize:12,color:'var(--text)'}}>{p.content}</div>
+          <div style={{fontSize:10,color:'var(--textThi)',marginTop:2}}>❤️ {p.likes} · {p.createdAt?.substring(0,10)}</div>
+        </div>):<div style={{textAlign:'center',color:'var(--textThi)',padding:20}}>暂无帖子</div>}
       </div>}
     </div>
 
@@ -882,7 +920,7 @@ function ChatPage(){
     <div className="panel">
       <div className="toolbar">
         <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="搜索用户名…"/>
-        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>共 {data.total} 个会话</span>
+        <span style={{fontSize:12,color:'var(--textThi)',marginLeft:'auto'}}>共 {data.total} 个会话</span>
       </div>
       <table><thead><tr><th>用户A</th><th>用户B</th><th>消息数</th><th>最后消息</th><th>时间</th><th>操作</th></tr></thead>
       <tbody>{data.items?.map(c=>(
@@ -890,14 +928,14 @@ function ChatPage(){
           <td style={{fontWeight:600}}>{c.nameA}</td>
           <td style={{fontWeight:600}}>{c.nameB}</td>
           <td>{c.messageCount}</td>
-          <td style={{fontSize:12,color:'#9CA3AF',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.lastMessage}</td>
-          <td style={{fontSize:11,color:'#6B7280'}}>{c.lastTime?.substring(0,16).replace('T',' ')}</td>
+          <td style={{fontSize:12,color:'var(--textSec)',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.lastMessage}</td>
+          <td style={{fontSize:11,color:'var(--textThi)'}}>{c.lastTime?.substring(0,16).replace('T',' ')}</td>
           <td><button className="btn-sm btn-ghost" onClick={()=>openConv(c.key)}>查看</button></td>
         </tr>
       ))}</tbody></table>
       {totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:12}}>
         {page>1&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page-1)}>←</button>}
-        <span style={{fontSize:12,color:'#6B7280',padding:'6px 8px'}}>{page}/{totalPages}</span>
+        <span style={{fontSize:12,color:'var(--textThi)',padding:'6px 8px'}}>{page}/{totalPages}</span>
         {page<totalPages&&<button className="btn-sm btn-ghost" onClick={()=>setPage(page+1)}>→</button>}
       </div>}
     </div>
@@ -910,18 +948,18 @@ function ChatPage(){
           <div key={m.id} style={{display:'flex',gap:8,marginBottom:8,alignItems:'flex-start'}}>
             <div style={{flex:1}}>
               <div style={{display:'flex',alignItems:'center',gap:6}}>
-                <span style={{fontSize:12,fontWeight:600,color:'#A78BFA'}}>{m.fromName}</span>
+                <span style={{fontSize:12,fontWeight:600,color:'var(--accent)'}}>{m.fromName}</span>
                 <span style={{fontSize:10,color:'#4a4a5a'}}>{m.createdAt?.substring(11,16)}</span>
                 <span style={{fontSize:10,color:'#4a4a5a'}}>{m.createdAt?.substring(0,10)}</span>
               </div>
-              <div style={{fontSize:13,color:'#e0e0e0',marginTop:2,lineHeight:1.6,wordBreak:'break-word'}}>{m.text}</div>
-              {m.msgType==='image'&&<div style={{fontSize:11,color:'#6B7280'}}>[图片消息]</div>}
-              {m.msgType==='voice'&&<div style={{fontSize:11,color:'#6B7280'}}>[语音 {m.voiceDuration}″]</div>}
+              <div style={{fontSize:13,color:'var(--text)',marginTop:2,lineHeight:1.6,wordBreak:'break-word'}}>{m.text}</div>
+              {m.msgType==='image'&&<div style={{fontSize:11,color:'var(--textThi)'}}>[图片消息]</div>}
+              {m.msgType==='voice'&&<div style={{fontSize:11,color:'var(--textThi)'}}>[语音 {m.voiceDuration}″]</div>}
             </div>
             <button className="btn-sm btn-danger" style={{fontSize:10,padding:'2px 8px',flexShrink:0}} disabled={deleting===m.id} onClick={async()=>{if(await adminConfirm('删除此消息？'))deleteMsg(activeConv.key,m.id)}}>{deleting===m.id?'…':'删除'}</button>
           </div>
         ))}
-        {(!activeConv.messages||activeConv.messages.length===0)&&<div style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无消息</div>}
+        {(!activeConv.messages||activeConv.messages.length===0)&&<div style={{textAlign:'center',color:'var(--textThi)',padding:20}}>暂无消息</div>}
       </div>
       <div className="actions"><button className="btn-sm btn-ghost" onClick={()=>setActiveConv(null)}>关闭</button></div>
     </div></div>}
@@ -946,10 +984,10 @@ function SensitiveWordsModal({onClose}){
       <button className="btn-sm btn-primary" onClick={add}>添加</button>
     </div>
     <div style={{maxHeight:300,overflow:'auto',display:'flex',flexWrap:'wrap',gap:6}}>
-      {words.map((w,i)=><span key={i} style={{padding:'4px 10px',borderRadius:8,background:'#EF444420',color:'#EF4444',fontSize:12,display:'flex',alignItems:'center',gap:4}}>
-        {w} <button onClick={()=>remove(i)} style={{background:'none',border:'none',color:'#EF4444',cursor:'pointer',fontSize:14,padding:0}}>×</button>
+      {words.map((w,i)=><span key={i} style={{padding:'4px 10px',borderRadius:8,background:'var(--errBg)',color:'var(--err)',fontSize:12,display:'flex',alignItems:'center',gap:4}}>
+        {w} <button onClick={()=>remove(i)} style={{background:'none',border:'none',color:'var(--err)',cursor:'pointer',fontSize:14,padding:0}}>×</button>
       </span>)}
-      {words.length===0&&<span style={{color:'#6B7280',fontSize:12}}>暂无敏感词</span>}
+      {words.length===0&&<span style={{color:'var(--textThi)',fontSize:12}}>暂无敏感词</span>}
     </div>
     </>}
     <div className="actions">
@@ -1012,7 +1050,7 @@ function ContentPage(){
           <button className="btn-sm btn-danger" onClick={batchDeletePosts} disabled={batchLoading}>{batchLoading?'删除中…':`批量删除(${selectedPosts.length})`}</button>
           <button className="btn-sm btn-ghost" onClick={()=>setSelectedPosts([])}>取消</button>
         </>}
-        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>共 {posts.total} 条</span>
+        <span style={{fontSize:12,color:'var(--textThi)',marginLeft:'auto'}}>共 {posts.total} 条</span>
       </div>
       <table><thead><tr><th><input type="checkbox" checked={allPostsSelected} onChange={()=>{if(allPostsSelected)setSelectedPosts([]);else setSelectedPosts(posts.items?.map(p=>p.id)||[])}}/></th><th>作者</th><th>内容</th><th>赞</th><th>评论</th><th>时间</th><th>操作</th></tr></thead>
       <tbody>{posts.items?.map(p=>(
@@ -1022,32 +1060,32 @@ function ContentPage(){
           <td style={{fontSize:12,maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.content}</td>
           <td>{p.likeCount}</td>
           <td>{p.commentCount}</td>
-          <td style={{fontSize:11,color:'#6B7280'}}>{p.createdAt?.substring(0,10)}</td>
+          <td style={{fontSize:11,color:'var(--textThi)'}}>{p.createdAt?.substring(0,10)}</td>
           <td style={{whiteSpace:'nowrap'}}>
             <button className="btn-sm btn-ghost" style={{marginRight:4}} onClick={()=>pinPost(p.id,!p.pinned)}>{p.pinned?'取消置顶':'置顶'}</button>
             <button className="btn-sm btn-danger" onClick={()=>deletePost(p.id)}>删除</button>
           </td>
         </tr>
       ))}</tbody></table>
-      {posts.items?.length===0&&<div style={{textAlign:'center',padding:30,color:'#6B7280',fontSize:13}}>📭 暂无帖子</div>}
+      {posts.items?.length===0&&<div style={{textAlign:'center',padding:30,color:'var(--textThi)',fontSize:13}}>📭 暂无帖子</div>}
     </div>}
 
     {tab==='reports'&&<div className="panel">
       <div className="toolbar">
-        <select value={reportStatus} onChange={e=>{setReportStatus(e.target.value);setPage(1)}} style={{padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:13}}>
+        <select value={reportStatus} onChange={e=>{setReportStatus(e.target.value);setPage(1)}} style={{padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'var(--text)',fontSize:13}}>
           <option value="pending">待处理</option><option value="resolved">已处理</option><option value="dismissed">已忽略</option><option value="all">全部</option>
         </select>
-        <span style={{fontSize:12,color:'#6B7280',marginLeft:'auto'}}>共 {reports.total} 条</span>
+        <span style={{fontSize:12,color:'var(--textThi)',marginLeft:'auto'}}>共 {reports.total} 条</span>
       </div>
-      {reports.items?.length===0&&<div style={{textAlign:'center',padding:30,color:'#6B7280',fontSize:13}}>{reportStatus==='pending'?'🎉 没有待处理的举报':'📭 无记录'}</div>}
+      {reports.items?.length===0&&<div style={{textAlign:'center',padding:30,color:'var(--textThi)',fontSize:13}}>{reportStatus==='pending'?'🎉 没有待处理的举报':'📭 无记录'}</div>}
       {reports.items?.length>0&&<table><thead><tr><th>举报人</th><th>类型</th><th>理由</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
       <tbody>{reports.items?.map(r=>(
         <tr key={r.id}>
           <td>{r.reporterName}</td>
           <td><span className="badge badge-warn">{r.targetType}</span></td>
           <td style={{fontSize:12,maxWidth:250,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.reason}</td>
-          <td>{r.status==='pending'?<span className="badge badge-err">待处理</span>:r.status==='resolved'?<span className="badge badge-ok">已处理</span>:<span className="badge" style={{background:'#6B728020',color:'#6B7280'}}>已忽略</span>}</td>
-          <td style={{fontSize:11,color:'#6B7280'}}>{r.createdAt?.substring(0,10)}</td>
+          <td>{r.status==='pending'?<span className="badge badge-err">待处理</span>:r.status==='resolved'?<span className="badge badge-ok">已处理</span>:<span className="badge" style={{background:'#6B728020',color:'var(--textThi)'}}>已忽略</span>}</td>
+          <td style={{fontSize:11,color:'var(--textThi)'}}>{r.createdAt?.substring(0,10)}</td>
           <td style={{whiteSpace:'nowrap'}}>
             {r.status==='pending'&&<>
               <button className="btn-sm btn-primary" style={{marginRight:4}} onClick={()=>resolveReport(r.id,'resolved')}>处理</button>
@@ -1098,7 +1136,7 @@ function LLMPage(){
       {/* LLM统计 */}
       {stats&&<div className="stats-grid">
         <div className="stat-card"><div className="label">LLM调用</div><div className="value">{stats.llm?.calls||0}</div></div>
-        <div className="stat-card"><div className="label">成功率</div><div className="value" style={{fontSize:18,color:'#34D399'}}>{stats.llm?.calls?(((stats.llm?.success||0)/(stats.llm?.calls)*100)|0)+'%':'—'}</div></div>
+        <div className="stat-card"><div className="label">成功率</div><div className="value" style={{fontSize:18,color:'var(--ok)'}}>{stats.llm?.calls?(((stats.llm?.success||0)/(stats.llm?.calls)*100)|0)+'%':'—'}</div></div>
         <div className="stat-card"><div className="label">平均耗时</div><div className="value" style={{fontSize:18}}>{stats.llm?.avgTimeSeconds||'—'}</div></div>
         <div className="stat-card"><div className="label">当前模型</div><div className="value" style={{fontSize:12,wordBreak:'break-all'}}>{llmCfg?.providers?.[llmCfg?.activeIndex]?.model||'—'}</div></div>
       </div>}
@@ -1113,9 +1151,9 @@ function LLMPage(){
           </div>
         </h3>
 
-        {llmCfg?.envDefaults&&!llmCfg?.allProviders?.length&&<div style={{padding:10,background:'#F59E0B10',borderRadius:8,fontSize:12,color:'#F59E0B',marginBottom:12}}>
+        {llmCfg?.envDefaults&&!llmCfg?.allProviders?.length&&<div style={{padding:10,background:'#F59E0B10',borderRadius:8,fontSize:12,color:'var(--warn)',marginBottom:12}}>
           当前使用环境变量配置: {llmCfg.envDefaults.model} @ {llmCfg.envDefaults.url}
-          <div style={{fontSize:10,color:'#6B7280',marginTop:2}}>添加Provider后将切换为动态管理模式</div>
+          <div style={{fontSize:10,color:'var(--textThi)',marginTop:2}}>添加Provider后将切换为动态管理模式</div>
         </div>}
 
         <table><thead><tr><th></th><th>名称</th><th>URL</th><th>模型</th><th>状态</th><th>错误</th><th>操作</th></tr></thead>
@@ -1127,10 +1165,10 @@ function LLMPage(){
             return(<tr key={p.id||p.name} style={isActive?{background:'#A78BFA10'}:undefined}>
               <td>{isActive&&<span className="badge badge-ok">当前</span>}</td>
               <td style={{fontWeight:600}}>{p.name}</td>
-              <td style={{fontSize:11,color:'#9CA3AF',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.url}</td>
+              <td style={{fontSize:11,color:'var(--textSec)',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.url}</td>
               <td><span className="badge badge-purple">{p.model}</span></td>
               <td>{p.enabled!==false?<span className="badge badge-ok">启用</span>:<span className="badge badge-warn">禁用</span>}</td>
-              <td>{errs>0?<span style={{color:errs>=3?'#EF4444':'#F59E0B',fontSize:12,fontWeight:600}}>{errs}</span>:<span style={{color:'#34D399',fontSize:12}}>0</span>}</td>
+              <td>{errs>0?<span style={{color:errs>=3?'#EF4444':'#F59E0B',fontSize:12,fontWeight:600}}>{errs}</span>:<span style={{color:'var(--ok)',fontSize:12}}>0</span>}</td>
               <td style={{whiteSpace:'nowrap'}}>
                 {!isActive&&<button className="btn-sm btn-primary" style={{fontSize:10,padding:'2px 8px',marginRight:4}} onClick={()=>switchProvider(i)}>切换</button>}
                 {!isEnv&&<>
@@ -1143,7 +1181,7 @@ function LLMPage(){
               </td>
             </tr>);
           })}
-          {(!llmCfg?.providers||llmCfg.providers.length===0)&&<tr><td colSpan="7" style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无Provider</td></tr>}
+          {(!llmCfg?.providers||llmCfg.providers.length===0)&&<tr><td colSpan="7" style={{textAlign:'center',color:'var(--textThi)',padding:20}}>暂无Provider</td></tr>}
         </tbody></table>
 
         {/* 测试结果 */}
@@ -1151,11 +1189,11 @@ function LLMPage(){
           {testing?<span><span className="spinner" style={{marginRight:8}}/>正在测试连接…</span>:
           testResult?.ok?<div style={{fontSize:12}}>
             <span style={{color:testResult.time>10000?'#F59E0B':testResult.time>5000?'#F59E0B':'#34D399',fontWeight:600}}>{testResult.time>10000?'⚠️ 连接成功(过慢!)':testResult.time>5000?'连接成功(较慢)':'连接成功'}</span> · 耗时 <b>{testResult.time>1000?(testResult.time/1000).toFixed(1)+'s':testResult.time+'ms'}</b>
-            {testResult.time>10000&&<div style={{color:'#F59E0B',marginTop:4,fontSize:11}}>响应超过10秒，生产环境可能导致超时</div>}
-            <div style={{color:'#9CA3AF',marginTop:4}}>回复: {testResult.reply}</div>
+            {testResult.time>10000&&<div style={{color:'var(--warn)',marginTop:4,fontSize:11}}>响应超过10秒，生产环境可能导致超时</div>}
+            <div style={{color:'var(--textSec)',marginTop:4}}>回复: {testResult.reply}</div>
           </div>:<div style={{fontSize:12}}>
-            <span style={{color:'#EF4444',fontWeight:600}}>连接失败</span> · 耗时 {testResult?.time}ms
-            <div style={{color:'#EF4444',marginTop:4}}>{testResult?.error}</div>
+            <span style={{color:'var(--err)',fontWeight:600}}>连接失败</span> · 耗时 {testResult?.time}ms
+            <div style={{color:'var(--err)',marginTop:4}}>{testResult?.error}</div>
           </div>}
         </div>}
       </div>
@@ -1165,12 +1203,12 @@ function LLMPage(){
         <h3>🎛️ LLM默认参数</h3>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,fontSize:12}}>
           {[['temperature','Temperature',0.5,'0~2,越大越有创意'],['maxTokens','最大Token数',6144,'单次生成上限'],['timeout','超时时间(ms)',180000,'超时自动断开']].map(([k,l,def,hint])=>(
-            <div key={k} style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
-              <div style={{color:'#6B7280',fontSize:10,marginBottom:2}}>{l}</div>
+            <div key={k} style={{padding:'8px',background:'var(--input)',borderRadius:8}}>
+              <div style={{color:'var(--textThi)',fontSize:10,marginBottom:2}}>{l}</div>
               <input type="number" step={k==='temperature'?0.1:1} value={llmCfg?.params?.[k]??def} onChange={e=>{
                 const v=k==='temperature'?parseFloat(e.target.value):parseInt(e.target.value);
                 setLlmCfg({...llmCfg,params:{...llmCfg?.params,[k]:v}});
-              }} onBlur={()=>updateParams(llmCfg?.params||{})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid #2D2D3F',background:'transparent',color:'#A78BFA',fontSize:16,fontWeight:700,outline:'none'}}/>
+              }} onBlur={()=>updateParams(llmCfg?.params||{})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid var(--border)',background:'transparent',color:'var(--accent)',fontSize:16,fontWeight:700,outline:'none'}}/>
               <div style={{color:'#4a4a5a',fontSize:9,marginTop:2}}>{hint}</div>
             </div>
           ))}
@@ -1179,12 +1217,12 @@ function LLMPage(){
 
       {/* LLM限额 */}
       <div className="panel">
-        <h3>📊 用量限额 <span style={{fontSize:10,color:'#6B7280',fontWeight:400}}>（0=不限）</span></h3>
+        <h3>📊 用量限额 <span style={{fontSize:10,color:'var(--textThi)',fontWeight:400}}>（0=不限）</span></h3>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,fontSize:12}}>
           {[['divinationsPerDay','每天占卜次数',0],['followUpsPerReport','每报告追问',20],['followUpsPerDay','每天追问总数',0]].map(([k,l,def])=>(
-            <div key={k} style={{padding:'8px',background:'#0f0f1a',borderRadius:8}}>
-              <div style={{color:'#6B7280',fontSize:10,marginBottom:2}}>{l}</div>
-              <input type="number" value={cfg.limits?.[k]??def} onChange={e=>setCfg({...cfg,limits:{...cfg.limits,[k]:parseInt(e.target.value)||0}})} onBlur={()=>updateCfg({limits:cfg.limits})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid #2D2D3F',background:'transparent',color:'#A78BFA',fontSize:16,fontWeight:700,outline:'none'}}/>
+            <div key={k} style={{padding:'8px',background:'var(--input)',borderRadius:8}}>
+              <div style={{color:'var(--textThi)',fontSize:10,marginBottom:2}}>{l}</div>
+              <input type="number" value={cfg.limits?.[k]??def} onChange={e=>setCfg({...cfg,limits:{...cfg.limits,[k]:parseInt(e.target.value)||0}})} onBlur={()=>updateCfg({limits:cfg.limits})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid var(--border)',background:'transparent',color:'var(--accent)',fontSize:16,fontWeight:700,outline:'none'}}/>
             </div>
           ))}
         </div>
@@ -1200,9 +1238,9 @@ function LLMPage(){
           <button onClick={()=>updateCfg({maintenance:{...cfg.maintenance,enabled:!cfg.maintenance?.enabled}})} className={`btn-sm ${cfg.maintenance?.enabled?'btn-danger':'btn-primary'}`}>
             {cfg.maintenance?.enabled?'🔴 关闭维护':'🟢 开启维护'}
           </button>
-          <span style={{fontSize:12,color:'#6B7280'}}>{cfg.maintenance?.enabled?'用户端已显示维护页面':'系统正常运行'}</span>
+          <span style={{fontSize:12,color:'var(--textThi)'}}>{cfg.maintenance?.enabled?'用户端已显示维护页面':'系统正常运行'}</span>
         </div>
-        <input value={cfg.maintenance?.message||''} onChange={e=>setCfg({...cfg,maintenance:{...cfg.maintenance,message:e.target.value}})} onBlur={()=>updateCfg({maintenance:cfg.maintenance})} placeholder="维护提示消息" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12}}/>
+        <input value={cfg.maintenance?.message||''} onChange={e=>setCfg({...cfg,maintenance:{...cfg.maintenance,message:e.target.value}})} onBlur={()=>updateCfg({maintenance:cfg.maintenance})} placeholder="维护提示消息" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'var(--text)',fontSize:12}}/>
       </div>
 
       {/* 功能开关 */}
@@ -1210,16 +1248,16 @@ function LLMPage(){
         <h3>🎛️ 功能开关</h3>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
           {[['fortuneWheel','命运转盘'],['communityPosts','缘友圈'],['moodTracker','心情打卡'],['shareCards','分享卡片'],['voiceMessage','语音消息'],['imageMessage','图片消息']].map(([k,l])=>(
-            <div key={k} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',background:'#0f0f1a',borderRadius:8}}>
+            <div key={k} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 12px',background:'var(--input)',borderRadius:8}}>
               <span style={{fontSize:12}}>{l}</span>
               <button onClick={()=>updateCfg({features:{...cfg.features,[k]:!cfg.features?.[k]}})} style={{padding:'2px 10px',borderRadius:6,border:'none',fontSize:10,fontWeight:600,cursor:'pointer',background:cfg.features?.[k]!==false?'#34D39930':'#EF444430',color:cfg.features?.[k]!==false?'#34D399':'#EF4444'}}>{cfg.features?.[k]!==false?'开':'关'}</button>
             </div>
           ))}
         </div>
-        <div style={{fontSize:12,fontWeight:600,color:'#6B7280',margin:'12px 0 6px'}}>占卜模式</div>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--textThi)',margin:'12px 0 6px'}}>占卜模式</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8}}>
           {[['bazi','八字'],['astrology','星座'],['tarot','塔罗'],['meihua','梅花'],['vedic','印度'],['hehun','合婚'],['synastry','配对'],['hepan','合盘']].map(([k,l])=>(
-            <div key={k} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 8px',background:'#0f0f1a',borderRadius:6}}>
+            <div key={k} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 8px',background:'var(--input)',borderRadius:6}}>
               <span style={{fontSize:10}}>{l}</span>
               <button onClick={()=>updateCfg({features:{...cfg.features,modes:{...cfg.features?.modes,[k]:!cfg.features?.modes?.[k]}}})} style={{padding:'1px 8px',borderRadius:4,border:'none',fontSize:9,fontWeight:600,cursor:'pointer',background:cfg.features?.modes?.[k]!==false?'#34D39930':'#EF444430',color:cfg.features?.modes?.[k]!==false?'#34D399':'#EF4444'}}>{cfg.features?.modes?.[k]!==false?'开':'关'}</button>
             </div>
@@ -1229,7 +1267,7 @@ function LLMPage(){
 
       {/* 自动标记规则 */}
       <div className="panel">
-        <h3>🛡️ 自动标记规则 <span style={{fontSize:10,color:'#6B7280',fontWeight:400}}>（正则表达式，匹配的消息/帖子自动标记）</span></h3>
+        <h3>🛡️ 自动标记规则 <span style={{fontSize:10,color:'var(--textThi)',fontWeight:400}}>（正则表达式，匹配的消息/帖子自动标记）</span></h3>
         <div style={{display:'flex',flexDirection:'column',gap:6}}>
           {(cfg.autoFlag?.patterns||[]).map((p,i)=>(
             <div key={i} style={{display:'flex',gap:6,alignItems:'center'}}>
@@ -1238,14 +1276,14 @@ function LLMPage(){
                 const patterns=cfg.autoFlag?.patterns||[];
                 for(let j=0;j<patterns.length;j++){if(patterns[j]){try{new RegExp(patterns[j])}catch(e){showToast(`第${j+1}条规则正则错误: ${e.message}`,'error');return}}}
                 updateCfg({autoFlag:cfg.autoFlag});
-              }} style={{flex:1,padding:'6px 8px',borderRadius:6,border:'1px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:11,fontFamily:'monospace'}}/>
-              <button onClick={()=>{const ps=(cfg.autoFlag?.patterns||[]).filter((_,j)=>j!==i);const nc={...cfg,autoFlag:{...cfg.autoFlag,patterns:ps}};setCfg(nc);updateCfg({autoFlag:nc.autoFlag})}} style={{background:'none',border:'none',color:'#EF4444',cursor:'pointer',fontSize:14}}>✕</button>
+              }} style={{flex:1,padding:'6px 8px',borderRadius:6,border:'1px solid var(--border)',background:'#0f0f1a',color:'var(--text)',fontSize:11,fontFamily:'monospace'}}/>
+              <button onClick={()=>{const ps=(cfg.autoFlag?.patterns||[]).filter((_,j)=>j!==i);const nc={...cfg,autoFlag:{...cfg.autoFlag,patterns:ps}};setCfg(nc);updateCfg({autoFlag:nc.autoFlag})}} style={{background:'none',border:'none',color:'var(--err)',cursor:'pointer',fontSize:14}}>✕</button>
             </div>
           ))}
           <button onClick={()=>{const ps=[...(cfg.autoFlag?.patterns||[]),''];setCfg({...cfg,autoFlag:{...cfg.autoFlag,patterns:ps}})}} className="btn-sm btn-ghost" style={{alignSelf:'flex-start',fontSize:11}}>+ 添加规则</button>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
-          <span style={{fontSize:11,color:'#6B7280'}}>自动标记</span>
+          <span style={{fontSize:11,color:'var(--textThi)'}}>自动标记</span>
           <button onClick={()=>updateCfg({autoFlag:{...cfg.autoFlag,enabled:!cfg.autoFlag?.enabled}})} style={{padding:'2px 10px',borderRadius:6,border:'none',fontSize:10,fontWeight:600,cursor:'pointer',background:cfg.autoFlag?.enabled!==false?'#34D39930':'#EF444430',color:cfg.autoFlag?.enabled!==false?'#34D399':'#EF4444'}}>{cfg.autoFlag?.enabled!==false?'开':'关'}</button>
         </div>
       </div>
@@ -1261,9 +1299,9 @@ function LLMPage(){
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:12}}>
         {[['replyDelayMin','最短回复(ms)',2000],['replyDelayMax','最长回复(ms)',7000],['typingDurationMin','最短打字(ms)',2000],['typingDurationMax','最长打字(ms)',6000],['activeHourStart','活跃开始(时)',8],['activeHourEnd','活跃结束(时)',23]].map(([k,l,def])=>(
-          <div key={k} style={{padding:'6px 8px',background:'#0f0f1a',borderRadius:6}}>
-            <div style={{color:'#6B7280',fontSize:10,marginBottom:2}}>{l}</div>
-            <input type="number" value={cfg.bot?.[k]??def} onChange={e=>setCfg({...cfg,bot:{...cfg.bot,[k]:parseInt(e.target.value)||0}})} onBlur={()=>updateCfg({bot:cfg.bot})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid #2D2D3F',background:'transparent',color:'#A78BFA',fontSize:13,fontWeight:700,outline:'none'}}/>
+          <div key={k} style={{padding:'6px 8px',background:'var(--input)',borderRadius:6}}>
+            <div style={{color:'var(--textThi)',fontSize:10,marginBottom:2}}>{l}</div>
+            <input type="number" value={cfg.bot?.[k]??def} onChange={e=>setCfg({...cfg,bot:{...cfg.bot,[k]:parseInt(e.target.value)||0}})} onBlur={()=>updateCfg({bot:cfg.bot})} style={{width:'100%',padding:'4px 6px',borderRadius:4,border:'1px solid var(--border)',background:'transparent',color:'var(--accent)',fontSize:13,fontWeight:700,outline:'none'}}/>
           </div>
         ))}
       </div>
@@ -1287,7 +1325,7 @@ function QualityTab(){
   const [fullContent,setFullContent]=useState(null); // full response loaded from API
   const [loadingFull,setLoadingFull]=useState(false);
   const limit=10;
-  const selStyle={padding:'6px 10px',borderRadius:8,border:'1.5px solid #2D2D3F',background:'#0f0f1a',color:'#e0e0e0',fontSize:12};
+  const selStyle={padding:'6px 10px',borderRadius:8,border:'1.5px solid var(--border)',background:'var(--input)',color:'var(--text)',fontSize:12};
 
   const load=()=>{
     apiGet(`/api/admin/ai-samples?page=${page}&limit=${limit}&mode=${mode}`).then(d=>{
@@ -1315,9 +1353,9 @@ function QualityTab(){
   const renderMD=(text)=>{
     if(!text)return null;
     return text.split('\n').map((line,i)=>{
-      if(line.startsWith('###'))return <div key={i} style={{fontWeight:700,fontSize:13,color:'#A78BFA',margin:'8px 0 4px'}}>{line.replace(/^###\s*/,'')}</div>;
-      if(line.startsWith('##'))return <div key={i} style={{fontWeight:700,fontSize:14,color:'#A78BFA',margin:'10px 0 4px'}}>{line.replace(/^##\s*/,'')}</div>;
-      if(line.startsWith('#'))return <div key={i} style={{fontWeight:700,fontSize:15,color:'#A78BFA',margin:'12px 0 4px'}}>{line.replace(/^#\s*/,'')}</div>;
+      if(line.startsWith('###'))return <div key={i} style={{fontWeight:700,fontSize:13,color:'var(--accent)',margin:'8px 0 4px'}}>{line.replace(/^###\s*/,'')}</div>;
+      if(line.startsWith('##'))return <div key={i} style={{fontWeight:700,fontSize:14,color:'var(--accent)',margin:'10px 0 4px'}}>{line.replace(/^##\s*/,'')}</div>;
+      if(line.startsWith('#'))return <div key={i} style={{fontWeight:700,fontSize:15,color:'var(--accent)',margin:'12px 0 4px'}}>{line.replace(/^#\s*/,'')}</div>;
       if(line.startsWith('---'))return <hr key={i} style={{border:'none',borderTop:'1px solid #2D2D3F',margin:'8px 0'}}/>;
       if(line.trim()==='')return <div key={i} style={{height:6}}/>;
       // bold + italic inline
@@ -1330,7 +1368,7 @@ function QualityTab(){
     <div className="panel">
       <h3 style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         🔍 AI输出质量抽查
-        <span style={{fontSize:12,color:'#6B7280',fontWeight:400}}>共 {total} 条记录</span>
+        <span style={{fontSize:12,color:'var(--textThi)',fontWeight:400}}>共 {total} 条记录</span>
       </h3>
 
       {/* 筛选栏 */}
@@ -1340,23 +1378,23 @@ function QualityTab(){
 
       {/* 列表 */}
       {samples===null?<div style={{textAlign:'center',padding:30}}><span className="spinner"/> 加载中…</div>:
-      samples.length===0?<div style={{textAlign:'center',color:'#6B7280',padding:30,fontSize:13}}>暂无占卜记录</div>:
+      samples.length===0?<div style={{textAlign:'center',color:'var(--textThi)',padding:30,fontSize:13}}>暂无占卜记录</div>:
       <div>
         {samples.map(s=>{
           const isOpen=expanded===s.id;
-          return(<div key={s.id} style={{borderBottom:'1px solid #1f1f30'}}>
+          return(<div key={s.id} style={{borderBottom:'1px solid var(--border2)'}}>
             {/* 摘要行 — 点击展开 */}
             <div onClick={()=>toggleExpand(s)} style={{padding:'12px 8px',cursor:'pointer',display:'flex',gap:10,alignItems:'flex-start',transition:'background .15s'}}
               onMouseEnter={e=>e.currentTarget.style.background='#1f1f30'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-              <div style={{flexShrink:0,width:20,textAlign:'center',color:'#6B7280',fontSize:12,marginTop:2}}>{isOpen?'▾':'▸'}</div>
+              <div style={{flexShrink:0,width:20,textAlign:'center',color:'var(--textThi)',fontSize:12,marginTop:2}}>{isOpen?'▾':'▸'}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                   <span className="badge badge-purple">{s.mode}</span>
-                  <span style={{fontSize:12,fontWeight:600,color:'#e0e0e0'}}>{s.userName||'—'}</span>
+                  <span style={{fontSize:12,fontWeight:600,color:'var(--text)'}}>{s.userName||'—'}</span>
                   <span style={{fontSize:10,color:'#4a4a5a',marginLeft:'auto',flexShrink:0}}>{s.createdAt?.substring(0,16).replace('T',' ')}</span>
                 </div>
-                {s.question&&<div style={{fontSize:12,color:'#9CA3AF',marginBottom:2}}>❓ {s.question}</div>}
-                {!isOpen&&<div style={{fontSize:12,color:'#6B7280',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.preview||'（无预览）'}</div>}
+                {s.question&&<div style={{fontSize:12,color:'var(--textSec)',marginBottom:2}}>❓ {s.question}</div>}
+                {!isOpen&&<div style={{fontSize:12,color:'var(--textThi)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.preview||'（无预览）'}</div>}
               </div>
             </div>
 
@@ -1365,34 +1403,34 @@ function QualityTab(){
               {loadingFull?<div><span className="spinner" style={{marginRight:6}}/>加载完整内容…</div>:
               fullContent?<>
                 {/* 元信息 */}
-                <div style={{display:'flex',gap:12,marginBottom:10,fontSize:11,color:'#6B7280',flexWrap:'wrap'}}>
-                  <span>模式: <span style={{color:'#A78BFA'}}>{fullContent.mode}</span></span>
-                  <span>深度: <span style={{color:'#A78BFA'}}>{fullContent.depth}</span></span>
-                  <span>字数: <span style={{color:'#A78BFA'}}>{fullContent.response?.length||0}</span></span>
+                <div style={{display:'flex',gap:12,marginBottom:10,fontSize:11,color:'var(--textThi)',flexWrap:'wrap'}}>
+                  <span>模式: <span style={{color:'var(--accent)'}}>{fullContent.mode}</span></span>
+                  <span>深度: <span style={{color:'var(--accent)'}}>{fullContent.depth}</span></span>
+                  <span>字数: <span style={{color:'var(--accent)'}}>{fullContent.response?.length||0}</span></span>
                   <span>时间: {fullContent.createdAt?.substring(0,16).replace('T',' ')}</span>
                 </div>
 
                 {/* 问题 */}
-                {fullContent.question&&<div style={{padding:'8px 12px',background:'#A78BFA10',borderRadius:8,marginBottom:10,fontSize:12,color:'#A78BFA'}}>
+                {fullContent.question&&<div style={{padding:'8px 12px',background:'#A78BFA10',borderRadius:8,marginBottom:10,fontSize:12,color:'var(--accent)'}}>
                   ❓ 用户提问: {fullContent.question}
                 </div>}
 
                 {/* AI完整回复 */}
-                <div style={{padding:'12px 14px',background:'#0f0f1a',borderRadius:10,fontSize:12,color:'#9CA3AF',maxHeight:500,overflow:'auto',lineHeight:1.7,border:'1px solid #2D2D3F'}}>
+                <div style={{padding:'12px 14px',background:'#0f0f1a',borderRadius:10,fontSize:12,color:'var(--textSec)',maxHeight:500,overflow:'auto',lineHeight:1.7,border:'1px solid var(--border)'}}>
                   {renderMD(fullContent.response)}
                 </div>
 
                 {/* 追问对话记录 */}
                 {fullContent.chatHistory?.length>0&&<div style={{marginTop:12}}>
-                  <div style={{fontSize:12,fontWeight:600,color:'#A78BFA',marginBottom:8}}>💬 追问对话 ({fullContent.chatHistory.length}条)</div>
-                  <div style={{border:'1px solid #2D2D3F',borderRadius:10,overflow:'hidden'}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'var(--accent)',marginBottom:8}}>💬 追问对话 ({fullContent.chatHistory.length}条)</div>
+                  <div style={{border:'1px solid var(--border)',borderRadius:10,overflow:'hidden'}}>
                     {fullContent.chatHistory.map((msg,i)=>(
                       <div key={i} style={{padding:'10px 14px',background:msg.role==='user'?'#1a1a2e':'#0f0f1a',borderBottom:i<fullContent.chatHistory.length-1?'1px solid #1f1f30':'none'}}>
                         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
                           <span style={{fontSize:10,fontWeight:600,color:msg.role==='user'?'#3B82F6':'#A78BFA'}}>{msg.role==='user'?'👤 用户':'🤖 AI'}</span>
                           {msg.time&&<span style={{fontSize:9,color:'#4a4a5a'}}>{msg.time}</span>}
                         </div>
-                        <div style={{fontSize:12,color:'#e0e0e0',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{msg.text}</div>
+                        <div style={{fontSize:12,color:'var(--text)',lineHeight:1.6,whiteSpace:'pre-wrap'}}>{msg.text}</div>
                       </div>
                     ))}
                   </div>
@@ -1400,10 +1438,10 @@ function QualityTab(){
 
                 {/* 引擎数据 */}
                 {fullContent.engineData&&<details style={{marginTop:8}}>
-                  <summary style={{fontSize:11,color:'#6B7280',cursor:'pointer'}}>查看引擎原始数据</summary>
-                  <pre style={{padding:10,background:'#0f0f1a',borderRadius:8,fontSize:10,color:'#6B7280',overflow:'auto',maxHeight:200,marginTop:4,whiteSpace:'pre-wrap'}}>{fullContent.engineData}</pre>
+                  <summary style={{fontSize:11,color:'var(--textThi)',cursor:'pointer'}}>查看引擎原始数据</summary>
+                  <pre style={{padding:10,background:'var(--input)',borderRadius:8,fontSize:10,color:'var(--textThi)',overflow:'auto',maxHeight:200,marginTop:4,whiteSpace:'pre-wrap'}}>{fullContent.engineData}</pre>
                 </details>}
-              </>:<div style={{color:'#6B7280',fontSize:12}}>内容加载失败</div>}
+              </>:<div style={{color:'var(--textThi)',fontSize:12}}>内容加载失败</div>}
             </div>}
           </div>);
         })}
@@ -1412,7 +1450,7 @@ function QualityTab(){
       {/* 分页 */}
       {totalPages>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:12}}>
         {page>1&&<button className="btn-sm btn-ghost" onClick={()=>{setPage(page-1);setExpanded(null)}}>← 上一页</button>}
-        <span style={{fontSize:12,color:'#6B7280',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
+        <span style={{fontSize:12,color:'var(--textThi)',padding:'6px 8px'}}>第{page}/{totalPages}页</span>
         {page<totalPages&&<button className="btn-sm btn-ghost" onClick={()=>{setPage(page+1);setExpanded(null)}}>下一页 →</button>}
       </div>}
     </div>
@@ -1462,7 +1500,7 @@ function ProviderModal({provider,onClose,onDone,testFn,testResult,testing}){
     <h3>{isEdit?'编辑':'添加'} LLM Provider</h3>
 
     {!isEdit&&<div style={{marginBottom:12}}>
-      <div style={{fontSize:11,color:'#6B7280',marginBottom:6}}>快速填入预设:</div>
+      <div style={{fontSize:11,color:'var(--textThi)',marginBottom:6}}>快速填入预设:</div>
       <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
         {presets.map(p=><button key={p.label} className="btn-sm btn-ghost" style={{fontSize:10,padding:'3px 8px'}} onClick={()=>{setUrl(p.url);setModel(p.model);if(!name)setName(p.label)}}>{p.label}</button>)}
       </div>
@@ -1477,7 +1515,7 @@ function ProviderModal({provider,onClose,onDone,testFn,testResult,testing}){
     {(localTesting||localTest)&&<div style={{marginTop:10,padding:10,background:localTest?.ok?'#34D39910':'#EF444410',borderRadius:8,fontSize:12}}>
       {localTesting?<span><span className="spinner" style={{marginRight:6}}/>测试中…</span>:
       localTest?.ok?<span style={{color:localTest.time>10000?'#F59E0B':'#34D399'}}>{localTest.time>10000?'⚠️ 成功(过慢)':'成功'} · {localTest.time>1000?(localTest.time/1000).toFixed(1)+'s':localTest.time+'ms'} · {localTest.reply?.substring(0,50)}</span>:
-      <span style={{color:'#EF4444'}}>失败: {localTest?.error}</span>}
+      <span style={{color:'var(--err)'}}>失败: {localTest?.error}</span>}
     </div>}
 
     <div className="actions" style={{marginTop:14}}>
@@ -1539,14 +1577,14 @@ function BotPage(){
 
   return (<div className="container">
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-      🤖 Bot管理 <span style={{fontSize:12,color:'#6B7280',fontWeight:400}}>{bots.length}个Bot</span>
+      🤖 Bot管理 <span style={{fontSize:12,color:'var(--textThi)',fontWeight:400}}>{bots.length}个Bot</span>
       <div style={{display:'flex',gap:6}}>
         <button className="btn-sm btn-ghost" onClick={importDefaults}>📥 导入默认Bot</button>
         <button className="btn-sm btn-primary" onClick={()=>setEditBot({id:0,name:'',age:25,bio:'',year:2000,month:1,day:1,hour:12,gender:'female',dist:'3km',sign:'',tags:[],chatStyle:'',enabled:true})}>+ 新建Bot</button>
       </div>
     </h2>
     {loading?<div className="panel"><span className="spinner"/> 加载中…</div>:
-    bots.length===0?<div className="panel" style={{textAlign:'center',padding:30,color:'#6B7280'}}>
+    bots.length===0?<div className="panel" style={{textAlign:'center',padding:30,color:'var(--textThi)'}}>
       <div style={{fontSize:28,marginBottom:8}}>🤖</div>
       <div>暂无Bot</div>
       <div style={{fontSize:11,marginTop:4}}>点击"导入默认Bot"快速导入20个预设角色，或手动创建</div>
@@ -1560,7 +1598,7 @@ function BotPage(){
           <td>{b.age}</td>
           <td style={{fontSize:11}}>{b.sign}</td>
           <td style={{fontSize:11,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.bio}</td>
-          <td style={{fontSize:11,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'#9CA3AF'}}>{b.chatStyle}</td>
+          <td style={{fontSize:11,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--textSec)'}}>{b.chatStyle}</td>
           <td><button onClick={()=>toggleBot(b.id)} style={{padding:'2px 8px',borderRadius:4,border:'none',fontSize:10,fontWeight:600,cursor:'pointer',background:b.enabled!==false?'#34D39930':'#EF444430',color:b.enabled!==false?'#34D399':'#EF4444'}}>{b.enabled!==false?'启用':'停用'}</button></td>
           <td style={{whiteSpace:'nowrap'}}>
             <button className="btn-sm btn-ghost" style={{marginRight:4}} onClick={()=>setEditBot({...b})}>编辑</button>
@@ -1645,8 +1683,8 @@ function VipPage(){
     {tab==='overview'&&<>
       {revenue&&<div className="stats-grid">
         <div className="stat-card"><div className="label">总订单</div><div className="value">{revenue.totalOrders}</div></div>
-        <div className="stat-card"><div className="label">总收入</div><div className="value" style={{color:'#F59E0B'}}>¥{revenue.totalRevenue}</div></div>
-        <div className="stat-card"><div className="label">今日收入</div><div className="value" style={{color:'#34D399'}}>¥{revenue.todayRevenue}</div><div className="sub">{revenue.todayOrders}单</div></div>
+        <div className="stat-card"><div className="label">总收入</div><div className="value" style={{color:'var(--warn)'}}>¥{revenue.totalRevenue}</div></div>
+        <div className="stat-card"><div className="label">今日收入</div><div className="value" style={{color:'var(--ok)'}}>¥{revenue.todayRevenue}</div><div className="sub">{revenue.todayOrders}单</div></div>
         <div className="stat-card"><div className="label">7日收入</div><div className="value" style={{fontSize:18}}>¥{revenue.weekRevenue}</div></div>
         <div className="stat-card"><div className="label">30日收入</div><div className="value" style={{fontSize:18}}>¥{revenue.monthRevenue}</div></div>
         <div className="stat-card"><div className="label">VIP赠送</div><div className="value">{revenue.vipGrants}</div></div>
@@ -1657,8 +1695,8 @@ function VipPage(){
         <table><thead><tr><th>等级</th><th>名称</th><th>每日占卜</th><th>追问/报告</th><th>看谁喜欢</th><th>无限滑卡</th><th>价格</th></tr></thead>
         <tbody>
           <tr><td>Lv.0</td><td>免费用户</td><td>5次</td><td>5次</td><td>❌</td><td>❌</td><td>免费</td></tr>
-          <tr style={{color:'#A78BFA'}}><td>Lv.1</td><td>缘合会员</td><td>20次</td><td>20次</td><td>✅</td><td>✅</td><td>¥28/月</td></tr>
-          <tr style={{color:'#F59E0B'}}><td>Lv.2</td><td>缘合至尊</td><td>无限</td><td>无限</td><td>✅</td><td>✅</td><td>¥68/月</td></tr>
+          <tr style={{color:'var(--accent)'}}><td>Lv.1</td><td>缘合会员</td><td>20次</td><td>20次</td><td>✅</td><td>✅</td><td>¥28/月</td></tr>
+          <tr style={{color:'var(--warn)'}}><td>Lv.2</td><td>缘合至尊</td><td>无限</td><td>无限</td><td>✅</td><td>✅</td><td>¥68/月</td></tr>
         </tbody></table>
       </div>
     </>}
@@ -1667,7 +1705,7 @@ function VipPage(){
       <h3 style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>📋 订单列表
         <button className="btn-sm btn-primary" onClick={()=>setGrantModal({userId:'',tier:'basic',days:'30'})}>+ 手动赠送VIP</button>
       </h3>
-      {orders.items?.length===0?<div style={{textAlign:'center',padding:30,color:'#6B7280'}}>暂无订单</div>:
+      {orders.items?.length===0?<div style={{textAlign:'center',padding:30,color:'var(--textThi)'}}>暂无订单</div>:
       <table><thead><tr><th>订单号</th><th>用户</th><th>等级</th><th>天数</th><th>金额</th><th>类型</th><th>时间</th></tr></thead>
       <tbody>{orders.items?.map(o=>(
         <tr key={o.id}>
@@ -1675,9 +1713,9 @@ function VipPage(){
           <td>{o.userName}</td>
           <td><span className="badge badge-purple">{o.tierName}</span></td>
           <td>{o.days}</td>
-          <td style={{color:'#F59E0B'}}>¥{o.amount}</td>
+          <td style={{color:'var(--warn)'}}>¥{o.amount}</td>
           <td><span className={`badge ${o.type==='admin_grant'?'badge-warn':'badge-ok'}`}>{o.type==='admin_grant'?'赠送':'购买'}</span></td>
-          <td style={{fontSize:11,color:'#6B7280'}}>{o.createdAt?.substring(0,10)}</td>
+          <td style={{fontSize:11,color:'var(--textThi)'}}>{o.createdAt?.substring(0,10)}</td>
         </tr>
       ))}</tbody></table>}
     </div>}
@@ -1689,7 +1727,7 @@ function VipPage(){
           {[3,7,14,30].map(d=><button key={d} onClick={()=>loadInactive(d)} className={`btn-sm ${inactiveDays===d?'btn-primary':'btn-ghost'}`}>{d}天</button>)}
         </div>
       </div>
-      {inactive.length===0?<div style={{textAlign:'center',padding:30,color:'#6B7280'}}>暂无流失用户 🎉</div>:
+      {inactive.length===0?<div style={{textAlign:'center',padding:30,color:'var(--textThi)'}}>暂无流失用户 🎉</div>:
       <table><thead><tr><th>用户</th><th>性别</th><th>占卜数</th><th>VIP</th><th>未活跃</th><th>操作</th></tr></thead>
       <tbody>{inactive.map(u=>(
         <tr key={u.id}>
@@ -1697,7 +1735,7 @@ function VipPage(){
           <td>{u.gender==='female'?'♀':'♂'}</td>
           <td>{u.divinationCount}</td>
           <td><span className={`badge ${u.vipTier!=='free'?'badge-purple':'badge-warn'}`}>{u.vipTier}</span></td>
-          <td style={{color:'#EF4444',fontWeight:600}}>{u.daysSinceActive}天</td>
+          <td style={{color:'var(--err)',fontWeight:600}}>{u.daysSinceActive}天</td>
           <td><button className="btn-sm btn-primary" onClick={()=>setGrantModal({userId:u.id,userName:u.name,tier:'basic',days:'7'})}>赠VIP</button></td>
         </tr>
       ))}</tbody></table>}
@@ -1714,10 +1752,10 @@ function AdminsPage({role}){
   const [showCreate,setShowCreate]=useState(false);
   const loadAdmins=()=>{apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)}).catch(()=>{})};
   useEffect(()=>{if(role==='superadmin')loadAdmins()},[]);
-  if(role!=='superadmin')return<div className="container" style={{textAlign:'center',paddingTop:80}}><div style={{fontSize:48,marginBottom:16}}>🔒</div><div style={{fontSize:16,color:'#6B7280'}}>仅超级管理员可访问</div></div>;
+  if(role!=='superadmin')return<div className="container" style={{textAlign:'center',paddingTop:80}}><div style={{fontSize:48,marginBottom:16}}>🔒</div><div style={{fontSize:16,color:'var(--textThi)'}}>仅超级管理员可访问</div></div>;
   return(<div className="container">
     <h2 style={{fontSize:18,fontWeight:700,margin:'8px 0 16px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-      👤 管理员账号 <span style={{fontSize:12,color:'#6B7280',fontWeight:400}}>{admins.length}人</span>
+      👤 管理员账号 <span style={{fontSize:12,color:'var(--textThi)',fontWeight:400}}>{admins.length}人</span>
       <div style={{display:'flex',gap:6}}>
         <button className="btn-sm btn-ghost" onClick={loadAdmins}>🔄 刷新</button>
         <button className="btn-sm btn-primary" onClick={()=>setShowCreate(true)}>+ 新建管理员</button>
@@ -1729,9 +1767,9 @@ function AdminsPage({role}){
         <td style={{fontWeight:600}}>{a.username}</td>
         <td>{a.name}</td>
         <td><span className={`badge ${a.role==='superadmin'?'badge-purple':a.role==='operator'?'badge-ok':'badge-warn'}`}>{a.role==='superadmin'?'超管':a.role==='operator'?'运营':'客服'}</span></td>
-        <td style={{fontSize:10,color:'#6B7280'}}>{a.role==='superadmin'?'全部权限':a.role==='operator'?'用户·内容·Bot·VIP':'聊天·内容·日志'}</td>
-        <td style={{fontSize:11,color:'#6B7280'}}>{a.lastLoginAt?.substring(0,16).replace('T',' ')||'从未'}</td>
-        <td style={{fontSize:11,color:'#6B7280'}}>{a.createdAt?.substring(0,10)}</td>
+        <td style={{fontSize:10,color:'var(--textThi)'}}>{a.role==='superadmin'?'全部权限':a.role==='operator'?'用户·内容·Bot·VIP':'聊天·内容·日志'}</td>
+        <td style={{fontSize:11,color:'var(--textThi)'}}>{a.lastLoginAt?.substring(0,16).replace('T',' ')||'从未'}</td>
+        <td style={{fontSize:11,color:'var(--textThi)'}}>{a.createdAt?.substring(0,10)}</td>
       </tr>
     ))}</tbody></table></div>
     {showCreate&&<CreateAdminModal onClose={()=>setShowCreate(false)} onDone={()=>{setShowCreate(false);apiGet('/api/admin/list').then(d=>{if(Array.isArray(d))setAdmins(d)})}}/>}
@@ -1742,8 +1780,8 @@ function AdminsPage({role}){
 function PlaceholderPage({title,icon}){
   return(<div className="container" style={{textAlign:'center',paddingTop:80}}>
     <div style={{fontSize:48,marginBottom:16}}>{icon||'🔧'}</div>
-    <div style={{fontSize:18,fontWeight:600,color:'#A78BFA'}}>{title}</div>
-    <div style={{fontSize:13,color:'#6B7280',marginTop:8}}>即将开发…</div>
+    <div style={{fontSize:18,fontWeight:600,color:'var(--accent)'}}>{title}</div>
+    <div style={{fontSize:13,color:'var(--textThi)',marginTop:8}}>即将开发…</div>
   </div>);
 }
 
@@ -1751,7 +1789,15 @@ function PlaceholderPage({title,icon}){
 function App(){
   const [adminUser,setAdminUser]=useState(null);
   const [confirmData,setConfirmData]=useState(null);
+  const [adminTheme,setAdminTheme]=useState(()=>localStorage.getItem('yuanhe_admin_theme')||'dark');
   _confirmShow=(data)=>setConfirmData(data);
+  // Apply theme
+  useEffect(()=>{
+    if(adminTheme==='light')document.body.classList.add('light');
+    else document.body.classList.remove('light');
+    localStorage.setItem('yuanhe_admin_theme',adminTheme);
+  },[adminTheme]);
+  const toggleAdminTheme=()=>setAdminTheme(t=>t==='dark'?'light':'dark');
   const [page,setPage]=useState('dashboard');
   const [showChangePw,setShowChangePw]=useState(false);
 
@@ -1781,7 +1827,7 @@ function App(){
 
   // 角色权限强制(防止通过修改state绕过UI)
   const role=adminUser.role;
-  const NoAccess=()=><div className="container"><div className="panel" style={{textAlign:'center',padding:40}}><div style={{fontSize:36,marginBottom:12}}>🔒</div><div style={{fontSize:15,fontWeight:600,color:'#EF4444'}}>无权访问</div><div style={{fontSize:12,color:'#6B7280',marginTop:6}}>当前角色({role})无此页面权限</div></div></div>;
+  const NoAccess=()=><div className="container"><div className="panel" style={{textAlign:'center',padding:40}}><div style={{fontSize:36,marginBottom:12}}>🔒</div><div style={{fontSize:15,fontWeight:600,color:'var(--err)'}}>无权访问</div><div style={{fontSize:12,color:'var(--textThi)',marginTop:6}}>当前角色({role})无此页面权限</div></div></div>;
   const pages={
     dashboard:<DashboardPage/>,
     users:role==='support'?<NoAccess/>:<UsersPage/>,
@@ -1818,8 +1864,11 @@ function App(){
         </div>}
       </div>
       <div className="bottom">
-        <div className="info">{adminUser.name||adminUser.username||'管理员'}<br/><span style={{color:'#A78BFA',fontSize:10}}>{role==='superadmin'?'超级管理员':role==='operator'?'运营':'客服'}</span></div>
-        <button className="btn-sm btn-ghost" style={{width:'100%',marginBottom:6,fontSize:11}} onClick={()=>setShowChangePw(true)}>改密码</button>
+        <div className="info">{adminUser.name||adminUser.username||'管理员'}<br/><span style={{color:'var(--accent)',fontSize:10}}>{role==='superadmin'?'超级管理员':role==='operator'?'运营':'客服'}</span></div>
+        <div style={{display:'flex',gap:6,marginBottom:6}}>
+          <button className="btn-sm btn-ghost" style={{flex:1,fontSize:11}} onClick={()=>setShowChangePw(true)}>🔑 <span>改密</span></button>
+          <button className="btn-sm btn-ghost" style={{flex:1,fontSize:11}} onClick={toggleAdminTheme}>{adminTheme==='dark'?'☀️':'🌙'} <span>{adminTheme==='dark'?'浅色':'深色'}</span></button>
+        </div>
         <button className="logout" onClick={logout}>退出</button>
       </div>
     </div>
