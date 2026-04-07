@@ -4157,58 +4157,66 @@ function ReportModal({target,onClose}){
 }
 
 function PrivacySettingsModal({onClose}){
+  const isEN=getLang()==='en-US';
   const [level,setLevel]=useState(()=>localStorage.getItem('yuanhe_privacy')||'standard');
   const [scorePref,setScorePref]=useState(()=>localStorage.getItem('yuanhe_score_vis')||'grade');
   const [distPref,setDistPref]=useState(()=>localStorage.getItem('yuanhe_dist_vis')||'fuzzy');
-  const save=()=>{localStorage.setItem('yuanhe_privacy',level);localStorage.setItem('yuanhe_score_vis',scorePref);localStorage.setItem('yuanhe_dist_vis',distPref);onClose()};
+  const [saved,setSaved]=useState(false);
+  const save=()=>{localStorage.setItem('yuanhe_privacy',level);localStorage.setItem('yuanhe_score_vis',scorePref);localStorage.setItem('yuanhe_dist_vis',distPref);setSaved(true);window.yuanheToast?.(isEN?'Settings saved':'设置已保存');setTimeout(onClose,600)};
   const levels=[
-    {id:'standard',name:'标准模式',desc:'推荐 · 年龄+匹配等级+兼容类型',icon:'🛡️',items:['年龄(段)','匹配等级(高/中/低)','兼容类型','兴趣标签']},
-    {id:'open',name:'开放模式',desc:'额外展示星座+五行属性+匹配分数',icon:'🌐',items:['精确年龄','星座','五行属性','匹配百分比','日主五行']},
-    {id:'private',name:'保守模式',desc:'只显示昵称+大致距离',icon:'🔒',items:['昵称','年龄段(25-30)','大致距离']},
+    {id:'standard',name:isEN?'Standard':'标准模式',desc:isEN?'Recommended · Age range + match grade + compatibility type':'推荐 · 展示年龄段+匹配等级+兼容类型',icon:'🛡️',items:isEN?['Age range','Match grade','Compatibility','Interests']:['年龄(段)','匹配等级','兼容类型','兴趣标签']},
+    {id:'open',name:isEN?'Open':'开放模式',desc:isEN?'Also shows zodiac, elements, exact match score':'额外展示星座+五行属性+匹配百分比',icon:'🌐',items:isEN?['Exact age','Zodiac','Elements','Match %','Day Master']:['精确年龄','星座','五行属性','匹配百分比','日主五行']},
+    {id:'private',name:isEN?'Private':'保守模式',desc:isEN?'Only nickname and approximate distance':'仅显示昵称+大致距离',icon:'🔒',items:isEN?['Nickname','Age range','Approx distance']:['昵称','年龄段(25-30)','大致距离']},
   ];
   return(
-    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <div style={{fontSize:18,fontWeight:700}}>🔐 隐私设置</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-        </div>
+    <div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,overflow:'auto'}}>
+      {/* 标题栏 */}
+      <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+        <button onClick={onClose} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+        <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{isEN?'Privacy Settings':'隐私设置'}</div>
+        <div style={{width:34}}/>
+      </div>
 
-        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>信息展示级别</div>
-        <div style={{fontSize:11,color:T.textThi,marginBottom:12}}>控制其他用户能看到你的哪些信息</div>
+      <div style={{maxWidth:480,margin:'0 auto',padding:'20px 16px 40px'}}>
+        {/* 说明 */}
+        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:6}}>{isEN?'Visibility Level':'信息展示级别'}</div>
+        <div style={{fontSize:12,color:T.textThi,marginBottom:16,lineHeight:1.5}}>{isEN?'Control what others can see about you in matching cards':'控制其他用户在匹配卡片上能看到你的哪些信息'}</div>
+
         {levels.map(l=>(
-          <button key={l.id} onClick={()=>setLevel(l.id)} style={{width:'100%',padding:'14px',borderRadius:14,border:level===l.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:level===l.id?(T.isDark?T.accent2+'15':'#F5F3FF'):T.card,marginBottom:8,cursor:'pointer',textAlign:'left'}}>
-            <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <span style={{fontSize:20}}>{l.icon}</span>
+          <button key={l.id} onClick={()=>setLevel(l.id)} style={{width:'100%',padding:'16px',borderRadius:16,border:level===l.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:level===l.id?(T.isDark?T.accent2+'12':'#F5F3FF'):T.card,marginBottom:10,cursor:'pointer',textAlign:'left',boxShadow:level===l.id?`0 2px 12px ${T.accent2}20`:'none',transition:'all .2s'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{width:42,height:42,borderRadius:12,background:level===l.id?T.accent2+'18':T.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>{l.icon}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:14,fontWeight:600,color:level===l.id?T.accent2:T.text}}>{l.name}</div>
-                <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{l.desc}</div>
+                <div style={{fontSize:15,fontWeight:600,color:level===l.id?T.accent2:T.text}}>{l.name}</div>
+                <div style={{fontSize:11,color:T.textThi,marginTop:3}}>{l.desc}</div>
               </div>
-              <div style={{width:20,height:20,borderRadius:10,border:level===l.id?'none':`2px solid ${T.border}`,background:level===l.id?T.accent2:T.card,display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:22,height:22,borderRadius:11,border:level===l.id?'none':`2px solid ${T.border}`,background:level===l.id?T.accent2:T.card,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .2s'}}>
                 {level===l.id&&<div style={{width:8,height:8,borderRadius:4,background:'#fff'}}/>}
               </div>
             </div>
-            <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:8}}>
-              {l.items.map(it=><span key={it} style={{padding:'2px 8px',borderRadius:6,background:level===l.id?(T.isDark?T.accent2+'20':'#DDD6FE'):(T.isDark?T.border:'#F3F4F6'),fontSize:10,color:level===l.id?T.accent2:T.textSec}}>{it}</span>)}
+            <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:10}}>
+              {l.items.map(it=><span key={it} style={{padding:'3px 10px',borderRadius:8,background:level===l.id?(T.isDark?T.accent2+'20':'#DDD6FE'):(T.isDark?T.border:'#F3F4F6'),fontSize:10,fontWeight:500,color:level===l.id?T.accent2:T.textSec}}>{it}</span>)}
             </div>
           </button>
         ))}
 
-        <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:16,marginBottom:8}}>匹配分数显示</div>
-        <div style={{display:'flex',gap:8,marginBottom:16}}>
-          {[{id:'grade',l:'只显示等级'},{id:'percent',l:'显示百分比'},{id:'hide',l:'不显示'}].map(o=>
-            <button key={o.id} onClick={()=>setScorePref(o.id)} style={{flex:1,padding:'10px',borderRadius:10,border:scorePref===o.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:scorePref===o.id?(T.isDark?T.accent2+'15':'#F5F3FF'):T.card,fontSize:12,fontWeight:scorePref===o.id?600:400,color:scorePref===o.id?T.accent2:T.textSec,cursor:'pointer'}}>{o.l}</button>
-          )}
-        </div>
-
-        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>距离显示</div>
+        {/* 匹配分数显示 */}
+        <div style={{fontSize:13,fontWeight:600,color:T.text,marginTop:24,marginBottom:8}}>{isEN?'Match Score Display':'匹配分数显示'}</div>
         <div style={{display:'flex',gap:8,marginBottom:20}}>
-          {[{id:'fuzzy',l:'模糊(<5km)'},{id:'precise',l:'较精确(1.2km)'},{id:'city',l:'只显示同城'},{id:'hide',l:'不显示'}].map(o=>
-            <button key={o.id} onClick={()=>setDistPref(o.id)} style={{flex:1,padding:'8px 4px',borderRadius:10,border:distPref===o.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:distPref===o.id?(T.isDark?T.accent2+'15':'#F5F3FF'):T.card,fontSize:10,fontWeight:distPref===o.id?600:400,color:distPref===o.id?T.accent2:T.textSec,cursor:'pointer'}}>{o.l}</button>
+          {[{id:'grade',l:isEN?'Grade only':'只显示等级'},{id:'percent',l:isEN?'Percentage':'显示百分比'},{id:'hide',l:isEN?'Hide':'不显示'}].map(o=>
+            <button key={o.id} onClick={()=>setScorePref(o.id)} style={{flex:1,padding:'12px',borderRadius:12,border:scorePref===o.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:scorePref===o.id?(T.isDark?T.accent2+'12':'#F5F3FF'):T.card,fontSize:12,fontWeight:scorePref===o.id?600:400,color:scorePref===o.id?T.accent2:T.textSec,cursor:'pointer',transition:'all .2s'}}>{o.l}</button>
           )}
         </div>
 
-        <button onClick={save} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存设置</button>
+        {/* 距离显示 */}
+        <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:8}}>{isEN?'Distance Display':'距离显示'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:28}}>
+          {[{id:'fuzzy',l:isEN?'Approximate':'模糊(<5km)'},{id:'precise',l:isEN?'Precise':'较精确(1.2km)'},{id:'city',l:isEN?'City only':'只显示同城'},{id:'hide',l:isEN?'Hidden':'不显示'}].map(o=>
+            <button key={o.id} onClick={()=>setDistPref(o.id)} style={{padding:'12px',borderRadius:12,border:distPref===o.id?`2px solid ${T.accent2}`:`1.5px solid ${T.border}`,background:distPref===o.id?(T.isDark?T.accent2+'12':'#F5F3FF'):T.card,fontSize:12,fontWeight:distPref===o.id?600:400,color:distPref===o.id?T.accent2:T.textSec,cursor:'pointer',transition:'all .2s'}}>{o.l}</button>
+          )}
+        </div>
+
+        <button onClick={save} disabled={saved} style={{width:'100%',padding:'15px',borderRadius:14,border:'none',background:saved?T.ok:`linear-gradient(135deg,${T.accent2},${T.accent2}dd)`,color:'#fff',fontSize:15,fontWeight:600,cursor:saved?'default':'pointer',boxShadow:saved?'none':`0 4px 16px ${T.accent2}30`,transition:'all .2s'}}>{saved?(isEN?'✓ Saved':'✓ 已保存'):(isEN?'Save Settings':'保存设置')}</button>
       </div>
     </div>
   );
