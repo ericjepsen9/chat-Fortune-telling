@@ -4664,25 +4664,36 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       </div>
     </div>
   </div>}
-  {/* Blacklist modal */}
-  {showBlacklist&&<div onClick={()=>setShowBlacklist(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease',maxHeight:'60vh',overflow:'auto'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-        <div style={{fontSize:16,fontWeight:700,color:T.text}}>🚫 黑名单</div>
-        <button onClick={()=>setShowBlacklist(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
-      </div>
+  {/* 黑名单 — 全屏二级页面 */}
+  {showBlacklist&&<div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,overflow:'auto'}}>
+    <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+      <button onClick={()=>setShowBlacklist(false)} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+      <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{getLang()==='zh-CN'?'黑名单':'Blocked Users'}</div>
+      <div style={{width:34}}/>
+    </div>
+    <div style={{maxWidth:480,margin:'0 auto',padding:'16px 16px 40px'}}>
       {(()=>{
         const bl=JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]');
         const convs=ChatStore.getAll();
-        if(bl.length===0)return <div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}><div style={{fontSize:28,marginBottom:8}}>✨</div><div style={{fontSize:13}}>黑名单为空</div></div>;
-        return bl.map(uid=>{
-          const conv=convs.find(c=>c.user.id===uid);
-          return <div key={uid} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',borderBottom:`1px solid ${T.border}`}}>
-            <div style={{width:40,height:40,borderRadius:20,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{conv?.user?.gender==='female'?'👩':'👨'}</div>
-            <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:T.text}}>{conv?.user?.name||'用户'}</div></div>
-            <button onClick={()=>{const newBl=bl.filter(id=>id!==uid);localStorage.setItem('yuanhe_blacklist',JSON.stringify(newBl));if(localStorage.getItem('yuanhe_token'))apiPost('/api/auth/blacklist',{blacklist:newBl}).catch(()=>{});setShowBlacklist(false);setTimeout(()=>setShowBlacklist(true),100);window.yuanheToast?.('已解除拉黑')}} style={{padding:'6px 14px',borderRadius:10,border:`1px solid ${T.border}`,background:T.card,fontSize:11,color:T.textSec,cursor:'pointer'}}>解除</button>
-          </div>;
-        });
+        if(bl.length===0)return <div style={{textAlign:'center',padding:'60px 0',color:T.textThi}}>
+          <div style={{fontSize:48,marginBottom:12}}>✨</div>
+          <div style={{fontSize:15,fontWeight:600,color:T.text}}>{getLang()==='zh-CN'?'黑名单为空':'No blocked users'}</div>
+          <div style={{fontSize:12,marginTop:6}}>{getLang()==='zh-CN'?'你没有拉黑任何人':'You haven\'t blocked anyone'}</div>
+        </div>;
+        return <>
+          <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>{getLang()==='zh-CN'?`已拉黑 ${bl.length} 人`:`${bl.length} blocked`}</div>
+          {bl.map(uid=>{
+            const conv=convs.find(c=>c.user.id===uid);
+            return <div key={uid} style={{display:'flex',alignItems:'center',gap:12,padding:'14px',borderRadius:16,background:T.card,border:`1px solid ${T.border}`,marginBottom:10,boxShadow:T.shadow}}>
+              <div style={{width:44,height:44,borderRadius:22,background:'linear-gradient(135deg,#FCA5A5,#F87171)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{conv?.user?.avatar||(conv?.user?.gender==='female'?'👩':'👨')}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:600,color:T.text}}>{conv?.user?.name||(getLang()==='zh-CN'?'用户':'User')}</div>
+                <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{conv?.user?.sign||''}</div>
+              </div>
+              <button onClick={()=>{const newBl=bl.filter(id=>id!==uid);localStorage.setItem('yuanhe_blacklist',JSON.stringify(newBl));if(localStorage.getItem('yuanhe_token'))apiPost('/api/auth/blacklist',{blacklist:newBl}).catch(()=>{});setShowBlacklist(false);setTimeout(()=>setShowBlacklist(true),100);window.yuanheToast?.(getLang()==='zh-CN'?'已解除拉黑':'Unblocked')}} style={{padding:'8px 16px',borderRadius:12,border:'none',background:T.isDark?'#34D39918':'#D1FAE5',fontSize:12,fontWeight:600,color:T.isDark?'#34D399':'#059669',cursor:'pointer'}}>{getLang()==='zh-CN'?'解除':'Unblock'}</button>
+            </div>;
+          })}
+        </>;
       })()}
     </div>
   </div>}
