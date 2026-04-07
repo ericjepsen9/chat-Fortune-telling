@@ -2453,7 +2453,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     stopTimer(m);
   };
 
-  const md=t=>{try{return{__html:marked.parse(t)}}catch(e){console.warn('markdown parse error:',e);return{__html:t.replace(/\n/g,'<br>')}}};
+  const md=t=>{try{let h=marked.parse(t);h=h.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/\bon\w+\s*=\s*"[^"]*"/gi,'').replace(/\bon\w+\s*=\s*'[^']*'/gi,'').replace(/\bon\w+\s*=[^\s>]*/gi,'').replace(/href\s*=\s*"javascript:[^"]*"/gi,'').replace(/href\s*=\s*'javascript:[^']*'/gi,'');return{__html:h}}catch(e){console.warn('markdown parse error:',e);return{__html:t.replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'})[c]).replace(/\n/g,'<br>')}}};
   const SECTION_ICONS={'排盘':'📋','性格':'🧠','天赋':'🧠','大运':'📈','命运':'📈','事业':'💼','财运':'💰','婚姻':'💕','家庭':'🏡','感情':'💕','健康':'🏥','流年':'🔮','预测':'🔮','总评':'⭐','建议':'💡','注意':'⚠️','配对':'💑','方位':'🧭','行业':'💼','子女':'👶','星座':'★','塔罗':'🎴','牌':'🎴','卦':'❀','梅花':'❀','吠陀':'◎','核心':'💎','相位':'🔗','元素':'🌀'};
   const SECTION_COLORS=['#8B5CF6','#DB2777','#0D9488','#D97706','#2563EB','#DC2626','#059669','#7C3AED','#E11D48','#0891B2'];
   const parseSections=(resp,isStreaming)=>{
@@ -4516,7 +4516,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
         else if(line.trim()&&!line.startsWith('#')&&!line.match(/^---+$/)){if(!sections.length)sections.push(cur={title:'性格概述',icon:'🧠',lines:[]});cur?.lines.push(line)}
       });
       sections=sections.filter(s=>s.lines.some(l=>l.trim()));
-      const md=t=>{try{return{__html:marked.parse(t)}}catch(e){console.warn('markdown parse error:',e);return{__html:t.replace(/\n/g,'<br>')}}};
+      const md=t=>{try{let h=marked.parse(t);h=h.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/\bon\w+\s*=\s*"[^"]*"/gi,'').replace(/\bon\w+\s*=\s*'[^']*'/gi,'').replace(/\bon\w+\s*=[^\s>]*/gi,'').replace(/href\s*=\s*"javascript:[^"]*"/gi,'').replace(/href\s*=\s*'javascript:[^']*'/gi,'');return{__html:h}}catch(e){console.warn('markdown parse error:',e);return{__html:t.replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'})[c]).replace(/\n/g,'<br>')}}};
       return <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
         <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
           <button onClick={()=>setShowPersonality(false)} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
