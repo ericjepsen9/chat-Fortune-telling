@@ -2340,6 +2340,13 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           if(final)streaming=false;
           // If AI is in <think> mode and no visible content yet, show thinking indicator
           if(isThinking&&!clean){clean='💭 AI正在深度分析中，请稍候…'}
+          // Final: if clean is empty but fullText has content, the model only output <think> tags
+          if(final&&!clean&&fullText.length>10){
+            // Extract think content as fallback display
+            const thinkMatch=fullText.match(/<think>([\s\S]*?)<\/think>/);
+            if(thinkMatch){clean='💭 **AI思考过程**\n\n'+thinkMatch[1].trim()+'\n\n---\n⚠️ *AI模型仅输出了思考内容，未生成正式分析。可能是token限制或模型特性。请尝试重新生成。*'}
+            else{clean='⚠️ AI返回了内容但格式异常，请重新生成。'}
+          }
           setMS(m,{result:{response:clean,engineData,structured,_genTime:new Date().toLocaleTimeString(),_elapsed:getMS(m).elapsed,_streaming:streaming,_thinking:isThinking},loading:false});
         };
         while(true){

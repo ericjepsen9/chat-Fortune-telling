@@ -157,7 +157,13 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens) {
               content += '\n\n---\n⚠️ *AI输出因长度限制被截断，以上为部分内容。可输入具体问题获取更聚焦的分析。*';
             }
             // Strip <think> reasoning tags from AI response
+            const original = content;
             content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+            // If stripping removed everything, keep think content as fallback
+            if (!content && original.length > 10) {
+              const m = original.match(/<think>([\s\S]*?)<\/think>/);
+              content = m ? '💭 **AI思考过程**\n\n' + m[1].trim() + '\n\n---\n⚠️ *模型仅输出了思考内容。请重试。*' : original;
+            }
             resolve(content);
           } else if (json.error) {
             const err = new Error(json.error.message || JSON.stringify(json.error));
@@ -636,7 +642,7 @@ app.post('/api/admin/llm/test', admin.adminAuth, async (req, res) => {
   const apiUrl = `${url}/chat/completions`;
   const testBody = JSON.stringify({
     model, messages:[{role:'user',content:'你好，请回复"连接成功"四个字'}],
-    max_tokens:50, temperature:0.1, stream:false,
+    max_tokens:200, temperature:0.1, stream:false,
   });
   const start = Date.now();
   try {
@@ -651,7 +657,7 @@ app.post('/api/admin/llm/test', admin.adminAuth, async (req, res) => {
         resp.on('end',()=>{
           try {
             const json=JSON.parse(data);
-            if(json.choices?.[0]) resolve({ok:true,reply:json.choices[0].message?.content||'',time:Date.now()-start,status:resp.statusCode});
+            if(json.choices?.[0]){let reply=json.choices[0].message?.content||'';reply=reply.replace(/<think>[\s\S]*?<\/think>/g,'').trim();if(!reply&&json.choices[0].message?.content)reply='[thinking model - response OK]';resolve({ok:true,reply,time:Date.now()-start,status:resp.statusCode})}
             else if(json.error) resolve({ok:false,error:json.error.message||JSON.stringify(json.error),time:Date.now()-start});
             else resolve({ok:false,error:`状态码${resp.statusCode}: ${data.substring(0,200)}`,time:Date.now()-start});
           } catch(e){ resolve({ok:false,error:`非JSON响应: ${data.substring(0,200)}`,time:Date.now()-start}); }
