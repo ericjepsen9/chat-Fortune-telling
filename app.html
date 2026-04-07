@@ -1423,7 +1423,7 @@ function DailyStatusModal({profile,onClose}){
       <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 {t('shareToday')}</button>
     </div>
     {showShare&&<ShareModal type={showShare.type==='weekly'?'fortune':'fortune'} profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:th.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:th.color,keywords:th.keywords}} onClose={()=>setShowShare(false)}/>}
-  </div></div></div>);
+  </div></div>);
 }
 
 function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
