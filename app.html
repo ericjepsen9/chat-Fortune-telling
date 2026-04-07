@@ -4598,10 +4598,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           <div key={conv.id} onClick={()=>{setShowMatchHistory(false);goTo(S.MSGS)}} style={{display:'flex',alignItems:'center',gap:12,padding:'14px',borderRadius:16,background:T.card,border:`1px solid ${T.border}`,marginBottom:10,cursor:'pointer',boxShadow:T.shadow}}>
             <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{conv.user.avatar||(conv.user.gender==='female'?'👩':'👨')}</div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{display:'flex',alignItems:'center',gap:6}}>
-                <span style={{fontSize:15,fontWeight:600,color:T.text}}>{conv.user.name}</span>
-                {conv.user.isBot&&<span style={{padding:'1px 6px',borderRadius:4,background:T.isDark?'#F59E0B20':'#FEF3C7',color:'#D97706',fontSize:9,fontWeight:600}}>Bot</span>}
-              </div>
+              <div style={{fontSize:15,fontWeight:600,color:T.text}}>{conv.user.name}</div>
               <div style={{fontSize:11,color:T.textThi,marginTop:3}}>{conv.user.sign||''} · {(conv.messages||[]).length}{getLang()==='zh-CN'?'条消息':' msgs'}</div>
             </div>
             <div style={{textAlign:'right',flexShrink:0}}>
@@ -4611,8 +4608,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
           </div>
         );
         return <>
-          {realConvs.length>0&&<><div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>{getLang()==='zh-CN'?'真实用户':'Real Users'} ({realConvs.length})</div>{realConvs.map(renderConv)}</>}
-          {botConvs.length>0&&<><div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8,marginTop:realConvs.length?16:0}}>{getLang()==='zh-CN'?'AI缘友':'AI Friends'} ({botConvs.length})</div>{botConvs.map(renderConv)}</>}
+          {allConvs.map(renderConv)}
           <div style={{textAlign:'center',fontSize:11,color:T.textThi,marginTop:16}}>{getLang()==='zh-CN'?`共 ${allConvs.length} 次匹配`:`${allConvs.length} total matches`}</div>
         </>;
       })()}
