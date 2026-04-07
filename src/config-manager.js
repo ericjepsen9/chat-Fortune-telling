@@ -6,6 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
+function atomicWriteSync(f, d) { const t = f + '.tmp.' + process.pid; fs.writeFileSync(t, d); fs.renameSync(t, f); }
+
 const DATA_DIR = path.join(__dirname, '../data');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 
@@ -99,7 +101,7 @@ function load() {
 function save() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+    atomicWriteSync(CONFIG_FILE, JSON.stringify(config, null, 2));
   } catch (e) {
     console.error('Config save error:', e.message);
   }

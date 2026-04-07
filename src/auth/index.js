@@ -8,7 +8,15 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+
+// Atomic write: write to temp file then rename (prevents corruption on crash/power-loss)
+function atomicWriteSync(filePath, data) {
+  const tmp = filePath + '.tmp.' + process.pid;
+  fs.writeFileSync(tmp, data);
+  fs.renameSync(tmp, filePath);
+}
 
 // JWT secret — 生产环境应从 .env 读取
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
@@ -40,7 +48,7 @@ function loadUsers() {
 function saveUsers() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    atomicWriteSync(USERS_FILE, JSON.stringify(users, null, 2));
   } catch (e) { console.error('Failed to save users:', e.message); }
 }
 
@@ -333,7 +341,7 @@ function saveMessage(fromId, toId, message) {
   try {
     const msgFile = path.join(DATA_DIR, 'messages.json');
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
+    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
   } catch (e) { console.error('Failed to save messages:', e.message); }
 }
 
@@ -367,7 +375,7 @@ try { if (fs.existsSync(SWIPES_FILE)) swipes = JSON.parse(fs.readFileSync(SWIPES
 function saveSwipes() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(SWIPES_FILE, JSON.stringify(swipes));
+    atomicWriteSync(SWIPES_FILE, JSON.stringify(swipes));
   } catch (e) {}
 }
 
@@ -443,7 +451,7 @@ try { if (fs.existsSync(FRIENDS_FILE)) friendData = JSON.parse(fs.readFileSync(F
 function saveFriends() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(FRIENDS_FILE, JSON.stringify(friendData, null, 2));
+    atomicWriteSync(FRIENDS_FILE, JSON.stringify(friendData, null, 2));
   } catch (e) {}
 }
 
@@ -616,7 +624,7 @@ function setSensitiveWords(words) {
   sensitiveWords = words.filter(w => w.trim()).map(w => w.trim().toLowerCase());
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(SENSITIVE_FILE, JSON.stringify(sensitiveWords, null, 2));
+    atomicWriteSync(SENSITIVE_FILE, JSON.stringify(sensitiveWords, null, 2));
   } catch (e) {}
   return { success: true, count: sensitiveWords.length };
 }
@@ -688,7 +696,7 @@ function adminDeleteMessage(convKey, messageId) {
   msgs.splice(idx, 1);
   try {
     const msgFile = path.join(DATA_DIR, 'messages.json');
-    fs.writeFileSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
+    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
   } catch (e) {}
   return { success: true };
 }
@@ -1056,7 +1064,7 @@ try { if (fs.existsSync(POSTS_FILE)) posts = JSON.parse(fs.readFileSync(POSTS_FI
 function savePosts() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
+    atomicWriteSync(POSTS_FILE, JSON.stringify(posts, null, 2));
   } catch (e) {}
 }
 
@@ -1180,7 +1188,7 @@ try { if (fs.existsSync(REPORTS_FILE)) reports = JSON.parse(fs.readFileSync(REPO
 function saveReports() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
+    atomicWriteSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
   } catch (e) {}
 }
 

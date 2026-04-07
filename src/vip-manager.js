@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+function atomicWriteSync(f, d) { const t = f + '.tmp.' + process.pid; fs.writeFileSync(t, d); fs.renameSync(t, f); }
+
 const DATA_DIR = path.join(__dirname, '../data');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 
@@ -22,7 +24,7 @@ try { if (fs.existsSync(ORDERS_FILE)) orders = JSON.parse(fs.readFileSync(ORDERS
 function saveOrders() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
+    atomicWriteSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
   } catch (e) {}
 }
 

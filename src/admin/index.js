@@ -11,6 +11,8 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
+function atomicWriteSync(f, d) { const t = f + '.tmp.' + process.pid; fs.writeFileSync(t, d); fs.renameSync(t, f); }
+
 const DATA_DIR = path.join(__dirname, '../../data');
 const ADMINS_FILE = path.join(DATA_DIR, 'admins.json');
 const ADMIN_LOG_FILE = path.join(DATA_DIR, 'admin-logs.json');
@@ -53,7 +55,7 @@ function loadAdmins() {
 function saveAdmins() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(ADMINS_FILE, JSON.stringify(admins, null, 2));
+    atomicWriteSync(ADMINS_FILE, JSON.stringify(admins, null, 2));
   } catch (e) {}
 }
 
@@ -78,7 +80,7 @@ function logAction(adminId, action, target, detail) {
   adminLogs.unshift(entry);
   if (adminLogs.length > 1000) adminLogs.length = 1000;
   try {
-    fs.writeFileSync(ADMIN_LOG_FILE, JSON.stringify(adminLogs, null, 2));
+    atomicWriteSync(ADMIN_LOG_FILE, JSON.stringify(adminLogs, null, 2));
   } catch (e) {}
   return entry;
 }
