@@ -4715,62 +4715,100 @@ function ProfileEditModal({profile,onSave,onClose}){
 }
 
 function DataManagementModal({profile,onClose,onLogout}){
+  const isEN=getLang()==='en-US';
+  // 计算各项数据大小
+  const getSize=(key)=>{const v=localStorage.getItem(key);return v?v.length:0};
+  const fmtSize=(bytes)=>bytes>1024?(bytes/1024).toFixed(1)+'KB':bytes+'B';
+  const totalSize=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_')).reduce((s,k)=>s+getSize(k),0);
+  const modeResults=JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}');
+  const history=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');
+  const convs=JSON.parse(localStorage.getItem('yuanhe_conversations')||localStorage.getItem('yuanhe_convs')||'[]');
+  const blacklist=JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]');
+
   const dataItems=[
-    {key:'yuanhe_profile',label:'出生信息',desc:'年月日时+性别+昵称',icon:'📋'},
-    {key:'yuanhe_mode_results',label:'占卜报告',desc:Object.keys(JSON.parse(localStorage.getItem('yuanhe_mode_results')||'{}')).length+'条',icon:'🔮'},
-    {key:'yuanhe_history',label:'占卜历史',desc:(JSON.parse(localStorage.getItem('yuanhe_history')||'[]')).length+'条记录',icon:'📜'},
-    {key:'yuanhe_convs',label:'聊天记录',desc:'所有匹配会话+消息',icon:'💬'},
-    {key:'yuanhe_blacklist',label:'黑名单',desc:(JSON.parse(localStorage.getItem('yuanhe_blacklist')||'[]')).length+'人',icon:'🚫'},
-    {key:'yuanhe_privacy',label:'隐私设置',desc:localStorage.getItem('yuanhe_privacy')||'standard',icon:'🔐'},
+    {key:'yuanhe_profile',label:isEN?'Birth Info':'出生信息',desc:isEN?'Birthday, gender, nickname':'生辰八字 · 性别 · 昵称',icon:'📋',size:getSize('yuanhe_profile')},
+    {key:'yuanhe_mode_results',label:isEN?'Reading Reports':'占卜报告',desc:(isEN?'reports':'份报告')+': '+Object.keys(modeResults).length,icon:'🔮',size:getSize('yuanhe_mode_results')},
+    {key:'yuanhe_history',label:isEN?'Reading History':'占卜记录',desc:history.length+(isEN?' entries':'条记录'),icon:'📜',size:getSize('yuanhe_history')},
+    {key:'yuanhe_conversations',label:isEN?'Chat Messages':'聊天记录',desc:convs.length+(isEN?' conversations':'个会话'),icon:'💬',size:getSize('yuanhe_conversations')||getSize('yuanhe_convs')},
+    {key:'yuanhe_blacklist',label:isEN?'Blocked Users':'黑名单',desc:blacklist.length+(isEN?' users':'人'),icon:'🚫',size:getSize('yuanhe_blacklist')},
+    {key:'yuanhe_privacy',label:isEN?'Privacy Settings':'隐私设置',desc:isEN?'Visibility preferences':'信息展示级别',icon:'🔐',size:getSize('yuanhe_privacy')},
   ];
   const exportData=()=>{
     const data={};
     dataItems.forEach(d=>{try{data[d.key]=JSON.parse(localStorage.getItem(d.key)||'null')}catch(e){data[d.key]=localStorage.getItem(d.key)}});
     data._exportTime=new Date().toISOString();
-    data._version='缘合 v0.7.0';
+    data._version='YuanHe v0.9.0';
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const link=document.createElement('a');
-    link.download=`yuanhe_data_${Date.now()}.json`;
+    link.download=`yuanhe_data_${new Date().toISOString().slice(0,10)}.json`;
     link.href=URL.createObjectURL(blob);
     link.click();
+    window.yuanheToast?.(isEN?'Data exported':'数据已导出');
   };
   const deleteItem=(key,label)=>{
-    window.yuanheConfirm(`确定删除${label}？`,()=>{
+    window.yuanheConfirm(isEN?`Delete ${label}?`:`确定删除「${label}」？`,()=>{
       localStorage.removeItem(key);
       if(key==='yuanhe_profile'){onLogout();onClose();return}
-      // 通知其他组件数据已变化
       window.dispatchEvent(new CustomEvent('yuanhe-data-deleted',{detail:{key}}));
-      window.yuanheToast?.(`${label}已删除`);
+      window.yuanheToast?.(isEN?`${label} deleted`:`${label}已删除`);
       onClose();
-    },{detail:'此操作不可恢复'});
+    },{detail:isEN?'This cannot be undone':'删除后无法恢复'});
   };
   const deleteAll=()=>{
-    window.yuanheConfirm('确定删除所有数据并注销账号？',()=>{
-      const keys=Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_'));
-      keys.forEach(k=>localStorage.removeItem(k));
+    window.yuanheConfirm(isEN?'Delete all data and sign out?':'删除全部数据并注销？',()=>{
+      Object.keys(localStorage).filter(k=>k.startsWith('yuanhe_')).forEach(k=>localStorage.removeItem(k));
       onLogout();onClose();
-    },{detail:'将清除出生信息、占卜报告、聊天记录和所有设置，此操作不可恢复。'});
+    },{detail:isEN?'This will erase all your birth info, readings, chats, and settings. Cannot be undone.':'将永久清除出生信息、占卜报告、聊天记录和所有设置。'});
   };
   return(
-    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'85vh',overflow:'auto',animation:'slideUp .3s ease',padding:'20px 16px 30px'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-          <div style={{fontSize:18,fontWeight:700}}>📊 我的数据</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-        </div>
-        <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:T.bg,borderRadius:10}}>以下是缘合存储在你设备上的所有数据。数据仅保存在本地，不上传到服务器。</div>
-        {dataItems.map(d=><div key={d.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px',borderRadius:12,border:`1px solid ${T.border}`,marginBottom:8}}>
-          <span style={{fontSize:18}}>{d.icon}</span>
-          <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:600}}>{d.label}</div>
-            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{d.desc}</div>
+    <div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,overflow:'auto'}}>
+      {/* 标题栏 */}
+      <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+        <button onClick={onClose} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+        <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{isEN?'My Data':'我的数据'}</div>
+        <div style={{width:34}}/>
+      </div>
+
+      <div style={{maxWidth:480,margin:'0 auto',padding:'16px 16px 40px'}}>
+        {/* 数据概览卡片 */}
+        <div style={{background:`linear-gradient(135deg,${T.accent2}15,${T.accent2}05)`,borderRadius:16,padding:'20px',marginBottom:20,border:`1px solid ${T.accent2}20`}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <div>
+              <div style={{fontSize:13,color:T.textSec,fontWeight:500}}>{isEN?'Total Storage':'本地存储'}</div>
+              <div style={{fontSize:24,fontWeight:800,color:T.accent2,marginTop:4}}>{fmtSize(totalSize)}</div>
+            </div>
+            <div style={{width:48,height:48,borderRadius:24,background:`${T.accent2}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>📊</div>
           </div>
-          <button onClick={()=>deleteItem(d.key,d.label)} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${T.isDark?'#EF444440':'#FECACA'}`,background:T.isDark?'#EF444415':'#FEF2F2',fontSize:10,color:'#EF4444',cursor:'pointer'}}>删除</button>
-        </div>)}
-        <div style={{display:'flex',gap:8,marginTop:16}}>
-          <button onClick={exportData} style={{flex:1,padding:'12px',borderRadius:12,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 导出全部数据 (JSON)</button>
+          <div style={{fontSize:11,color:T.textThi,lineHeight:1.6}}>{isEN?'All data is stored locally on your device. Nothing is uploaded to our servers unless you explicitly sync.':'所有数据仅保存在你的设备上，不会上传到服务器。'}</div>
         </div>
-        <button onClick={deleteAll} style={{width:'100%',padding:'12px',borderRadius:12,border:'1.5px solid #EF4444',background:T.card,color:'#EF4444',fontSize:13,fontWeight:600,cursor:'pointer',marginTop:8}}>⚠️ 删除所有数据并注销</button>
+
+        {/* 数据列表 */}
+        <div style={{fontSize:13,fontWeight:600,color:T.textSec,marginBottom:10}}>{isEN?'Data Categories':'数据分类'}</div>
+        {dataItems.map(d=><div key={d.key} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 12px',borderRadius:14,background:T.card,border:`1px solid ${T.border}`,marginBottom:8,boxShadow:T.shadow}}>
+          <div style={{width:40,height:40,borderRadius:12,background:T.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{d.icon}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:600,color:T.text}}>{d.label}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{d.desc} · {fmtSize(d.size)}</div>
+          </div>
+          <button onClick={()=>deleteItem(d.key,d.label)} style={{padding:'6px 12px',borderRadius:10,border:'none',background:T.isDark?'#EF444418':'#FEF2F2',fontSize:11,fontWeight:600,color:'#EF4444',cursor:'pointer',flexShrink:0}}>{isEN?'Delete':'删除'}</button>
+        </div>)}
+
+        {/* 操作按钮 */}
+        <div style={{marginTop:24}}>
+          <button onClick={exportData} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}dd)`,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:`0 4px 16px ${T.accent2}30`}}>
+            📥 {isEN?'Export All Data':'导出全部数据'}
+          </button>
+          <div style={{fontSize:10,color:T.textThi,textAlign:'center',marginTop:6}}>{isEN?'Downloads as JSON file for backup':'导出为JSON文件，可用于备份和迁移'}</div>
+        </div>
+
+        {/* 危险操作 */}
+        <div style={{marginTop:32,padding:'16px',borderRadius:14,border:'1.5px solid #EF444430',background:T.isDark?'#EF444408':'#FEF2F2'}}>
+          <div style={{fontSize:13,fontWeight:700,color:'#EF4444',marginBottom:4}}>{isEN?'Danger Zone':'危险操作'}</div>
+          <div style={{fontSize:11,color:T.textThi,marginBottom:12,lineHeight:1.5}}>{isEN?'This will permanently delete all your data including birth info, readings, chats, and sign you out.':'永久删除所有数据（出生信息、占卜报告、聊天记录、设置），并退出登录。'}</div>
+          <button onClick={deleteAll} style={{width:'100%',padding:'12px',borderRadius:12,border:'1.5px solid #EF4444',background:'transparent',color:'#EF4444',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+            {isEN?'Delete All Data & Sign Out':'删除全部数据并注销'}
+          </button>
+        </div>
       </div>
     </div>
   );
