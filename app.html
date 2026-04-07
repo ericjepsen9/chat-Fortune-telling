@@ -2943,14 +2943,27 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             const ch=ms.chatHistory||[];
             const asked=ch.filter(m=>m.role==='user').map(m=>m.text);
             const base=(QUICK_QS[mode]||[]).filter(q=>!asked.includes(q));
-            // Dynamic chips based on report content
+            // Dynamic chips based on report content — per mode
             const resp=ms.result?.response||'';
             const dynamic=[];
-            if(resp.includes('桃花')&&!asked.some(a=>a.includes('桃花')))dynamic.push('桃花运详解');
-            if(resp.includes('大运')&&!asked.some(a=>a.includes('大运')))dynamic.push('当前大运分析');
-            if(resp.includes('创业')&&!asked.some(a=>a.includes('创业')))dynamic.push('适合创业吗');
-            if(resp.includes('贵人')&&!asked.some(a=>a.includes('贵人')))dynamic.push('贵人方位');
-            const chips=[...dynamic.slice(0,2),...base].slice(0,5);
+            if(mode==='bazi'){
+              if(resp.includes('桃花')&&!asked.some(a=>a.includes('桃花')))dynamic.push('桃花运详解');
+              if(resp.includes('大运')&&!asked.some(a=>a.includes('大运')))dynamic.push('当前大运分析');
+              if(resp.includes('创业')&&!asked.some(a=>a.includes('创业')))dynamic.push('适合创业吗');
+              if(resp.includes('贵人')&&!asked.some(a=>a.includes('贵人')))dynamic.push('贵人方位');
+            }else if(mode==='astrology'){
+              if(resp.includes('水逆')&&!asked.some(a=>a.includes('水逆')))dynamic.push(getLang()==='zh-CN'?'水逆影响':'Mercury retrograde');
+              if(resp.includes('感情')&&!asked.some(a=>a.includes('感情')))dynamic.push(getLang()==='zh-CN'?'感情运势':'Love forecast');
+            }else if(mode==='tarot'){
+              if(resp.includes('正位')&&!asked.some(a=>a.includes('正位')))dynamic.push(getLang()==='zh-CN'?'牌面深层含义':'Deeper card meaning');
+            }else if(mode==='meihua'){
+              if(resp.includes('变卦')&&!asked.some(a=>a.includes('变卦')))dynamic.push(getLang()==='zh-CN'?'变卦趋势':'Changing hexagram');
+            }else if(mode==='vedic'){
+              if(resp.includes('大运')&&!asked.some(a=>a.includes('大运')))dynamic.push(getLang()==='zh-CN'?'大运周期详解':'Dasha details');
+            }
+            // Dedupe: dynamic不应和base重复
+            const uniqueDynamic=dynamic.filter(d=>!base.includes(d));
+            const chips=[...uniqueDynamic.slice(0,2),...base].slice(0,5);
             return chips.map(qq=>(
               <button key={qq} onClick={()=>followUp(qq)} disabled={chatLoading||chatCooldown} style={{padding:'4px 10px',borderRadius:8,border:`1px solid ${mc}25`,background:`${mc}06`,color:mc,fontSize:10,fontWeight:500,cursor:chatLoading||chatCooldown?'default':'pointer',opacity:chatCooldown?0.5:1,flexShrink:0,whiteSpace:'nowrap'}}>{qq}</button>
             ));
