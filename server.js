@@ -552,8 +552,8 @@ app.get('/api/admin/llm-config', admin.adminAuth, (req, res) => {
   const providers = getAllProviders();
   const allCfgProviders = configManager.get('llm.providers') || [];
   res.json({
-    providers: providers.map(p => ({ id:p.id, name:p.name, url:p.url, model:p.model, enabled:p.enabled!==false })),
-    allProviders: allCfgProviders.map(p => ({ id:p.id, name:p.name, url:p.url, model:p.model, enabled:p.enabled!==false })),
+    providers: providers.map(p => ({ id:p.id, name:p.name, url:p.url, key:p.key||'', model:p.model, enabled:p.enabled!==false, hasKey:!!(p.key&&p.key.trim()) })),
+    allProviders: allCfgProviders.map(p => ({ id:p.id, name:p.name, url:p.url, key:p.key||'', model:p.model, enabled:p.enabled!==false, hasKey:!!(p.key&&p.key.trim()) })),
     activeIndex: getActiveProviderIndex(),
     providerErrors,
     params: getLLMParams(),
@@ -621,8 +621,18 @@ app.post('/api/admin/llm/switch', admin.adminAuth, (req, res) => {
 
 // 测试provider连通性
 app.post('/api/admin/llm/test', admin.adminAuth, async (req, res) => {
-  const { url, key, model } = req.body;
+  const { url, key, model, providerId } = req.body;
   if (!url || !model) return res.status(400).json({ error: 'URL和模型必填' });
+  // 如果没传key,尝试从已存储的provider中查找
+  let actualKey = key;
+  if (!actualKey && providerId) {
+    const stored = (configManager.get('llm.providers') || []).find(p => p.id === providerId);
+    if (stored) actualKey = stored.key;
+  }
+  if (!actualKey) actualKey = LLM_API_KEY; // fallback to env
+  if (!actualKey || actualKey === 'YOUR_API_KEY_HERE' || actualKey === 'ollama') {
+    return res.json({ ok: false, error: 'API Key未配置。请在编辑Provider时填写有效的API Key。', time: 0 });
+  }
   const apiUrl = `${url}/chat/completions`;
   const testBody = JSON.stringify({
     model, messages:[{role:'user',content:'你好，请回复"连接成功"四个字'}],
@@ -634,7 +644,7 @@ app.post('/api/admin/llm/test', admin.adminAuth, async (req, res) => {
     const result = await new Promise((resolve, reject) => {
       const options = {
         hostname:parsed.hostname, port:parsed.port, path:parsed.pathname, method:'POST',
-        headers: anonLLMHeaders(Buffer.byteLength(testBody), key||'test'),
+        headers: anonLLMHeaders(Buffer.byteLength(testBody), actualKey),
       };
       const req = (parsed.protocol==='https:'?require('https'):http).request(options, (resp)=>{
         let data=''; resp.on('data',c=>data+=c);

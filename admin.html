@@ -1126,9 +1126,9 @@ function LLMPage(){
   const deleteProvider=async(id)=>{if(!await adminConfirm('确定删除该Provider？'))return;apiPost('/api/admin/llm/providers/'+id+'/delete',{}).then(r=>{if(r.success){showToast('已删除','success');reload()}})};
   const toggleProvider=(p)=>{apiPost('/api/admin/llm/providers/'+p.id,{enabled:!p.enabled}).then(r=>{if(r.success){showToast(p.enabled?'已禁用':'已启用','success');reload()}})};
   const resetErrors=()=>{apiPost('/api/admin/llm/reset-errors',{}).then(r=>{if(r.success){showToast('错误计数已重置','success');reload()}})};
-  const testProvider=async(url,key,model)=>{
+  const testProvider=async(url,key,model,providerId)=>{
     setTesting(true);setTestResult(null);
-    const r=await apiPost('/api/admin/llm/test',{url,key,model});
+    const r=await apiPost('/api/admin/llm/test',{url,key,model,providerId});
     setTestResult(r);setTesting(false);
   };
   const updateParams=(params)=>{apiPost('/api/admin/llm/params',params).then(r=>{if(r.success){showToast('参数已更新','success');reload()}})};
@@ -1184,10 +1184,10 @@ function LLMPage(){
                 {!isEnv&&<>
                   <button className="btn-sm btn-ghost" style={{fontSize:10,padding:'2px 8px',marginRight:4}} onClick={()=>setEditProvider(p)}>编辑</button>
                   <button className="btn-sm btn-ghost" style={{fontSize:10,padding:'2px 8px',marginRight:4}} onClick={()=>toggleProvider(p)}>{p.enabled!==false?'禁用':'启用'}</button>
-                  <button className="btn-sm btn-ghost" style={{fontSize:10,padding:'2px 8px',marginRight:4,color:'#3B82F6'}} onClick={()=>testProvider(p.url,p.key,p.model)}>测试</button>
+                  <button className="btn-sm btn-ghost" style={{fontSize:10,padding:'2px 8px',marginRight:4,color:'#3B82F6'}} onClick={()=>testProvider(p.url,p.key,p.model,p.id)}>测试</button>
                   <button className="btn-sm btn-danger" style={{fontSize:10,padding:'2px 8px'}} onClick={()=>deleteProvider(p.id)}>删</button>
                 </>}
-                {isEnv&&<button className="btn-sm btn-ghost" style={{fontSize:10,padding:'2px 8px',color:'#3B82F6'}} onClick={()=>testProvider(p.url,'',p.model)}>测试</button>}
+                {isEnv&&<button className="btn-sm btn-ghost" style={{fontSize:10,padding:'2px 8px',color:'#3B82F6'}} onClick={()=>testProvider(p.url,'',p.model,p.id)}>测试</button>}
               </td>
             </tr>);
           })}
@@ -1493,7 +1493,7 @@ function ProviderModal({provider,onClose,onDone,testFn,testResult,testing}){
   const doTest=async()=>{
     if(!url.trim()||!model.trim()){showToast('请填写URL和模型','error');return}
     setLocalTesting(true);setLocalTest(null);
-    const r=await apiPost('/api/admin/llm/test',{url,key,model});
+    const r=await apiPost('/api/admin/llm/test',{url,key,model,providerId:provider?.id});
     setLocalTest(r);setLocalTesting(false);
   };
 
