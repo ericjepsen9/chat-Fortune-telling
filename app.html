@@ -2570,7 +2570,15 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
           const chatHistory=ms.chatHistory||[];
           const hasChat=chatHistory.length>0;
           const expanded=reportExpanded;
+          const isEmpty=!ms.result._streaming&&(!ms.result.response||ms.result.response.trim().length<5)&&sections.length===0;
           return(<div>
+            {/* Empty response fallback */}
+            {isEmpty&&<div style={{background:T.isDark?'#F59E0B15':'#FFFBEB',border:`1px solid ${T.isDark?'#F59E0B40':'#FCD34D'}`,borderRadius:14,padding:'20px',marginBottom:12,textAlign:'center'}}>
+              <div style={{fontSize:28,marginBottom:8}}>⚠️</div>
+              <div style={{fontSize:14,fontWeight:600,color:T.isDark?'#FBBF24':'#D97706'}}>{getLang()==='zh-CN'?'AI未返回分析内容':'AI returned no content'}</div>
+              <div style={{fontSize:12,color:T.textSec,marginTop:6,lineHeight:1.6}}>{getLang()==='zh-CN'?'可能原因：LLM服务未启动或模型正在思考中被截断。\n请检查服务器状态或重新尝试。':'Possible cause: LLM server not running or model response was truncated.\nPlease check server status or try again.'}</div>
+              <button onClick={()=>divine(mode,false)} className="btn-sm btn-primary" style={{marginTop:12}}>{getLang()==='zh-CN'?'🔄 重新生成':'🔄 Retry'}</button>
+            </div>}
 
             {/* Report Header — always visible, clickable to toggle */}
               <div onClick={hasChat?()=>setReportExpanded(!expanded):undefined} style={{background:`linear-gradient(135deg,${mc},${mc}bb)`,borderRadius:16,padding:'16px',marginBottom:expanded?10:6,color:'#fff',cursor:hasChat?'pointer':'default'}}>
@@ -2676,9 +2684,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
               {chatHistory.map((msg,i)=>(
                 <div key={i} style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8}}>
                   <div style={{maxWidth:'85%',padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
-                    background:msg.role==='user'?`linear-gradient(135deg,${mc},${mc}dd)`:'#fff',
+                    background:msg.role==='user'?`linear-gradient(135deg,${mc},${mc}dd)`:T.card,
                     color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
-                    boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+                    boxShadow:'0 1px 3px rgba(0,0,0,0.06)',border:msg.role==='user'?'none':`1px solid ${T.border}`}}>
                     {msg.role==='user'?msg.text:<div className="markdown" dangerouslySetInnerHTML={md(msg.text)}/>}
                     {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
                   </div>
