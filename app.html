@@ -4615,31 +4615,34 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     </div>
   </div>}
   {showMyPosts&&<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
-    <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',background:T.card,borderBottom:`1px solid ${T.border}`,position:'sticky',top:0,zIndex:1}}>
-      <button onClick={()=>setShowMyPosts(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
-      <div style={{flex:1,fontSize:16,fontWeight:700,color:T.text}}>我的动态</div>
-      <button onClick={()=>{setShowMyPosts(false);window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}} style={{fontSize:12,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>去发布</button>
+    <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+      <button onClick={()=>setShowMyPosts(false)} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+      <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{getLang()==='zh-CN'?'我的动态':'My Posts'}</div>
+      <button onClick={()=>{setShowMyPosts(false);window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}} style={{fontSize:12,color:T.accent2,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>{getLang()==='zh-CN'?'发布':'Post'}</button>
     </div>
-    <div style={{padding:'12px 16px 80px'}}>
+    <div style={{maxWidth:480,margin:'0 auto',padding:'16px 16px 40px'}}>
       {(()=>{
         const posts=JSON.parse(localStorage.getItem('yuanhe_user_posts')||'[]');
         if(posts.length===0)return <div style={{textAlign:'center',padding:'60px 20px',color:T.textThi}}>
           <div style={{fontSize:48,marginBottom:12}}>✏️</div>
-          <div style={{fontSize:16,fontWeight:600,color:T.text}}>还没有发布过动态</div>
-          <div style={{fontSize:13,marginTop:8,lineHeight:1.7}}>在缘友圈分享你的想法和感悟</div>
-          <button onClick={()=>{setShowMyPosts(false);window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}} style={{marginTop:16,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>去缘友圈发一条</button>
+          <div style={{fontSize:15,fontWeight:600,color:T.text}}>{getLang()==='zh-CN'?'还没有发布过动态':'No posts yet'}</div>
+          <div style={{fontSize:12,marginTop:6,lineHeight:1.7}}>{getLang()==='zh-CN'?'在缘友圈分享你的想法和感悟':'Share your thoughts in the Community'}</div>
+          <button onClick={()=>{setShowMyPosts(false);window._yuanheDiscoverTab='community';goTo(S.DISCOVER)}} style={{marginTop:16,padding:'10px 24px',borderRadius:12,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>{getLang()==='zh-CN'?'去缘友圈发一条':'Go post something'}</button>
         </div>;
-        return posts.map((p,i)=><div key={p.id||i} style={{background:T.card,borderRadius:14,padding:16,boxShadow:T.shadow,marginBottom:10}}>
+        return <>
+          <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>{getLang()==='zh-CN'?`共 ${posts.length} 条动态`:`${posts.length} posts`}</div>
+          {posts.map((p,i)=><div key={p.id||i} style={{background:T.card,borderRadius:16,padding:16,boxShadow:T.shadow,marginBottom:10,border:`1px solid ${T.border}`}}>
           <div style={{fontSize:14,color:T.text,lineHeight:1.8}}>{p.content}</div>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:10,paddingTop:10,borderTop:`1px solid ${T.border}`}}>
             <div style={{display:'flex',gap:12,fontSize:11,color:T.textThi}}>
-              <span>{p.time||'刚刚'}</span>
+              <span>{p.time||getLang()==='zh-CN'?'刚刚':'Just now'}</span>
               {p.likes>0&&<span>❤️ {p.likes}</span>}
               {p.comments>0&&<span>💬 {p.comments}</span>}
             </div>
-            <button onClick={()=>{window.yuanheConfirm('确定删除这条动态？',()=>{const updated=posts.filter((_,j)=>j!==i);localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));setShowMyPosts(false);setTimeout(()=>setShowMyPosts(true),100);window.yuanheToast?.('已删除')})}} style={{fontSize:11,color:T.primary,background:'none',border:'none',cursor:'pointer'}}>删除</button>
+            <button onClick={()=>{window.yuanheConfirm(getLang()==='zh-CN'?'确定删除这条动态？':'Delete this post?',()=>{const updated=posts.filter((_,j)=>j!==i);localStorage.setItem('yuanhe_user_posts',JSON.stringify(updated));setShowMyPosts(false);setTimeout(()=>setShowMyPosts(true),100);window.yuanheToast?.(getLang()==='zh-CN'?'已删除':'Deleted')})}} style={{fontSize:11,color:'#EF4444',background:'none',border:'none',cursor:'pointer',fontWeight:500}}>{getLang()==='zh-CN'?'删除':'Delete'}</button>
           </div>
-        </div>);
+        </div>)}
+        </>;
       })()}
     </div>
   </div>}
