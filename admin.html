@@ -10,7 +10,7 @@ body{font-family:-apple-system,'Noto Sans SC',sans-serif;background:#0f0f1a;colo
 a{color:#A78BFA;text-decoration:none}
 input,select{font-family:inherit;font-size:14px}
 button{font-family:inherit;cursor:pointer}
-.container{max-width:1200px;margin:0 auto;padding:20px}
+.container{max-width:1280px;margin:0 auto;padding:20px 24px}
 
 /* Login */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh}
@@ -26,10 +26,12 @@ button{font-family:inherit;cursor:pointer}
 /* Layout */
 .admin-layout{display:flex;min-height:100vh}
 /* Sidebar */
-.sidebar{width:200px;background:#1a1a2e;border-right:1px solid #2D2D3F;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+.sidebar{width:210px;background:#1a1a2e;border-right:1px solid #2D2D3F;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;overflow-y:auto}
 .sidebar .brand{font-size:18px;font-weight:700;color:#A78BFA;padding:20px 16px 16px;border-bottom:1px solid #2D2D3F;display:flex;align-items:center;gap:8px}
 .sidebar .menu{flex:1;padding:8px 0}
-.sidebar button{width:100%;padding:10px 16px;background:none;border:none;color:#9CA3AF;font-size:13px;font-weight:500;text-align:left;display:flex;align-items:center;gap:8px;cursor:pointer;border-left:3px solid transparent}
+.sidebar .menu-group{padding:0}
+.sidebar .menu-label{font-size:9px;color:#4a4a5a;text-transform:uppercase;letter-spacing:1.5px;padding:16px 16px 6px;font-weight:600}
+.sidebar button{width:100%;padding:11px 16px;background:none;border:none;color:#9CA3AF;font-size:13px;font-weight:500;text-align:left;display:flex;align-items:center;gap:8px;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
 .sidebar button.active{color:#A78BFA;background:#A78BFA10;border-left-color:#A78BFA}
 .sidebar button:hover{color:#e0e0e0;background:#ffffff08}
 .sidebar .bottom{padding:12px 16px;border-top:1px solid #2D2D3F}
@@ -37,56 +39,74 @@ button{font-family:inherit;cursor:pointer}
 .sidebar .bottom .logout{width:100%;padding:8px 12px;border-radius:8px;border:1px solid #2D2D3F;background:none;color:#9CA3AF;font-size:12px;cursor:pointer;text-align:center}
 .sidebar .bottom .logout:hover{background:#2D2D3F}
 /* Main content */
-.main-content{margin-left:200px;flex:1;min-height:100vh}
+.main-content{margin-left:210px;flex:1;min-height:100vh}
+@media(max-width:1024px){
+  .sidebar{width:180px}.main-content{margin-left:180px}
+}
 @media(max-width:768px){
-  .sidebar{width:60px}.sidebar .brand span,.sidebar button span,.sidebar .bottom .info{display:none}
+  .sidebar{width:60px}.sidebar .brand span,.sidebar button span,.sidebar .bottom .info,.sidebar .menu-label{display:none}
   .sidebar button{justify-content:center;padding:12px 0}.main-content{margin-left:60px}
   .sidebar .bottom .logout{font-size:0;padding:8px}
 }
 
 /* Cards */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:20px 0}
-.stat-card{background:#1a1a2e;border:1px solid #2D2D3F;border-radius:12px;padding:16px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:20px 0}
+.stat-card{background:#1a1a2e;border:1px solid #2D2D3F;border-radius:12px;padding:16px;transition:border-color .2s}
+.stat-card:hover{border-color:#2D2D3F80}
 .stat-card .label{font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px}
 .stat-card .value{font-size:28px;font-weight:700;color:#A78BFA;margin-top:4px}
 .stat-card .sub{font-size:11px;color:#4ECDC4;margin-top:4px}
 
 /* Table */
-.panel{background:#1a1a2e;border:1px solid #2D2D3F;border-radius:12px;padding:16px;margin:12px 0}
-.panel h3{font-size:14px;font-weight:600;color:#A78BFA;margin-bottom:12px}
+.panel{background:#1a1a2e;border:1px solid #2D2D3F;border-radius:12px;padding:18px;margin:14px 0}
+.panel h3{font-size:15px;font-weight:600;color:#A78BFA;margin-bottom:14px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:8px 10px;color:#6B7280;font-size:11px;border-bottom:1px solid #2D2D3F}
-td{padding:8px 10px;border-bottom:1px solid #1f1f30}
-tr:hover{background:#1f1f30}
-.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600}
-.badge-ok{background:#34D39920;color:#34D399}
-.badge-warn{background:#F59E0B20;color:#F59E0B}
-.badge-err{background:#EF444420;color:#EF4444}
-.badge-purple{background:#8B5CF620;color:#A78BFA}
+th{text-align:left;padding:10px 12px;color:#6B7280;font-size:11px;font-weight:600;border-bottom:1.5px solid #2D2D3F;letter-spacing:0.3px}
+td{padding:11px 12px;border-bottom:1px solid #1f1f30}
+tr:hover{background:#1f1f3060}
+tr:active{background:#1f1f3090}
+.badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:0.2px}
+.badge-ok{background:#34D39930;color:#34D399}
+.badge-warn{background:#F59E0B30;color:#F59E0B}
+.badge-err{background:#EF444430;color:#EF4444}
+.badge-purple{background:#8B5CF630;color:#A78BFA}
 
 /* Toolbar */
-.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
-.toolbar input{padding:8px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0;font-size:13px;min-width:200px}
+.toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.toolbar input{padding:9px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0;font-size:13px;min-width:200px;flex:1;max-width:400px}
+.toolbar input:focus{border-color:#A78BFA;outline:none}
 .toolbar .btn-sm{padding:6px 14px;border-radius:8px;border:none;font-size:12px;font-weight:500}
-.btn-primary{background:#8B5CF6;color:#fff}
-.btn-danger{background:#EF4444;color:#fff}
-.btn-ghost{background:none;border:1px solid #2D2D3F;color:#9CA3AF}
+.btn-primary{background:#8B5CF6;color:#fff;transition:opacity .15s}
+.btn-primary:hover{opacity:0.85}
+.btn-primary:disabled{opacity:0.5;cursor:default}
+.btn-danger{background:#EF4444;color:#fff;transition:opacity .15s}
+.btn-danger:hover{opacity:0.85}
+.btn-danger:disabled{opacity:0.5;cursor:default}
+.btn-ghost{background:none;border:1px solid #2D2D3F;color:#9CA3AF;transition:all .15s}
+.btn-ghost:hover{border-color:#A78BFA40;color:#e0e0e0}
 
 /* Modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:200}
-.modal{background:#1a1a2e;border-radius:16px;padding:24px;width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;word-wrap:break-word}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:200;animation:fadeIn .15s ease}
+.modal{background:#1a1a2e;border-radius:16px;padding:24px;width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;word-wrap:break-word;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px #2D2D3F;animation:scaleIn .2s ease}
 .modal h3{font-size:16px;font-weight:600;color:#A78BFA;margin-bottom:16px}
 .modal label{display:block;font-size:12px;color:#9CA3AF;margin:10px 0 4px}
-.modal input,.modal select{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0}
-.modal .actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.modal input,.modal select{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid #2D2D3F;background:#0f0f1a;color:#e0e0e0;outline:none;transition:border-color .15s}
+.modal input:focus,.modal select:focus{border-color:#A78BFA}
+.modal .actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end}
 /* Toast */
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:10px;background:#1a1a2e;border:1px solid #2D2D3F;color:#e0e0e0;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
-.toast.show{opacity:1}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:12px;background:#1a1a2e;border:1px solid #2D2D3F;color:#e0e0e0;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.toast.show{opacity:1;pointer-events:auto}
 .toast.toast-err{border-color:#EF4444;color:#EF4444}
 .toast.toast-ok{border-color:#34D399;color:#34D399}
 /* Loading spinner */
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(167,139,250,0.3);border-top-color:#A78BFA;border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+/* Page title */
+.page-title{font-size:18px;font-weight:700;margin:8px 0 20px;display:flex;align-items:center;gap:8px}
+.page-title .actions{margin-left:auto;display:flex;gap:6px;align-items:center}
+.page-title .count{font-size:12px;color:#6B7280;font-weight:400}
 </style>
 </head>
 <body>
@@ -109,7 +129,7 @@ function showToast(msg,type='info'){
   el.textContent=msg;
   el.className='toast show '+(type==='error'?'toast-err':type==='success'?'toast-ok':'');
   clearTimeout(_toastTimer);
-  _toastTimer=setTimeout(()=>{el.className='toast'},3000);
+  _toastTimer=setTimeout(()=>{el.className='toast'},type==='error'?5000:3000);
 }
 // Debounce
 function useDebounce(value,delay=400){
@@ -132,8 +152,29 @@ const api=async(path,opts={})=>{
 const apiGet=(p)=>api(p);
 const apiPost=(p,b)=>api(p,{method:'POST',body:JSON.stringify(b)});
 
-// 全局确认弹窗(替代原生confirm)
+// 全局确认弹窗(替代原生confirm) — 支持 await adminConfirm('msg')
 let _confirmResolve=null;
+let _confirmShow=null; // set by App
+function adminConfirm(msg,opts={}){
+  return new Promise(resolve=>{
+    _confirmResolve=resolve;
+    if(_confirmShow)_confirmShow({msg,detail:opts.detail||'',danger:opts.danger!==false,resolve});
+  });
+}
+function AdminConfirmDialog({data,onDone}){
+  useEscClose(()=>onDone(false));
+  if(!data)return null;
+  return(<div className="modal-bg" onClick={()=>onDone(false)}><div className="modal" style={{width:340,textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+    <div style={{fontSize:32,marginBottom:12}}>{data.danger?'⚠️':'❓'}</div>
+    <div style={{fontSize:15,fontWeight:600,color:'#e0e0e0',marginBottom:data.detail?6:16}}>{data.msg}</div>
+    {data.detail&&<div style={{fontSize:12,color:'#6B7280',marginBottom:16}}>{data.detail}</div>}
+    <div className="actions" style={{justifyContent:'center'}}>
+      <button className="btn-sm btn-ghost" onClick={()=>onDone(false)}>取消</button>
+      <button className={`btn-sm ${data.danger?'btn-danger':'btn-primary'}`} onClick={()=>onDone(true)}>确认</button>
+    </div>
+  </div></div>);
+}
+// backward compat
 function AdminConfirm({msg,detail,danger,onResult}){
   return(<div className="modal-bg" onClick={()=>onResult(false)}><div className="modal" style={{width:340,textAlign:'center'}} onClick={e=>e.stopPropagation()}>
     <div style={{fontSize:32,marginBottom:12}}>{danger?'⚠️':'❓'}</div>
@@ -435,7 +476,7 @@ function EditModal({user,onClose,onDone}){
   };
   return (<div className="modal-bg" onClick={onClose}><div className="modal" style={{width:480}} onClick={e=>e.stopPropagation()}>
     <h3>✏️ 编辑 {user.name}</h3>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 12px'}}>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px'}}>
       <div><label>昵称</label><input value={name} onChange={e=>setName(e.target.value)}/></div>
       <div><label>城市</label><input value={city} onChange={e=>setCity(e.target.value)}/></div>
       <div><label>性别</label><select value={gender} onChange={e=>setGender(e.target.value)}><option value="male">男</option><option value="female">女</option></select></div>
@@ -555,7 +596,7 @@ function UsersPage(){
   const batchBan=async(ban)=>{
     if(selected.length===0){showToast('请先选择用户','error');return}
     if(batchLoading)return;
-    if(!confirm(`确定${ban?'封禁':'解封'} ${selected.length} 个用户？`))return;
+    if(!await adminConfirm(`确定${ban?'封禁':'解封'} ${selected.length} 个用户？`))return;
     setBatchLoading(true);
     const r=await apiPost('/api/admin/users/batch/ban',{userIds:selected,ban,reason:'批量操作'});
     setBatchLoading(false);
@@ -640,10 +681,10 @@ function UsersPage(){
           <td>{u.deleted?<span className="badge badge-warn">已删除</span>:u.banned?<span className="badge badge-err">封禁</span>:!u.profileComplete?<span className="badge badge-warn">未完善</span>:<span className="badge badge-ok">正常</span>}</td>
           <td style={{fontSize:11,color:'#6B7280'}}>{u.lastActiveAt?u.lastActiveAt.substring(5,16).replace('T',' '):'从未'}</td>
           <td style={{whiteSpace:'nowrap'}}>
-            <button className="btn-sm btn-ghost" style={{marginRight:4,padding:'4px 8px',fontSize:11}} onClick={()=>setEditModal(u)}>编辑</button>
+            <button className="btn-sm btn-ghost" style={{marginRight:4,padding:'5px 10px',fontSize:11}} onClick={()=>setEditModal(u)}>编辑</button>
             {u.banned
-              ?<button className="btn-sm btn-primary" style={{padding:'4px 8px',fontSize:11}} onClick={()=>{apiPost('/api/admin/users/'+u.id+'/ban',{ban:false}).then(()=>{showToast('已解封','success');load()})}}>解封</button>
-              :<button className="btn-sm btn-danger" style={{padding:'4px 8px',fontSize:11}} onClick={()=>setBanModal(u)}>封禁</button>
+              ?<button className="btn-sm btn-primary" style={{padding:'5px 10px',fontSize:11}} onClick={()=>{apiPost('/api/admin/users/'+u.id+'/ban',{ban:false}).then(()=>{showToast('已解封','success');load()})}}>解封</button>
+              :<button className="btn-sm btn-danger" style={{padding:'5px 10px',fontSize:11}} onClick={()=>setBanModal(u)}>封禁</button>
             }
           </td>
         </tr>
@@ -877,7 +918,7 @@ function ChatPage(){
               {m.msgType==='image'&&<div style={{fontSize:11,color:'#6B7280'}}>[图片消息]</div>}
               {m.msgType==='voice'&&<div style={{fontSize:11,color:'#6B7280'}}>[语音 {m.voiceDuration}″]</div>}
             </div>
-            <button className="btn-sm btn-danger" style={{fontSize:10,padding:'2px 8px',flexShrink:0}} disabled={deleting===m.id} onClick={()=>{if(confirm('删除此消息？'))deleteMsg(activeConv.key,m.id)}}>{deleting===m.id?'…':'删除'}</button>
+            <button className="btn-sm btn-danger" style={{fontSize:10,padding:'2px 8px',flexShrink:0}} disabled={deleting===m.id} onClick={async()=>{if(await adminConfirm('删除此消息？'))deleteMsg(activeConv.key,m.id)}}>{deleting===m.id?'…':'删除'}</button>
           </div>
         ))}
         {(!activeConv.messages||activeConv.messages.length===0)&&<div style={{textAlign:'center',color:'#6B7280',padding:20}}>暂无消息</div>}
@@ -933,7 +974,7 @@ function ContentPage(){
   const loadReports=()=>apiGet(`/api/admin/reports?status=${reportStatus}&page=${page}&limit=20`).then(d=>{if(d?.items)setReports(d)}).catch(()=>{});
   useEffect(()=>{if(tab==='posts')loadPosts();else loadReports()},[tab,search,reportStatus,page]);
 
-  const deletePost=(id)=>{if(!confirm('确定删除该帖子？'))return;apiPost('/api/admin/posts/'+id+'/delete',{}).then(()=>{showToast('已删除','success');loadPosts()})};
+  const deletePost=async(id)=>{if(!await adminConfirm('确定删除该帖子？'))return;apiPost('/api/admin/posts/'+id+'/delete',{}).then(()=>{showToast('已删除','success');loadPosts()})};
   const pinPost=(id,pinned)=>apiPost('/api/admin/posts/'+id+'/pin',{pinned}).then(()=>{showToast(pinned?'已置顶':'已取消置顶','success');loadPosts()});
   const resolveReport=(id,status)=>{
     const resolution=status==='resolved'?prompt('处理说明(可选):'):'';
@@ -942,7 +983,7 @@ function ContentPage(){
 
   const batchDeletePosts=async()=>{
     if(selectedPosts.length===0)return;
-    if(!confirm(`确定删除 ${selectedPosts.length} 个帖子？`))return;
+    if(!await adminConfirm(`确定删除 ${selectedPosts.length} 个帖子？`))return;
     setBatchLoading(true);
     let ok=0;
     for(const id of selectedPosts){const r=await apiPost('/api/admin/posts/'+id+'/delete',{});if(!r.error)ok++}
@@ -1034,7 +1075,7 @@ function LLMPage(){
 
   // LLM provider operations
   const switchProvider=(idx)=>{apiPost('/api/admin/llm/switch',{index:idx}).then(r=>{if(r.success){showToast(`已切换到 ${r.provider.name}`,'success');reload()}})};
-  const deleteProvider=(id)=>{if(!confirm('确定删除？'))return;apiPost('/api/admin/llm/providers/'+id+'/delete',{}).then(r=>{if(r.success){showToast('已删除','success');reload()}})};
+  const deleteProvider=async(id)=>{if(!await adminConfirm('确定删除该Provider？'))return;apiPost('/api/admin/llm/providers/'+id+'/delete',{}).then(r=>{if(r.success){showToast('已删除','success');reload()}})};
   const toggleProvider=(p)=>{apiPost('/api/admin/llm/providers/'+p.id,{enabled:!p.enabled}).then(r=>{if(r.success){showToast(p.enabled?'已禁用':'已启用','success');reload()}})};
   const resetErrors=()=>{apiPost('/api/admin/llm/reset-errors',{}).then(r=>{if(r.success){showToast('错误计数已重置','success');reload()}})};
   const testProvider=async(url,key,model)=>{
@@ -1458,7 +1499,7 @@ function BotPage(){
   useEffect(()=>{load()},[]);
 
   const toggleBot=(id)=>apiPost('/api/admin/bots/'+id+'/toggle',{}).then(()=>{showToast('已切换','success');load()});
-  const deleteBot=(id)=>{if(!confirm('确定删除？'))return;apiPost('/api/admin/bots/'+id+'/delete',{}).then(()=>{showToast('已删除','success');load()})};
+  const deleteBot=async(id)=>{if(!await adminConfirm('确定删除该Bot？'))return;apiPost('/api/admin/bots/'+id+'/delete',{}).then(()=>{showToast('已删除','success');load()})};
 
   const importDefaults=async()=>{
     const existingIds=new Set(bots.map(b=>String(b.id)));
@@ -1486,7 +1527,7 @@ function BotPage(){
     ];
     const toImport=defaults.filter(b=>!existingIds.has(String(b.id)));
     if(toImport.length===0){showToast('所有Bot已存在，无需导入','info');return}
-    if(!confirm(`将导入 ${toImport.length} 个Bot，确认？`))return;
+    if(!await adminConfirm(`将导入 ${toImport.length} 个Bot，确认？`,{danger:false}))return;
     let count=0;
     for(const b of toImport){
       const r=await apiPost('/api/admin/bots',{...b,enabled:true});
@@ -1709,6 +1750,8 @@ function PlaceholderPage({title,icon}){
 // ===== APP =====
 function App(){
   const [adminUser,setAdminUser]=useState(null);
+  const [confirmData,setConfirmData]=useState(null);
+  _confirmShow=(data)=>setConfirmData(data);
   const [page,setPage]=useState('dashboard');
   const [showChangePw,setShowChangePw]=useState(false);
 
@@ -1755,18 +1798,27 @@ function App(){
     <div className="sidebar">
       <div className="brand">🔮 <span>缘合管理</span></div>
       <div className="menu">
-        <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}>📊 <span>概览</span></button>
-        {adminUser.role!=='support'&&<button className={page==='users'?'active':''} onClick={()=>setPage('users')}>👥 <span>用户</span></button>}
-        <button className={page==='chat'?'active':''} onClick={()=>setPage('chat')}>💬 <span>聊天</span></button>
-        <button className={page==='content'?'active':''} onClick={()=>setPage('content')}>📋 <span>内容</span></button>
-        <button className={page==='bots'?'active':''} onClick={()=>setPage('bots')}>🤖 <span>Bot</span></button>
-        {adminUser.role==='superadmin'&&<button className={page==='llm'?'active':''} onClick={()=>setPage('llm')}>⚙️ <span>系统</span></button>}
-        <button className={page==='logs'?'active':''} onClick={()=>setPage('logs')}>📝 <span>日志</span></button>
-        <button className={page==='vip'?'active':''} onClick={()=>setPage('vip')}>💎 <span>营收</span></button>
-        {adminUser.role==='superadmin'&&<button className={page==='admins'?'active':''} onClick={()=>setPage('admins')}>👤 <span>管理员</span></button>}
+        <div className="menu-group">
+          <div className="menu-label"><span>核心</span></div>
+          <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}>📊 <span>概览</span></button>
+          {role!=='support'&&<button className={page==='users'?'active':''} onClick={()=>setPage('users')}>👥 <span>用户</span></button>}
+          <button className={page==='chat'?'active':''} onClick={()=>setPage('chat')}>💬 <span>聊天</span></button>
+          <button className={page==='content'?'active':''} onClick={()=>setPage('content')}>📋 <span>内容</span></button>
+          <button className={page==='bots'?'active':''} onClick={()=>setPage('bots')}>🤖 <span>Bot</span></button>
+        </div>
+        <div className="menu-group">
+          <div className="menu-label"><span>运营</span></div>
+          <button className={page==='vip'?'active':''} onClick={()=>setPage('vip')}>💎 <span>营收</span></button>
+          <button className={page==='logs'?'active':''} onClick={()=>setPage('logs')}>📝 <span>日志</span></button>
+        </div>
+        {role==='superadmin'&&<div className="menu-group">
+          <div className="menu-label"><span>系统</span></div>
+          <button className={page==='llm'?'active':''} onClick={()=>setPage('llm')}>⚙️ <span>配置</span></button>
+          <button className={page==='admins'?'active':''} onClick={()=>setPage('admins')}>👤 <span>管理员</span></button>
+        </div>}
       </div>
       <div className="bottom">
-        <div className="info">{adminUser.name||adminUser.username||'管理员'}<br/>{adminUser.role}</div>
+        <div className="info">{adminUser.name||adminUser.username||'管理员'}<br/><span style={{color:'#A78BFA',fontSize:10}}>{role==='superadmin'?'超级管理员':role==='operator'?'运营':'客服'}</span></div>
         <button className="btn-sm btn-ghost" style={{width:'100%',marginBottom:6,fontSize:11}} onClick={()=>setShowChangePw(true)}>改密码</button>
         <button className="logout" onClick={logout}>退出</button>
       </div>
@@ -1775,6 +1827,7 @@ function App(){
     {pages[page]||pages.dashboard}
     </div>
     {showChangePw&&<ChangePasswordModal forced={adminUser.mustChangePassword} onDone={()=>{setShowChangePw(false);if(adminUser.mustChangePassword)setAdminUser({...adminUser,mustChangePassword:false})}} onClose={()=>setShowChangePw(false)}/>}
+    {confirmData&&<AdminConfirmDialog data={confirmData} onDone={ok=>{confirmData.resolve(ok);setConfirmData(null)}}/>}
   </div>);
 }
 
