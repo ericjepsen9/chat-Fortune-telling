@@ -2193,15 +2193,16 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const saveScrollPos=()=>{if(scrollRef.current&&!isRestoringScroll.current)scrollPositions.current[mode]=scrollRef.current.scrollTop};
   const restoreScrollPos=(m)=>{
     const pos=scrollPositions.current[m];
-    if(!pos){setModeReady(true);return}
+    if(!pos)return;
     isRestoringScroll.current=true;
-    setModeReady(false); // 隐藏内容防闪烁
-    const done=()=>{
-      if(scrollRef.current){scrollRef.current.scrollTop=pos}
-      setModeReady(true);
-      isRestoringScroll.current=false;
-    };
-    setTimeout(done,80);
+    // 立即恢复,不用opacity隐藏(避免闪烁)
+    requestAnimationFrame(()=>{
+      if(scrollRef.current)scrollRef.current.scrollTop=pos;
+      setTimeout(()=>{
+        if(scrollRef.current)scrollRef.current.scrollTop=pos; // 二次确认
+        isRestoringScroll.current=false;
+      },60);
+    });
   };
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
@@ -2485,7 +2486,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
   const P={bg:T.bg,accent:T.accent2,accentLight:'#DDD6FE',accentDark:'#7C3AED'};
 
-  return(<div ref={scrollRef} onScroll={e=>{const t=e.target.scrollTop;if(!scrolledPastModes&&t>200)setScrolledPastModes(true);else if(scrolledPastModes&&t<120)setScrolledPastModes(false)}} style={{height:'100%',overflow:'auto',background:P.bg,opacity:modeReady?1:0,transition:'opacity .08s'}}>
+  return(<div ref={scrollRef} onScroll={e=>{const t=e.target.scrollTop;if(!scrolledPastModes&&t>200)setScrolledPastModes(true);else if(scrolledPastModes&&t<120)setScrolledPastModes(false)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER — matches Discover style === */}
     <div style={{padding:'12px 16px 8px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:`1px solid ${T.border}`}}>
       {/* Category tabs as title */}
