@@ -4578,28 +4578,43 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
       })()}
     </div>
   </div>}
-  {/* 匹配历史弹窗 */}
-  {showMatchHistory&&<div onClick={()=>setShowMatchHistory(false)} style={{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-    <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,maxHeight:'75vh',overflow:'auto',padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-        <div style={{fontSize:18,fontWeight:700}}>💕 匹配历史</div>
-        <button onClick={()=>setShowMatchHistory(false)} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-      </div>
+  {/* 匹配历史 — 全屏二级页面 */}
+  {showMatchHistory&&<div style={{position:'fixed',inset:0,zIndex:400,background:T.bg,overflow:'auto'}}>
+    <div style={{display:'flex',alignItems:'center',padding:'14px 16px',position:'sticky',top:0,zIndex:10,background:T.bg,borderBottom:`1px solid ${T.border}`}}>
+      <button onClick={()=>setShowMatchHistory(false)} style={{width:34,height:34,borderRadius:17,border:'none',background:T.card,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec,boxShadow:T.shadow}}>←</button>
+      <div style={{flex:1,textAlign:'center',fontSize:16,fontWeight:700,color:T.text}}>{getLang()==='zh-CN'?'匹配历史':'Match History'}</div>
+      <div style={{width:34}}/>
+    </div>
+    <div style={{maxWidth:480,margin:'0 auto',padding:'16px 16px 40px'}}>
       {(()=>{const allConvs=ChatStore.getAll();
-        if(allConvs.length===0)return<div style={{textAlign:'center',padding:'30px 0',color:T.textThi}}><div style={{fontSize:28,marginBottom:8}}>💫</div><div style={{fontSize:13}}>还没有匹配记录</div></div>;
-        return allConvs.map((conv,i)=>(
-          <div key={conv.id} onClick={()=>{setShowMatchHistory(false);goTo(S.MSGS)}} style={{display:'flex',alignItems:'center',gap:12,padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,marginBottom:8,cursor:'pointer'}}>
-            <div style={{width:44,height:44,borderRadius:22,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{conv.user.gender==='female'?'👩':'👨'}</div>
+        if(allConvs.length===0)return<div style={{textAlign:'center',padding:'60px 0',color:T.textThi}}>
+          <div style={{fontSize:48,marginBottom:12}}>💫</div>
+          <div style={{fontSize:15,fontWeight:600,color:T.text}}>{getLang()==='zh-CN'?'还没有匹配记录':'No matches yet'}</div>
+          <div style={{fontSize:12,marginTop:6}}>{getLang()==='zh-CN'?'去首页转动命运转盘，遇见你的缘分':'Spin the Fortune Wheel to find your match'}</div>
+        </div>;
+        const botConvs=allConvs.filter(c=>c.user.isBot);
+        const realConvs=allConvs.filter(c=>!c.user.isBot);
+        const renderConv=(conv)=>(
+          <div key={conv.id} onClick={()=>{setShowMatchHistory(false);goTo(S.MSGS)}} style={{display:'flex',alignItems:'center',gap:12,padding:'14px',borderRadius:16,background:T.card,border:`1px solid ${T.border}`,marginBottom:10,cursor:'pointer',boxShadow:T.shadow}}>
+            <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#DDD6FE,#C4B5FD)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{conv.user.avatar||(conv.user.gender==='female'?'👩':'👨')}</div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:14,fontWeight:600,color:T.text}}>{conv.user.name}</div>
-              <div style={{fontSize:11,color:T.textThi}}>{conv.user.sign} · {(conv.messages||[]).length}条消息</div>
+              <div style={{display:'flex',alignItems:'center',gap:6}}>
+                <span style={{fontSize:15,fontWeight:600,color:T.text}}>{conv.user.name}</span>
+                {conv.user.isBot&&<span style={{padding:'1px 6px',borderRadius:4,background:T.isDark?'#F59E0B20':'#FEF3C7',color:'#D97706',fontSize:9,fontWeight:600}}>Bot</span>}
+              </div>
+              <div style={{fontSize:11,color:T.textThi,marginTop:3}}>{conv.user.sign||''} · {(conv.messages||[]).length}{getLang()==='zh-CN'?'条消息':' msgs'}</div>
             </div>
             <div style={{textAlign:'right',flexShrink:0}}>
-              <div style={{fontSize:15,fontWeight:700,color:T.accent2}}>{conv.user.score||'?'}%</div>
+              <div style={{fontSize:18,fontWeight:800,color:T.accent2}}>{conv.user.score||'?'}<span style={{fontSize:10,fontWeight:400}}>%</span></div>
               <div style={{fontSize:9,color:T.textThi}}>{conv.createdAt?new Date(conv.createdAt).toLocaleDateString([],{month:'numeric',day:'numeric'}):''}</div>
             </div>
           </div>
-        ));
+        );
+        return <>
+          {realConvs.length>0&&<><div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8}}>{getLang()==='zh-CN'?'真实用户':'Real Users'} ({realConvs.length})</div>{realConvs.map(renderConv)}</>}
+          {botConvs.length>0&&<><div style={{fontSize:12,fontWeight:600,color:T.textSec,marginBottom:8,marginTop:realConvs.length?16:0}}>{getLang()==='zh-CN'?'AI缘友':'AI Friends'} ({botConvs.length})</div>{botConvs.map(renderConv)}</>}
+          <div style={{textAlign:'center',fontSize:11,color:T.textThi,marginTop:16}}>{getLang()==='zh-CN'?`共 ${allConvs.length} 次匹配`:`${allConvs.length} total matches`}</div>
+        </>;
       })()}
     </div>
   </div>}
