@@ -1319,7 +1319,7 @@ function DailyStatusModal({profile,onClose}){
   const sel=getDayInfo(selDate);
   const weekDays=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
   const selDateStr=`${selDate.getFullYear()}年${selDate.getMonth()+1}月${selDate.getDate()}日 · ${weekDays[selDate.getDay()]}`;
-  const t=sel.theme;
+  const th=sel.theme;
 
   return(<div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
     <div style={{maxWidth:480,margin:'0 auto',padding:'12px 16px 40px'}}>
@@ -1363,13 +1363,13 @@ function DailyStatusModal({profile,onClose}){
       <div style={{fontSize:22,fontWeight:800,color:T.text,marginBottom:14}}>{t('todayStatus')}</div>
 
       {/* Theme card */}
-      <div style={{background:t.bg,borderRadius:20,padding:'24px 20px',textAlign:'center',marginBottom:16}}>
-        <div style={{fontSize:28,fontWeight:800,color:t.color,letterSpacing:4}}>{t.theme}</div>
+      <div style={{background:th.bg,borderRadius:20,padding:'24px 20px',textAlign:'center',marginBottom:16}}>
+        <div style={{fontSize:28,fontWeight:800,color:th.color,letterSpacing:4}}>{th.theme}</div>
         <div style={{fontSize:13,color:T.textSec,marginTop:6}}>{sel.tg}{sel.dz}日 · {sel.wx}旺</div>
       </div>
 
       {/* Sections */}
-      {[{title:'今日关键词',items:t.keywords,color:t.color},{title:'关系建议',items:t.relation,color:'#0D9488'},{title:'行动建议',items:t.action,color:'#3B82F6'}].map(sec=>(
+      {[{title:'今日关键词',items:th.keywords,color:th.color},{title:'关系建议',items:th.relation,color:'#0D9488'},{title:'行动建议',items:th.action,color:'#3B82F6'}].map(sec=>(
         <div key={sec.title} style={{background:T.card,borderRadius:16,padding:'16px 20px',marginBottom:12,boxShadow:T.shadow}}>
           <div style={{fontSize:14,fontWeight:700,color:sec.color,marginBottom:10}}>{sec.title}</div>
           {sec.items.map(item=><div key={item} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'6px 0'}}>
@@ -1419,7 +1419,7 @@ function DailyStatusModal({profile,onClose}){
       {/* Share */}
       <button onClick={()=>setShowShare(true)} style={{width:'100%',padding:'12px',borderRadius:14,border:`1px solid ${T.border}`,background:T.card,fontSize:13,color:T.textSec,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>📤 {t('shareToday')}</button>
     </div>
-    {showShare&&<ShareModal type={showShare.type==='weekly'?'fortune':'fortune'} profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:t.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:t.color,keywords:t.keywords}} onClose={()=>setShowShare(false)}/>}
+    {showShare&&<ShareModal type={showShare.type==='weekly'?'fortune':'fortune'} profile={profile} dayInfo={{date:selDate.getDate(),month:selDate.getMonth()+1,year:selDate.getFullYear(),theme:th.theme,tgdz:sel.tg+sel.dz,wx:sel.wx,color:th.color,keywords:th.keywords}} onClose={()=>setShowShare(false)}/>}
   </div>);
 }
 
@@ -2198,8 +2198,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       setModeReady(true);
       isRestoringScroll.current=false;
     };
-    // 等一帧让React渲染完成,再恢复并显示
-    setTimeout(done,30);
+    setTimeout(done,80);
   };
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
