@@ -149,7 +149,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens) {
         try {
           const json = JSON.parse(data);
           if (json.choices && json.choices[0]) {
-            let content = json.choices[0].message.content;
+            let content = json.choices[0].message?.content || '';
             const finishReason = json.choices[0].finish_reason;
             const result = logger.logLLMSuccess(llmCtx, content.length, finishReason, res.statusCode);
             onProviderSuccess(provider.id || provider.name);
@@ -1187,7 +1187,9 @@ app.post('/api/calculate', (req, res) => {
 app.post('/api/divine-stream', async (req, res) => {
   try {
     const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox } = req.body;
+    if (!mode || !year || !month || !day) { res.writeHead(400, {'Content-Type':'application/json'}); res.end(JSON.stringify({error:'缺少必要参数(mode/year/month/day)'})); return; }
     const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
+    if (isNaN(profile.year) || isNaN(profile.month) || isNaN(profile.day)) { res.writeHead(400, {'Content-Type':'application/json'}); res.end(JSON.stringify({error:'日期参数无效'})); return; }
     const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox };
 
     const buildReq = aiService.buildRequest(mode, profile, question || '', { displayMode: displayMode || 'simple', ...ctxOptions });
@@ -1285,7 +1287,9 @@ app.post('/api/divine-stream', async (req, res) => {
 app.post('/api/divine', async (req, res) => {
   try {
     const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, context, lang } = req.body;
+    if (!mode || !year || !month || !day) return res.status(400).json({error:'缺少必要参数(mode/year/month/day)'});
     const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
+    if (isNaN(profile.year) || isNaN(profile.month) || isNaN(profile.day)) return res.status(400).json({error:'日期参数无效'});
     const ctxOptions = { city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, lang: lang || 'zh-CN' };
     // 追问上下文：把之前的分析摘要拼入问题
     let fullQuestion = question || '';
