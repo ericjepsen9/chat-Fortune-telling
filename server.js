@@ -58,7 +58,8 @@ const providerErrors = {}; // track consecutive errors per provider
 
 // 获取所有providers: 优先config中的动态配置，兜底env vars
 function getAllProviders() {
-  const cfgProviders = configManager.get('llm.providers') || [];
+  const raw = configManager.get('llm.providers');
+  const cfgProviders = Array.isArray(raw) ? raw : [];
   if (cfgProviders.length > 0) {
     return cfgProviders.filter(p => p.enabled !== false);
   }
@@ -115,6 +116,9 @@ admin.setSecret(auth.JWT_SECRET);
 
 async function callLLM(systemPrompt, userMessage, mode = '', maxTokens) {
   const provider = getProvider();
+  if (!provider.url || !provider.key || provider.key === 'ollama') {
+    throw new Error('未配置有效的LLM服务商，请在后台管理中添加Provider并填写API Key');
+  }
   const params = getLLMParams();
   const apiUrl = `${provider.url}/chat/completions`;
   const llmCtx = logger.logLLMStart(mode, systemPrompt.length, userMessage.length);

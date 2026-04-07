@@ -17,9 +17,9 @@ const DATA_DIR = path.join(__dirname, '../../data');
 const ADMINS_FILE = path.join(DATA_DIR, 'admins.json');
 const ADMIN_LOG_FILE = path.join(DATA_DIR, 'admin-logs.json');
 
-// 使用与用户auth相同的JWT_SECRET
+// 管理员独立JWT密钥，与用户token隔离
 let JWT_SECRET;
-function setSecret(secret) { JWT_SECRET = secret; }
+function setSecret(secret) { JWT_SECRET = process.env.ADMIN_JWT_SECRET || (secret + '_admin'); }
 
 const ADMIN_JWT_EXPIRES = '8h'; // 管理员token 8小时有效
 
