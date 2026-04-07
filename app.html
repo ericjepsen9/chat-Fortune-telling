@@ -2186,21 +2186,20 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   // 每个模式独立保存滚动位置
   const scrollPositions=useRef({});
   const isRestoringScroll=useRef(false);
+  const [modeReady,setModeReady]=useState(true);
   const saveScrollPos=()=>{if(scrollRef.current&&!isRestoringScroll.current)scrollPositions.current[mode]=scrollRef.current.scrollTop};
   const restoreScrollPos=(m)=>{
     const pos=scrollPositions.current[m];
-    if(!pos)return;
+    if(!pos){setModeReady(true);return}
     isRestoringScroll.current=true;
-    // 等DOM稳定后一次性恢复,用debounce避免闪烁
-    let timer=null;
-    const doRestore=()=>{if(scrollRef.current){scrollRef.current.style.scrollBehavior='auto';scrollRef.current.scrollTop=pos;scrollRef.current.style.scrollBehavior=''}};
-    if(scrollRef.current){
-      const obs=new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(doRestore,60)});
-      obs.observe(scrollRef.current,{childList:true,subtree:true});
-      // 如果没有DOM变化也要兜底恢复
-      timer=setTimeout(doRestore,80);
-      setTimeout(()=>{obs.disconnect();isRestoringScroll.current=false},600);
-    }else{setTimeout(()=>{isRestoringScroll.current=false},300)}
+    setModeReady(false); // 隐藏内容防闪烁
+    const done=()=>{
+      if(scrollRef.current){scrollRef.current.scrollTop=pos}
+      setModeReady(true);
+      isRestoringScroll.current=false;
+    };
+    // 等一帧让React渲染完成,再恢复并显示
+    setTimeout(done,30);
   };
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
@@ -2484,7 +2483,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   };
   const P={bg:T.bg,accent:T.accent2,accentLight:'#DDD6FE',accentDark:'#7C3AED'};
 
-  return(<div ref={scrollRef} onScroll={e=>{const t=e.target.scrollTop;if(!scrolledPastModes&&t>200)setScrolledPastModes(true);else if(scrolledPastModes&&t<120)setScrolledPastModes(false)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
+  return(<div ref={scrollRef} onScroll={e=>{const t=e.target.scrollTop;if(!scrolledPastModes&&t>200)setScrolledPastModes(true);else if(scrolledPastModes&&t<120)setScrolledPastModes(false)}} style={{height:'100%',overflow:'auto',background:P.bg,opacity:modeReady?1:0,transition:'opacity .08s'}}>
     {/* === HEADER — matches Discover style === */}
     <div style={{padding:'12px 16px 8px',background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:`1px solid ${T.border}`}}>
       {/* Category tabs as title */}
