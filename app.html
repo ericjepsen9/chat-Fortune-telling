@@ -2183,16 +2183,25 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const chatEndRef=useRef(null);
   const scrollRef=useRef(null);
   const [scrolledPastModes,setScrolledPastModes]=useState(false);
+  // 每个模式独立保存滚动位置
+  const scrollPositions=useRef({});
+  const saveScrollPos=()=>{if(scrollRef.current)scrollPositions.current[mode]=scrollRef.current.scrollTop};
+  const restoreScrollPos=(m)=>{
+    const pos=scrollPositions.current[m]||0;
+    if(scrollRef.current)requestAnimationFrame(()=>{if(scrollRef.current)scrollRef.current.scrollTop=pos});
+  };
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
   const [chatCooldown,setChatCooldown]=useState(false);
   const [reportExpanded,setReportExpanded]=useState(true);
-  // Reset states when switching modes
+  // Reset states when switching modes + restore scroll position
   useEffect(()=>{
-    setReportExpanded((getMS(mode).chatHistory||[]).length===0); // expand if no chat, collapse if has chat
+    setReportExpanded((getMS(mode).chatHistory||[]).length===0);
     setFollowUpQ('');
-    if(getMS(mode).error)setMS(mode,{error:null}); // clear stale errors
-  },[mode]); // auto-collapse on followUp
+    if(getMS(mode).error)setMS(mode,{error:null});
+    // 恢复该模式的滚动位置(延迟一帧等DOM更新)
+    restoreScrollPos(mode);
+  },[mode]);
 
   // Per-mode state: {bazi:{q,result,loading,elapsed,error,loadMsg}, ...}
   const [modeStates,setModeStates]=useState(()=>{
@@ -2231,6 +2240,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
       window.yuanheToast?.(`${info?.n||''}正在分析中，请稍候…`);
       return;
     }
+    saveScrollPos(); // 保存当前模式滚动位置
     setMode(newMode);
   };
 
