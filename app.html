@@ -2189,18 +2189,18 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const saveScrollPos=()=>{if(scrollRef.current&&!isRestoringScroll.current)scrollPositions.current[mode]=scrollRef.current.scrollTop};
   const restoreScrollPos=(m)=>{
     const pos=scrollPositions.current[m];
-    if(!pos||!scrollRef.current)return;
+    if(!pos)return;
     isRestoringScroll.current=true;
-    // 多次尝试+MutationObserver确保DOM稳定后恢复
-    const apply=()=>{if(scrollRef.current)scrollRef.current.scrollTop=pos};
-    apply();
-    const timers=[16,50,100,200,400].map(t=>setTimeout(apply,t));
-    // DOM稳定后最终恢复
+    // 等DOM稳定后一次性恢复,用debounce避免闪烁
+    let timer=null;
+    const doRestore=()=>{if(scrollRef.current){scrollRef.current.style.scrollBehavior='auto';scrollRef.current.scrollTop=pos;scrollRef.current.style.scrollBehavior=''}};
     if(scrollRef.current){
-      const obs=new MutationObserver(()=>{apply()});
+      const obs=new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(doRestore,60)});
       obs.observe(scrollRef.current,{childList:true,subtree:true});
-      setTimeout(()=>{obs.disconnect();isRestoringScroll.current=false},500);
-    }else{setTimeout(()=>{isRestoringScroll.current=false},500)}
+      // 如果没有DOM变化也要兜底恢复
+      timer=setTimeout(doRestore,80);
+      setTimeout(()=>{obs.disconnect();isRestoringScroll.current=false},600);
+    }else{setTimeout(()=>{isRestoringScroll.current=false},300)}
   };
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
