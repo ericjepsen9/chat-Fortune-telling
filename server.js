@@ -715,10 +715,12 @@ app.get('/api/admin/users/export', admin.adminAuth, (req, res) => {
   const { search, gender, status, vip, tag } = req.query;
   const rows = auth.adminExportUsers({ search, gender, status, vip, tag });
   if (rows.length === 0) return res.json({ error: '无匹配用户' });
+  if (rows.length > 10000) return res.status(400).json({ error: `数据量过大(${rows.length}条)，请添加筛选条件缩小范围` });
   const headers = Object.keys(rows[0]);
   const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r[h]+'').replace(/"/g,'""')}"`).join(','))].join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename=users_export.csv');
+  admin.logAction(req.admin.id, 'export_users', null, `导出${rows.length}条用户数据`);
   res.send('\uFEFF' + csv);
 });
 
@@ -744,7 +746,7 @@ app.get('/api/admin/users/:id', admin.adminAuth, (req, res) => {
 app.post('/api/admin/users/:id/update', admin.adminAuth, (req, res) => {
   const result = auth.adminUpdateUser(req.params.id, req.body);
   if (result.error) return res.status(400).json(result);
-  admin.logAction(req.admin.id, 'update_user', req.params.id, `编辑用户: ${JSON.stringify(req.body).substring(0, 100)}`);
+  admin.logAction(req.admin.id, 'update_user', req.params.id, `编辑用户: ${Object.keys(req.body).join(',')}`);
   res.json(result);
 });
 
