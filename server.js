@@ -281,7 +281,13 @@ load();setInterval(load,10000);
 const app = express();
 
 // Middleware
-app.use(compression());
+app.use(compression({filter:(req,res)=>{
+  // SSE和streaming请求不压缩(否则会缓冲整个响应)
+  if(req.headers.accept==='text/event-stream')return false;
+  if(req.url.includes('divine-stream'))return false;
+  if(req.url.includes('chat-followup'))return false;
+  return compression.filter(req,res);
+}}));
 app.use(helmet({
   contentSecurityPolicy: false, // app.html loads CDN scripts (React, Babel, marked)
   crossOriginEmbedderPolicy: false,
