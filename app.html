@@ -2330,8 +2330,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         const reader=resp.body.getReader();
         const decoder=new TextDecoder();
         let fullText='';let structured=null;let engineData='';let buf='';let chunkCount=0;
-        let updateTimer=null;let streaming=true;
+        let updateTimer=null;let streaming=true;let hasError=false;
         const flushUpdate=(final)=>{
+          if(hasError)return; // 已出错，不覆盖error状态
           let clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
           // During streaming, strip unclosed <think> tags but track thinking state
           const isThinking=!final&&/<think>[^]*$/.test(fullText)&&!/<\/think>[^]*$/.test(fullText);
@@ -2363,15 +2364,19 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                 updateTimer=setInterval(flushUpdate,500);
               }
               else if(ev.type==='chunk'){fullText+=ev.text;chunkCount++}
-              else if(ev.type==='error'){DiagLog.sse('stream_error',{error:ev.error});setMS(m,{error:ev.error,loading:false});if(updateTimer)clearInterval(updateTimer);clearTimeout(timeout);return}
+              else if(ev.type==='error'){
+                DiagLog.sse('stream_error',{error:ev.error});hasError=true;
+                const friendlyErr=ev.error?.includes?.('ECONNREFUSED')?(getLang()==='zh-CN'?'LLM服务未连接，请在管理后台检查Provider配置':'LLM service not connected. Check Provider settings.'):ev.error;
+                setMS(m,{error:friendlyErr,loading:false});if(updateTimer)clearInterval(updateTimer);clearTimeout(timeout);
+              }
             }catch(e){DiagLog.error('sse_parse',{raw:d.substring(0,200),err:e.message})}
           }
         }
         if(updateTimer)clearInterval(updateTimer);
         flushUpdate(true);
-        DiagLog.sse('done',{chunks:chunkCount,totalLen:fullText.length,cleanLen:fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim().length,hasThinkTags:fullText.includes('<think>')});
-        // Save to history
-        try{const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');hist.unshift({mode:m,question:q,time:new Date().toLocaleString(),ts:Date.now()});if(hist.length>50)hist.length=50;localStorage.setItem('yuanhe_history',JSON.stringify(hist))}catch(e){}
+        DiagLog.sse('done',{chunks:chunkCount,totalLen:fullText.length,cleanLen:fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim().length,hasThinkTags:fullText.includes('<think>'),hasError});
+        // Save to history (only on success)
+        if(!hasError){try{const hist=JSON.parse(localStorage.getItem('yuanhe_history')||'[]');hist.unshift({mode:m,question:q,time:new Date().toLocaleString(),ts:Date.now()});if(hist.length>50)hist.length=50;localStorage.setItem('yuanhe_history',JSON.stringify(hist))}catch(e){}}
         // 同步到服务器
         if(localStorage.getItem('yuanhe_token')){const ms_=modeStates[m];apiPost('/api/auth/divination',{mode:m,question:q,response:ms_?.result?.response||'',structured:ms_?.result?.structured,engineData:ms_?.result?.engineData}).then(r=>{if(r?.id)setMS(m,{result:{...ms_?.result,divId:r.id}})}).catch(()=>{})}
         }catch(abortErr){
