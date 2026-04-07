@@ -235,7 +235,10 @@ function getProfile(userId) {
 function updateProfile(userId, profileData) {
   const user = users[userId];
   if (!user) return null;
-  user.profile = { ...user.profile, ...profileData };
+  const ALLOWED = ['name','bio','city','avatar','year','month','day','hour','gender'];
+  const clean = {};
+  for (const k of ALLOWED) { if (profileData[k] !== undefined) clean[k] = profileData[k]; }
+  user.profile = { ...user.profile, ...clean };
   user.lastActiveAt = new Date().toISOString();
   saveUsers();
   return { id: user.id, phone: user.phone, profile: user.profile };

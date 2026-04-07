@@ -528,7 +528,9 @@ app.get('/api/admin/config', admin.adminAuth, (req, res) => {
 // 更新配置(patch)
 app.post('/api/admin/config', admin.adminAuth, (req, res) => {
   const result = configManager.update(req.body);
-  admin.logAction(req.admin.id, 'update_config', null, `更新配置: ${JSON.stringify(req.body).substring(0, 200)}`);
+  const safeBody = JSON.parse(JSON.stringify(req.body));
+  if (safeBody.llm) { const ps = safeBody.llm.providers; if (Array.isArray(ps)) ps.forEach(p => { if (p.key) p.key = p.key.substring(0, 4) + '***'; }); }
+  admin.logAction(req.admin.id, 'update_config', null, `更新配置: ${JSON.stringify(safeBody).substring(0, 200)}`);
   res.json(result);
 });
 
