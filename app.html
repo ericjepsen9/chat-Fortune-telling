@@ -2188,18 +2188,27 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const saveScrollPos=()=>{if(scrollRef.current)scrollPositions.current[mode]=scrollRef.current.scrollTop};
   const restoreScrollPos=(m)=>{
     const pos=scrollPositions.current[m]||0;
-    if(scrollRef.current)requestAnimationFrame(()=>{if(scrollRef.current)scrollRef.current.scrollTop=pos});
+    // 需要多次延迟尝试恢复,因为React渲染+DOM更新需要时间
+    const tryRestore=()=>{if(scrollRef.current)scrollRef.current.scrollTop=pos};
+    requestAnimationFrame(tryRestore);
+    setTimeout(tryRestore,50);
+    setTimeout(tryRestore,150);
   };
   const [followUpQ,setFollowUpQ]=useState('');
   const [chatLoading,setChatLoading]=useState(false);
   const [chatCooldown,setChatCooldown]=useState(false);
   const [reportExpanded,setReportExpanded]=useState(true);
+  // 每个模式独立保存展开状态
+  const expandStates=useRef({});
   // Reset states when switching modes + restore scroll position
   useEffect(()=>{
-    setReportExpanded((getMS(mode).chatHistory||[]).length===0);
+    // 恢复该模式的展开状态(如果之前保存过)
+    const savedExpand=expandStates.current[mode];
+    if(savedExpand!==undefined){setReportExpanded(savedExpand)}
+    else{setReportExpanded((getMS(mode).chatHistory||[]).length===0)}
     setFollowUpQ('');
     if(getMS(mode).error)setMS(mode,{error:null});
-    // 恢复该模式的滚动位置(延迟一帧等DOM更新)
+    // 恢复该模式的滚动位置(延迟等DOM更新+展开状态渲染完成)
     restoreScrollPos(mode);
   },[mode]);
 
@@ -2235,12 +2244,14 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   // 模式切换锁: AI计算中禁止切换，超时自动解锁
   const trySetMode=(newMode)=>{
+    if(newMode===mode)return;
     if(loadingMode){
       const info=MODES.find(m=>m.id===loadingMode);
       window.yuanheToast?.(`${info?.n||''}正在分析中，请稍候…`);
       return;
     }
-    saveScrollPos(); // 保存当前模式滚动位置
+    saveScrollPos();
+    expandStates.current[mode]=reportExpanded; // 保存当前模式的展开状态
     setMode(newMode);
   };
 
