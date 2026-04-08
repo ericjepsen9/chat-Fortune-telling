@@ -216,6 +216,17 @@ function verifyCode(phone, code) {
   };
 }
 
+// ============ Token Blacklist (logout) ============
+const tokenBlacklist = new Set();
+function logout(token) {
+  if (token) tokenBlacklist.add(token);
+  // Auto-cleanup: limit to 10000 entries (oldest removed)
+  if (tokenBlacklist.size > 10000) {
+    const it = tokenBlacklist.values();
+    tokenBlacklist.delete(it.next().value);
+  }
+}
+
 // ============ JWT Middleware ============
 
 function authMiddleware(req, res, next) {
@@ -223,9 +234,13 @@ function authMiddleware(req, res, next) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: '未登录' });
   }
+  const token = authHeader.slice(7);
+  if (tokenBlacklist.has(token)) {
+    return res.status(401).json({ error: '已登出，请重新登录' });
+  }
 
   try {
-    const decoded = jwt.verify(authHeader.slice(7), JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     const user = users[decoded.uid];
     if (!user) {
       return res.status(401).json({ error: '用户不存在' });
@@ -241,10 +256,10 @@ function authMiddleware(req, res, next) {
 function optionalAuth(req, res, next) {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    try {
-      const decoded = jwt.verify(authHeader.slice(7), JWT_SECRET);
-      req.user = users[decoded.uid];
-    } catch (e) { /* ignore */ }
+    const token = authHeader.slice(7);
+    if (!tokenBlacklist.has(token)) {
+      try { const decoded = jwt.verify(token, JWT_SECRET); req.user = users[decoded.uid]; } catch (e) { /* ignore */ }
+    }
   }
   next();
 }
@@ -543,6 +558,7 @@ module.exports = {
   _saveUsers: saveUsers,
   flushAll,
   sendCode,
+  logout,
   verifyCode,
   authMiddleware,
   optionalAuth,

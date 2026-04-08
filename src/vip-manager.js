@@ -124,4 +124,14 @@ function getInactiveUsers(users, inactiveDays = 7, limit = 50) {
     }));
 }
 
-module.exports = { VIP_TIERS, getUserVip, grantVip, revokeVip, getOrders, getRevenueStats, getInactiveUsers };
+// Check if user can perform divination today (returns {allowed, remaining, limit})
+function checkDivinationLimit(user) {
+  const vip = getUserVip(user);
+  if (vip.dailyDivinations === -1) return { allowed: true, remaining: -1, limit: -1 }; // unlimited
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount = (user?.divinations || []).filter(d => d.createdAt && d.createdAt.startsWith(today)).length;
+  const remaining = Math.max(0, vip.dailyDivinations - todayCount);
+  return { allowed: remaining > 0, remaining, limit: vip.dailyDivinations, todayCount };
+}
+
+module.exports = { VIP_TIERS, getUserVip, grantVip, revokeVip, getOrders, getRevenueStats, getInactiveUsers, checkDivinationLimit };

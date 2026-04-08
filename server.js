@@ -845,6 +845,13 @@ app.get('/api/auth/me', auth.authMiddleware, (req, res) => {
 });
 
 // 更新用户资料
+// 用户登出
+app.post('/api/auth/logout', auth.authMiddleware, (req, res) => {
+  const token = req.headers.authorization?.slice(7);
+  auth.logout(token);
+  res.json({ success: true });
+});
+
 app.post('/api/auth/profile', auth.authMiddleware, (req, res) => {
   const result = auth.updateProfile(req.user.id, req.body);
   if (!result) return res.status(404).json({ error: '用户不存在' });
@@ -1210,8 +1217,14 @@ app.post('/api/calculate', (req, res) => {
 });
 
 // API：流式计算 + AI 解读（SSE）
-app.post('/api/divine-stream', async (req, res) => {
+app.post('/api/divine-stream', auth.optionalAuth, async (req, res) => {
   try {
+    // VIP limit check
+    if (req.user) {
+      const user = auth._users[req.user.id];
+      const limit = vipManager.checkDivinationLimit(user);
+      if (!limit.allowed) { res.writeHead(429, {'Content-Type':'application/json'}); res.end(JSON.stringify({error:`今日占卜次数已用完(${limit.limit}次)，升级VIP获取更多次数`})); return; }
+    }
     const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox } = req.body;
     if (!mode || !year || !month || !day) { res.writeHead(400, {'Content-Type':'application/json'}); res.end(JSON.stringify({error:'缺少必要参数(mode/year/month/day)'})); return; }
     const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
@@ -1310,8 +1323,14 @@ app.post('/api/divine-stream', async (req, res) => {
 });
 
 // API：计算 + AI 解读
-app.post('/api/divine', async (req, res) => {
+app.post('/api/divine', auth.optionalAuth, async (req, res) => {
   try {
+    // VIP limit check (follow-up questions also count)
+    if (req.user) {
+      const user = auth._users[req.user.id];
+      const limit = vipManager.checkDivinationLimit(user);
+      if (!limit.allowed) return res.status(429).json({error:`今日占卜次数已用完(${limit.limit}次)，升级VIP获取更多次数`});
+    }
     const { mode, year, month, day, hour, gender, question, displayMode, city, latitude, longitude, selectedCards, meihuaNum1, meihuaNum2, spreadType, profileB, hourUnknown, hourApprox, context, lang } = req.body;
     if (!mode || !year || !month || !day) return res.status(400).json({error:'缺少必要参数(mode/year/month/day)'});
     const profile = { year: parseInt(year), month: parseInt(month), day: parseInt(day), hour: parseInt(hour), gender: gender || 'male', longitude: parseFloat(longitude) || undefined };
