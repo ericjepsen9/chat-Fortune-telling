@@ -114,7 +114,20 @@ admin.setSecret(auth.JWT_SECRET);
 
 // ============ LLM 调用 ============
 
+// Simple LLM response cache (non-streaming only, 5min TTL, max 100 entries)
+const llmCache = new Map();
+const LLM_CACHE_TTL = 5 * 60 * 1000;
+const LLM_CACHE_MAX = 100;
+function llmCacheKey(mode, msg) { return crypto.createHash('md5').update(mode + '|' + msg).digest('hex'); }
+function llmCacheGet(key) { const e = llmCache.get(key); if (!e) return null; if (Date.now() - e.ts > LLM_CACHE_TTL) { llmCache.delete(key); return null; } return e.val; }
+function llmCacheSet(key, val) { if (llmCache.size >= LLM_CACHE_MAX) { const oldest = llmCache.keys().next().value; llmCache.delete(oldest); } llmCache.set(key, { val, ts: Date.now() }); }
+
 async function callLLM(systemPrompt, userMessage, mode = '', maxTokens) {
+  // Check cache for identical requests
+  const cKey = llmCacheKey(mode, userMessage);
+  const cached = llmCacheGet(cKey);
+  if (cached) { logger.info('LLM', `Cache hit for ${mode}`); return cached; }
+
   const provider = getProvider();
   if (!provider.url || !provider.key || provider.key === 'ollama') {
     throw new Error('未配置有效的LLM服务商，请在后台管理中添加Provider并填写API Key');
@@ -168,6 +181,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens) {
               const m = original.match(/<think>([\s\S]*?)<\/think>/);
               content = m ? '💭 **AI思考过程**\n\n' + m[1].trim() + '\n\n---\n⚠️ *模型仅输出了思考内容。请重试。*' : original;
             }
+            llmCacheSet(cKey, content);
             resolve(content);
           } else if (json.error) {
             const err = new Error(json.error.message || JSON.stringify(json.error));
@@ -302,6 +316,9 @@ app.use(express.json({ limit: '1mb' }));
 const apiLimiter = rateLimit({ windowMs: 60*1000, max: 60, message: { error: '请求太频繁，请稍后再试' } });
 const llmLimiter = rateLimit({ windowMs: 60*1000, max: 10, message: { error: 'AI请求太频繁，请稍后再试' } });
 const adminLimiter = rateLimit({ windowMs: 60*1000, max: 200, message: { error: '请求太频繁' } });
+const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 10, keyGenerator: (req) => req.ip, message: { error: '验证请求太频繁，请15分钟后再试' } });
+app.use('/api/auth/sendCode', authLimiter);
+app.use('/api/auth/verifyCode', authLimiter);
 app.use('/api/divine', llmLimiter);
 app.use('/api/divine-stream', llmLimiter);
 app.use('/api/chat', llmLimiter);
@@ -309,9 +326,13 @@ app.use('/api/chat-followup', llmLimiter);
 app.use('/api/admin/', adminLimiter); // 管理后台更高限额（放在apiLimiter之前）
 app.use('/api/', apiLimiter);
 
-// CORS
+// CORS — restrict to configured origins (env ALLOWED_ORIGINS=https://a.com,https://b.com)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map(s => s.trim());
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') { res.sendStatus(200); return; }
@@ -759,6 +780,8 @@ app.get('/api/admin/users/tags', admin.adminAuth, (req, res) => {
 app.post('/api/admin/users/batch/ban', admin.adminAuth, (req, res) => {
   const { userIds, ban, reason, days } = req.body;
   if (!Array.isArray(userIds) || userIds.length === 0) return res.status(400).json({ error: '请选择用户' });
+  if (userIds.length > 100) return res.status(400).json({ error: '单次最多操作100个用户' });
+  if (!userIds.every(id => typeof id === 'string')) return res.status(400).json({ error: '用户ID格式错误' });
   const result = auth.adminBatchBan(userIds, { ban, reason, days });
   admin.logAction(req.admin.id, ban ? 'batch_ban' : 'batch_unban', null, `批量${ban?'封禁':'解封'} ${result.count}个用户`);
   res.json(result);
