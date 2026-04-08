@@ -564,6 +564,19 @@ app.get('/api/status', (req, res) => {
   res.json({ maintenance: cfg.maintenance.enabled, message: cfg.maintenance.message });
 });
 
+// 健康检查 — PM2/Nginx/监控系统使用
+app.get('/api/health', (req, res) => {
+  const mem = process.memoryUsage();
+  res.json({
+    status: 'ok',
+    uptime: Math.round(process.uptime()),
+    memory: { rss: Math.round(mem.rss / 1024 / 1024) + 'MB', heap: Math.round(mem.heapUsed / 1024 / 1024) + 'MB' },
+    users: Object.keys(auth._users).length,
+    provider: (()=>{ try { const p = getProvider(); return p.name || 'unknown'; } catch(e) { return 'none'; }})(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 // AI输出质量抽查 — 最近N条占卜结果(优化：直接遍历用户数据，不调用重量级adminGetUser)
 app.get('/api/admin/ai-samples', admin.adminAuth, (req, res) => {
   const limit = parseInt(req.query.limit) || 20;

@@ -8,4 +8,6 @@ build/
 .env.production
 logs/
 data/
+backups/
+*.tmp.*
 test-results.json
