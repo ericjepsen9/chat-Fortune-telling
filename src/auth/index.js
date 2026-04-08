@@ -18,6 +18,25 @@ function atomicWriteSync(filePath, data) {
   fs.renameSync(tmp, filePath);
 }
 
+// Debounced write: batches multiple writes within 5s, flushes on exit
+const _pendingWrites = {};
+function debouncedWrite(filePath, dataFn) {
+  _pendingWrites[filePath] = dataFn;
+  if (_pendingWrites[filePath + '_t']) clearTimeout(_pendingWrites[filePath + '_t']);
+  _pendingWrites[filePath + '_t'] = setTimeout(() => flushWrite(filePath), 5000);
+}
+function flushWrite(filePath) {
+  const fn = _pendingWrites[filePath];
+  if (!fn) return;
+  delete _pendingWrites[filePath];
+  if (_pendingWrites[filePath + '_t']) { clearTimeout(_pendingWrites[filePath + '_t']); delete _pendingWrites[filePath + '_t']; }
+  try { atomicWriteSync(filePath, fn()); } catch (e) { console.error('Flush write error:', filePath, e.message); }
+}
+function flushAll() { Object.keys(_pendingWrites).filter(k => !k.endsWith('_t')).forEach(flushWrite); }
+process.on('beforeExit', flushAll);
+process.on('SIGTERM', flushAll);
+process.on('SIGINT', flushAll);
+
 // JWT secret — 生产环境应从 .env 读取
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const JWT_EXPIRES = '30d'; // 30天有效
@@ -46,10 +65,8 @@ function loadUsers() {
 }
 
 function saveUsers() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(USERS_FILE, JSON.stringify(users));
-  } catch (e) { console.error('Failed to save users:', e.message); }
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  debouncedWrite(USERS_FILE, () => JSON.stringify(users));
 }
 
 loadUsers();
@@ -337,12 +354,17 @@ function saveMessage(fromId, toId, message) {
   if (global._yuanheMessages[key].length > 500) {
     global._yuanheMessages[key] = global._yuanheMessages[key].slice(-500);
   }
-  // 持久化
-  try {
-    const msgFile = path.join(DATA_DIR, 'messages.json');
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages));
-  } catch (e) { console.error('Failed to save messages:', e.message); }
+  // 限制总会话数（防止内存无限增长），超出时删除最不活跃的
+  const MAX_CONVS = 10000;
+  const keys = Object.keys(global._yuanheMessages);
+  if (keys.length > MAX_CONVS) {
+    const sorted = keys.map(k => ({ k, last: global._yuanheMessages[k].length ? global._yuanheMessages[k][global._yuanheMessages[k].length - 1].ts || 0 : 0 })).sort((a, b) => a.last - b.last);
+    for (let i = 0; i < keys.length - MAX_CONVS; i++) delete global._yuanheMessages[sorted[i].k];
+  }
+  // 持久化 (debounced)
+  const msgFile = path.join(DATA_DIR, 'messages.json');
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  debouncedWrite(msgFile, () => JSON.stringify(global._yuanheMessages));
 }
 
 function getMessages(userIdA, userIdB, limit = 50, before) {
@@ -373,10 +395,8 @@ const SWIPES_FILE = path.join(DATA_DIR, 'swipes.json');
 let swipes = {};
 try { if (fs.existsSync(SWIPES_FILE)) swipes = JSON.parse(fs.readFileSync(SWIPES_FILE, 'utf-8')); } catch (e) {}
 function saveSwipes() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(SWIPES_FILE, JSON.stringify(swipes));
-  } catch (e) {}
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  debouncedWrite(SWIPES_FILE, () => JSON.stringify(swipes));
 }
 
 // 获取候选用户(排除已滑动、黑名单、自己)
@@ -449,10 +469,8 @@ let friendData = { requests: [], accepted: [] };
 // accepted: [{ userA, userB, createdAt }]
 try { if (fs.existsSync(FRIENDS_FILE)) friendData = JSON.parse(fs.readFileSync(FRIENDS_FILE, 'utf-8')); } catch (e) {}
 function saveFriends() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(FRIENDS_FILE, JSON.stringify(friendData));
-  } catch (e) {}
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  debouncedWrite(FRIENDS_FILE, () => JSON.stringify(friendData));
 }
 
 function sendFriendRequest(fromId, toId, message) {
@@ -523,6 +541,7 @@ module.exports = {
   JWT_SECRET,
   _users: users,
   _saveUsers: saveUsers,
+  flushAll,
   sendCode,
   verifyCode,
   authMiddleware,
@@ -694,10 +713,8 @@ function adminDeleteMessage(convKey, messageId) {
   const idx = msgs.findIndex(m => m.id === messageId);
   if (idx < 0) return { error: '消息不存在' };
   msgs.splice(idx, 1);
-  try {
-    const msgFile = path.join(DATA_DIR, 'messages.json');
-    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages));
-  } catch (e) {}
+  const msgFile = path.join(DATA_DIR, 'messages.json');
+  debouncedWrite(msgFile, () => JSON.stringify(global._yuanheMessages));
   return { success: true };
 }
 
@@ -1062,10 +1079,8 @@ const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
 let posts = [];
 try { if (fs.existsSync(POSTS_FILE)) posts = JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8')); } catch (e) {}
 function savePosts() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(POSTS_FILE, JSON.stringify(posts));
-  } catch (e) {}
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  debouncedWrite(POSTS_FILE, () => JSON.stringify(posts));
 }
 
 function createPost(userId, content, tag) {
@@ -1186,10 +1201,8 @@ const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
 let reports = [];
 try { if (fs.existsSync(REPORTS_FILE)) reports = JSON.parse(fs.readFileSync(REPORTS_FILE, 'utf-8')); } catch (e) {}
 function saveReports() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(REPORTS_FILE, JSON.stringify(reports));
-  } catch (e) {}
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  debouncedWrite(REPORTS_FILE, () => JSON.stringify(reports));
 }
 
 function submitReport(reporterId, { targetType, targetId, reason }) {

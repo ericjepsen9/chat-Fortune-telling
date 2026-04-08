@@ -1375,6 +1375,7 @@ wsModule.init(server, auth);
 
 function shutdown(signal) {
   console.log(`\n⚡ ${signal} received, shutting down gracefully...`);
+  try { auth.flushAll(); console.log('✅ Pending writes flushed'); } catch (e) {}
   server.close(() => {
     console.log('✅ HTTP server closed');
     process.exit(0);
