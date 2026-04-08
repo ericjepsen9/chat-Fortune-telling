@@ -1,8 +1,10 @@
 /**
- * 缘合 Auth Module — 手机号+验证码+JWT
+ * 缘合 Auth Module — 手机号+验证码+JWT + Admin管理
  *
  * 开发阶段: 内存存储 + 文件持久化 (data/users.json)
  * 生产阶段: 替换为 PostgreSQL
+ *
+ * 子模块: messages.js (消息), social.js (社交/帖子/举报)
  */
 
 const jwt = require('jsonwebtoken');
@@ -70,6 +72,13 @@ function saveUsers() {
 }
 
 loadUsers();
+
+// ============ Sub-modules (messages, social/posts/reports) ============
+const messages = require('./messages');
+const social = require('./social');
+const _sharedDeps = { DATA_DIR, debouncedWrite, atomicWriteSync, users, saveUsers };
+messages.init(_sharedDeps);
+social.init(_sharedDeps);
 
 // ============ SMS ============
 
@@ -557,67 +566,48 @@ module.exports = {
   _users: users,
   _saveUsers: saveUsers,
   flushAll,
-  sendCode,
-  logout,
-  verifyCode,
-  authMiddleware,
-  optionalAuth,
-  getProfile,
-  updateProfile,
-  migrateLocalData,
-  saveDivination,
-  appendDivinationChat,
-  getDivinations,
-  saveMessage,
-  getMessages,
-  createPost,
-  getPosts,
-  likePost,
-  addComment,
-  getComments,
-  getCandidates,
-  recordSwipe,
-  getMatches,
-  sendFriendRequest,
-  respondFriendRequest,
-  getPendingRequests,
-  getFriends,
-  areFriends,
-  // Admin user management
-  adminListUsers,
-  adminGetUser,
-  adminGetDivinationSamples,
-  adminGetUserDivination,
-  adminUpdateUser,
-  adminBanUser,
-  adminDeleteUser,
-  adminSetUserTags,
-  adminBatchBan,
-  adminExportUsers,
-  adminGetAllTags,
-  adminGetStats,
-  adminGetTrends,
-  adminGetFunnel,
-  // Admin chat management
-  adminListConversations,
-  adminGetConversation,
-  adminDeleteMessage,
+  // Auth core
+  sendCode, logout, verifyCode, authMiddleware, optionalAuth,
+  // Profile & Divination
+  getProfile, updateProfile, migrateLocalData, saveDivination, appendDivinationChat, getDivinations,
+  // Messages — delegated to messages.js
+  saveMessage: messages.saveMessage,
+  getMessages: messages.getMessages,
+  // Social — delegated to social.js
+  getCandidates: social.getCandidates,
+  recordSwipe: social.recordSwipe,
+  getMatches: social.getMatches,
+  sendFriendRequest: social.sendFriendRequest,
+  respondFriendRequest: social.respondFriendRequest,
+  getPendingRequests: social.getPendingRequests,
+  getFriends: social.getFriends,
+  areFriends: social.areFriends,
+  // Posts — delegated to social.js
+  createPost: social.createPost,
+  getPosts: social.getPosts,
+  likePost: social.likePost,
+  addComment: social.addComment,
+  getComments: social.getComments,
+  // Reports — delegated to social.js
+  submitReport: social.submitReport,
+  // Admin user management (stays in index.js — cross-store deps)
+  adminListUsers, adminGetUser, adminGetDivinationSamples, adminGetUserDivination,
+  adminUpdateUser, adminBanUser, adminDeleteUser, adminSetUserTags,
+  adminBatchBan, adminExportUsers, adminGetAllTags, adminGetStats, adminGetTrends, adminGetFunnel,
+  // Admin chat — delegated to messages.js
+  adminListConversations: messages.adminListConversations,
+  adminGetConversation: messages.adminGetConversation,
+  adminDeleteMessage: messages.adminDeleteMessage,
+  // Admin content — delegated to social.js
+  adminListPosts: social.adminListPosts,
+  adminDeletePost: social.adminDeletePost,
+  adminPinPost: social.adminPinPost,
+  adminListReports: social.adminListReports,
+  adminResolveReport: social.adminResolveReport,
   // Sensitive words
-  getSensitiveWords,
-  setSensitiveWords,
-  checkSensitive,
-  // Admin content
-  adminListPosts,
-  adminDeletePost,
-  adminPinPost,
-  adminListReports,
-  adminResolveReport,
-  submitReport,
+  getSensitiveWords, setSensitiveWords, checkSensitive,
   // User data sync
-  syncBlacklist,
-  getBlacklist: getUserBlacklist,
-  syncFavorites,
-  getFavorites,
+  syncBlacklist, getBlacklist: getUserBlacklist, syncFavorites, getFavorites,
 };
 
 // ============ User Data Sync (黑名单/收藏) ============
@@ -784,23 +774,9 @@ function adminListUsers({ search, gender, page = 1, limit = 20, status, vip, sor
 }
 
 function _mapUserSummary(u) {
-  // Count matches for this user
-  let matchCount = 0;
-  for (const [key, dir] of Object.entries(swipes)) {
-    if (dir !== 'right') continue;
-    const [from, to] = key.split(':');
-    if (from !== u.id) continue;
-    if (swipes[`${to}:${from}`] === 'right') matchCount++;
-  }
-  // Count messages
-  let msgCount = 0;
-  if (global._yuanheMessages) {
-    for (const [key, msgs] of Object.entries(global._yuanheMessages)) {
-      if (key.includes(u.id)) msgCount += msgs.filter(m => m.from === u.id).length;
-    }
-  }
-  // Count friends
-  const friendCount = friendData.accepted.filter(a => a.userA === u.id || a.userB === u.id).length;
+  const matchCount = social.getMatchCount(u.id);
+  const msgCount = messages.getUserMsgCount(u.id);
+  const friendCount = social.getFriendCount(u.id);
 
   return {
     id: u.id,
@@ -831,67 +807,27 @@ function _mapUserSummary(u) {
 function adminGetUser(userId) {
   const u = users[userId];
   if (!u) return null;
-
-  // Match count
-  let matchCount = 0;
-  for (const [key, dir] of Object.entries(swipes)) {
-    if (dir !== 'right') continue;
-    const [from, to] = key.split(':');
-    if (from !== userId) continue;
-    if (swipes[`${to}:${from}`] === 'right') matchCount++;
-  }
-  // Message count
-  let msgCount = 0;
-  if (global._yuanheMessages) {
-    for (const [key, msgs] of Object.entries(global._yuanheMessages)) {
-      if (key.includes(userId)) msgCount += msgs.filter(m => m.from === userId).length;
-    }
-  }
-  // Friends
-  const friends = friendData.accepted
-    .filter(a => a.userA === userId || a.userB === userId)
-    .map(a => {
-      const fid = a.userA === userId ? a.userB : a.userA;
-      const fu = users[fid];
-      return { id: fid, name: fu?.profile?.name || '缘友', gender: fu?.profile?.gender, since: a.createdAt };
-    });
-  // Swipe stats
-  let swipedRight = 0, swipedLeft = 0, beenLiked = 0;
-  for (const [key, dir] of Object.entries(swipes)) {
-    const [from, to] = key.split(':');
-    if (from === userId) { if (dir === 'right') swipedRight++; else swipedLeft++; }
-    if (to === userId && dir === 'right') beenLiked++;
-  }
-  // User posts
-  const userPosts = (posts || []).filter(p => p.authorId === userId).slice(0, 5).map(p => ({
+  const matchCount = social.getMatchCount(userId);
+  const msgCount = messages.getUserMsgCount(userId);
+  const friends = social.getFriendsList(userId);
+  const swipeStats = social.getSwipeStats(userId);
+  const userPosts = social.getUserPosts(userId).slice(0, 5).map(p => ({
     id: p.id, content: (p.content || '').substring(0, 60), likes: p.likes?.length || 0, createdAt: p.createdAt,
   }));
 
   return {
-    id: u.id,
-    phone: u.phone,
-    profile: u.profile,
-    banned: u.banned || false,
-    banReason: u.banReason || '',
-    banUntil: u.banUntil || null,
-    deleted: u.deleted || false,
-    createdAt: u.createdAt,
-    lastActiveAt: u.lastActiveAt,
-    vip: u.vip || null,
-    adminTags: u.adminTags || [],
-    adminNote: u.adminNote || '',
+    id: u.id, phone: u.phone, profile: u.profile,
+    banned: u.banned || false, banReason: u.banReason || '', banUntil: u.banUntil || null,
+    deleted: u.deleted || false, createdAt: u.createdAt, lastActiveAt: u.lastActiveAt,
+    vip: u.vip || null, adminTags: u.adminTags || [], adminNote: u.adminNote || '',
     divinationCount: u.divinations?.length || 0,
     divinations: (u.divinations || []).slice(0, 10).map(d => ({
       id: d.id, mode: d.mode, question: d.question,
       createdAt: d.createdAt, preview: (d.response || '').substring(0, 80),
     })),
-    postCount: (posts || []).filter(p => p.authorId === userId).length,
-    posts: userPosts,
-    matchCount,
-    msgCount,
-    friendCount: friends.length,
-    friends: friends.slice(0, 10),
-    swipeStats: { swipedRight, swipedLeft, beenLiked },
+    postCount: social.getUserPosts(userId).length,
+    posts: userPosts, matchCount, msgCount,
+    friendCount: friends.length, friends: friends.slice(0, 10), swipeStats,
   };
 }
 
@@ -1045,7 +981,7 @@ function adminGetStats() {
     banned: allUsers.filter(u => u.banned).length,
     withProfile: allUsers.filter(u => u.profile?.year).length,
     totalDivinations: allUsers.reduce((s, u) => s + (u.divinations?.length || 0), 0),
-    totalPosts: (posts || []).length,
+    totalPosts: social.getPostCount(),
     genderSplit: {
       male: allUsers.filter(u => u.profile?.gender === 'male').length,
       female: allUsers.filter(u => u.profile?.gender === 'female').length,
@@ -1077,7 +1013,7 @@ function adminGetFunnel() {
   const total = allUsers.length;
   const withProfile = allUsers.filter(u => u.profile?.year).length;
   const hasDivination = allUsers.filter(u => u.divinations?.length > 0).length;
-  const swipeData = (() => { try { const f = path.join(DATA_DIR, 'swipes.json'); if (fs.existsSync(f)) { const s = JSON.parse(fs.readFileSync(f, 'utf-8')); const swipers = new Set(Object.keys(s).map(k => k.split(':')[0])); return swipers.size; } } catch (e) {} return 0; })();
+  const swipeData = social.getSwipersCount();
   const hasConversation = allUsers.filter(u => { try { const c = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'messages.json'), 'utf-8') || '{}'); return Object.keys(c).some(k => k.includes(u.id)); } catch (e) { return false; } }).length;
 
   return [
@@ -1088,9 +1024,8 @@ function adminGetFunnel() {
   ];
 }
 
-// ============ Posts (缘友圈) ============
+// ============ Posts (缘友圈) — LEGACY: kept for reference, exports use social.js ============
 
-// 帖子存储
 const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
 let posts = [];
 try { if (fs.existsSync(POSTS_FILE)) posts = JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8')); } catch (e) {}
@@ -1211,46 +1146,4 @@ function adminPinPost(postId, pinned) {
   return { success: true };
 }
 
-// ============ Reports (举报) ============
-
-const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
-let reports = [];
-try { if (fs.existsSync(REPORTS_FILE)) reports = JSON.parse(fs.readFileSync(REPORTS_FILE, 'utf-8')); } catch (e) {}
-function saveReports() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  debouncedWrite(REPORTS_FILE, () => JSON.stringify(reports));
-}
-
-function submitReport(reporterId, { targetType, targetId, reason }) {
-  const report = {
-    id: crypto.randomUUID(),
-    reporterId,
-    reporterName: users[reporterId]?.profile?.name || '匿名',
-    targetType, // 'user','post','message'
-    targetId,
-    reason: (reason || '').substring(0, 500),
-    status: 'pending', // pending/resolved/dismissed
-    resolution: '',
-    createdAt: new Date().toISOString(),
-  };
-  reports.unshift(report);
-  saveReports();
-  return { success: true, id: report.id };
-}
-
-function adminListReports({ status, page = 1, limit = 20 } = {}) {
-  let list = reports;
-  if (status && status !== 'all') list = list.filter(r => r.status === status);
-  const total = list.length;
-  return { total, page, limit, items: list.slice((page - 1) * limit, page * limit) };
-}
-
-function adminResolveReport(reportId, { status, resolution }) {
-  const report = reports.find(r => r.id === reportId);
-  if (!report) return { error: '举报不存在' };
-  report.status = status; // 'resolved' or 'dismissed'
-  report.resolution = resolution || '';
-  report.resolvedAt = new Date().toISOString();
-  saveReports();
-  return { success: true };
-}
+// ============ Reports (举报) — LEGACY: kept for reference, exports use social.js ============
