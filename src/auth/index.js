@@ -48,7 +48,7 @@ function loadUsers() {
 function saveUsers() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(USERS_FILE, JSON.stringify(users, null, 2));
+    atomicWriteSync(USERS_FILE, JSON.stringify(users));
   } catch (e) { console.error('Failed to save users:', e.message); }
 }
 
@@ -341,7 +341,7 @@ function saveMessage(fromId, toId, message) {
   try {
     const msgFile = path.join(DATA_DIR, 'messages.json');
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
+    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages));
   } catch (e) { console.error('Failed to save messages:', e.message); }
 }
 
@@ -451,7 +451,7 @@ try { if (fs.existsSync(FRIENDS_FILE)) friendData = JSON.parse(fs.readFileSync(F
 function saveFriends() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(FRIENDS_FILE, JSON.stringify(friendData, null, 2));
+    atomicWriteSync(FRIENDS_FILE, JSON.stringify(friendData));
   } catch (e) {}
 }
 
@@ -696,7 +696,7 @@ function adminDeleteMessage(convKey, messageId) {
   msgs.splice(idx, 1);
   try {
     const msgFile = path.join(DATA_DIR, 'messages.json');
-    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages, null, 2));
+    atomicWriteSync(msgFile, JSON.stringify(global._yuanheMessages));
   } catch (e) {}
   return { success: true };
 }
@@ -1064,7 +1064,7 @@ try { if (fs.existsSync(POSTS_FILE)) posts = JSON.parse(fs.readFileSync(POSTS_FI
 function savePosts() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(POSTS_FILE, JSON.stringify(posts, null, 2));
+    atomicWriteSync(POSTS_FILE, JSON.stringify(posts));
   } catch (e) {}
 }
 
@@ -1188,7 +1188,7 @@ try { if (fs.existsSync(REPORTS_FILE)) reports = JSON.parse(fs.readFileSync(REPO
 function saveReports() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
+    atomicWriteSync(REPORTS_FILE, JSON.stringify(reports));
   } catch (e) {}
 }
 

@@ -331,8 +331,7 @@ app.use((req, res, next) => {
 
 // 管理后台页面
 app.get('/admin', (req, res) => {
-  const html = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf-8');
-  res.type('text/html; charset=utf-8').send(html);
+  res.type('text/html; charset=utf-8').send(cachedAdminHtml);
 });
 
 // 管理员登录
@@ -953,7 +952,7 @@ app.get(['/', '/index.html'], (req, res) => {
 
 // 缘合App（测试版）
 app.get('/app', (req, res) => {
-  const html = fs.readFileSync(path.join(__dirname, 'app.html'), 'utf-8');
+  const html = cachedAppHtml;
   res.set({
     'Content-Type': 'text/html; charset=utf-8',
     'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1346,6 +1345,10 @@ app.get('/api/posts/:id/comments', (req, res) => {
   res.json(comments);
 });
 
+// ============ HTML Cache (startup) ============
+let cachedAppHtml = fs.readFileSync(path.join(__dirname, 'app.html'), 'utf-8');
+let cachedAdminHtml = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf-8');
+
 // ============ Start Server ============
 
 const wsModule = require('./src/websocket');
@@ -1367,3 +1370,26 @@ const server = app.listen(PORT, () => {
 
 // 启动 WebSocket
 wsModule.init(server, auth);
+
+// ============ Graceful Shutdown ============
+
+function shutdown(signal) {
+  console.log(`\n⚡ ${signal} received, shutting down gracefully...`);
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    process.exit(0);
+  });
+  setTimeout(() => { console.error('⚠️ Force exit after 30s timeout'); process.exit(1); }, 30000);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  shutdown('uncaughtException');
+});

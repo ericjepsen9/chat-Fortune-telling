@@ -80,7 +80,7 @@ function logAction(adminId, action, target, detail) {
   adminLogs.unshift(entry);
   if (adminLogs.length > 1000) adminLogs.length = 1000;
   try {
-    atomicWriteSync(ADMIN_LOG_FILE, JSON.stringify(adminLogs, null, 2));
+    atomicWriteSync(ADMIN_LOG_FILE, JSON.stringify(adminLogs));
   } catch (e) {}
   return entry;
 }

@@ -24,7 +24,7 @@ try { if (fs.existsSync(ORDERS_FILE)) orders = JSON.parse(fs.readFileSync(ORDERS
 function saveOrders() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    atomicWriteSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
+    atomicWriteSync(ORDERS_FILE, JSON.stringify(orders));
   } catch (e) {}
 }
 
