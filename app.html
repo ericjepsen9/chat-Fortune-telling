@@ -2214,6 +2214,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
   const [hourApprox,setHourApprox]=useState(false); // user chose approximate time
   const ref=useRef(null);
   const chatEndRef=useRef(null);
+  const lastUserMsgRef=useRef(null);
   const scrollRef=useRef(null);
   const [scrolledPastModes,setScrolledPastModes]=useState(false);
   // 每个模式独立保存滚动位置
@@ -2499,6 +2500,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     const newChat=[...ch,userMsg];
     setMS(mode,{chatHistory:newChat});
     setFollowUpQ('');
+    // 发送后先滚动到用户提问位置
+    setTimeout(()=>lastUserMsgRef.current?.scrollIntoView({behavior:'smooth',block:'start'}),150);
     try{
       const reportSummary=ms.result?.response?.substring(0,500)||'';
       const body={mode,year:profile.year,month:profile.month,day:profile.day,hour:profile.hour,gender:profile.gender,question:q,reportSummary,recentChat:ch.slice(-6),hourUnknown:profile.hour===-1};
@@ -2523,7 +2526,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     }catch(e){setModeStates(prev=>{const cur=prev[mode]||{chatHistory:[]};return{...prev,[mode]:{...cur,chatHistory:[...(cur.chatHistory||[]),{role:'ai',text:'⚠️ 网络错误，请重试',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}]}}});}
     setChatLoading(false);
     setChatCooldown(true);setTimeout(()=>setChatCooldown(false),3000);
-    setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:'smooth'}),300);
+    // 滚动到用户的提问位置（而非回答末尾）
+    setTimeout(()=>lastUserMsgRef.current?.scrollIntoView({behavior:'smooth',block:'start'}),300);
   };
   const P={bg:T.bg,accent:T.accent2,accentLight:'#DDD6FE',accentDark:'#7C3AED'};
 
@@ -2887,8 +2891,9 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
             {chatHistory.length>0&&<div style={{marginBottom:10}}>
               {expanded&&<div style={{borderTop:`1px solid ${T.border}`,marginTop:4,marginBottom:12}}/>}
               <div style={{fontSize:12,fontWeight:600,color:mc,marginBottom:8,paddingLeft:2}}>💬 追问会话</div>
-              {chatHistory.map((msg,i)=>(
-                <div key={i} style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8}}>
+              {chatHistory.map((msg,i)=>{
+                const isLastUser=msg.role==='user'&&!chatHistory.slice(i+1).some(m=>m.role==='user');
+                return <div key={i} ref={isLastUser?lastUserMsgRef:null} style={{display:'flex',justifyContent:msg.role==='user'?'flex-end':'flex-start',marginBottom:8}}>
                   <div style={{maxWidth:'85%',padding:'10px 14px',borderRadius:msg.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
                     background:msg.role==='user'?`linear-gradient(135deg,${mc},${mc}dd)`:T.card,
                     color:msg.role==='user'?'#fff':T.text,fontSize:13,lineHeight:1.7,
@@ -2896,8 +2901,8 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
                     {msg.role==='user'?msg.text:<div className="markdown" dangerouslySetInnerHTML={md(msg.text)}/>}
                     {msg.time&&<div style={{fontSize:9,opacity:.4,marginTop:4,textAlign:msg.role==='user'?'right':'left'}}>{msg.time}</div>}
                   </div>
-                </div>
-              ))}
+                </div>}
+              )}
               {chatLoading&&<div style={{display:'flex',justifyContent:'flex-start',marginBottom:8}}>
                 <div style={{padding:'10px 14px',borderRadius:'16px 16px 16px 4px',background:T.card,boxShadow:T.shadow}}>
                   <div style={{display:'flex',gap:4,alignItems:'center'}}>
