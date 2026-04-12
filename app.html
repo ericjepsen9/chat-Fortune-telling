@@ -2384,6 +2384,23 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         // Streaming SSE for AI divine
         const abortCtrl=new AbortController();
         const timeout=setTimeout(()=>abortCtrl.abort(),180000); // 3 min timeout
+        // Declare outside try so catch/finally can access them
+        let fullText='';let structured=null;let engineData='';let buf='';let chunkCount=0;
+        let updateTimer=null;let streaming=true;let hasError=false;
+        const flushUpdate=(final)=>{
+          if(hasError)return;
+          let clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
+          const isThinking=!final&&/<think>[^]*$/.test(fullText)&&!/<\/think>[^]*$/.test(fullText);
+          if(!final)clean=clean.replace(/<think>[\s\S]*$/,'').trim();
+          if(final)streaming=false;
+          if(isThinking&&!clean){clean='💭 AI正在深度分析中，请稍候…'}
+          if(final&&!clean&&fullText.length>10){
+            const thinkMatch=fullText.match(/<think>([\s\S]*?)<\/think>/);
+            if(thinkMatch){clean='💭 **AI思考过程**\n\n'+thinkMatch[1].trim()+'\n\n---\n⚠️ *AI模型仅输出了思考内容，未生成正式分析。可能是token限制或模型特性。请尝试重新生成。*'}
+            else{clean='⚠️ AI返回了内容但格式异常，请重新生成。'}
+          }
+          setMS(m,{result:{response:clean,engineData,structured,_genTime:new Date().toLocaleTimeString(),_elapsed:getMS(m).elapsed,_streaming:streaming,_thinking:isThinking},loading:false});
+        };
         try{
         DiagLog.sse('start',{mode:m,question:q,displayMode:dm});
         const resp=await fetch('/api/divine-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:abortCtrl.signal});
@@ -2391,26 +2408,6 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
         if(!resp.ok){const errText=await resp.text();DiagLog.sse('http_error',{status:resp.status,body:errText.substring(0,300)});setMS(m,{error:`服务器错误(${resp.status})`,loading:false});clearTimeout(timeout);return}
         const reader=resp.body.getReader();
         const decoder=new TextDecoder();
-        let fullText='';let structured=null;let engineData='';let buf='';let chunkCount=0;
-        let updateTimer=null;let streaming=true;let hasError=false;
-        const flushUpdate=(final)=>{
-          if(hasError)return; // 已出错，不覆盖error状态
-          let clean=fullText.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
-          // During streaming, strip unclosed <think> tags but track thinking state
-          const isThinking=!final&&/<think>[^]*$/.test(fullText)&&!/<\/think>[^]*$/.test(fullText);
-          if(!final)clean=clean.replace(/<think>[\s\S]*$/,'').trim();
-          if(final)streaming=false;
-          // If AI is in <think> mode and no visible content yet, show thinking indicator
-          if(isThinking&&!clean){clean='💭 AI正在深度分析中，请稍候…'}
-          // Final: if clean is empty but fullText has content, the model only output <think> tags
-          if(final&&!clean&&fullText.length>10){
-            // Extract think content as fallback display
-            const thinkMatch=fullText.match(/<think>([\s\S]*?)<\/think>/);
-            if(thinkMatch){clean='💭 **AI思考过程**\n\n'+thinkMatch[1].trim()+'\n\n---\n⚠️ *AI模型仅输出了思考内容，未生成正式分析。可能是token限制或模型特性。请尝试重新生成。*'}
-            else{clean='⚠️ AI返回了内容但格式异常，请重新生成。'}
-          }
-          setMS(m,{result:{response:clean,engineData,structured,_genTime:new Date().toLocaleTimeString(),_elapsed:getMS(m).elapsed,_streaming:streaming,_thinking:isThinking},loading:false});
-        };
         while(true){
           const {done,value}=await reader.read();
           if(done)break;
