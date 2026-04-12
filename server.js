@@ -316,7 +316,7 @@ app.use(express.json({ limit: '1mb' }));
 const apiLimiter = rateLimit({ windowMs: 60*1000, max: 60, message: { error: '请求太频繁，请稍后再试' } });
 const llmLimiter = rateLimit({ windowMs: 60*1000, max: 10, message: { error: 'AI请求太频繁，请稍后再试' } });
 const adminLimiter = rateLimit({ windowMs: 60*1000, max: 200, message: { error: '请求太频繁' } });
-const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 10, keyGenerator: (req) => req.ip, message: { error: '验证请求太频繁，请15分钟后再试' } });
+const authLimiter = rateLimit({ windowMs: 15*60*1000, max: 10, message: { error: '验证请求太频繁，请15分钟后再试' } });
 app.use('/api/auth/sendCode', authLimiter);
 app.use('/api/auth/verifyCode', authLimiter);
 app.use('/api/divine', llmLimiter);
