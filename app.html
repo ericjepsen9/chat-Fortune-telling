@@ -1539,7 +1539,7 @@ function HomeScreen({profile,goTo,addConv,setOpenConvId,autoGreet}){
   const dominantIdx=wxValues.indexOf(Math.max(...wxValues));
   const dominantWx=wxLabels[dominantIdx];
 
-  return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:80}}>
+  return(<div style={{height:'100%',overflow:'hidden',display:'flex',flexDirection:'column',paddingBottom:'calc(80px + env(safe-area-inset-bottom))'}}>
     {/* Header matching prototype: 五行轮盘 + title + action buttons */}
     <div style={{padding:'10px 16px 6px',flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -3278,7 +3278,7 @@ function DiscoverScreen({goTo,profile,onUpdateProfile}){
   const luckBorderLight=['#FCD34D','#FECACA','#DDD6FE','#99F6E4','#E5E7EB','#CBD5E1'];
   const luckBorderDark=['#D9770640','#DC262640','#8B5CF640','#0D948840','#6B728040','#64748B40'];
   const luckBorder=(T.isDark?luckBorderDark:luckBorderLight)[dayN%6];
-  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:'calc(80px + env(safe-area-inset-bottom))',background:T.bg}}>
     <div style={{padding:'14px 16px 0'}}>
       {/* Tab as title + mood in top right */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
@@ -4036,7 +4036,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
   // Conversation list
   const blacklist=getBlacklist();
   const filteredConvs=convs.filter(c=>!blacklist.includes(c.user.id)&&(!msgSearch||c.user.name.includes(msgSearch)||c.lastMessage?.includes(msgSearch)));
-  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:'calc(80px + env(safe-area-inset-bottom))',background:T.bg}}>
     <div style={{padding:'14px 16px 0'}}>
       <div style={{fontSize:24,fontWeight:800,color:T.text,marginBottom:14}}>消息</div>
       {/* Search */}
@@ -4297,7 +4297,7 @@ function MeScreen({profile,onLogout,goTo,onEdit,onUpdateProfile,themeMode,toggle
     input.click();
   };
   const isPhotoAvatar=(a)=>a&&a.startsWith('data:');
-  return(<div style={{height:'100%',overflow:'auto',paddingBottom:80,background:T.bg}}>
+  return(<div style={{height:'100%',overflow:'auto',paddingBottom:'calc(80px + env(safe-area-inset-bottom))',background:T.bg}}>
   {/* Profile card */}
   <div style={{padding:'14px 16px 0'}}>
     <div style={{background:T.card,borderRadius:20,padding:'20px',boxShadow:T.shadow}}>
@@ -5061,7 +5061,8 @@ function ShareModal({type,profile,structured,partner,score,compatibility,dayInfo
 function TabBar({active,onTap}){
   const unread=ChatStore.totalUnread();
   const tabs=[{id:S.HOME,ic:p=><Icons.flame s={20} c={p}/>,label:t('navHome')},{id:S.DISCOVER,ic:p=><Icons.compass s={20} c={p}/>,label:t('navDiscover')},{id:S.AI,ic:null,label:t('navAI'),center:true},{id:S.MSGS,ic:p=><Icons.msgCircle s={20} c={p}/>,label:t('navMsgs'),badge:unread},{id:S.ME,ic:p=><Icons.user s={20} c={p}/>,label:t('navMe')}];
-  return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',height:60,background:T.card,borderTop:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 4px 0',zIndex:100}}>
+  return(<div style={{position:'fixed',bottom:0,left:0,right:0,maxWidth:480,margin:'0 auto',background:T.card,borderTop:`1px solid ${T.border}`,zIndex:100,paddingBottom:'env(safe-area-inset-bottom)'}}>
+    <div style={{height:60,display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 4px'}}>
     {tabs.map(tab=>{const act=active===tab.id;
       if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}DD)`,border:'none',borderRadius:22,width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:`0 3px 12px ${T.accent2}40`,marginTop:-14}}><Icons.sparkles s={20} c="#fff"/></button>;
       return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1,padding:'6px 12px',position:'relative',transition:'opacity .2s'}}>
@@ -5070,6 +5071,7 @@ function TabBar({active,onTap}){
         <span style={{fontSize:10,color:act?T.accent2:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
         {act&&<div style={{position:'absolute',bottom:-1,width:16,height:2,borderRadius:1,background:T.accent2}}/>}
       </button>})}
+    </div>
   </div>);
 }
 
