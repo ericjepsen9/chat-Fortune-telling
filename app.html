@@ -749,7 +749,7 @@ function LangPickerModal({onClose}){
     <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,padding:'20px 16px 30px',animation:'slideUp .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
         <div style={{fontSize:18,fontWeight:700,color:T.text}}>🌐 {t('meLanguage')}</div>
-        <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.text}}>✕</button>
+        <button onClick={onClose} style={{width:40,height:40,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.text}}>✕</button>
       </div>
       <div style={{fontSize:12,color:T.textThi,marginBottom:16}}>{getLang()==='zh-CN'?'切换语言后，界面文案和功能展示将自动适配':'Switching language will adapt the UI and features automatically'}</div>
       {langs.map(l=>{
@@ -1077,11 +1077,11 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
         {/* Online badge */}
         <div style={{position:'absolute',top:10,left:10,padding:'4px 10px',borderRadius:12,background:'rgba(0,0,0,0.25)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',gap:4}}>
           <div style={{width:6,height:6,borderRadius:3,background:isOnline?'#34D399':'#9CA3AF'}}/>
-          <span style={{fontSize:10,color:'#fff',fontWeight:500}}>{isOnline?'在线':'离线'}</span>
+          <span style={{fontSize:12,color:'#fff',fontWeight:500}}>{isOnline?'在线':'离线'}</span>
         </div>
         {/* "TA喜欢你" badge */}
         {user.likedMe&&<div style={{position:'absolute',top:38,left:10,padding:'4px 10px',borderRadius:12,background:'linear-gradient(135deg,#EC4899,#F472B6)',boxShadow:'0 2px 8px rgba(236,72,153,0.3)'}}>
-          <span style={{fontSize:10,color:'#fff',fontWeight:600}}>💕 TA喜欢你</span>
+          <span style={{fontSize:12,color:'#fff',fontWeight:600}}>💕 TA喜欢你</span>
         </div>}
         {/* Score badge */}
         <div style={{position:'absolute',top:10,right:10,padding:'6px 12px',borderRadius:14,background:'rgba(255,255,255,0.95)',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
@@ -1095,7 +1095,7 @@ function SwipeCard({user,onSwipe,isTop,onDetail}){
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
           <span style={{fontSize:20,fontWeight:700,color:T.text}}>{user.name}，{user.age}</span>
           <span style={{fontSize:12,color:user.gender==='female'?'#EC4899':'#3B82F6',fontWeight:600,marginLeft:6}}>{user.gender==='female'?'♀':'♂'}</span>
-          <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:'nowrap',background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#059669':user.score>=65?'#7C3AED':'#D97706'}}>{typeTag}</span>
+          <span style={{padding:'3px 10px',borderRadius:20,fontSize:12,fontWeight:600,whiteSpace:'nowrap',background:user.score>=80?'#ECFDF5':user.score>=65?'#F5F3FF':'#FEF3C7',color:user.score>=80?'#059669':user.score>=65?'#7C3AED':'#D97706'}}>{typeTag}</span>
         </div>
         <div style={{fontSize:13,color:T.textSec,marginBottom:8,lineHeight:1.6}}>{user.bio}</div>
         {/* Match reason */}
@@ -1146,7 +1146,7 @@ function CardDetailModal({user,profile,onClose,goTo,addConv,autoGreet}){
     <div style={{position:'fixed',inset:0,zIndex:300,background:T.bg,overflow:'auto'}}>
         {/* Top bar */}
         <div className="yh-safe-top" style={{position:'sticky',top:0,zIndex:10,padding:'12px 16px',background:T.bg,display:'flex',alignItems:'center',gap:12,borderBottom:`1px solid ${T.border}`}}>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
+          <button onClick={onClose} style={{width:40,height:40,borderRadius:16,border:'none',background:T.bg,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>←</button>
           <div style={{flex:1,fontSize:17,fontWeight:700,color:T.text}}>个人资料</div>
           {match&&<span style={{padding:'4px 12px',borderRadius:20,fontSize:12,fontWeight:600,background:ac,color:'#fff'}}>{match.score}% 匹配</span>}
         </div>
@@ -1367,7 +1367,7 @@ function DailyStatusModal({profile,onClose}){
     <div style={{maxWidth:480,margin:'0 auto',width:'100%',padding:'12px 16px 0',flexShrink:0}}>
       {/* Header — fixed at top */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-        <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
+        <button onClick={onClose} style={{width:40,height:40,borderRadius:16,border:'none',background:T.card,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textSec}}>←</button>
         <div style={{fontSize:16,fontWeight:700,color:T.text}}>{t('calTitle')}</div>
         <button onClick={()=>{setSelDate(now);setViewMonth(now.getMonth());setViewYear(now.getFullYear())}} style={{fontSize:12,color:T.primary,background:'none',border:'none',cursor:'pointer',fontWeight:600}}>{getLang()==='zh-CN'?'今天':'Today'}</button>
       </div>
@@ -1377,15 +1377,15 @@ function DailyStatusModal({profile,onClose}){
 
       {/* Month navigation */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-        <button onClick={prevMonth} style={{width:28,height:28,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:T.textSec}}>‹</button>
+        <button onClick={prevMonth} style={{width:36,height:36,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:T.textSec}}>‹</button>
         <div style={{fontSize:15,fontWeight:700,color:T.text}}>{viewYear}年{viewMonth+1}月</div>
-        <button onClick={nextMonth} style={{width:28,height:28,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:T.textSec}}>›</button>
+        <button onClick={nextMonth} style={{width:36,height:36,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:T.textSec}}>›</button>
       </div>
 
       {/* Calendar grid */}
       <div style={{background:T.card,borderRadius:16,padding:'10px 8px',marginBottom:16,boxShadow:T.shadow}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:4}}>
-          {['日','一','二','三','四','五','六'].map(w=><div key={w} style={{textAlign:'center',fontSize:10,color:T.textThi,padding:'4px 0',fontWeight:600}}>{w}</div>)}
+          {['日','一','二','三','四','五','六'].map(w=><div key={w} style={{textAlign:'center',fontSize:12,color:T.textThi,padding:'4px 0',fontWeight:600}}>{w}</div>)}
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2}}>
           {calDays.map((d,i)=>{
@@ -1687,10 +1687,10 @@ function FourPillarsCard({structured,mc}){
           const tg=p.gz?.[0],dz=p.gz?.[1];
           const tgWx=WX_MAP[tg]||'',dzWx=WX_MAP[dz]||'';
           return <div key={p.name} style={{textAlign:'center',padding:'8px 4px',borderRadius:10,background:T.isDark?T.bg:'#F9FAFB',border:`1px solid ${p.name==='日柱'?mc+'30':T.border}`}}>
-            <div style={{fontSize:10,color:T.textThi,marginBottom:4}}>{p.name}</div>
+            <div style={{fontSize:12,color:T.textThi,marginBottom:4}}>{p.name}</div>
             <div style={{fontSize:20,fontWeight:700,color:WX_C[tgWx]||T.text,lineHeight:1.2}}>{tg||'—'}</div>
             <div style={{fontSize:20,fontWeight:700,color:WX_C[dzWx]||T.text,lineHeight:1.2,marginTop:2}}>{dz||'—'}</div>
-            {p.ny&&<div style={{fontSize:9,color:T.textThi,marginTop:4}}>{p.ny}</div>}
+            {p.ny&&<div style={{fontSize:11,color:T.textThi,marginTop:4}}>{p.ny}</div>}
           </div>})}
       </div>
       {/* Info row */}
@@ -1723,7 +1723,7 @@ function WuxingBar({data,height=6}){
           <div style={{flex:1,height,background:T.isDark?T.border:'#F3F4F6',borderRadius:height/2,overflow:'hidden'}}>
             <div style={{height:'100%',background:WX_C[wx],borderRadius:height/2,width:Math.round(val/max*100)+'%',transition:'width .6s ease'}}/>
           </div>
-          <span style={{width:24,fontSize:10,color:T.textThi,textAlign:'right'}}>{val.toFixed?val.toFixed(1):val}</span>
+          <span style={{width:24,fontSize:12,color:T.textThi,textAlign:'right'}}>{val.toFixed?val.toFixed(1):val}</span>
         </div>
       ))}
     </div>
@@ -1743,7 +1743,7 @@ function PersonalityCards({cards,mc}){
           <button key={c.id} onClick={()=>setActiveCard(activeCard===i?null:i)} style={{flexShrink:0,width:100,padding:'12px 10px',borderRadius:14,border:activeCard===i?`2px solid ${c.color}`:`1.5px solid ${T.border}`,background:activeCard===i?`${c.color}08`:'#fff',cursor:'pointer',textAlign:'center',transition:'all .2s',boxShadow:activeCard===i?`0 2px 12px ${c.color}20`:T.shadow}}>
             <div style={{fontSize:20,marginBottom:4}}>{c.icon}</div>
             <div style={{fontSize:11,fontWeight:700,color:activeCard===i?c.color:T.text}}>{c.title}</div>
-            <div style={{fontSize:9,color:T.textThi,marginTop:2}}>{c.subtitle}</div>
+            <div style={{fontSize:11,color:T.textThi,marginTop:2}}>{c.subtitle}</div>
           </button>
         ))}
       </div>
@@ -2057,7 +2057,7 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
       <div style={{width:'100%',maxWidth:480,margin:'0 auto',flex:1,overflow:'auto',padding:'20px 16px 28px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
           <div style={{fontSize:17,fontWeight:700,color:'#E9D5FF'}}>🎴 选择你的塔罗牌</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:'rgba(255,255,255,0.1)',color:'#C4B5FD',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={onClose} style={{width:40,height:40,borderRadius:16,border:'none',background:'rgba(255,255,255,0.1)',color:'#C4B5FD',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
         {/* Spread type */}
         <div style={{display:'flex',gap:6,marginBottom:14}}>
@@ -2068,7 +2068,7 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
         {/* Selected cards display */}
         {cards.length>0&&<div style={{display:'flex',justifyContent:'center',gap:8,marginBottom:14}}>
           {cards.map((cid,i)=><div key={cid} className="anim-in" style={{width:44,height:62,borderRadius:8,background:'linear-gradient(135deg,#FBBF24,#F59E0B)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 12px rgba(251,191,36,0.3)',transform:`rotate(${(i-Math.floor(cards.length/2))*5}deg)`}}>
-            <div style={{fontSize:10,fontWeight:700,color:'#fff'}}>第{i+1}张</div>
+            <div style={{fontSize:12,fontWeight:700,color:'#fff'}}>第{i+1}张</div>
           </div>)}
         </div>}
         {/* Progress */}
@@ -2088,7 +2088,7 @@ function TarotModal({spread,setSpread,cards,setCards,pool,onDone,onClose}){
               transition:'all .3s',transform:isFlip?'rotateY(90deg) scale(0.9)':picked?'translateY(-4px) scale(1.03)':'scale(1)',
               boxShadow:picked?'0 6px 16px rgba(251,191,36,0.3)':'0 2px 8px rgba(0,0,0,0.3)',opacity:!picked&&full?0.25:1,
             }}>
-              {picked?<><div style={{fontSize:10,opacity:.9,fontWeight:700}}>第{cards.indexOf(cid)+1}张</div><div style={{fontSize:20,marginTop:2}}>✦</div></>:<><div style={{fontSize:22,opacity:.3}}>✧</div><div style={{fontSize:9,opacity:.3,marginTop:2}}>翻牌</div></>}
+              {picked?<><div style={{fontSize:12,opacity:.9,fontWeight:700}}>第{cards.indexOf(cid)+1}张</div><div style={{fontSize:20,marginTop:2}}>✦</div></>:<><div style={{fontSize:22,opacity:.3}}>✧</div><div style={{fontSize:11,opacity:.3,marginTop:2}}>翻牌</div></>}
             </button>;
           })}
         </div>
@@ -2136,7 +2136,7 @@ function HourAssistantModal({profile,onResult,onClose}){
         {/* Header */}
         <div onClick={e=>e.stopPropagation()} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:18,fontWeight:700,color:'#D97706'}}>🔮 AI时辰校正助手</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={onClose} style={{width:40,height:40,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
         {/* Progress */}
         <div style={{height:4,background:'#FEF3C7',borderRadius:2,marginBottom:16,overflow:'hidden'}}>
@@ -3167,14 +3167,14 @@ function FortuneWheel({profile,goTo,addConv,setOpenConvId,autoGreet,onClose}){
           <div style={{flex:1}}>
             <div style={{fontSize:16,fontWeight:700,color:'#E9D5FF'}}>{result.name}，{result.age}岁</div>
             <div style={{fontSize:12,color:'rgba(196,181,253,0.7)',marginTop:2}}>{result.sign} · {result.bio}</div>
-            <div style={{display:'flex',gap:4,marginTop:6}}>{(result.tags||[]).map(t=><span key={t} style={{padding:'2px 8px',borderRadius:6,background:'rgba(139,92,246,0.15)',fontSize:10,color:'#C4B5FD'}}>{t}</span>)}</div>
+            <div style={{display:'flex',gap:4,marginTop:6}}>{(result.tags||[]).map(t=><span key={t} style={{padding:'2px 8px',borderRadius:6,background:'rgba(139,92,246,0.15)',fontSize:12,color:'#C4B5FD'}}>{t}</span>)}</div>
           </div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10,marginTop:12,padding:'10px 14px',background:'rgba(251,191,36,0.08)',border:'1px solid rgba(251,191,36,0.15)',borderRadius:12}}>
           <div style={{fontSize:24,fontWeight:800,color:'#FBBF24'}}>{result.score}%</div>
           <div style={{flex:1}}>
             <div style={{fontSize:12,fontWeight:600,color:'#FBBF24'}}>{result.score>=80?((t('matchGradeLabels')||[])[0]||'Soulmates')+' 💕':result.score>=65?((t('matchGradeLabels')||[])[2]||'Good')+' ✨':t('matchPotential')+' 🌱'}</div>
-            <div style={{fontSize:10,color:'rgba(196,181,253,0.5)'}}>{result.score>=80?t('matchDescHigh'):result.score>=65?t('matchDescMid'):t('matchDescLow')}</div>
+            <div style={{fontSize:12,color:'rgba(196,181,253,0.5)'}}>{result.score>=80?t('matchDescHigh'):result.score>=65?t('matchDescMid'):t('matchDescLow')}</div>
           </div>
         </div>
         {/* Action buttons: 3 options */}
@@ -3209,17 +3209,17 @@ function MoodTracker({profile}){
   if(todayMood>=0&&!showMsg){
     return(<div style={{background:T.card,borderRadius:14,padding:'10px 16px',boxShadow:T.shadow,marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:18}}>{MOODS[todayMood].emoji}</span><span style={{fontSize:12,color:T.textSec}}>今日已打卡 · {MOODS[todayMood].label}</span></div>
-      {streak>1&&<span style={{fontSize:10,color:T.primary,fontWeight:600}}>🔥 {streak}天</span>}
+      {streak>1&&<span style={{fontSize:12,color:T.primary,fontWeight:600}}>🔥 {streak}天</span>}
     </div>);
   }
   return(
     <div style={{background:T.card,borderRadius:18,padding:16,boxShadow:T.shadow,marginBottom:14,border:`1px solid ${T.border}`}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
         <div style={{fontSize:13,fontWeight:700,color:T.text}}>💭 今天心情如何？</div>
-        {streak>1&&<div style={{fontSize:10,color:T.primary,fontWeight:600}}>🔥 连续{streak}天</div>}
+        {streak>1&&<div style={{fontSize:12,color:T.primary,fontWeight:600}}>🔥 连续{streak}天</div>}
       </div>
       <div style={{display:'flex',justifyContent:'space-around',gap:4}}>
-        {MOODS.map((m,i)=><button key={i} onClick={()=>pickMood(i)} style={{flex:1,padding:'8px 2px',borderRadius:12,border:'1.5px solid transparent',background:T.card,cursor:'pointer',textAlign:'center',transition:'all .2s'}}><div style={{fontSize:22}}>{m.emoji}</div><div style={{fontSize:9,color:T.textThi,marginTop:2}}>{m.label}</div></button>)}
+        {MOODS.map((m,i)=><button key={i} onClick={()=>pickMood(i)} style={{flex:1,padding:'8px 2px',borderRadius:12,border:'1.5px solid transparent',background:T.card,cursor:'pointer',textAlign:'center',transition:'all .2s'}}><div style={{fontSize:22}}>{m.emoji}</div><div style={{fontSize:11,color:T.textThi,marginTop:2}}>{m.label}</div></button>)}
       </div>
       {showMsg&&todayMood>=0&&<div className="anim-in" style={{marginTop:10,padding:'10px 14px',borderRadius:12,background:`${MOODS[todayMood].color}08`,border:`1px solid ${MOODS[todayMood].color}20`,fontSize:12,color:MOODS[todayMood].color,lineHeight:1.6,textAlign:'center'}}>{MOODS[todayMood].msg}</div>}
     </div>
@@ -3526,9 +3526,9 @@ function IcebreakerCard({type,data,onAction,done}){
               background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#FDE68A,#FCD34D)':isPicked?(T.isDark?'#DB277720':'#FCE7F3'):isAi&&revealed?(T.isDark?'#F59E0B20':'#FEF3C7'):T.card,
               fontSize:12,fontWeight:isPicked||isAi?700:500,color:T.text,cursor:picked?'default':'pointer',position:'relative'}}>
             {opt}
-            {isPicked&&!revealed&&<span style={{marginLeft:4,fontSize:10}}>✓</span>}
-            {revealed&&isPicked&&<span style={{marginLeft:4,fontSize:10}}>你</span>}
-            {revealed&&isAi&&!isPicked&&<span style={{marginLeft:4,fontSize:10}}>TA</span>}
+            {isPicked&&!revealed&&<span style={{marginLeft:4,fontSize:12}}>✓</span>}
+            {revealed&&isPicked&&<span style={{marginLeft:4,fontSize:12}}>你</span>}
+            {revealed&&isAi&&!isPicked&&<span style={{marginLeft:4,fontSize:12}}>TA</span>}
           </button>;
         })}
       </div>
@@ -3553,8 +3553,8 @@ function IcebreakerCard({type,data,onAction,done}){
               background:isPicked&&isAi&&revealed?'linear-gradient(135deg,#BBF7D0,#86EFAC)':isPicked?(T.isDark?'#D9770620':'#FEF3C7'):T.card,
               fontSize:14,fontWeight:600,color:T.text,cursor:picked?'default':'pointer',textAlign:'center'}}>
             {choice}
-            {revealed&&isPicked&&<div style={{fontSize:9,color:'#D97706',marginTop:4}}>你选的</div>}
-            {revealed&&isAi&&!isPicked&&<div style={{fontSize:9,color:'#D97706',marginTop:4}}>TA选的</div>}
+            {revealed&&isPicked&&<div style={{fontSize:11,color:'#D97706',marginTop:4}}>你选的</div>}
+            {revealed&&isAi&&!isPicked&&<div style={{fontSize:11,color:'#D97706',marginTop:4}}>TA选的</div>}
           </button>;
         })}
       </div>
@@ -4195,7 +4195,7 @@ function ReportModal({target,onClose}){
       {done?<div style={{textAlign:'center',padding:'30px 0'}}><div style={{fontSize:36,marginBottom:8}}>✅</div><div style={{fontSize:15,fontWeight:600,color:T.text}}>举报已提交</div><div style={{fontSize:12,color:T.textThi,marginTop:4}}>我们会尽快处理</div></div>:<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div style={{fontSize:16,fontWeight:700,color:T.text}}>举报</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={onClose} style={{width:40,height:40,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
         <div style={{fontSize:12,color:T.textThi,marginBottom:12}}>请选择举报原因：</div>
         {reasons.map(r=><button key={r} onClick={()=>setReason(r)} style={{display:'block',width:'100%',padding:'12px 14px',borderRadius:12,border:reason===r?`2px solid ${T.primary}`:`1px solid ${T.border}`,background:reason===r?`${T.primary}08`:T.card,fontSize:13,color:T.text,cursor:'pointer',marginBottom:6,textAlign:'left'}}>{r}</button>)}
@@ -4244,7 +4244,7 @@ function PrivacySettingsModal({onClose}){
               </div>
             </div>
             <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:10}}>
-              {l.items.map(it=><span key={it} style={{padding:'3px 10px',borderRadius:8,background:level===l.id?(T.isDark?T.accent2+'20':'#DDD6FE'):(T.isDark?T.border:'#F3F4F6'),fontSize:10,fontWeight:500,color:level===l.id?T.accent2:T.textSec}}>{it}</span>)}
+              {l.items.map(it=><span key={it} style={{padding:'3px 10px',borderRadius:8,background:level===l.id?(T.isDark?T.accent2+'20':'#DDD6FE'):(T.isDark?T.border:'#F3F4F6'),fontSize:12,fontWeight:500,color:level===l.id?T.accent2:T.textSec}}>{it}</span>)}
             </div>
           </button>
         ))}
@@ -4774,14 +4774,14 @@ function ProfileEditModal({profile,onSave,onClose}){
       <div onClick={e=>e.stopPropagation()} style={{background:T.card,borderRadius:'24px 24px 0 0',width:'100%',maxWidth:480,animation:'slideUp .3s ease',padding:'20px 16px 30px',maxHeight:'90vh',overflow:'auto'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:700,color:T.text}}>✏️ 编辑资料</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
+          <button onClick={onClose} style={{width:40,height:40,borderRadius:16,border:'none',background:T.bg,fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:T.textThi}}>✕</button>
         </div>
         {/* Avatar edit */}
         <div style={{textAlign:'center',marginBottom:20}}>
           <div onClick={()=>setShowAvatarPick(!showAvatarPick)} style={{width:72,height:72,borderRadius:36,margin:'0 auto',background:`linear-gradient(135deg,${T.accent2}20,${T.accent2}10)`,border:`2px solid ${T.accent2}30`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',position:'relative',overflow:avatar?.startsWith('data:')?'hidden':'visible',fontSize:32}}>
             {avatar?.startsWith('data:')?<img src={avatar} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:avatar}
             <div style={{position:'absolute',bottom:-2,right:-2,width:22,height:22,borderRadius:11,background:T.accent2,display:'flex',alignItems:'center',justifyContent:'center',border:`2px solid ${T.card}`}}>
-              <span style={{fontSize:10,color:'#fff'}}>📷</span>
+              <span style={{fontSize:12,color:'#fff'}}>📷</span>
             </div>
           </div>
           <div style={{fontSize:11,color:T.textThi,marginTop:6}}>点击更换头像</div>
@@ -4793,7 +4793,7 @@ function ProfileEditModal({profile,onSave,onClose}){
           </div>}
         </div>
         <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>昵称</label><input value={f.name} onChange={e=>sF({...f,name:e.target.value})} placeholder="你的昵称" maxLength={12} style={is}/></div>
-        <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>个性签名</label><input value={f.bio} onChange={e=>sF({...f,bio:e.target.value})} placeholder="一句话介绍自己" maxLength={30} style={is}/><div style={{fontSize:10,color:T.textThi,textAlign:'right',marginTop:4}}>{f.bio.length}/30</div></div>
+        <div style={{marginBottom:14}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>个性签名</label><input value={f.bio} onChange={e=>sF({...f,bio:e.target.value})} placeholder="一句话介绍自己" maxLength={30} style={is}/><div style={{fontSize:12,color:T.textThi,textAlign:'right',marginTop:4}}>{f.bio.length}/30</div></div>
         <div style={{marginBottom:20}}><label style={{fontSize:13,color:T.textSec,marginBottom:6,display:'block'}}>所在城市</label><input value={f.city} onChange={e=>sF({...f,city:e.target.value})} placeholder="如：北京" maxLength={10} style={is}/></div>
         <div style={{fontSize:11,color:T.textThi,marginBottom:14,padding:'8px 12px',background:T.bg,borderRadius:10}}>修改生辰信息请前往「修改生辰」</div>
         <button onClick={save} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}CC)`,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer'}}>保存</button>
@@ -4886,7 +4886,7 @@ function DataManagementModal({profile,onClose,onLogout}){
           <button onClick={exportData} style={{width:'100%',padding:'14px',borderRadius:14,border:'none',background:`linear-gradient(135deg,${T.accent2},${T.accent2}dd)`,color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:`0 4px 16px ${T.accent2}30`}}>
             📥 {isEN?'Export All Data':'导出全部数据'}
           </button>
-          <div style={{fontSize:10,color:T.textThi,textAlign:'center',marginTop:6}}>{isEN?'Downloads as JSON file for backup':'导出为JSON文件，可用于备份和迁移'}</div>
+          <div style={{fontSize:12,color:T.textThi,textAlign:'center',marginTop:6}}>{isEN?'Downloads as JSON file for backup':'导出为JSON文件，可用于备份和迁移'}</div>
         </div>
 
         {/* 危险操作 */}
@@ -4909,7 +4909,7 @@ function PersonalityShareCard({profile,structured}){
   const wx=structured?.wuxing||{};const wxArr=Object.entries(wx).sort((a,b)=>b[1]-a[1]);
   return(
     <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#8B5CF6,#6D28D9)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
-      <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · 命理性格卡</div>
+      <div style={{fontSize:12,opacity:.6,marginBottom:4}}>缘合 · 命理性格卡</div>
       <div style={{fontSize:22,fontWeight:800,marginBottom:2}}>{profile.name||'缘友'}</div>
       <div style={{fontSize:12,opacity:.7}}>{profile.year}.{profile.month}.{profile.day}</div>
       <div style={{margin:'16px 0',height:1,background:'rgba(255,255,255,0.15)'}}/>
@@ -4923,12 +4923,12 @@ function PersonalityShareCard({profile,structured}){
       <div style={{display:'flex',gap:6,marginBottom:16}}>
         {wxArr.slice(0,5).map(([k,v])=><div key={k} style={{flex:1,textAlign:'center',background:'rgba(255,255,255,0.1)',borderRadius:8,padding:'6px 2px'}}>
           <div style={{fontSize:14,fontWeight:700}}>{k}</div>
-          <div style={{fontSize:10,opacity:.6,marginTop:2}}>{v.toFixed(1)}</div>
+          <div style={{fontSize:12,opacity:.6,marginTop:2}}>{v.toFixed(1)}</div>
         </div>)}
       </div>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
-        <span style={{fontSize:10}}>扫码查看你的命理</span>
-        <span style={{fontSize:10}}>缘合 yuanhe.app</span>
+        <span style={{fontSize:12}}>扫码查看你的命理</span>
+        <span style={{fontSize:12}}>缘合 yuanhe.app</span>
       </div>
     </div>
   );
@@ -4937,7 +4937,7 @@ function PersonalityShareCard({profile,structured}){
 function MatchShareCard({profile,partner,score,compatibility}){
   return(
     <div id="share-card" style={{width:340,background:'linear-gradient(135deg,#EC4899,#BE185D)',borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
-      <div style={{fontSize:10,opacity:.6,marginBottom:12}}>缘合 · 命理匹配卡</div>
+      <div style={{fontSize:12,opacity:.6,marginBottom:12}}>缘合 · 命理匹配卡</div>
       <div style={{display:'flex',justifyContent:'space-around',alignItems:'center',marginBottom:16}}>
         <div style={{textAlign:'center'}}>
           <div style={{width:56,height:56,borderRadius:28,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto'}}>{profile.gender==='female'?'👩':'👨'}</div>
@@ -4945,7 +4945,7 @@ function MatchShareCard({profile,partner,score,compatibility}){
         </div>
         <div style={{textAlign:'center'}}>
           <div style={{fontSize:28,fontWeight:800,color:'#FFF'}}>{score||'?'}%</div>
-          <div style={{fontSize:10,opacity:.7}}>缘分值</div>
+          <div style={{fontSize:12,opacity:.7}}>缘分值</div>
         </div>
         <div style={{textAlign:'center'}}>
           <div style={{width:56,height:56,borderRadius:28,background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto'}}>{partner?.gender==='female'?'👩':'👨'}</div>
@@ -4957,8 +4957,8 @@ function MatchShareCard({profile,partner,score,compatibility}){
         <div style={{fontSize:11,opacity:.7,marginTop:4}}>{compatibility.desc||'命理相合，值得珍惜'}</div>
       </div>}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
-        <span style={{fontSize:10}}>扫码测测你们的缘分</span>
-        <span style={{fontSize:10}}>缘合 yuanhe.app</span>
+        <span style={{fontSize:12}}>扫码测测你们的缘分</span>
+        <span style={{fontSize:12}}>缘合 yuanhe.app</span>
       </div>
     </div>
   );
@@ -4983,7 +4983,7 @@ function FortuneShareCard({profile,dayInfo}){
   const keywords=dayInfo?.keywords||[];
   return(
     <div id="share-card" style={{width:340,background:`linear-gradient(135deg,${wxColor},${wxColor}CC)`,borderRadius:24,padding:24,color:'#fff',fontFamily:'system-ui'}}>
-      <div style={{fontSize:10,opacity:.6,marginBottom:4}}>缘合 · {theme?'命理日历':'今日运势'}</div>
+      <div style={{fontSize:12,opacity:.6,marginBottom:4}}>缘合 · {theme?'命理日历':'今日运势'}</div>
       <div style={{fontSize:14,fontWeight:600,opacity:.8}}>{y}年{m}月{d}日</div>
       <div style={{textAlign:'center',margin:'20px 0'}}>
         {theme?<>
@@ -4999,11 +4999,11 @@ function FortuneShareCard({profile,dayInfo}){
       </div>}
       {!theme&&<div style={{display:'flex',gap:12,marginBottom:16}}>
         <div style={{flex:1,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 12px'}}>
-          <div style={{fontSize:10,opacity:.6}}>{t('calYi')}</div>
+          <div style={{fontSize:12,opacity:.6}}>{t('calYi')}</div>
           <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{yi}</div>
         </div>
         <div style={{flex:1,background:'rgba(255,255,255,0.15)',borderRadius:12,padding:'10px 12px'}}>
-          <div style={{fontSize:10,opacity:.6}}>{t('calJi')}</div>
+          <div style={{fontSize:12,opacity:.6}}>{t('calJi')}</div>
           <div style={{fontSize:12,fontWeight:600,marginTop:4}}>{ji}</div>
         </div>
       </div>}
@@ -5015,8 +5015,8 @@ function FortuneShareCard({profile,dayInfo}){
         <div style={{background:'rgba(255,255,255,0.15)',borderRadius:10,padding:'8px 14px',fontSize:11}}>🔢 幸运数 {(d*3+7)%10}</div>
       </div>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',opacity:.5}}>
-        <span style={{fontSize:10}}>长按保存分享给好友</span>
-        <span style={{fontSize:10}}>缘合 yuanhe.app</span>
+        <span style={{fontSize:12}}>长按保存分享给好友</span>
+        <span style={{fontSize:12}}>缘合 yuanhe.app</span>
       </div>
     </div>
   );
@@ -5071,8 +5071,8 @@ function TabBar({active,onTap}){
       if(tab.center)return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:`linear-gradient(135deg,${T.accent2},${T.accent2}DD)`,border:'none',borderRadius:22,width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:`0 3px 12px ${T.accent2}40`,marginTop:-14}}><Icons.sparkles s={20} c="#fff"/></button>;
       return<button key={tab.id} onClick={()=>onTap(tab.id)} style={{background:'none',border:'none',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1,padding:'6px 12px',position:'relative',transition:'opacity .2s'}}>
         {tab.ic(act?T.accent2:T.textThi)}
-        {tab.badge>0&&<div style={{position:'absolute',top:2,right:4,minWidth:16,height:16,borderRadius:8,background:T.primary,color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
-        <span style={{fontSize:10,color:act?T.accent2:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
+        {tab.badge>0&&<div style={{position:'absolute',top:2,right:4,minWidth:16,height:16,borderRadius:8,background:T.primary,color:'#fff',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px'}}>{tab.badge>99?'99+':tab.badge}</div>}
+        <span style={{fontSize:12,color:act?T.accent2:T.textThi,fontWeight:act?600:400}}>{tab.label}</span>
         {act&&<div style={{position:'absolute',bottom:-1,width:16,height:2,borderRadius:1,background:T.accent2}}/>}
       </button>})}
     </div>
