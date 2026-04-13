@@ -19,7 +19,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body,#root{height:100%;overflow:hidden}
 body{font-family:'Noto Sans SC',sans-serif;background:var(--yuanhe-bg,#FAFAF7);color:var(--yuanhe-text,#1A1A2E);-webkit-tap-highlight-color:transparent;
-  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 ::-webkit-scrollbar{display:none}
 .serif{font-family:'Noto Serif SC',serif}
 /* Animations */
@@ -82,6 +82,14 @@ body.dark input::placeholder,body.dark textarea::placeholder{color:var(--yuanhe-
 /* iOS notch / status bar safe area for sticky headers */
 .yh-safe-top{padding-top:calc(12px + env(safe-area-inset-top)) !important}
 .yh-safe-top-sm{padding-top:calc(6px + env(safe-area-inset-top)) !important}
+/* PWA standalone mode: iOS hides status bar but content can extend under dynamic island/notch */
+@media (display-mode: standalone) {
+  /* Remove body-level safe-area since it's inconsistent in PWA; handle at header level */
+  body { padding-top: 0 !important; }
+  /* Force minimum top padding on headers to clear notch/dynamic island (44-59px) */
+  .yh-safe-top { padding-top: max(56px, calc(12px + env(safe-area-inset-top))) !important; }
+  .yh-safe-top-sm { padding-top: max(50px, calc(6px + env(safe-area-inset-top))) !important; }
+}
 </style>
 </head>
 <body>
@@ -2543,7 +2551,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
 
   return(<div ref={scrollRef} onScroll={e=>{const t=e.target.scrollTop;if(!scrolledPastModes&&t>200)setScrolledPastModes(true);else if(scrolledPastModes&&t<120)setScrolledPastModes(false)}} style={{height:'100%',overflow:'auto',background:P.bg}}>
     {/* === HEADER — matches Discover style === */}
-    <div style={{paddingTop:'calc(12px + env(safe-area-inset-top))',paddingLeft:16,paddingRight:16,paddingBottom:8,background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:`1px solid ${T.border}`}}>
+    <div className="yh-safe-top" style={{paddingLeft:16,paddingRight:16,paddingBottom:8,background:T.bg,position:'sticky',top:0,zIndex:60,borderBottom:`1px solid ${T.border}`}}>
       {/* Category tabs as title */}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
