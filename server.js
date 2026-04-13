@@ -565,6 +565,11 @@ app.get('/api/status', (req, res) => {
   res.json({ maintenance: cfg.maintenance.enabled, message: cfg.maintenance.message });
 });
 
+// App 版本号 — PWA 客户端用于检测更新
+app.get('/api/version', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate').json({ version: APP_VERSION });
+});
+
 // 健康检查 — PM2/Nginx/监控系统使用
 app.get('/api/health', (req, res) => {
   const mem = process.memoryUsage();
@@ -1425,6 +1430,12 @@ app.get('/api/posts/:id/comments', (req, res) => {
 // ============ HTML Cache (startup) ============
 let cachedAppHtml = fs.readFileSync(path.join(__dirname, 'app.html'), 'utf-8');
 let cachedAdminHtml = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf-8');
+
+// App 版本号 — 用 app.html 内容的 MD5 前 10 位，改动自动变化
+const APP_VERSION = crypto.createHash('md5').update(cachedAppHtml).digest('hex').substring(0, 10);
+// 注入版本号到 app.html 里（替换占位符）
+cachedAppHtml = cachedAppHtml.replace(/__APP_VERSION__/g, APP_VERSION);
+console.log(`📦 App version: ${APP_VERSION}`);
 
 // ============ Start Server ============
 
