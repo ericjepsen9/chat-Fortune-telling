@@ -80,15 +80,9 @@ body.dark input::placeholder,body.dark textarea::placeholder{color:var(--yuanhe-
 .yh-modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center}
 .yh-label{font-size:13px;margin-bottom:6px;display:block}
 /* iOS notch / status bar safe area for sticky headers */
-/* Browser mode: body handles safe-area, header just adds visual padding */
+/* body has padding-top: env(safe-area-inset-top), so headers only need visual padding */
 .yh-safe-top{padding-top:12px !important}
 .yh-safe-top-sm{padding-top:6px !important}
-/* PWA standalone mode: body-level safe-area is unreliable, so header must include notch space */
-@media (display-mode: standalone) {
-  body { padding-top: 0 !important; }
-  .yh-safe-top { padding-top: max(56px, calc(12px + env(safe-area-inset-top))) !important; }
-  .yh-safe-top-sm { padding-top: max(50px, calc(6px + env(safe-area-inset-top))) !important; }
-}
 </style>
 </head>
 <body>

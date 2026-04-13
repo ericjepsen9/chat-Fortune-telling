@@ -6,7 +6,7 @@
  *   - 离线时：提供简单离线页面
  */
 
-const CACHE_VERSION = 'yuanhe-v5';
+const CACHE_VERSION = 'yuanhe-v6';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const STATIC_ASSETS = [
