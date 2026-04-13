@@ -1006,6 +1006,24 @@ app.get('/app', (req, res) => {
   }).send(html);
 });
 
+// ============ PWA 资源 ============
+// Service Worker 必须从根路径提供（scope 决定）
+app.get('/sw.js', (req, res) => {
+  res.set({
+    'Content-Type': 'application/javascript; charset=utf-8',
+    'Cache-Control': 'no-cache, max-age=0',
+    'Service-Worker-Allowed': '/',
+  }).sendFile(path.join(__dirname, 'public', 'sw.js'));
+});
+// manifest + icons 等静态资源
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+  maxAge: '7d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.json')) res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+    if (filePath.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+  },
+}));
+
 // API：健康检查
 app.get('/api/health', (req, res) => {
   res.json({

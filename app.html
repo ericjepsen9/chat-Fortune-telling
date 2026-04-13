@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>缘合 YuanHe</title>
+<!-- PWA — iOS 主屏 / Android -->
+<link rel="manifest" href="/public/manifest.json">
+<meta name="theme-color" content="#8B5CF6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="缘合">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="/public/icons/icon-180.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/public/icons/icon-180.svg">
+<link rel="icon" type="image/svg+xml" href="/public/icons/icon-192.svg">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -5204,6 +5214,16 @@ function App(){
   </div>);
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
+</script>
+<!-- PWA Service Worker 注册 -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => { console.log('[PWA] SW registered:', reg.scope); })
+      .catch(err => { console.warn('[PWA] SW registration failed:', err); });
+  });
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="39.6" fill="url(#g)"/>
+  <text x="50%" y="53%" font-family="'PingFang SC','Noto Serif SC',serif"
+        font-size="81" font-weight="700"
+        fill="white" text-anchor="middle" dominant-baseline="middle">缘</text>
+  <circle cx="140.4" cy="39.6" r="9" fill="#FCD34D" opacity="0.9"/>
+  <circle cx="39.6" cy="140.4" r="7.2" fill="#F472B6" opacity="0.8"/>
+</svg>
