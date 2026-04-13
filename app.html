@@ -80,13 +80,12 @@ body.dark input::placeholder,body.dark textarea::placeholder{color:var(--yuanhe-
 .yh-modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center}
 .yh-label{font-size:13px;margin-bottom:6px;display:block}
 /* iOS notch / status bar safe area for sticky headers */
-.yh-safe-top{padding-top:calc(12px + env(safe-area-inset-top)) !important}
-.yh-safe-top-sm{padding-top:calc(6px + env(safe-area-inset-top)) !important}
-/* PWA standalone mode: iOS hides status bar but content can extend under dynamic island/notch */
+/* Browser mode: body handles safe-area, header just adds visual padding */
+.yh-safe-top{padding-top:12px !important}
+.yh-safe-top-sm{padding-top:6px !important}
+/* PWA standalone mode: body-level safe-area is unreliable, so header must include notch space */
 @media (display-mode: standalone) {
-  /* Remove body-level safe-area since it's inconsistent in PWA; handle at header level */
   body { padding-top: 0 !important; }
-  /* Force minimum top padding on headers to clear notch/dynamic island (44-59px) */
   .yh-safe-top { padding-top: max(56px, calc(12px + env(safe-area-inset-top))) !important; }
   .yh-safe-top-sm { padding-top: max(50px, calc(6px + env(safe-area-inset-top))) !important; }
 }
