@@ -157,6 +157,7 @@ async function callLLM(systemPrompt, userMessage, mode = '', maxTokens) {
     };
 
     const req = (parsed.protocol === 'https:' ? require('https') : http).request(options, (res) => {
+      res.setEncoding('utf-8'); // 防止多字节字符跨chunk边界损坏
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -698,6 +699,7 @@ app.post('/api/admin/llm/test', admin.adminAuth, async (req, res) => {
         headers: anonLLMHeaders(Buffer.byteLength(testBody), actualKey),
       };
       const req = (parsed.protocol==='https:'?require('https'):http).request(options, (resp)=>{
+        resp.setEncoding('utf-8'); // 防止多字节字符跨chunk损坏
         let data=''; resp.on('data',c=>data+=c);
         resp.on('end',()=>{
           try {
@@ -1191,6 +1193,7 @@ app.post('/api/chat', async (req, res) => {
       hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
       headers: anonLLMHeaders(Buffer.byteLength(llmBody), chatProvider.key),
     }, (llmRes) => {
+      llmRes.setEncoding('utf-8'); // 防止多字节字符跨chunk边界损坏
       let data = '';
       llmRes.on('data', chunk => data += chunk);
       llmRes.on('end', () => {
@@ -1277,9 +1280,10 @@ app.post('/api/divine-stream', auth.optionalAuth, async (req, res) => {
       hostname: parsed.hostname, port: parsed.port, path: parsed.pathname, method: 'POST',
       headers: anonLLMHeaders(Buffer.byteLength(llmBody), streamProvider.key),
     }, (llmRes) => {
+      llmRes.setEncoding('utf-8'); // 防止多字节字符跨chunk损坏
       let buf = '';
       llmRes.on('data', (chunk) => {
-        buf += chunk.toString();
+        buf += chunk;
         const lines = buf.split('\n');
         buf = lines.pop(); // keep incomplete line
         for (const line of lines) {
