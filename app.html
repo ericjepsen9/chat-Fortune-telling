@@ -2961,7 +2961,7 @@ function AIScreen({profile,initialMode,onUpdateProfile}){
     </div>
 
     {/* === FIXED BOTTOM BAR === */}
-    <div style={{position:'fixed',bottom:64,left:0,right:0,maxWidth:480,margin:'0 auto',background:T.isDark?'rgba(15,15,26,0.97)':'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50,minHeight:66}}>
+    <div style={{position:'fixed',bottom:'calc(64px + env(safe-area-inset-bottom))',left:0,right:0,maxWidth:480,margin:'0 auto',background:T.isDark?'rgba(15,15,26,0.97)':'rgba(255,255,255,0.97)',borderTop:`1px solid ${T.border}`,padding:'8px 16px',zIndex:50,minHeight:66}}>
       {(ms.loading||ms.result?._streaming)?<>
         {/* Loading / Streaming: button itself is progress bar */}
         <button disabled style={{width:'100%',height:50,borderRadius:14,border:'none',fontSize:14,fontWeight:700,color:'#fff',position:'relative',overflow:'hidden',cursor:'default',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -3980,7 +3980,7 @@ function MsgsScreen({convs,refreshConvs,openConvId,setOpenConvId,setChatActive,p
         <button onClick={stopRecording} style={{padding:'8px 18px',borderRadius:20,border:'none',background:T.accent2,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:`0 2px 8px ${T.accent2}30`}}>{t('send')}</button>
       </div>}
       {/* Input bar */}
-      {!recording&&<div style={{padding:'8px 12px 24px',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:6,alignItems:'center'}}>
+      {!recording&&<div style={{padding:'8px 12px calc(24px + env(safe-area-inset-bottom))',background:T.card,borderTop:(showQuick||showEmoji)?'none':`1px solid ${T.border}`,display:'flex',gap:6,alignItems:'center'}}>
         <button onClick={()=>{setShowQuick(!showQuick);setShowEmoji(false)}} style={{width:30,height:30,borderRadius:15,border:'none',background:showQuick?`${T.accent2}10`:T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:showQuick?T.accent2:T.textThi}}>{showQuick?'✕':'+'}</button>
         <button onClick={()=>{setShowEmoji(!showEmoji);setShowQuick(false)}} style={{width:30,height:30,borderRadius:15,border:'none',background:showEmoji?'#FEF3C7':T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>😊</button>
         <button onClick={sendImage} disabled={sending} style={{width:30,height:30,borderRadius:15,border:'none',background:T.bg,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>📷</button>
